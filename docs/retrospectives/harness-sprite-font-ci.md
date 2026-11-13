@@ -13,3 +13,5 @@
 도구 개선으로 처리하고 전역 GC 규칙은 추가하지 않는다. 실패 원문 누락과 실행 환경 미고정은 이번 실제 원격 실패의 근거로 남긴다. 격리 실험의 첫 argv 구성 오류는 인자를 별도 변수에 보존한 뒤 수정했고 성공한 재현만 결과로 기록했다. 실제 토큰/비용·절감률은 미측정이다. 후속 독립 검토와 원격 CI 확인 후 완료를 판정한다.
 
 [독립 교정 리뷰](../reviews/harness-sprite-font-ci.md)는 추가 HIGH/MEDIUM 없이 통과했다. 실제 격리 portable CLI는 정상0→Runtime Sprite Editor 유출1→Editor 플랫폼 제한 삭제1→복원0을 확인했다. 별도 실패 자식의 stdout/stderr와 exit9가 wrapper 원문 출력/exit1로 전파되는 것도 확인했다. 전체 Editor/원격 CI를 이 독립 리뷰가 실행한 것으로 합산하지 않는다. 교정 커밋 후 실제 CI 결과는 별도로 확인한다.
+
+교정 커밋 `d12311b85a50ed6168bc8a029c155bd45edde576`을 원격 브랜치에서 확인했다. [코어·동기화·어셈블리 경계 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43470940690)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43470940666)가 모두 성공했다. 원격에서 고정 Python 설치와 폰트 재생성/오류 입력을 실제 통과했으며 검수 폰트/manifest 바이트는 그대로다. 실패 이력은 유지하고 교정 후 해당 SHA의 성공으로 닫는다. 현재 진행 중인 실제 아트/폰트 Unity 지원은 이 CI 결과와 별개다.

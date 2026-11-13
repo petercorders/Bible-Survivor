@@ -1,0 +1,2434 @@
+{
+  "schema": 1,
+  "manifestSha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751",
+  "ppu": 32,
+  "layers": [
+    "cloak_back",
+    "base",
+    "hair_short",
+    "beard",
+    "hood",
+    "cloak_front"
+  ],
+  "assets": [
+    {
+      "id": "chr_player_layer-cloak-back_idle_32",
+      "source": "export/png/chr_player_layer-cloak-back_idle_32.png",
+      "sha256": "737efef890538b9a0f2730f8c9baf02e719e2daf22f6fe1c03f144757790c5d3",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_back",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-base_idle_32",
+      "source": "export/png/chr_player_layer-base_idle_32.png",
+      "sha256": "e9fde7fca6be3b851ef946207ec0864a405b1da23ad32986d91630ea5fa48a78",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "base",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hair-short_idle_32",
+      "source": "export/png/chr_player_layer-hair-short_idle_32.png",
+      "sha256": "09785e9875ffbb3c518d86bb7bcc5e3b599802b5113c945da4a09838f90b5d8c",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hair_short",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-beard_idle_32",
+      "source": "export/png/chr_player_layer-beard_idle_32.png",
+      "sha256": "3e305885454c20766661b71c9a54aa5a86a4cf7fb8f6b3ba97e74a121a0d9f57",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "beard",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hood_idle_32",
+      "source": "export/png/chr_player_layer-hood_idle_32.png",
+      "sha256": "d1c1224cc1323f7fad51cb21aca3cbceefd7960647cc15fa90492ba1e648e4f6",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hood",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-cloak-front_idle_32",
+      "source": "export/png/chr_player_layer-cloak-front_idle_32.png",
+      "sha256": "8c10832cf79a03bac18322c58cda5bcc828f5051753bd3692e879fcafaaa2aa3",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_front",
+      "animation": "idle",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-cloak-back_walk_32",
+      "source": "export/png/chr_player_layer-cloak-back_walk_32.png",
+      "sha256": "65b608ce13148dfd1b89631b96ceb4da3795ba469973796cc7db06e628e621d7",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_back",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-base_walk_32",
+      "source": "export/png/chr_player_layer-base_walk_32.png",
+      "sha256": "1893ed8d8a76a33e033aaeedd8556c507c0c19458a88ed2270bf3b822ac7563a",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "base",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hair-short_walk_32",
+      "source": "export/png/chr_player_layer-hair-short_walk_32.png",
+      "sha256": "5323cf3ab81f4faf88a55fb8589c425388513e79b0579ebefa0550434b3cd832",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hair_short",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-beard_walk_32",
+      "source": "export/png/chr_player_layer-beard_walk_32.png",
+      "sha256": "aaa8259728c6db5f2a3953028467415a485dd71fe4556110e418a1e1557a8c12",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "beard",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hood_walk_32",
+      "source": "export/png/chr_player_layer-hood_walk_32.png",
+      "sha256": "790d77cb02a148f86eeb26f668efe4164f3cdd1db33caa0e4c4488ea3605c81a",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hood",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-cloak-front_walk_32",
+      "source": "export/png/chr_player_layer-cloak-front_walk_32.png",
+      "sha256": "1254e4e37272ca7fa849ad0e4ae1cf1712304d62fca48d208e16d60526200629",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_front",
+      "animation": "walk",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-cloak-back_death_32",
+      "source": "export/png/chr_player_layer-cloak-back_death_32.png",
+      "sha256": "b18ecd3d78ff641dcfd4a9c96010eb3c88921f3f60239f08b12d41246bed98ca",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_back",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-base_death_32",
+      "source": "export/png/chr_player_layer-base_death_32.png",
+      "sha256": "576f12cf35a6e68656f652cb786e951d38cc0fb9779919fe09c10c2e466b29a9",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "base",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hair-short_death_32",
+      "source": "export/png/chr_player_layer-hair-short_death_32.png",
+      "sha256": "8400b7e229f619bca10d28595264c2cd81a8b21354ce31515b5bde27300ca958",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hair_short",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-beard_death_32",
+      "source": "export/png/chr_player_layer-beard_death_32.png",
+      "sha256": "673064525e57c53e7d16fc10b7636607742445958fb2fc6a202ff2a672339391",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "beard",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-hood_death_32",
+      "source": "export/png/chr_player_layer-hood_death_32.png",
+      "sha256": "b788a3419773f369229e8fcd6cd2b3b0a8329235053e0e7b2fccf036dc40d888",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "hood",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "chr_player_layer-cloak-front_death_32",
+      "source": "export/png/chr_player_layer-cloak-front_death_32.png",
+      "sha256": "abe958a55ee7ec924aaeecbe7dca7e4fc2773e8bf9457854e7d9b301422daa57",
+      "width": 32,
+      "height": 32,
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "cloak_front",
+      "animation": "death",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "enm_a1-small-snake_move_32",
+      "source": "export/png/enm_a1-small-snake_move_32.png",
+      "sha256": "5fb9bd3684945ed1ed13c8f91e7b301ef7e08d76051eeb195b6cc2b81c94e048",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "enm_a2-fruit-moth_fly_32",
+      "source": "export/png/enm_a2-fruit-moth_fly_32.png",
+      "sha256": "122e9d089dfba70e4940359bef7eaa484bc296f3a0d5bc7d7dad9567be8c4c09",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "enm_a3-thorn-beast_walk_32",
+      "source": "export/png/enm_a3-thorn-beast_walk_32.png",
+      "sha256": "c106b026306d3bed8302ac570002634b05042bfd77fc386006424612a3746c8e",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "Actors",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_enemy-death_burst_32",
+      "source": "export/png/fx_enemy-death_burst_32.png",
+      "sha256": "f3962942d960270c1c218a90cb36ca34b6b56b6411665675edd99a8e65793005",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "sorting": "FX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "wpn_bible-book_spin_16",
+      "source": "export/png/wpn_bible-book_spin_16.png",
+      "sha256": "dfbffbb9f952c0df9b61f17f1c4c515a3a95eed6a73d119650fad771138a556f",
+      "width": 16,
+      "height": 16,
+      "frames": 2,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "WeaponFX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_bible-glow_static_20",
+      "source": "export/png/fx_bible-glow_static_20.png",
+      "sha256": "3457bdaf28c5878edb8c11a29cc2bcfa726a9552d27f92ed4c32add4f499cf5f",
+      "width": 20,
+      "height": 20,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 10,
+      "pivotY": 10,
+      "sorting": "WeaponFX",
+      "quality": "optional-fx",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        96,
+        176,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "wpn_jawbone_held_16",
+      "source": "export/png/wpn_jawbone_held_16.png",
+      "sha256": "fc71c4dc2f89be4929ec7e8aac17084ba90acc57ce741e3d81288898812edd88",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "WeaponFX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_jawbone-swing-edge_hit_64",
+      "source": "export/png/fx_jawbone-swing-edge_hit_64.png",
+      "sha256": "ee6de575a768dd01112dace5e63c998e3497679697e4dc7f5cd2716bba01f50f",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 20,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 32,
+      "sorting": "WeaponFX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [
+        59,
+        60,
+        49,
+        47
+      ],
+      "attachY": [
+        44,
+        24,
+        8,
+        6
+      ]
+    },
+    {
+      "id": "fx_jawbone-swing-trail_hit_64",
+      "source": "export/png/fx_jawbone-swing-trail_hit_64.png",
+      "sha256": "bdadc4e80ae41891aa0ea9bda4cfa8ec58694dbcf20145bf6853b92c170eb977",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 20,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 32,
+      "sorting": "WeaponFX",
+      "quality": "optional-fx",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        112,
+        176
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [
+        59,
+        60,
+        49,
+        47
+      ],
+      "attachY": [
+        44,
+        24,
+        8,
+        6
+      ]
+    },
+    {
+      "id": "wpn_sling-stone_spin_8",
+      "source": "export/png/wpn_sling-stone_spin_8.png",
+      "sha256": "abc32a7897a201e265a44ede5bf348d6ac9c6322c2bece80d6c700f1878f664a",
+      "width": 8,
+      "height": 8,
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 4,
+      "pivotY": 4,
+      "sorting": "WeaponFX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_sling-trail_static_20x8",
+      "source": "export/png/fx_sling-trail_static_20x8.png",
+      "sha256": "2b8964a7ad25dcbcc4936152ebbdbaede4a43acce515249367ac2facf1d45a14",
+      "width": 20,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 19,
+      "pivotY": 4,
+      "sorting": "WeaponFX",
+      "quality": "optional-fx",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        112,
+        136
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_hit-spark_hit_16",
+      "source": "export/png/fx_hit-spark_hit_16.png",
+      "sha256": "e10cf82bf788637526fc1e48f3720c0633115376ee1cefcd634e04bf95b495fd",
+      "width": 16,
+      "height": 16,
+      "frames": 3,
+      "fps": 15,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "FX",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "pkp_xp-gem-base_idle_8",
+      "source": "export/png/pkp_xp-gem-base_idle_8.png",
+      "sha256": "9c7191b272c063db523da8c7d23c1f31132cd7a42fecd28919cdb32e0dbcee69",
+      "width": 8,
+      "height": 8,
+      "frames": 2,
+      "fps": 4,
+      "loop": true,
+      "pivotX": 4,
+      "pivotY": 4,
+      "sorting": "Pickups",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "pkp_xp-gem-bonus_idle_8",
+      "source": "export/png/pkp_xp-gem-bonus_idle_8.png",
+      "sha256": "e249b60e3d9ca40dd7c48767565e113b4022633d1ba5580d5cac72fd6ed587ef",
+      "width": 8,
+      "height": 8,
+      "frames": 2,
+      "fps": 4,
+      "loop": true,
+      "pivotX": 4,
+      "pivotY": 4,
+      "sorting": "Pickups",
+      "quality": "core",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_shadow_static_16x6",
+      "source": "export/png/fx_shadow_static_16x6.png",
+      "sha256": "15723bddb50ecca80f3928f16934222f3c9d02a0a018fe9d0c70a382c9f245b1",
+      "width": 16,
+      "height": 6,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 3,
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        89
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_shadow-snake_static_20x4",
+      "source": "export/png/fx_shadow-snake_static_20x4.png",
+      "sha256": "c2c15536d5ea42aa63cc7afb5c811fb51ed4a1be1af2e373f8ac1dd3300d6c49",
+      "width": 20,
+      "height": 4,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 10,
+      "pivotY": 2,
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        51
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_shadow-wide_static_24x6",
+      "source": "export/png/fx_shadow-wide_static_24x6.png",
+      "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef",
+      "width": 24,
+      "height": 6,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 12,
+      "pivotY": 3,
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        89
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_shadow-small_static_12x4",
+      "source": "export/png/fx_shadow-small_static_12x4.png",
+      "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "width": 12,
+      "height": 4,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 6,
+      "pivotY": 2,
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        51
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_path-16mask_static_32",
+      "source": "export/png/til_eden_path-16mask_static_32.png",
+      "sha256": "1d2013a938e8e88a3dbf94bf53385a4a381ff919dcb9a6984bbde095fb0f01d9",
+      "width": 32,
+      "height": 32,
+      "frames": 16,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_grass-a_static_32",
+      "source": "export/png/til_eden_grass-a_static_32.png",
+      "sha256": "1f6a8cd289566e67896414cdc0fbbffaaf86b4ecdf24585491fbab5231ca4ab6",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_grass-b_static_32",
+      "source": "export/png/til_eden_grass-b_static_32.png",
+      "sha256": "4773bb8b592250ae6ac666821f2ffb84cdaff6bf4fd76afae3adb4de5a59d201",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_grass-c_static_32",
+      "source": "export/png/til_eden_grass-c_static_32.png",
+      "sha256": "19d545ca9e0463afe07eea877b64e55c6546b5a0ec3305ab4cedf4b43bfe6dac",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_grass-d_static_32",
+      "source": "export/png/til_eden_grass-d_static_32.png",
+      "sha256": "a430efb1729faf25ce62c3c5f608d1895afc303c008a697d6aaae094462ac6bd",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_meadow-a_static_32",
+      "source": "export/png/til_eden_meadow-a_static_32.png",
+      "sha256": "77f81270b222920489de4baeacfed2bb75ec1cff6f3c953d58656af41ae9ff32",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "til_eden_meadow-b_static_32",
+      "source": "export/png/til_eden_meadow-b_static_32.png",
+      "sha256": "a12a6a449662a91a939620d495dda9f71555ba85b516447152556a481aa3a1c8",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 16,
+      "sorting": "Ground",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_tuft-1_11x8",
+      "source": "export/png/dec_eden_tuft-1_11x8.png",
+      "sha256": "ec6f90ce25819678ae6827a56a5f2da0e4275251ccd7ee5400f3a37a8586ee99",
+      "width": 11,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_tuft-2_11x8",
+      "source": "export/png/dec_eden_tuft-2_11x8.png",
+      "sha256": "8e55cdcdc1dd9b4c706911fd9ace621378f1e120d06a1bd9f39e00072e053d0e",
+      "width": 11,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_tuft-3_11x8",
+      "source": "export/png/dec_eden_tuft-3_11x8.png",
+      "sha256": "eb12d34f09abe24b0ff4856423065dfd4a0b92fea8dac5e2d13a67fd6c69dc15",
+      "width": 11,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_tuft-dry_11x8",
+      "source": "export/png/dec_eden_tuft-dry_11x8.png",
+      "sha256": "8e18f6ecbcaec710c2fd07f47abdce10fbdfbe684909d79ee0f533d6e1deae98",
+      "width": 11,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_flowers-1_16x10",
+      "source": "export/png/dec_eden_flowers-1_16x10.png",
+      "sha256": "059d5a0469f4f6cef9e3892089eee9a236527ae47fd5b3425d700ea795583d7b",
+      "width": 16,
+      "height": 10,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_flowers-2_16x10",
+      "source": "export/png/dec_eden_flowers-2_16x10.png",
+      "sha256": "05c68527102e0d6765c8d8e792f6ba8d6d8a4d4af3ccd23d232f8c7147312ab6",
+      "width": 16,
+      "height": 10,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_flowers-3_16x10",
+      "source": "export/png/dec_eden_flowers-3_16x10.png",
+      "sha256": "46d165eec23b99f018d41bf542834595dc58d11d661435def63f65f7f8cbe789",
+      "width": 16,
+      "height": 10,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_pebbles_10x6",
+      "source": "export/png/dec_eden_pebbles_10x6.png",
+      "sha256": "b42d312efb7957ba4ce8c4c2c015efeae94f2836e4c66615e68b4564d5727a78",
+      "width": 10,
+      "height": 6,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_clover-1_14x8",
+      "source": "export/png/dec_eden_clover-1_14x8.png",
+      "sha256": "c0995dee202a55846fc5c36eda319fa864a131945883417313fb5440974e291d",
+      "width": 14,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 7,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_clover-2_14x8",
+      "source": "export/png/dec_eden_clover-2_14x8.png",
+      "sha256": "8266dcfd73d3316aa323d3943974810f7ee22d93dee1cfb175fd02ad4d9c22d1",
+      "width": 14,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 7,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_rock-m_14x9",
+      "source": "export/png/dec_eden_rock-m_14x9.png",
+      "sha256": "9c186a150d0d752fbe98d58a2452302b0dacd9056af1ff9c05cf466cf5f7e53e",
+      "width": 14,
+      "height": 9,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 7,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_rock-s_10x7",
+      "source": "export/png/dec_eden_rock-s_10x7.png",
+      "sha256": "7720bf29a5604b012f1fc53aa32d380f16266a729f877787e765f9945eb01731",
+      "width": 10,
+      "height": 7,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 5,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_edge-stone-1_7x5",
+      "source": "export/png/dec_eden_edge-stone-1_7x5.png",
+      "sha256": "f8868a784a702d92c66ea03420d11703b10227bb81b058e400d251a6d1c3ac16",
+      "width": 7,
+      "height": 5,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 3,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_edge-stone-2_7x5",
+      "source": "export/png/dec_eden_edge-stone-2_7x5.png",
+      "sha256": "f8868a784a702d92c66ea03420d11703b10227bb81b058e400d251a6d1c3ac16",
+      "width": 7,
+      "height": 5,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 3,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_root_46x18",
+      "source": "export/png/dec_eden_root_46x18.png",
+      "sha256": "a258874b0fb6f853fe482a0aa7357f059ad93319074520a82233b6425cd1f187",
+      "width": 46,
+      "height": 18,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 23,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_leaves_12x7",
+      "source": "export/png/dec_eden_leaves_12x7.png",
+      "sha256": "24a4546a0af55c21f80152dbbf4afadb48cf180388eb1edf8b383c3c0bc04222",
+      "width": 12,
+      "height": 7,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 6,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_thorn-vine-1_44x22",
+      "source": "export/png/dec_eden_thorn-vine-1_44x22.png",
+      "sha256": "1c30535c3e3d22a42e982b56b077c1cfcee3a7d8ab2c2bffccd11861b6a88632",
+      "width": 44,
+      "height": 22,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 22,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "dec_eden_thorn-vine-2_44x22",
+      "source": "export/png/dec_eden_thorn-vine-2_44x22.png",
+      "sha256": "b594b6ae804643725c163e2a02962c2d0e448870b176a81886e96914d298104c",
+      "width": 44,
+      "height": 22,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 22,
+      "pivotY": 0,
+      "sorting": "GroundDecal",
+      "quality": "terrain",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_wpn_bible_static_16",
+      "source": "export/png/ico_wpn_bible_static_16.png",
+      "sha256": "8ad95e89aa3732d5cf434856e69db6d198e20ce8b65d57dead24142a7c0362bd",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_wpn_jawbone_static_16",
+      "source": "export/png/ico_wpn_jawbone_static_16.png",
+      "sha256": "fc71c4dc2f89be4929ec7e8aac17084ba90acc57ce741e3d81288898812edd88",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_wpn_sling_static_16",
+      "source": "export/png/ico_wpn_sling_static_16.png",
+      "sha256": "10c4f9602328ed3654b1245f2987e2ebf03e673c3dd27fc9cea135dfa8ca76a5",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_psv_scroll_static_16",
+      "source": "export/png/ico_psv_scroll_static_16.png",
+      "sha256": "48cfa29aba0aee5535cd69fc29ac271fc2cdfdd3b5f11a7ee3805e99dc9b492e",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_psv_hair_static_16",
+      "source": "export/png/ico_psv_hair_static_16.png",
+      "sha256": "a0a59495022c6e95f8a0d026f2097e446bc813ee04a1c4c359a33d5542a76867",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_psv_stones_static_16",
+      "source": "export/png/ico_psv_stones_static_16.png",
+      "sha256": "13f7b33f400caf4afa14bfe0b6f1debb23b484869d4a601cf48d4d341fe3f170",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ico_res_gold_static_16",
+      "source": "export/png/ico_res_gold_static_16.png",
+      "sha256": "84b43586a396a6e33bb2e9fabb502723499f1fcc1a1cadc94e20b3bec5eafb3a",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_panel_9slice_16",
+      "source": "export/png/ui_panel_9slice_16.png",
+      "sha256": "18e36042007873510a39665b1bd5284c4097ef7b67eb64caf4b7a3e05a0fafe0",
+      "width": 16,
+      "height": 16,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "states": [
+        "default"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_card_9slice_24",
+      "source": "export/png/ui_card_9slice_24.png",
+      "sha256": "e4ad3620c8939cf9e2953aad89bb18fd9559362ae6b9267835e4cac5f0ea525e",
+      "width": 24,
+      "height": 24,
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 12,
+      "pivotY": 12,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "states": [
+        "normal",
+        "focus",
+        "pressed",
+        "disabled"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_button_9slice_16",
+      "source": "export/png/ui_button_9slice_16.png",
+      "sha256": "dba4f8b27a333a7db5ff4e6947df71596ba9318a275ec9621824db4751085d00",
+      "width": 16,
+      "height": 16,
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 8,
+      "pivotY": 8,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "states": [
+        "normal",
+        "focus",
+        "pressed",
+        "disabled"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_slot_18",
+      "source": "export/png/ui_slot_18.png",
+      "sha256": "e57904a5704035dc07b20850a5e2252d7ff43b347953ac9f4e079ee9b44c682e",
+      "width": 18,
+      "height": 18,
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 9,
+      "pivotY": 9,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "empty",
+        "filled",
+        "new",
+        "max"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_pip_2",
+      "source": "export/png/ui_pip_2.png",
+      "sha256": "382bd86705dda72e24b665ca32da863ef51eebf46f00636bb30b2bff0af393a0",
+      "width": 2,
+      "height": 2,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 1,
+      "pivotY": 1,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "off",
+        "on"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_bar-frame_9slice_8x6",
+      "source": "export/png/ui_bar-frame_9slice_8x6.png",
+      "sha256": "b11d56556ad0aa1fe0a960f23d61f7eea17ff735146bec42c822309faf5311b7",
+      "width": 8,
+      "height": 6,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 4,
+      "pivotY": 3,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "states": [
+        "default"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_bar-xp_tile_1x4",
+      "source": "export/png/ui_bar-xp_tile_1x4.png",
+      "sha256": "6579b63c65c68635d218999e4cb864e9f7f75e61dda60e8cf9343bb586ca5df5",
+      "width": 1,
+      "height": 4,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 0,
+      "pivotY": 2,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "back",
+        "fill"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_bar-hp_tile_1x2",
+      "source": "export/png/ui_bar-hp_tile_1x2.png",
+      "sha256": "7bc48242574a2cdf060b37ae9c0dd14b7e701827e7f7ac443c6f496e584499aa",
+      "width": 1,
+      "height": 2,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 0,
+      "pivotY": 1,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "back",
+        "fill"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_swatch_12",
+      "source": "export/png/ui_swatch_12.png",
+      "sha256": "ceade2514481d4cfa2b14d276e0dcda42f43f3fecf91407d661748947535768e",
+      "width": 12,
+      "height": 12,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 6,
+      "pivotY": 6,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "normal",
+        "selected"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_arrow_6x9",
+      "source": "export/png/ui_arrow_6x9.png",
+      "sha256": "805a1e33b8d9961f462f5df656a997bbd5362aee39fdc697327f2cdac1b0bef5",
+      "width": 6,
+      "height": 9,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 3,
+      "pivotY": 4,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "default"
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "ui_badge-evolve_8",
+      "source": "export/png/ui_badge-evolve_8.png",
+      "sha256": "df82adb213b4d5ce9d9fd1d81af4bafbd66df8db34fa763c9ab4dded33ec1724",
+      "width": 8,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 4,
+      "pivotY": 4,
+      "sorting": "UI",
+      "quality": "ui",
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "layer": "",
+      "animation": "",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "default"
+      ],
+      "attachX": [],
+      "attachY": []
+    }
+  ]
+}

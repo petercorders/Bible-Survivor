@@ -4,7 +4,7 @@
 - 디자인 협업: 개발 중 필요한 UI·아이콘·애니메이션·배경·에셋 변경은 지정된 Claude Design 담당에게 요청하고 개발 담당과 상호 피드백한다. 요청에는 stable ID·용도·크기/프레임/피벗·상태·완료 조건을 붙인다. Design 제품 사용과 단순 코드/격자 생성·캔버스 게시를 구분하며 연결되지 않았으면 대체 실행을 Design 실행으로 보고하지 않는다. 독립 QA 전 원본을 최종 에셋으로 임포트하지 않는다.
 
 기획: `docs/game-design.md`, `docs/genesis-balance.md`, `docs/mobile-platform-plan.md`.
-개발 단계: `docs/genesis-development-plan.md`, `docs/harness/unity-adam-plan.md`. R01/R02 순수 코어와 Unity 아담 시제품을 구현했다. 검증 상태는 `docs/progress/`에서 확인한다. 아트03은 오프라인 인계 QA를 통과했고 실제 게임 적용은 `docs/harness/unity-art-integration-plan.md`로 이어간다.
+개발 단계: `docs/genesis-development-plan.md`, `docs/harness/unity-adam-plan.md`, `docs/harness/unity-art-integration-plan.md`. R01/R02 순수 코어와 아트03·외곽선 폰트를 적용한 Unity 아담 시제품을 구현했다. 독립 리뷰·실행 범위와 남은 모바일/성능/후속 콘텐츠 게이트는 `docs/progress/`에서 확인한다.
 
 - 검사: `python3 tools/check_all.py`. 실제 .NET SDK 경로가 다르면 `BIBLE_SURVIVOR_DOTNET`을 지정한다.
 - 추가 게이트: `python3 tools/unity_check_project.py`(로컬 실제 동기화 입력), `python3 tools/unity_check_portable.py`(fresh checkout용 원본·산출물 일관성), `python3 tools/check_art.py`(오프라인 계약·음성 입력·검사기 회귀). 이 명령들은 Unity Editor/모바일 실행 시험을 대신하지 않는다.

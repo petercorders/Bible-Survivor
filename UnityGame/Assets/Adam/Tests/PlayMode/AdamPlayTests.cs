@@ -83,6 +83,45 @@ public class AdamPlayTests
         Assert.Less((keyboardVector - touchVector).magnitude, .00001);
         Assert.AreEqual(1, keyboardVector.magnitude, .00001);
     }
+    [UnityTest] public IEnumerator Digit1WaitsForDeathClipBeforeStartingBible() => DeathDigitBoundary(Key.Digit1,"bible");
+    [UnityTest] public IEnumerator Digit2WaitsForDeathClipBeforeStartingJawbone() => DeathDigitBoundary(Key.Digit2,"jawbone");
+    [UnityTest] public IEnumerator Digit3WaitsForDeathClipBeforeStartingSling() => DeathDigitBoundary(Key.Digit3,"sling");
+    IEnumerator DeathDigitBoundary(Key digit,string weapon)
+    {
+        var host=game.Host;host.Start("sling");yield return null;
+        for(var i=0;i<100 && host.World.Capture().Enemies.Count==0;i++)host.Tick(.1);
+        Assert.Greater(host.World.Capture().Enemies.Count,0);Assert.IsTrue(host.Checkpoint(),host.Error);
+        var store=new SaveStore(Path.Combine(directory,"save.json"));var fixture=store.Load();fixture.Run.Health=1;
+        fixture.Run.World.Enemies[0].X=fixture.Run.World.PlayerX+.1f;fixture.Run.World.Enemies[0].Y=fixture.Run.World.PlayerY;
+        store.Commit(fixture,fixture.Revision,Guid.NewGuid().ToString("N"));Assert.IsTrue(host.Reload(),host.Error);
+        game.ArtWorld.Update(host,0);host.SetPaused(false);host.Tick(1d/60);game.ArtWorld.Update(host,0);
+        Assert.IsNull(host.Session.Wave);Assert.IsFalse(host.Session.IsActive);Assert.IsTrue(game.DeathPresentationVisible);
+        var terminal=host.Session;var gold=host.State.Profile.Gold;var time=host.World.SimulationTime;
+        // Freeze only the presentation clock: the component and its actual InputSystem Update remain enabled.
+        host.SetPaused(true);game.SetLifecycle(true,false);
+        Action unchanged=()=>{
+            Assert.AreSame(terminal,host.Session,"Digit input must not bypass the visible death clip");
+            Assert.IsNull(host.State.Run);Assert.AreEqual(gold,host.State.Profile.Gold);
+            Assert.AreEqual(time,host.World.SimulationTime);Assert.IsTrue(game.DeathPresentationVisible);
+        };
+        Keys(digit);yield return null;unchanged();
+        Keys();yield return null;
+        Keys(Key.Digit1,Key.Digit2,Key.Digit3);yield return null;unchanged();
+        Keys();yield return null;
+        game.SetLifecycle(false,true);Keys(digit);yield return null;unchanged();
+        Keys();yield return null;game.SetLifecycle(true,false);
+        // Hold across the end boundary: an earlier rejected press must never become a delayed restart.
+        Keys(digit);yield return null;unchanged();host.SetPaused(false);
+        var deadline=Time.realtimeSinceStartup+5;
+        while(game.DeathPresentationVisible && Time.realtimeSinceStartup<deadline)yield return null;
+        Assert.IsFalse(game.DeathPresentationVisible);yield return null;
+        Assert.AreSame(terminal,host.Session);Assert.IsNull(host.State.Run);Assert.AreEqual(gold,host.State.Profile.Gold);
+        Keys();yield return null;Keys(digit);yield return null;
+        Assert.AreNotSame(terminal,host.Session);Assert.IsTrue(host.Session.IsActive);Assert.IsNotNull(host.State.Run);
+        Assert.IsTrue(host.Session.Inventory.Weapons.ContainsKey(weapon));Assert.AreEqual(gold,host.State.Profile.Gold);
+        var run=host.State.Run.RunId;yield return null;Assert.AreEqual(run,host.State.Run.RunId);
+        Keys();yield return null;
+    }
     [UnityTest] public IEnumerator SameFrameDoubleSelectionCannotStartAnotherChallenge()
     {
         game.SelectSlot(0); var id = game.Host.State.Run.RunId; game.SelectSlot(2);

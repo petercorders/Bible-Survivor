@@ -91,8 +91,7 @@ namespace BibleSurvivor.Unity
         }
         static void Add(List<string> changes, string label, double before, double after)
         { if (before != after) changes.Add($"{label} {N(before)} → {N(after)}"); }
-        public static Font CreateKoreanFont() => Font.CreateDynamicFontFromOSFont(new[] { "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", "Arial Unicode MS" }, 18);
-        public static float ScreenScale(float width, float height) => Math.Min(1, Math.Min(width / 660f, height / 440f));
+        public static float ScreenScale(float width, float height) => 1; // Integer raster UI; standalone enforces the supported minimum client size.
         public static Rect ChoicePanel(float width, float height) => new Rect((width - Math.Min(760, width - 24)) / 2, (height - 410) / 2, Math.Min(760, width - 24), 410);
         public static Rect ChoiceCard(Rect panel, int slot) => new Rect(panel.x + 12, panel.y + 94 + slot * 94, panel.width - 24, 88);
     }

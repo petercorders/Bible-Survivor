@@ -65,26 +65,36 @@ public class AdamChoiceTextTests
         }
         Assert.Throws<InvalidOperationException>(() => AdamChoiceText.Describe(id, inventory));
     }
-    [Test] public void KoreanCardsFit660By440WithoutShrinkingTheir17PixelText()
+    [Test] public void KoreanCardsFit660By440AtReviewedOutlineSizes()
     {
-        var font = AdamChoiceText.CreateKoreanFont();
-        try
+        using(var fonts=new AdamFonts())
         {
-            var style = new GUIStyle { font = font, fontSize = 17, wordWrap = true, padding = new RectOffset(14, 14, 8, 8) };
-            Assert.AreEqual(1, AdamChoiceText.ScreenScale(660, 440));
-            var panel = AdamChoiceText.ChoicePanel(660, 440);
-            foreach (var id in Passives.Concat(AdamGame.Weapons))
+            var heading = new GUIStyle { font=fonts.Label, fontSize=24 };
+            var effect = new GUIStyle { font=fonts.Body, fontSize=20 };
+            Assert.AreEqual(1,AdamChoiceText.ScreenScale(660,440));
+            foreach(var id in Passives.Concat(AdamGame.Weapons))
             {
-                var inventory = new EquipmentInventory(id == "jawbone" || id == "sling" ? id : "bible");
-                var card = AdamChoiceText.Describe(id, inventory);
-                var rect = AdamChoiceText.ChoiceCard(panel, 2);
-                Assert.LessOrEqual(rect.xMax, 660); Assert.LessOrEqual(rect.yMax, 440); Assert.GreaterOrEqual(rect.xMin, 0);
-                Assert.LessOrEqual(style.CalcHeight(new GUIContent(card.Card(2)), rect.width), rect.height, card.Card(2));
-                font.RequestCharactersInTexture(card.Card(2), 17);
-                foreach (var character in card.Name) Assert.IsTrue(font.HasCharacter(character), "Missing Korean glyph: " + character);
+                var weapon=AdamGame.Weapons.Contains(id);
+                var maximum=weapon?8:id=="stones"?2:5;
+                for(var level=0;level<maximum;level++)
+                {
+                    var inventory=new EquipmentInventory("bible");
+                    for(var i=inventory.Weapons.ContainsKey(id)?1:0;i<level;i++)Assert.IsTrue(inventory.TryChoose(id,!weapon));
+                    if(level==0 && weapon && id=="bible")inventory=new EquipmentInventory("jawbone");
+                    var card=AdamChoiceText.Describe(id,inventory);
+                    var lines=card.Card(2).Split('\n');
+                    foreach(var width in new[]{660,1100})
+                    {
+                        var rect=AdamChoiceText.ChoiceCard(AdamChoiceText.ChoicePanel(width,width==660?440:720),2);
+                        Assert.LessOrEqual(rect.xMax,width);Assert.GreaterOrEqual(rect.xMin,0);
+                        Assert.LessOrEqual(heading.CalcSize(new GUIContent(lines[0])).x,rect.width-52,lines[0]);
+                        Assert.LessOrEqual(effect.CalcSize(new GUIContent(lines[1])).x,rect.width-52,lines[1]);
+                    }
+                    foreach(var character in card.Card(2).Where(c=>c!='\n'))
+                    {Assert.IsTrue(fonts.Label.HasCharacter(character));Assert.IsTrue(fonts.Body.HasCharacter(character));}
+                }
             }
         }
-        finally { UnityEngine.Object.DestroyImmediate(font); }
     }
     [Test] public void RetaliationCardIncludesExistingDamageBonus()
     {

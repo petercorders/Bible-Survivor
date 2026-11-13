@@ -20,3 +20,5 @@ jobs:
         run: python3 tools/unity_check_portable.py
       - name: Unity declared assembly boundary regressions (no Editor execution)
         run: python3 tools/unity_test_assemblies.py
+      - name: Unity art and font preparation failure safety (no Editor execution)
+        run: python3 -B tools/unity_art_tool_tests.py
