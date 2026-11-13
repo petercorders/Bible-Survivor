@@ -18,3 +18,5 @@ jobs:
         run: python3 tools/check_mutations.py
       - name: Unity committed Core and catalog artifact consistency (no Editor execution)
         run: python3 tools/unity_check_portable.py
+      - name: Unity declared assembly boundary regressions (no Editor execution)
+        run: python3 tools/unity_test_assemblies.py

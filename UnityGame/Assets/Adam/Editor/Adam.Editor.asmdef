@@ -1,1 +1,10 @@
-{"name":"Adam.Editor","references":["Adam.Unity"],"includePlatforms":["Editor"]}
+{
+  "name": "Adam.Editor",
+  "references": [
+    "Adam.Unity",
+    "Unity.2D.Sprite.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

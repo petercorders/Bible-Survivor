@@ -9,6 +9,7 @@ import argparse
 import json
 from pathlib import Path
 from unity_build_inputs import SCHEMA, digest, evaluate
+from unity_assemblies import check_assemblies
 
 ROOT = Path(__file__).resolve().parents[1]
 PROPERTIES = ('TargetFramework', 'Configuration', 'Platform', 'PlatformTarget', 'DefineConstants',
@@ -50,6 +51,7 @@ def check(root):
                           (root / 'content/genesis/catalog.json', 'catalog_sha256')]:
             if digest(path) != record[key]:
                 errors.append('Artifact mismatch: ' + str(path.relative_to(root)))
+        errors.extend(check_assemblies(assets))
     except (OSError, ValueError, KeyError, TypeError) as error:
         errors.append('Cannot verify portable inputs: ' + str(error))
     return {'status': 'FAIL' if errors else 'PASS', 'errors': errors,

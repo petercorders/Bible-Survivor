@@ -6,9 +6,14 @@ permissions:
   contents: read
 jobs:
   art:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, same pinned revision as core workflow
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6, verified official tag
+        with:
+          python-version: '3.11.6'
+      - name: Show the generator runtime recorded in font provenance
+        run: python3 --version
       - name: Art contract, invalid inputs and checker regressions (no Unity execution)
         run: python3 tools/check_art.py
       - name: Font regeneration and invalid inputs (offline, no Unity or remote archive)

@@ -37,6 +37,10 @@ def main():
             command += ['--mutations', '--render']
         result = subprocess.run(command, cwd=package, capture_output=True, text=True)
         (evidence / 'verify.log').write_text(result.stdout + result.stderr)
+        if result.returncode:
+            print('Font verification failed; child output follows:', flush=True)
+            print(result.stdout, end='', flush=True)
+            print(result.stderr, end='', file=sys.stderr, flush=True)
         generated = package / 'tests/results'
         if generated.exists():
             shutil.copytree(generated, evidence / 'results')
