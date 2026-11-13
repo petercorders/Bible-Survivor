@@ -11,3 +11,5 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, same pinned revision as core workflow
       - name: Art contract, invalid inputs and checker regressions (no Unity execution)
         run: python3 tools/check_art.py
+      - name: Font regeneration and invalid inputs (offline, no Unity or remote archive)
+        run: python3 tools/check_fonts.py

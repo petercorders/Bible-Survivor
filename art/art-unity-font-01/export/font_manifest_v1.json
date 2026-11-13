@@ -1,0 +1,236 @@
+{
+ "schema": "bible-survivors.font-manifest",
+ "schemaVersion": 1,
+ "status": "handoff-draft",
+ "statusNote": "outline UI fonts beside art 03 (sidecar). Unity import, TextMeshPro/dynamic font rendering and devices: NOT_RUN. art 03 Galmuri*Bitmap*.ttf are bitmap-only (glyf 0 bytes) and are neither replaced nor used here.",
+ "contract": {
+  "file": "src/font_contract_v1.json",
+  "sha256": "4de5a3bada4a4dce508d8ad5ae310536af35a06b4f11188115a1bb06cf3d08b2"
+ },
+ "source": {
+  "name": "Galmuri",
+  "version": "2.40.4",
+  "url": "https://github.com/quiple/galmuri/releases/download/v2.40.4/Galmuri-v2.40.4.zip",
+  "sha256": "c8b3d9861a62ae73c8b1178091401cd79994812437ef386413f6dd54856e60e7",
+  "license": "SIL OFL 1.1",
+  "members": {
+   "Galmuri11-Bold.ttf": "Galmuri11-Bold.ttf",
+   "Galmuri11.ttf": "Galmuri11.ttf",
+   "Galmuri9.ttf": "Galmuri9.ttf",
+   "Galmuri7.ttf": "Galmuri7.ttf",
+   "LICENSE.txt": "LICENSE.txt"
+  }
+ },
+ "license": {
+  "file": "fonts/galmuri-outline/LICENSE.txt",
+  "sha256": "86a3ee9495f942f0243f18c103da9faca27adb88142613edb8bb852e56c892c1",
+  "name": "SIL OFL 1.1"
+ },
+ "sizeRule": "Engine font size in px must be basePx x n (n = 1, 2, 3 ...), with anti-aliasing off (point / raster sampling). Every outline point and advance of the covered glyphs lies on a grid of gridUnits font units, and gridUnits x basePx = unitsPerEm, so at basePx x n one grid step is exactly n pixels. Other sizes blur. The game UI scale s (1 game px = s window px) gives uiScalePx[s] = basePx x s.",
+ "roles": {
+  "title": {
+   "file": "fonts/galmuri-outline/Galmuri11-Bold.ttf",
+   "sha256": "45d901e379138dd91873af157640f60aa4cf6beaa885c3efd2a8c279e039a237",
+   "bytes": 2613660,
+   "zipMember": "Galmuri11-Bold.ttf",
+   "basePx": 12,
+   "gridUnits": 100,
+   "uiScalePx": {
+    "1": 12,
+    "2": 24,
+    "3": 36
+   },
+   "use": "titles, numbers",
+   "measured": {
+    "sfntVersion": "00010000",
+    "tables": [
+     "GPOS",
+     "GSUB",
+     "OS/2",
+     "cmap",
+     "glyf",
+     "head",
+     "hhea",
+     "hmtx",
+     "loca",
+     "maxp",
+     "name",
+     "post"
+    ],
+    "family": "Galmuri11 Bold",
+    "version": "Version 2.404;hotconv 1.1.1;makeotfexe 2.6.0 DEVELOPMENT",
+    "unitsPerEm": 1200,
+    "glyphs": 12698,
+    "glyfBytes": 2378516,
+    "glyphsWithOutlineData": 12691,
+    "measuredGridUnits": 100,
+    "measuredBasePx": 12.0,
+    "lineMetricsAtBasePx": {
+     "ascender": 12.0,
+     "descender": -2.0,
+     "lineGap": 2.0,
+     "lineHeight": 16.0
+    },
+    "coverage": {
+     "codePointsChecked": 11271,
+     "mapped": 11271,
+     "withOutline": 11271
+    }
+   }
+  },
+  "label": {
+   "file": "fonts/galmuri-outline/Galmuri11.ttf",
+   "sha256": "e24256f42e43713d2ea086a1e1669d78b968f5b3cc547e5c157f0606ffa5def1",
+   "bytes": 5376428,
+   "zipMember": "Galmuri11.ttf",
+   "basePx": 12,
+   "gridUnits": 100,
+   "uiScalePx": {
+    "1": 12,
+    "2": 24,
+    "3": 36
+   },
+   "use": "card names, buttons",
+   "measured": {
+    "sfntVersion": "00010000",
+    "tables": [
+     "GPOS",
+     "GSUB",
+     "OS/2",
+     "cmap",
+     "glyf",
+     "head",
+     "hhea",
+     "hmtx",
+     "loca",
+     "maxp",
+     "name",
+     "post"
+    ],
+    "family": "Galmuri11 Regular",
+    "version": "Version 2.404;hotconv 1.1.1;makeotfexe 2.6.0 DEVELOPMENT",
+    "unitsPerEm": 1200,
+    "glyphs": 20968,
+    "glyfBytes": 4928840,
+    "glyphsWithOutlineData": 20961,
+    "measuredGridUnits": 100,
+    "measuredBasePx": 12.0,
+    "lineMetricsAtBasePx": {
+     "ascender": 12.0,
+     "descender": -2.0,
+     "lineGap": 2.0,
+     "lineHeight": 16.0
+    },
+    "coverage": {
+     "codePointsChecked": 11271,
+     "mapped": 11271,
+     "withOutline": 11271
+    }
+   }
+  },
+  "body": {
+   "file": "fonts/galmuri-outline/Galmuri9.ttf",
+   "sha256": "e84e821b18be15b9e3a907ceb83cfba25fabf51c80b7edf0d2921cf8f8e1a11d",
+   "bytes": 4649144,
+   "zipMember": "Galmuri9.ttf",
+   "basePx": 10,
+   "gridUnits": 100,
+   "uiScalePx": {
+    "1": 10,
+    "2": 20,
+    "3": 30
+   },
+   "use": "effect lines, kind, hints",
+   "measured": {
+    "sfntVersion": "00010000",
+    "tables": [
+     "GPOS",
+     "GSUB",
+     "OS/2",
+     "cmap",
+     "glyf",
+     "head",
+     "hhea",
+     "hmtx",
+     "loca",
+     "maxp",
+     "name",
+     "post"
+    ],
+    "family": "Galmuri9 Regular",
+    "version": "Version 2.404;hotconv 1.1.1;makeotfexe 2.6.0 DEVELOPMENT",
+    "unitsPerEm": 1000,
+    "glyphs": 20714,
+    "glyfBytes": 4238128,
+    "glyphsWithOutlineData": 20707,
+    "measuredGridUnits": 100,
+    "measuredBasePx": 10.0,
+    "lineMetricsAtBasePx": {
+     "ascender": 10.0,
+     "descender": -1.0,
+     "lineGap": 2.0,
+     "lineHeight": 13.0
+    },
+    "coverage": {
+     "codePointsChecked": 11271,
+     "mapped": 11271,
+     "withOutline": 11271
+    }
+   }
+  },
+  "small": {
+   "file": "fonts/galmuri-outline/Galmuri7.ttf",
+   "sha256": "c845c6bf6f7236ed370aed4a8f8d9b4f25e6a18f63515777fe4153d287c32917",
+   "bytes": 3702440,
+   "zipMember": "Galmuri7.ttf",
+   "basePx": 8,
+   "gridUnits": 100,
+   "uiScalePx": {
+    "1": 8,
+    "2": 16,
+    "3": 24
+   },
+   "use": "level numbers, tags",
+   "measured": {
+    "sfntVersion": "00010000",
+    "tables": [
+     "GPOS",
+     "GSUB",
+     "OS/2",
+     "cmap",
+     "glyf",
+     "head",
+     "hhea",
+     "hmtx",
+     "loca",
+     "maxp",
+     "name",
+     "post"
+    ],
+    "family": "Galmuri7 Regular",
+    "version": "Version 2.404;hotconv 1.1.1;makeotfexe 2.6.0 DEVELOPMENT",
+    "unitsPerEm": 800,
+    "glyphs": 20151,
+    "glyfBytes": 3301944,
+    "glyphsWithOutlineData": 20144,
+    "measuredGridUnits": 100,
+    "measuredBasePx": 8.0,
+    "lineMetricsAtBasePx": {
+     "ascender": 8.0,
+     "descender": -1.0,
+     "lineGap": 2.0,
+     "lineHeight": 11.0
+    },
+    "coverage": {
+     "codePointsChecked": 11271,
+     "mapped": 11271,
+     "withOutline": 11271
+    }
+   }
+  }
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_font_package.py [--zip <Galmuri-v2.40.4.zip>]",
+  "python": "3.11.6"
+ }
+}

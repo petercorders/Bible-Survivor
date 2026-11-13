@@ -44,3 +44,4 @@ TestResults/
 __pycache__/
 *.pyc
 /art/art-concept-03/tests/results/
+/art/art-unity-font-01/tests/results/

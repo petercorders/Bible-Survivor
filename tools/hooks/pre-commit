@@ -7,3 +7,6 @@ fi
 if [ -f art/art-concept-03/export/manifest_v3.json ]; then
     python3 tools/check_art.py || exit $?
 fi
+if [ -f art/art-unity-font-01/export/font_manifest_v1.json ]; then
+    python3 tools/check_fonts.py || exit $?
+fi

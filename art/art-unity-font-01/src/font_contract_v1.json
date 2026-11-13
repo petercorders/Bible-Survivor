@@ -1,0 +1,61 @@
+{
+  "schema": "bible-survivors.font-contract",
+  "schemaVersion": 1,
+  "status": "handoff-draft",
+  "note": "Hand-written expectations for the outline UI fonts that sit beside art 03 (sidecar; art 03 and its Galmuri*Bitmap*.ttf files are not changed). scripts/check_fonts.py judges export/font_manifest_v1.json and the files in fonts/ against THIS file, never against the manifest's own claims. Hashes, unitsPerEm and names were measured on the members of the official Galmuri 2.40.4 release zip named in source. Unity import and Korean rendering in Unity are NOT_RUN here; the Unity owner verifies them.",
+  "fontDir": "fonts/galmuri-outline/",
+  "source": {
+    "name": "Galmuri",
+    "version": "2.40.4",
+    "url": "https://github.com/quiple/galmuri/releases/download/v2.40.4/Galmuri-v2.40.4.zip",
+    "sha256": "c8b3d9861a62ae73c8b1178091401cd79994812437ef386413f6dd54856e60e7",
+    "license": "SIL OFL 1.1",
+    "members": {
+      "Galmuri11-Bold.ttf": "Galmuri11-Bold.ttf",
+      "Galmuri11.ttf": "Galmuri11.ttf",
+      "Galmuri9.ttf": "Galmuri9.ttf",
+      "Galmuri7.ttf": "Galmuri7.ttf",
+      "LICENSE.txt": "LICENSE.txt"
+    }
+  },
+  "sfnt": {
+    "version": "00010000",
+    "requiredTables": ["cmap", "glyf", "head", "hhea", "hmtx", "loca", "maxp", "name", "OS/2", "post"],
+    "nameVersionPrefix": "Version 2.404",
+    "why": "00010000 + a non-empty glyf table = TrueType outlines that a dynamic font / TextMeshPro font asset can rasterise. The art 03 Galmuri*Bitmap*.ttf files are also 00010000 and also HAVE a glyf table, but it is 0 bytes long (EBDT/EBLC bitmap strikes only), so table presence alone proves nothing."
+  },
+  "sizeRule": "Engine font size in px must be basePx x n (n = 1, 2, 3 ...), with anti-aliasing off (point / raster sampling). Every outline point and advance of the covered glyphs lies on a grid of gridUnits font units, and gridUnits x basePx = unitsPerEm, so at basePx x n one grid step is exactly n pixels. Other sizes blur. The game UI scale s (1 game px = s window px) gives uiScalePx[s] = basePx x s.",
+  "roles": {
+    "title": {"file": "fonts/galmuri-outline/Galmuri11-Bold.ttf", "sha256": "45d901e379138dd91873af157640f60aa4cf6beaa885c3efd2a8c279e039a237", "family": "Galmuri11 Bold", "unitsPerEm": 1200, "gridUnits": 100, "basePx": 12, "uiScalePx": {"1": 12, "2": 24, "3": 36}, "use": "titles, numbers", "art03Bitmap": "Galmuri11Bitmap-Bold-2.40.4.ttf (strike 16 ppem)"},
+    "label": {"file": "fonts/galmuri-outline/Galmuri11.ttf", "sha256": "e24256f42e43713d2ea086a1e1669d78b968f5b3cc547e5c157f0606ffa5def1", "family": "Galmuri11 Regular", "unitsPerEm": 1200, "gridUnits": 100, "basePx": 12, "uiScalePx": {"1": 12, "2": 24, "3": 36}, "use": "card names, buttons", "art03Bitmap": "Galmuri11Bitmap-Regular-2.40.4.ttf (strike 16 ppem)"},
+    "body": {"file": "fonts/galmuri-outline/Galmuri9.ttf", "sha256": "e84e821b18be15b9e3a907ceb83cfba25fabf51c80b7edf0d2921cf8f8e1a11d", "family": "Galmuri9 Regular", "unitsPerEm": 1000, "gridUnits": 100, "basePx": 10, "uiScalePx": {"1": 10, "2": 20, "3": 30}, "use": "effect lines, kind, hints", "art03Bitmap": "Galmuri9Bitmap-Regular-2.40.4.ttf (strike 12 ppem)"},
+    "small": {"file": "fonts/galmuri-outline/Galmuri7.ttf", "sha256": "c845c6bf6f7236ed370aed4a8f8d9b4f25e6a18f63515777fe4153d287c32917", "family": "Galmuri7 Regular", "unitsPerEm": 800, "gridUnits": 100, "basePx": 8, "uiScalePx": {"1": 8, "2": 16, "3": 24}, "use": "level numbers, tags", "art03Bitmap": "Galmuri7Bitmap-Regular-2.40.4.ttf (strike 10 ppem)"}
+  },
+  "coverage": {
+    "note": "Every role must map each of these code points to a glyph with a real outline (contours != 0) whose points and advance lie on the grid. Space (U+0020) must be mapped; it may be empty. Samples are text the current Unity UI shows: string literals copied verbatim from UnityGame/Assets/Adam/Runtime/AdamGame.cs and AdamChoiceText.cs (2026-11-14), plus two level-up card lines exactly as they appear in the developer's capture evidence/unity-ui01-fix-20261114/player/final660-modal.png.",
+    "hangulSyllables": [44032, 55203],
+    "asciiPrintable": [33, 126],
+    "space": 32,
+    "uiSymbols": ["°", "·", "–", "…", "→"],
+    "samples": [
+      "레벨 상승 · 하나를 선택하세요",
+      "전투 정지 중 · 숫자 1–3 / 클릭 · 선택 즉시 저장",
+      "무기 수치는 기본값 · 보조/영구 강화는 별도 합산 · 진화 미구현",
+      "1. 가시 면류관  |  보조 · 신규 0 → 1/5",
+      "피격 시 근처 적 반격 피해 0 → 5 (피해 보너스 반영)",
+      "전방 120° 타격",
+      "저장 기록을 불러오는 중…",
+      "재개 (Enter)"
+    ],
+    "knownGaps": {"small": ["U+25BA ► (not used by the current UI; Galmuri7 has no glyph for it)"]}
+  },
+  "license": {
+    "file": "fonts/galmuri-outline/LICENSE.txt",
+    "sha256": "86a3ee9495f942f0243f18c103da9faca27adb88142613edb8bb852e56c892c1",
+    "name": "SIL OFL 1.1",
+    "copyright": "Copyright (c) 2019–2025 Lee Minseo",
+    "mustContain": ["SIL Open Font License, Version 1.1", "Lee Minseo"],
+    "headerMustNotContain": "Reserved Font Name",
+    "why": "OFL 1.1: ship LICENSE.txt with the fonts; do not sell the fonts alone. No Reserved Font Name is declared in the copyright header, so the fonts may be shipped unmodified under their own names."
+  }
+}

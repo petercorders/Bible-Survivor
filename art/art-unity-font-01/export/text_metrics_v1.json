@@ -1,0 +1,1469 @@
+{
+ "schema": "bible-survivors.font-text-metrics",
+ "schemaVersion": 1,
+ "note": "game px at the role basePx (UI scale s: window px = game px x s; font size = basePx x s). Widths include the GPOS kern pair adjustments (*NoKern without). Card text re-implements AdamChoiceText.Describe/Card in Python (crown with damageMultiplier 1); not run in Unity.",
+ "lineMetrics": {
+  "title": {
+   "basePx": 12,
+   "ascender": 12,
+   "descender": -2,
+   "lineGap": 2,
+   "box": 14,
+   "lineHeight": 16
+  },
+  "label": {
+   "basePx": 12,
+   "ascender": 12,
+   "descender": -2,
+   "lineGap": 2,
+   "box": 14,
+   "lineHeight": 16
+  },
+  "body": {
+   "basePx": 10,
+   "ascender": 10,
+   "descender": -1,
+   "lineGap": 2,
+   "box": 11,
+   "lineHeight": 13
+  },
+  "small": {
+   "basePx": 8,
+   "ascender": 8,
+   "descender": -1,
+   "lineGap": 2,
+   "box": 9,
+   "lineHeight": 11
+  }
+ },
+ "cardLayout": {
+  "cardWidthGamePx": {
+   "660x440 window": 306,
+   "1100x720 window": 368
+  },
+  "border": 6,
+  "padding": 2,
+  "focusMarkerColumn": 10,
+  "textWidthGamePx": {
+   "660x440 window": 280,
+   "1100x720 window": 342
+  },
+  "headerBox": 14,
+  "effectLineBox": 11,
+  "lineGap": 2,
+  "cardHeightGamePx": {
+   "1 effect line": 43,
+   "2 effect lines": 56
+  },
+  "developerCardHeightGamePx": 44
+ },
+ "summary": {
+  "cards": 71,
+  "maxHeaderPx": 250,
+  "maxEffectPx": 256,
+  "effectNeedsTwoLines": {
+   "660x440 window": [],
+   "1100x720 window": []
+  },
+  "headerTooWide": {
+   "660x440 window": [],
+   "1100x720 window": []
+  },
+  "missingGlyphs": 0
+ },
+ "uiLines": [
+  {
+   "role": "title",
+   "text": "레벨 상승 · 하나를 선택하세요",
+   "px": 169,
+   "pxKerned": 169,
+   "missingGlyphs": 0
+  },
+  {
+   "role": "body",
+   "text": "전투 정지 중 · 숫자 1–3 / 클릭 · 선택 즉시 저장",
+   "px": 222,
+   "pxKerned": 222,
+   "missingGlyphs": 0
+  },
+  {
+   "role": "body",
+   "text": "무기 수치는 기본값 · 보조/영구 강화는 별도 합산 · 진화 미구현",
+   "px": 292,
+   "pxKerned": 292,
+   "missingGlyphs": 0
+  },
+  {
+   "role": "title",
+   "text": "시작 무기를 선택하세요",
+   "px": 130,
+   "pxKerned": 130,
+   "missingGlyphs": 0
+  },
+  {
+   "role": "label",
+   "text": "재개 (Enter)",
+   "px": 71,
+   "pxKerned": 71,
+   "missingGlyphs": 0
+  },
+  {
+   "role": "body",
+   "text": "저장 기록을 불러오는 중…",
+   "px": 122,
+   "pxKerned": 122,
+   "missingGlyphs": 0
+  }
+ ],
+ "cards": [
+  {
+   "item": "bible",
+   "level": "0->1",
+   "header": "1. 회전 성경  |  무기 · 신규 0 → 1/8",
+   "effect": "주변 회전 · 기본 피해 10 · 수 1 · 대기 3초",
+   "headerPx": 209,
+   "effectPx": 196,
+   "headerPxNoKern": 209,
+   "effectPxNoKern": 196,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "1->2",
+   "header": "1. 회전 성경  |  무기 · 강화 1 → 2/8",
+   "effect": "생성·연타 수 1 → 2",
+   "headerPx": 209,
+   "effectPx": 90,
+   "headerPxNoKern": 209,
+   "effectPxNoKern": 90,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "2->3",
+   "header": "1. 회전 성경  |  무기 · 강화 2 → 3/8",
+   "effect": "범위 배율 1 → 1.25 · 회전속도 배율 1 → 1.3",
+   "headerPx": 211,
+   "effectPx": 206,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 206,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "3->4",
+   "header": "1. 회전 성경  |  무기 · 강화 3 → 4/8",
+   "effect": "기본 피해 10 → 20 · 지속(초) 3 → 3.5",
+   "headerPx": 211,
+   "effectPx": 182,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 182,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "4->5",
+   "header": "1. 회전 성경  |  무기 · 강화 4 → 5/8",
+   "effect": "생성·연타 수 2 → 3",
+   "headerPx": 211,
+   "effectPx": 92,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 92,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "5->6",
+   "header": "1. 회전 성경  |  무기 · 강화 5 → 6/8",
+   "effect": "범위 배율 1.25 → 1.5 · 회전속도 배율 1.3 → 1.6",
+   "headerPx": 211,
+   "effectPx": 226,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 226,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "6->7",
+   "header": "1. 회전 성경  |  무기 · 강화 6 → 7/8",
+   "effect": "기본 피해 20 → 30 · 지속(초) 3.5 → 4",
+   "headerPx": 210,
+   "effectPx": 185,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 185,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "bible",
+   "level": "7->8",
+   "header": "1. 회전 성경  |  무기 · 강화 7 → 8/8",
+   "effect": "생성·연타 수 3 → 4",
+   "headerPx": 211,
+   "effectPx": 93,
+   "headerPxNoKern": 211,
+   "effectPxNoKern": 93,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "0->1",
+   "header": "1. 삼손의 턱뼈  |  무기 · 신규 0 → 1/8",
+   "effect": "전방 120° 타격 · 기본 피해 10 · 수 1 · 대기 1초",
+   "headerPx": 221,
+   "effectPx": 218,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 218,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "1->2",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 1 → 2/8",
+   "effect": "생성·연타 수 1 → 2",
+   "headerPx": 221,
+   "effectPx": 90,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 90,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "2->3",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 2 → 3/8",
+   "effect": "범위 배율 1 → 1.2",
+   "headerPx": 223,
+   "effectPx": 84,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 84,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "3->4",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 3 → 4/8",
+   "effect": "기본 피해 10 → 20",
+   "headerPx": 223,
+   "effectPx": 88,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 88,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "4->5",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 4 → 5/8",
+   "effect": "대기(초) 1 → 0.9",
+   "headerPx": 223,
+   "effectPx": 80,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 80,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "5->6",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 5 → 6/8",
+   "effect": "기본 피해 20 → 30",
+   "headerPx": 223,
+   "effectPx": 90,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 90,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "6->7",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 6 → 7/8",
+   "effect": "범위 배율 1.2 → 1.4",
+   "headerPx": 222,
+   "effectPx": 95,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 95,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "jawbone",
+   "level": "7->8",
+   "header": "1. 삼손의 턱뼈  |  무기 · 강화 7 → 8/8",
+   "effect": "기본 피해 30 → 40",
+   "headerPx": 223,
+   "effectPx": 91,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 91,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "0->1",
+   "header": "1. 다윗의 물맷돌  |  무기 · 신규 0 → 1/8",
+   "effect": "가까운 적 자동 조준 · 기본 피해 10 · 수 1 · 대기 1.2초",
+   "headerPx": 233,
+   "effectPx": 252,
+   "headerPxNoKern": 233,
+   "effectPxNoKern": 252,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "1->2",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 1 → 2/8",
+   "effect": "생성·연타 수 1 → 2",
+   "headerPx": 233,
+   "effectPx": 90,
+   "headerPxNoKern": 233,
+   "effectPxNoKern": 90,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "2->3",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 2 → 3/8",
+   "effect": "대기(초) 1.2 → 1",
+   "headerPx": 235,
+   "effectPx": 78,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 78,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "3->4",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 3 → 4/8",
+   "effect": "생성·연타 수 2 → 3",
+   "headerPx": 235,
+   "effectPx": 92,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 92,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "4->5",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 4 → 5/8",
+   "effect": "기본 피해 10 → 20",
+   "headerPx": 235,
+   "effectPx": 88,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 88,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "5->6",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 5 → 6/8",
+   "effect": "생성·연타 수 3 → 4",
+   "headerPx": 235,
+   "effectPx": 93,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 93,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "6->7",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 6 → 7/8",
+   "effect": "관통 수 1 → 2",
+   "headerPx": 234,
+   "effectPx": 66,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 66,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "sling",
+   "level": "7->8",
+   "header": "1. 다윗의 물맷돌  |  무기 · 강화 7 → 8/8",
+   "effect": "기본 피해 20 → 30",
+   "headerPx": 235,
+   "effectPx": 90,
+   "headerPxNoKern": 235,
+   "effectPxNoKern": 90,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "scroll",
+   "level": "0->1",
+   "header": "1. 말씀의 두루마리  |  보조 · 신규 0 → 1/5",
+   "effect": "경험치 획득 보너스 0 → 8%",
+   "headerPx": 245,
+   "effectPx": 130,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 130,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "scroll",
+   "level": "1->2",
+   "header": "1. 말씀의 두루마리  |  보조 · 강화 1 → 2/5",
+   "effect": "경험치 획득 보너스 8 → 16%",
+   "headerPx": 245,
+   "effectPx": 134,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 134,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "scroll",
+   "level": "2->3",
+   "header": "1. 말씀의 두루마리  |  보조 · 강화 2 → 3/5",
+   "effect": "경험치 획득 보너스 16 → 24%",
+   "headerPx": 247,
+   "effectPx": 141,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 141,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "scroll",
+   "level": "3->4",
+   "header": "1. 말씀의 두루마리  |  보조 · 강화 3 → 4/5",
+   "effect": "경험치 획득 보너스 24 → 32%",
+   "headerPx": 247,
+   "effectPx": 143,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 143,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "scroll",
+   "level": "4->5",
+   "header": "1. 말씀의 두루마리  |  보조 · 강화 4 → 5/5",
+   "effect": "경험치 획득 보너스 32 → 40%",
+   "headerPx": 247,
+   "effectPx": 143,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 143,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "hair",
+   "level": "0->1",
+   "header": "1. 삼손의 머리카락  |  보조 · 신규 0 → 1/5",
+   "effect": "무기 피해 보너스 0 → 10%",
+   "headerPx": 245,
+   "effectPx": 124,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 124,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "hair",
+   "level": "1->2",
+   "header": "1. 삼손의 머리카락  |  보조 · 강화 1 → 2/5",
+   "effect": "무기 피해 보너스 10 → 20%",
+   "headerPx": 245,
+   "effectPx": 130,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 130,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "hair",
+   "level": "2->3",
+   "header": "1. 삼손의 머리카락  |  보조 · 강화 2 → 3/5",
+   "effect": "무기 피해 보너스 20 → 30%",
+   "headerPx": 247,
+   "effectPx": 132,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 132,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "hair",
+   "level": "3->4",
+   "header": "1. 삼손의 머리카락  |  보조 · 강화 3 → 4/5",
+   "effect": "무기 피해 보너스 30 → 40%",
+   "headerPx": 247,
+   "effectPx": 133,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 133,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "hair",
+   "level": "4->5",
+   "header": "1. 삼손의 머리카락  |  보조 · 강화 4 → 5/5",
+   "effect": "무기 피해 보너스 40 → 50%",
+   "headerPx": 247,
+   "effectPx": 133,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 133,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "stones",
+   "level": "0->1",
+   "header": "1. 매끄러운 다섯 돌  |  보조 · 신규 0 → 1/2",
+   "effect": "무기 생성·연타 추가 수 0 → 1개",
+   "headerPx": 250,
+   "effectPx": 148,
+   "headerPxNoKern": 250,
+   "effectPxNoKern": 148,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "stones",
+   "level": "1->2",
+   "header": "1. 매끄러운 다섯 돌  |  보조 · 강화 1 → 2/2",
+   "effect": "무기 생성·연타 추가 수 1 → 2개",
+   "headerPx": 250,
+   "effectPx": 148,
+   "headerPxNoKern": 250,
+   "effectPxNoKern": 148,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "east_wind",
+   "level": "0->1",
+   "header": "1. 동풍  |  보조 · 신규 0 → 1/5",
+   "effect": "돌 투사체 속도 보너스 0 → 10%",
+   "headerPx": 180,
+   "effectPx": 148,
+   "headerPxNoKern": 180,
+   "effectPxNoKern": 148,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "east_wind",
+   "level": "1->2",
+   "header": "1. 동풍  |  보조 · 강화 1 → 2/5",
+   "effect": "돌 투사체 속도 보너스 10 → 20%",
+   "headerPx": 180,
+   "effectPx": 154,
+   "headerPxNoKern": 180,
+   "effectPxNoKern": 154,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "east_wind",
+   "level": "2->3",
+   "header": "1. 동풍  |  보조 · 강화 2 → 3/5",
+   "effect": "돌 투사체 속도 보너스 20 → 30%",
+   "headerPx": 182,
+   "effectPx": 156,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 156,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "east_wind",
+   "level": "3->4",
+   "header": "1. 동풍  |  보조 · 강화 3 → 4/5",
+   "effect": "돌 투사체 속도 보너스 30 → 40%",
+   "headerPx": 182,
+   "effectPx": 157,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 157,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "east_wind",
+   "level": "4->5",
+   "header": "1. 동풍  |  보조 · 강화 4 → 5/5",
+   "effect": "돌 투사체 속도 보너스 40 → 50%",
+   "headerPx": 182,
+   "effectPx": 157,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 157,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "seal",
+   "level": "0->1",
+   "header": "1. 사자굴의 봉인석  |  보조 · 신규 0 → 1/5",
+   "effect": "보조 방어(피해 감소) 0 → 1 (최소 피해 1)",
+   "headerPx": 245,
+   "effectPx": 192,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 192,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "seal",
+   "level": "1->2",
+   "header": "1. 사자굴의 봉인석  |  보조 · 강화 1 → 2/5",
+   "effect": "보조 방어(피해 감소) 1 → 2 (최소 피해 1)",
+   "headerPx": 245,
+   "effectPx": 192,
+   "headerPxNoKern": 245,
+   "effectPxNoKern": 192,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "seal",
+   "level": "2->3",
+   "header": "1. 사자굴의 봉인석  |  보조 · 강화 2 → 3/5",
+   "effect": "보조 방어(피해 감소) 2 → 3 (최소 피해 1)",
+   "headerPx": 247,
+   "effectPx": 194,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 194,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "seal",
+   "level": "3->4",
+   "header": "1. 사자굴의 봉인석  |  보조 · 강화 3 → 4/5",
+   "effect": "보조 방어(피해 감소) 3 → 4 (최소 피해 1)",
+   "headerPx": 247,
+   "effectPx": 195,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 195,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "seal",
+   "level": "4->5",
+   "header": "1. 사자굴의 봉인석  |  보조 · 강화 4 → 5/5",
+   "effect": "보조 방어(피해 감소) 4 → 5 (최소 피해 1)",
+   "headerPx": 247,
+   "effectPx": 195,
+   "headerPxNoKern": 247,
+   "effectPxNoKern": 195,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "cloud",
+   "level": "0->1",
+   "header": "1. 구름기둥  |  보조 · 신규 0 → 1/5",
+   "effect": "회전 성경 지속시간 보너스 0 → 10%",
+   "headerPx": 204,
+   "effectPx": 168,
+   "headerPxNoKern": 204,
+   "effectPxNoKern": 168,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "cloud",
+   "level": "1->2",
+   "header": "1. 구름기둥  |  보조 · 강화 1 → 2/5",
+   "effect": "회전 성경 지속시간 보너스 10 → 20%",
+   "headerPx": 204,
+   "effectPx": 174,
+   "headerPxNoKern": 204,
+   "effectPxNoKern": 174,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "cloud",
+   "level": "2->3",
+   "header": "1. 구름기둥  |  보조 · 강화 2 → 3/5",
+   "effect": "회전 성경 지속시간 보너스 20 → 30%",
+   "headerPx": 206,
+   "effectPx": 176,
+   "headerPxNoKern": 206,
+   "effectPxNoKern": 176,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "cloud",
+   "level": "3->4",
+   "header": "1. 구름기둥  |  보조 · 강화 3 → 4/5",
+   "effect": "회전 성경 지속시간 보너스 30 → 40%",
+   "headerPx": 206,
+   "effectPx": 177,
+   "headerPxNoKern": 206,
+   "effectPxNoKern": 177,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "cloud",
+   "level": "4->5",
+   "header": "1. 구름기둥  |  보조 · 강화 4 → 5/5",
+   "effect": "회전 성경 지속시간 보너스 40 → 50%",
+   "headerPx": 206,
+   "effectPx": 177,
+   "headerPxNoKern": 206,
+   "effectPxNoKern": 177,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "thunder",
+   "level": "0->1",
+   "header": "1. 우레  |  보조 · 신규 0 → 1/5",
+   "effect": "대기시간 감소 보너스 0 → 8% (합산 최대 80%)",
+   "headerPx": 180,
+   "effectPx": 220,
+   "headerPxNoKern": 180,
+   "effectPxNoKern": 220,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "thunder",
+   "level": "1->2",
+   "header": "1. 우레  |  보조 · 강화 1 → 2/5",
+   "effect": "대기시간 감소 보너스 8 → 16% (합산 최대 80%)",
+   "headerPx": 180,
+   "effectPx": 224,
+   "headerPxNoKern": 180,
+   "effectPxNoKern": 224,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "thunder",
+   "level": "2->3",
+   "header": "1. 우레  |  보조 · 강화 2 → 3/5",
+   "effect": "대기시간 감소 보너스 16 → 24% (합산 최대 80%)",
+   "headerPx": 182,
+   "effectPx": 231,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 231,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "thunder",
+   "level": "3->4",
+   "header": "1. 우레  |  보조 · 강화 3 → 4/5",
+   "effect": "대기시간 감소 보너스 24 → 32% (합산 최대 80%)",
+   "headerPx": 182,
+   "effectPx": 233,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 233,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "thunder",
+   "level": "4->5",
+   "header": "1. 우레  |  보조 · 강화 4 → 5/5",
+   "effect": "대기시간 감소 보너스 32 → 40% (합산 최대 80%)",
+   "headerPx": 182,
+   "effectPx": 233,
+   "headerPxNoKern": 182,
+   "effectPxNoKern": 233,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "crown",
+   "level": "0->1",
+   "header": "1. 가시 면류관  |  보조 · 신규 0 → 1/5",
+   "effect": "피격 시 근처 적 반격 피해 0 → 5 (피해 보너스 반영)",
+   "headerPx": 221,
+   "effectPx": 244,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 244,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "crown",
+   "level": "1->2",
+   "header": "1. 가시 면류관  |  보조 · 강화 1 → 2/5",
+   "effect": "피격 시 근처 적 반격 피해 5 → 10 (피해 보너스 반영)",
+   "headerPx": 221,
+   "effectPx": 248,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 248,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "crown",
+   "level": "2->3",
+   "header": "1. 가시 면류관  |  보조 · 강화 2 → 3/5",
+   "effect": "피격 시 근처 적 반격 피해 10 → 15 (피해 보너스 반영)",
+   "headerPx": 223,
+   "effectPx": 252,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 252,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "crown",
+   "level": "3->4",
+   "header": "1. 가시 면류관  |  보조 · 강화 3 → 4/5",
+   "effect": "피격 시 근처 적 반격 피해 15 → 20 (피해 보너스 반영)",
+   "headerPx": 223,
+   "effectPx": 254,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 254,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "crown",
+   "level": "4->5",
+   "header": "1. 가시 면류관  |  보조 · 강화 4 → 5/5",
+   "effect": "피격 시 근처 적 반격 피해 20 → 25 (피해 보너스 반영)",
+   "headerPx": 223,
+   "effectPx": 256,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 256,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "underwear",
+   "level": "0->1",
+   "header": "1. 요한의 팬티  |  보조 · 신규 0 → 1/5",
+   "effect": "이동속도 보너스 0 → 10%",
+   "headerPx": 221,
+   "effectPx": 120,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 120,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "underwear",
+   "level": "1->2",
+   "header": "1. 요한의 팬티  |  보조 · 강화 1 → 2/5",
+   "effect": "이동속도 보너스 10 → 20%",
+   "headerPx": 221,
+   "effectPx": 126,
+   "headerPxNoKern": 221,
+   "effectPxNoKern": 126,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "underwear",
+   "level": "2->3",
+   "header": "1. 요한의 팬티  |  보조 · 강화 2 → 3/5",
+   "effect": "이동속도 보너스 20 → 30%",
+   "headerPx": 223,
+   "effectPx": 128,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 128,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "underwear",
+   "level": "3->4",
+   "header": "1. 요한의 팬티  |  보조 · 강화 3 → 4/5",
+   "effect": "이동속도 보너스 30 → 40%",
+   "headerPx": 223,
+   "effectPx": 129,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 129,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "underwear",
+   "level": "4->5",
+   "header": "1. 요한의 팬티  |  보조 · 강화 4 → 5/5",
+   "effect": "이동속도 보너스 40 → 50%",
+   "headerPx": 223,
+   "effectPx": 129,
+   "headerPxNoKern": 223,
+   "effectPxNoKern": 129,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "whirlwind",
+   "level": "0->1",
+   "header": "1. 회오리바람  |  보조 · 신규 0 → 1/5",
+   "effect": "무기 범위 보너스 0 → 10%",
+   "headerPx": 216,
+   "effectPx": 124,
+   "headerPxNoKern": 216,
+   "effectPxNoKern": 124,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "whirlwind",
+   "level": "1->2",
+   "header": "1. 회오리바람  |  보조 · 강화 1 → 2/5",
+   "effect": "무기 범위 보너스 10 → 20%",
+   "headerPx": 216,
+   "effectPx": 130,
+   "headerPxNoKern": 216,
+   "effectPxNoKern": 130,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "whirlwind",
+   "level": "2->3",
+   "header": "1. 회오리바람  |  보조 · 강화 2 → 3/5",
+   "effect": "무기 범위 보너스 20 → 30%",
+   "headerPx": 218,
+   "effectPx": 132,
+   "headerPxNoKern": 218,
+   "effectPxNoKern": 132,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "whirlwind",
+   "level": "3->4",
+   "header": "1. 회오리바람  |  보조 · 강화 3 → 4/5",
+   "effect": "무기 범위 보너스 30 → 40%",
+   "headerPx": 218,
+   "effectPx": 133,
+   "headerPxNoKern": 218,
+   "effectPxNoKern": 133,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  },
+  {
+   "item": "whirlwind",
+   "level": "4->5",
+   "header": "1. 회오리바람  |  보조 · 강화 4 → 5/5",
+   "effect": "무기 범위 보너스 40 → 50%",
+   "headerPx": 218,
+   "effectPx": 133,
+   "headerPxNoKern": 218,
+   "effectPxNoKern": 133,
+   "missingGlyphs": 0,
+   "effectLinesAt": {
+    "660x440 window": 1,
+    "1100x720 window": 1
+   },
+   "headerFitsAt": {
+    "660x440 window": true,
+    "1100x720 window": true
+   }
+  }
+ ]
+}
