@@ -13,8 +13,8 @@
 .vs/
 .idea/
 .DS_Store
-*.csproj
-*.sln
+/Assembly-CSharp*.csproj
+/Assembly-CSharp*.sln
 *.user
 *.pidb
 *.booproj
@@ -30,3 +30,9 @@
 .claude/settings.local.json
 .claude/harness-state/
 evidence/
+
+# Standalone C# development
+**/bin/
+**/obj/
+.local/
+TestResults/

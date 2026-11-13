@@ -1,0 +1,1141 @@
+{
+  "schema_version": 1,
+  "chapter_id": "genesis",
+  "status": "design_data",
+  "sources": [
+    "docs/genesis-balance.md",
+    "docs/gold-shop.md",
+    "docs/item-recommendations.md"
+  ],
+  "rules": {
+    "normal_duration_seconds": 180,
+    "spawn_cutoff_seconds": 170,
+    "boss_interval_rounds": 3,
+    "boss_intro_seconds": 2,
+    "boss_support_cap": 12,
+    "kills_per_gold": 5,
+    "boss_fallback_gold": 100,
+    "normal_round_completion": "all_scheduled_enemies_defeated_or_time_expired",
+    "boss_round_completion": "normal_condition_and_boss_defeated",
+    "xp_allocation": "floor_budget_per_spawn_plus_one_to_highest_health_then_spawn_order",
+    "spawn_placement": "offscreen",
+    "weapon_slots": 6,
+    "passive_slots": 6,
+    "level_up_choices": 3
+  },
+  "monsters": [
+    {
+      "id": "a1",
+      "source_code": "A1",
+      "name_ko": "작은 뱀",
+      "max_health": 1,
+      "contact_damage": 4,
+      "speed_ratio": 0.45,
+      "behavior_id": "serpentine_chase",
+      "behavior_ko": "구불거리는 추적 이동"
+    },
+    {
+      "id": "a2",
+      "source_code": "A2",
+      "name_ko": "열매 나방",
+      "max_health": 6,
+      "contact_damage": 4,
+      "speed_ratio": 0.6,
+      "behavior_id": "curved_chase",
+      "behavior_ko": "열매를 닮은 몸으로 곡선 접근"
+    },
+    {
+      "id": "a3",
+      "source_code": "A3",
+      "name_ko": "가시 마물",
+      "max_health": 12,
+      "contact_damage": 5,
+      "speed_ratio": 0.35,
+      "behavior_id": "slow_chase",
+      "behavior_ko": "가시를 두른 느린 추적형"
+    },
+    {
+      "id": "b1",
+      "source_code": "B1",
+      "name_ko": "시기의 눈",
+      "max_health": 12,
+      "contact_damage": 5,
+      "speed_ratio": 0.55,
+      "behavior_id": "swarm_chase",
+      "behavior_ko": "눈동자가 플레이어를 향하는 군집"
+    },
+    {
+      "id": "b2",
+      "source_code": "B2",
+      "name_ko": "분노의 사냥개",
+      "max_health": 18,
+      "contact_damage": 6,
+      "speed_ratio": 0.9,
+      "behavior_id": "fast_chase",
+      "behavior_ko": "달려드는 빠른 추적형, 별도 돌진 없음"
+    },
+    {
+      "id": "b3",
+      "source_code": "B3",
+      "name_ko": "갈라진 가면",
+      "max_health": 30,
+      "contact_damage": 6,
+      "speed_ratio": 0.45,
+      "behavior_id": "armored_chase",
+      "behavior_ko": "갈라진 얼굴을 지닌 높은 체력형, 분열 없음"
+    },
+    {
+      "id": "c1",
+      "source_code": "C1",
+      "name_ko": "폭력의 그림자",
+      "max_health": 30,
+      "contact_damage": 6,
+      "speed_ratio": 0.55,
+      "behavior_id": "swarm_chase",
+      "behavior_ko": "큰 무리로 밀려오는 추적형"
+    },
+    {
+      "id": "c2",
+      "source_code": "C2",
+      "name_ko": "목재 포식자",
+      "max_health": 50,
+      "contact_damage": 7,
+      "speed_ratio": 0.5,
+      "behavior_id": "chase",
+      "behavior_ko": "턱을 움직이며 자재 주변에서 접근"
+    },
+    {
+      "id": "c3",
+      "source_code": "C3",
+      "name_ko": "잔해 거인",
+      "max_health": 130,
+      "contact_damage": 9,
+      "speed_ratio": 0.3,
+      "behavior_id": "slow_chase",
+      "behavior_ko": "부서진 목재를 두른 느린 높은 체력형"
+    },
+    {
+      "id": "d1",
+      "source_code": "D1",
+      "name_ko": "광야 추적자",
+      "max_health": 45,
+      "contact_damage": 7,
+      "speed_ratio": 0.65,
+      "behavior_id": "chase",
+      "behavior_ko": "먼지 흔적을 남기며 접근"
+    },
+    {
+      "id": "d2",
+      "source_code": "D2",
+      "name_ko": "미혹의 등불",
+      "max_health": 60,
+      "contact_damage": 7,
+      "speed_ratio": 0.5,
+      "behavior_id": "floating_chase",
+      "behavior_ko": "떠다니는 추적형, 이 구간에는 탄막 없음"
+    },
+    {
+      "id": "d3",
+      "source_code": "D3",
+      "name_ko": "약탈 기병마",
+      "max_health": 100,
+      "contact_damage": 10,
+      "speed_ratio": 0.6,
+      "behavior_id": "telegraphed_dash",
+      "behavior_ko": "1.2초 예고 후 속도 1.30으로 0.6초 돌진, 재사용 6초",
+      "dash": {
+        "telegraph_seconds": 1.2,
+        "speed_ratio": 1.3,
+        "duration_seconds": 0.6,
+        "cooldown_seconds": 6
+      }
+    },
+    {
+      "id": "e1",
+      "source_code": "E1",
+      "name_ko": "탐욕의 입",
+      "max_health": 60,
+      "contact_damage": 8,
+      "speed_ratio": 0.6,
+      "behavior_id": "chase",
+      "behavior_ko": "금 장식과 큰 입을 가진 추적형"
+    },
+    {
+      "id": "e2",
+      "source_code": "E2",
+      "name_ko": "미련의 손",
+      "max_health": 80,
+      "contact_damage": 9,
+      "speed_ratio": 0.45,
+      "behavior_id": "slow_chase",
+      "behavior_ko": "뒤로 뻗은 팔을 끌며 접근, 강제 이동 없음"
+    },
+    {
+      "id": "e3",
+      "source_code": "E3",
+      "name_ko": "연기 추격자",
+      "max_health": 90,
+      "contact_damage": 9,
+      "speed_ratio": 0.95,
+      "behavior_id": "fast_chase",
+      "behavior_ko": "연기를 두른 빠른 추적형"
+    },
+    {
+      "id": "f1",
+      "source_code": "F1",
+      "name_ko": "물 약탈자",
+      "max_health": 80,
+      "contact_damage": 8,
+      "speed_ratio": 0.7,
+      "behavior_id": "swarm_chase",
+      "behavior_ko": "우물 주변에서 무리로 접근"
+    },
+    {
+      "id": "f2",
+      "source_code": "F2",
+      "name_ko": "우물 메움마",
+      "max_health": 120,
+      "contact_damage": 10,
+      "speed_ratio": 0.5,
+      "behavior_id": "armored_chase",
+      "behavior_ko": "흙을 운반하는 높은 체력형"
+    },
+    {
+      "id": "f3",
+      "source_code": "F3",
+      "name_ko": "다툼의 갑주",
+      "max_health": 270,
+      "contact_damage": 12,
+      "speed_ratio": 0.35,
+      "behavior_id": "armored_chase",
+      "behavior_ko": "단단해 보이는 몸체, 전면 무적 없음"
+    },
+    {
+      "id": "g1",
+      "source_code": "G1",
+      "name_ko": "속임의 가면",
+      "max_health": 120,
+      "contact_damage": 9,
+      "speed_ratio": 0.65,
+      "behavior_id": "chase",
+      "behavior_ko": "이동 중 표정이 바뀜, 공격 무효 위장 없음"
+    },
+    {
+      "id": "g2",
+      "source_code": "G2",
+      "name_ko": "얼룩 모피마",
+      "max_health": 180,
+      "contact_damage": 10,
+      "speed_ratio": 0.55,
+      "behavior_id": "chase",
+      "behavior_ko": "가축 모피를 흉내 낸 추적형"
+    },
+    {
+      "id": "g3",
+      "source_code": "G3",
+      "name_ko": "불화의 쌍영",
+      "max_health": 240,
+      "contact_damage": 11,
+      "speed_ratio": 0.65,
+      "behavior_id": "two_sided_chase",
+      "behavior_ko": "좌우 두 무리로 등장하지만 공유 체력 없음"
+    },
+    {
+      "id": "h1",
+      "source_code": "H1",
+      "name_ko": "시기의 그림자",
+      "max_health": 160,
+      "contact_damage": 10,
+      "speed_ratio": 0.65,
+      "behavior_id": "chase",
+      "behavior_ko": "요셉을 둘러싼 시기의 이미지"
+    },
+    {
+      "id": "h2",
+      "source_code": "H2",
+      "name_ko": "감옥 사슬령",
+      "max_health": 340,
+      "contact_damage": 12,
+      "speed_ratio": 0.4,
+      "behavior_id": "slow_chase",
+      "behavior_ko": "사슬을 회전시키며 접근, 속박 디버프 없음"
+    },
+    {
+      "id": "h3",
+      "source_code": "H3",
+      "name_ko": "기근의 마수",
+      "max_health": 400,
+      "contact_damage": 13,
+      "speed_ratio": 0.55,
+      "behavior_id": "chase",
+      "behavior_ko": "마른 몸과 곡식 포식 동작, 먹고 무한 성장하지 않음"
+    },
+    {
+      "id": "i1",
+      "source_code": "I1",
+      "name_ko": "은전 포식자",
+      "max_health": 160,
+      "contact_damage": 10,
+      "speed_ratio": 0.85,
+      "behavior_id": "fast_chase",
+      "behavior_ko": "동전 소리를 내는 빠른 추적형"
+    },
+    {
+      "id": "i2",
+      "source_code": "I2",
+      "name_ko": "은폐의 가면",
+      "max_health": 260,
+      "contact_damage": 11,
+      "speed_ratio": 0.6,
+      "behavior_id": "chase",
+      "behavior_ko": "가려진 얼굴이 공격 시 드러나는 추적형"
+    },
+    {
+      "id": "i3",
+      "source_code": "I3",
+      "name_ko": "형제 결박마",
+      "max_health": 600,
+      "contact_damage": 14,
+      "speed_ratio": 0.35,
+      "behavior_id": "slow_chase",
+      "behavior_ko": "긴 사슬을 두른 높은 체력형, 통로 봉쇄 없음"
+    }
+  ],
+  "rounds": [
+    {
+      "id": "genesis_01",
+      "number": 1,
+      "person_ko": "아담",
+      "concurrency_cap": 40,
+      "spawn_budget": 240,
+      "raw_xp_budget": 300,
+      "completion_gold": 25,
+      "boss_id": null,
+      "unlock_weapon_id": "wilderness_voice",
+      "waves": [
+        {
+          "id": "genesis_01_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 60,
+          "composition": [
+            {
+              "monster_id": "a1",
+              "count": 60
+            }
+          ]
+        },
+        {
+          "id": "genesis_01_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 80,
+          "composition": [
+            {
+              "monster_id": "a1",
+              "count": 56
+            },
+            {
+              "monster_id": "a2",
+              "count": 24
+            }
+          ]
+        },
+        {
+          "id": "genesis_01_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 100,
+          "composition": [
+            {
+              "monster_id": "a1",
+              "count": 60
+            },
+            {
+              "monster_id": "a2",
+              "count": 30
+            },
+            {
+              "monster_id": "a3",
+              "count": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_02",
+      "number": 2,
+      "person_ko": "가인",
+      "concurrency_cap": 50,
+      "spawn_budget": 360,
+      "raw_xp_budget": 600,
+      "completion_gold": 35,
+      "boss_id": null,
+      "unlock_weapon_id": "lightning",
+      "waves": [
+        {
+          "id": "genesis_02_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 90,
+          "composition": [
+            {
+              "monster_id": "b1",
+              "count": 72
+            },
+            {
+              "monster_id": "b3",
+              "count": 18
+            }
+          ]
+        },
+        {
+          "id": "genesis_02_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 120,
+          "composition": [
+            {
+              "monster_id": "b1",
+              "count": 84
+            },
+            {
+              "monster_id": "b2",
+              "count": 36
+            }
+          ]
+        },
+        {
+          "id": "genesis_02_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 150,
+          "composition": [
+            {
+              "monster_id": "b1",
+              "count": 75
+            },
+            {
+              "monster_id": "b2",
+              "count": 45
+            },
+            {
+              "monster_id": "b3",
+              "count": 30
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_03",
+      "number": 3,
+      "person_ko": "노아",
+      "concurrency_cap": 60,
+      "spawn_budget": 480,
+      "raw_xp_budget": 1100,
+      "completion_gold": 50,
+      "boss_id": "nephilim_tyrant",
+      "unlock_weapon_id": "moses_staff",
+      "waves": [
+        {
+          "id": "genesis_03_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 120,
+          "composition": [
+            {
+              "monster_id": "c1",
+              "count": 96
+            },
+            {
+              "monster_id": "c2",
+              "count": 24
+            }
+          ]
+        },
+        {
+          "id": "genesis_03_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 160,
+          "composition": [
+            {
+              "monster_id": "c1",
+              "count": 112
+            },
+            {
+              "monster_id": "c2",
+              "count": 48
+            }
+          ]
+        },
+        {
+          "id": "genesis_03_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 200,
+          "composition": [
+            {
+              "monster_id": "c1",
+              "count": 120
+            },
+            {
+              "monster_id": "c2",
+              "count": 60
+            },
+            {
+              "monster_id": "c3",
+              "count": 20
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_04",
+      "number": 4,
+      "person_ko": "아브라함",
+      "concurrency_cap": 70,
+      "spawn_budget": 600,
+      "raw_xp_budget": 1600,
+      "completion_gold": 65,
+      "boss_id": null,
+      "unlock_weapon_id": "fire_pillar",
+      "waves": [
+        {
+          "id": "genesis_04_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 160,
+          "composition": [
+            {
+              "monster_id": "d1",
+              "count": 128
+            },
+            {
+              "monster_id": "d2",
+              "count": 32
+            }
+          ]
+        },
+        {
+          "id": "genesis_04_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 200,
+          "composition": [
+            {
+              "monster_id": "d1",
+              "count": 140
+            },
+            {
+              "monster_id": "d2",
+              "count": 40
+            },
+            {
+              "monster_id": "d3",
+              "count": 20
+            }
+          ]
+        },
+        {
+          "id": "genesis_04_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 240,
+          "composition": [
+            {
+              "monster_id": "d1",
+              "count": 144
+            },
+            {
+              "monster_id": "d2",
+              "count": 72
+            },
+            {
+              "monster_id": "d3",
+              "count": 24
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_05",
+      "number": 5,
+      "person_ko": "롯",
+      "concurrency_cap": 80,
+      "spawn_budget": 690,
+      "raw_xp_budget": 1900,
+      "completion_gold": 80,
+      "boss_id": null,
+      "unlock_weapon_id": "daniel_lion",
+      "waves": [
+        {
+          "id": "genesis_05_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 180,
+          "composition": [
+            {
+              "monster_id": "e1",
+              "count": 126
+            },
+            {
+              "monster_id": "e2",
+              "count": 54
+            }
+          ]
+        },
+        {
+          "id": "genesis_05_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 230,
+          "composition": [
+            {
+              "monster_id": "e1",
+              "count": 138
+            },
+            {
+              "monster_id": "e2",
+              "count": 46
+            },
+            {
+              "monster_id": "e3",
+              "count": 46
+            }
+          ]
+        },
+        {
+          "id": "genesis_05_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 280,
+          "composition": [
+            {
+              "monster_id": "e1",
+              "count": 140
+            },
+            {
+              "monster_id": "e2",
+              "count": 56
+            },
+            {
+              "monster_id": "e3",
+              "count": 84
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_06",
+      "number": 6,
+      "person_ko": "이삭",
+      "concurrency_cap": 90,
+      "spawn_budget": 780,
+      "raw_xp_budget": 2400,
+      "completion_gold": 100,
+      "boss_id": "sitnah_keeper",
+      "unlock_weapon_id": "cross",
+      "waves": [
+        {
+          "id": "genesis_06_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 200,
+          "composition": [
+            {
+              "monster_id": "f1",
+              "count": 160
+            },
+            {
+              "monster_id": "f2",
+              "count": 40
+            }
+          ]
+        },
+        {
+          "id": "genesis_06_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 260,
+          "composition": [
+            {
+              "monster_id": "f1",
+              "count": 182
+            },
+            {
+              "monster_id": "f2",
+              "count": 52
+            },
+            {
+              "monster_id": "f3",
+              "count": 26
+            }
+          ]
+        },
+        {
+          "id": "genesis_06_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 320,
+          "composition": [
+            {
+              "monster_id": "f1",
+              "count": 160
+            },
+            {
+              "monster_id": "f2",
+              "count": 96
+            },
+            {
+              "monster_id": "f3",
+              "count": 64
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_07",
+      "number": 7,
+      "person_ko": "야곱",
+      "concurrency_cap": 100,
+      "spawn_budget": 900,
+      "raw_xp_budget": 3000,
+      "completion_gold": 120,
+      "boss_id": null,
+      "unlock_weapon_id": "elijah_chariot",
+      "waves": [
+        {
+          "id": "genesis_07_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 240,
+          "composition": [
+            {
+              "monster_id": "g1",
+              "count": 168
+            },
+            {
+              "monster_id": "g2",
+              "count": 72
+            }
+          ]
+        },
+        {
+          "id": "genesis_07_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 300,
+          "composition": [
+            {
+              "monster_id": "g1",
+              "count": 180
+            },
+            {
+              "monster_id": "g2",
+              "count": 90
+            },
+            {
+              "monster_id": "g3",
+              "count": 30
+            }
+          ]
+        },
+        {
+          "id": "genesis_07_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 360,
+          "composition": [
+            {
+              "monster_id": "g1",
+              "count": 180
+            },
+            {
+              "monster_id": "g2",
+              "count": 72
+            },
+            {
+              "monster_id": "g3",
+              "count": 108
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_08",
+      "number": 8,
+      "person_ko": "요셉",
+      "concurrency_cap": 110,
+      "spawn_budget": 1020,
+      "raw_xp_budget": 3500,
+      "completion_gold": 140,
+      "boss_id": null,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "id": "genesis_08_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 270,
+          "composition": [
+            {
+              "monster_id": "h1",
+              "count": 270
+            }
+          ]
+        },
+        {
+          "id": "genesis_08_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 340,
+          "composition": [
+            {
+              "monster_id": "h1",
+              "count": 238
+            },
+            {
+              "monster_id": "h2",
+              "count": 102
+            }
+          ]
+        },
+        {
+          "id": "genesis_08_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 410,
+          "composition": [
+            {
+              "monster_id": "h1",
+              "count": 205
+            },
+            {
+              "monster_id": "h2",
+              "count": 82
+            },
+            {
+              "monster_id": "h3",
+              "count": 123
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "genesis_09",
+      "number": 9,
+      "person_ko": "유다",
+      "concurrency_cap": 120,
+      "spawn_budget": 1140,
+      "raw_xp_budget": 4200,
+      "completion_gold": 160,
+      "boss_id": "silver_cup_accuser",
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "id": "genesis_09_w1",
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "spawn_budget": 300,
+          "composition": [
+            {
+              "monster_id": "i1",
+              "count": 240
+            },
+            {
+              "monster_id": "i2",
+              "count": 60
+            }
+          ]
+        },
+        {
+          "id": "genesis_09_w2",
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "spawn_budget": 380,
+          "composition": [
+            {
+              "monster_id": "i1",
+              "count": 266
+            },
+            {
+              "monster_id": "i2",
+              "count": 114
+            }
+          ]
+        },
+        {
+          "id": "genesis_09_w3",
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "spawn_budget": 460,
+          "composition": [
+            {
+              "monster_id": "i1",
+              "count": 230
+            },
+            {
+              "monster_id": "i2",
+              "count": 138
+            },
+            {
+              "monster_id": "i3",
+              "count": 92
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "nephilim_tyrant",
+      "round_number": 3,
+      "name_ko": "네피림의 폭군",
+      "max_health": 1800,
+      "contact_damage": 12,
+      "gold": 100,
+      "attack": {
+        "pattern_id": "telegraphed_club_slam",
+        "cooldown_seconds": 6,
+        "telegraph_seconds": 1.2,
+        "damage": 15,
+        "projectile_count": 0
+      },
+      "support_summons": [
+        {
+          "health_ratio": 0.5,
+          "monster_id": "c1",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "sitnah_keeper",
+      "round_number": 6,
+      "name_ko": "싯나의 우물지기",
+      "max_health": 6500,
+      "contact_damage": 16,
+      "gold": 200,
+      "attack": {
+        "pattern_id": "telegraphed_dirt_throw",
+        "cooldown_seconds": 7,
+        "telegraph_seconds": 1.2,
+        "damage": 18,
+        "projectile_count": 0
+      },
+      "support_summons": [
+        {
+          "health_ratio": 0.7,
+          "monster_id": "f1",
+          "count": 6
+        },
+        {
+          "health_ratio": 0.35,
+          "monster_id": "f1",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "silver_cup_accuser",
+      "round_number": 9,
+      "name_ko": "은잔의 참소자",
+      "max_health": 16000,
+      "contact_damage": 20,
+      "gold": 350,
+      "attack": {
+        "pattern_id": "three_way_chain_projectiles",
+        "cooldown_seconds": 5,
+        "telegraph_seconds": 1,
+        "damage": 15,
+        "projectile_count": 3
+      },
+      "support_summons": [
+        {
+          "health_ratio": 0.6,
+          "monster_id": "i2",
+          "count": 6
+        },
+        {
+          "health_ratio": 0.3,
+          "monster_id": "i2",
+          "count": 6
+        }
+      ]
+    }
+  ],
+  "weapon_unlocks": [
+    {
+      "weapon_id": "bible",
+      "name_ko": "회전 성경",
+      "round_number": 0,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "jawbone",
+      "name_ko": "삼손의 턱뼈",
+      "round_number": 0,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "sling",
+      "name_ko": "다윗의 물맷돌",
+      "round_number": 0,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "moses_staff",
+      "name_ko": "모세의 지팡이",
+      "round_number": 3,
+      "requires_boss_reward": true
+    },
+    {
+      "weapon_id": "daniel_lion",
+      "name_ko": "다니엘의 사자",
+      "round_number": 5,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "fire_pillar",
+      "name_ko": "불기둥",
+      "round_number": 4,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "lightning",
+      "name_ko": "하늘의 번개",
+      "round_number": 2,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "cross",
+      "name_ko": "십자가",
+      "round_number": 6,
+      "requires_boss_reward": true
+    },
+    {
+      "weapon_id": "wilderness_voice",
+      "name_ko": "광야의 외침",
+      "round_number": 1,
+      "requires_boss_reward": false
+    },
+    {
+      "weapon_id": "elijah_chariot",
+      "name_ko": "엘리야의 불수레",
+      "round_number": 7,
+      "requires_boss_reward": false
+    }
+  ],
+  "evolution_pairs": [
+    {
+      "weapon_id": "bible",
+      "passive_id": "scroll",
+      "evolved_weapon_id": "sanctuary",
+      "name_ko": "말씀의 성역",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "jawbone",
+      "passive_id": "hair",
+      "evolved_weapon_id": "thousand_strength",
+      "name_ko": "천인의 힘",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "sling",
+      "passive_id": "stones",
+      "evolved_weapon_id": "five_stone_barrage",
+      "name_ko": "다섯 돌의 연격",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "moses_staff",
+      "passive_id": "east_wind",
+      "evolved_weapon_id": "red_sea_path",
+      "name_ko": "홍해의 길",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "daniel_lion",
+      "passive_id": "seal",
+      "evolved_weapon_id": "den_guardian",
+      "name_ko": "사자굴의 수호자",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "fire_pillar",
+      "passive_id": "cloud",
+      "evolved_weapon_id": "wilderness_guidance",
+      "name_ko": "광야의 인도",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "lightning",
+      "passive_id": "thunder",
+      "evolved_weapon_id": "thunder_judgment",
+      "name_ko": "우레의 심판",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "cross",
+      "passive_id": "crown",
+      "evolved_weapon_id": "passion_radiance",
+      "name_ko": "수난의 광휘",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "wilderness_voice",
+      "passive_id": "underwear",
+      "evolved_weapon_id": "wilderness_proclamation",
+      "name_ko": "광야의 선포",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    },
+    {
+      "weapon_id": "elijah_chariot",
+      "passive_id": "whirlwind",
+      "evolved_weapon_id": "ascending_chariot",
+      "name_ko": "승천의 불수레",
+      "required_weapon_level": 8,
+      "required_passive_level": 1,
+      "consumes_passive": false,
+      "replaces_weapon_slot": true
+    }
+  ]
+}
