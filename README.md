@@ -4,9 +4,9 @@
 
 ## 현재 상태
 
-아담 1라운드의 Unity 독립 C# 코어와 자동 검증을 개발하고 있습니다. 아직 Unity 프로젝트와 플레이 가능한 게임은 포함되어 있지 않습니다. 문서의 전투 수치와 경제 수치는 초기 설계이며 플레이 검증 결과가 아닙니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
+아담 R01과 가인 R02의 Unity 독립 C# 코어·연속 진행·자동 검증을 개발하고 있습니다. R02 완료 후 R03 보스 라운드는 진입 대기로 보존합니다. 이 코어 검증은 Unity 화면·입력·기기 플레이 검증과 별개입니다. 문서의 전투 수치와 경제 수치는 초기 설계이며 플레이 검증 결과가 아닙니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
 
-[R01 구현·검증 상태](docs/progress/R01.md) · [개발 계획](docs/genesis-development-plan.md) · [모바일 고려 사항](docs/mobile-platform-plan.md)
+[R01 구현·검증 상태](docs/progress/R01.md) · [R02 구현·검증 상태](docs/progress/R02.md) · [개발 계획](docs/genesis-development-plan.md) · [모바일 고려 사항](docs/mobile-platform-plan.md)
 
 ## 코어 검사 실행
 
@@ -17,9 +17,13 @@ python3 tools/check_all.py
 python3 tools/check_mutations.py
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- bible
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --combat sling 7
+bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series sling
+bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series-combat sling 7
 ```
 
 기본 명령은 처치를 주입해 규칙을 확인합니다. `--combat`은 60Hz 좌표 전투에서 적 추적·자동 공격·명중·처치·거리 회수와 중간 저장/복원을 실행합니다. 무기는 `bible`, `jawbone`, `sling`이며 마지막 숫자는 시드입니다. Unity 화면·입력·물리·기기 성능 검증은 아직 하지 않았습니다. [코어 하네스 안내](docs/harness/standalone-core.md)
+
+`--series`는 R01→R02 예산/성장을 처치 주입으로 확인하고, `--series-combat`은 같은 진행을 실제 좌표 전투로 실행합니다. 라운드별 중간 저장·완료 저장·R02 진입 저장을 복원합니다. 정상 라운드는 시간 종료로도 완료되므로 출력의 실제 처치 수를 함께 확인합니다. 해금된 `wilderness_voice`·`lightning`은 아직 장착/공격을 구현하지 않았습니다.
 
 ## 기획 문서
 

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    evidence = ROOT / 'evidence' / ('r01-' + stamp)
+    evidence = ROOT / 'evidence' / ('r02-' + stamp)
     evidence.mkdir(parents=True)
     failures = []
     for file in (ROOT / 'src' / 'BibleSurvivor.Core').glob('*.cs'):
@@ -33,6 +33,8 @@ def main():
     for weapon in ('bible', 'jawbone', 'sling'):
         commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--',weapon])
         commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--','--combat',weapon,'7'])
+        commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--','--series',weapon])
+        commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--','--series-combat',weapon,'7'])
     records = []
     for index, command in enumerate(commands):
         result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)

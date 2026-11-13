@@ -12,6 +12,8 @@ internal static class Program
     {
         try
         {
+            if(args.Length>0 && (args[0]=="--series" || args[0]=="--series-combat"))
+                return SeriesRunner.Run(args.Skip(1).ToArray(),args[0]=="--series-combat");
             if(args.Length>0 && args[0]=="--combat") return BattleRunner.Run(args.Skip(1).ToArray());
             var weapon=args.Length>0?args[0]:"bible";
             var round=CatalogReader.Adam("content/genesis/catalog.json");

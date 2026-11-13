@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BibleSurvivor.Core
 {
@@ -47,16 +50,35 @@ namespace BibleSurvivor.Core
         public int ConcurrencyCap { get; }
         public int RawExperience { get; }
         public int CompletionGold { get; }
+        public string Id { get; }
+        public string? UnlockWeaponId { get; }
+        public string Fingerprint { get; }
         public IReadOnlyList<WaveDefinition> Waves { get; }
-        public RoundDefinition(int number, int concurrencyCap, int rawExperience, int completionGold, IEnumerable<WaveDefinition> waves)
+        public RoundDefinition(int number, int concurrencyCap, int rawExperience, int completionGold, IEnumerable<WaveDefinition> waves,
+            string? id = null, string? unlockWeaponId = null)
         {
             var copy = waves.ToArray();
-            if (number <= 0 || concurrencyCap <= 0 || rawExperience <= 0 || completionGold < 0 || copy.Length == 0)
+            if (number <= 0 || concurrencyCap <= 0 || rawExperience <= 0 || completionGold < 0 || copy.Length == 0 || copy.Any(x=>x==null))
                 throw new ArgumentException("Invalid round");
             var previous = 0.0;
             foreach (var wave in copy) { if (wave.Start != previous) throw new ArgumentException("Noncontiguous waves"); previous = wave.End; }
             Number = number; ConcurrencyCap = concurrencyCap; RawExperience = rawExperience;
             CompletionGold = completionGold; Waves = Array.AsReadOnly(copy);
+            Id = id ?? "genesis_" + number.ToString("D2", CultureInfo.InvariantCulture);
+            UnlockWeaponId = unlockWeaponId ?? (number==1 ? "wilderness_voice" : number==2 ? "lightning" : null);
+            if(string.IsNullOrWhiteSpace(Id) || (UnlockWeaponId!=null && string.IsNullOrWhiteSpace(UnlockWeaponId)))
+                throw new ArgumentException("Invalid round identity");
+            var parts=new List<string>{Id,number.ToString(CultureInfo.InvariantCulture),concurrencyCap.ToString(CultureInfo.InvariantCulture),
+                rawExperience.ToString(CultureInfo.InvariantCulture),completionGold.ToString(CultureInfo.InvariantCulture),UnlockWeaponId??""};
+            foreach(var wave in Waves)
+            {
+                parts.Add(wave.Start.ToString("R",CultureInfo.InvariantCulture));parts.Add(wave.End.ToString("R",CultureInfo.InvariantCulture));
+                foreach(var group in wave.Groups)
+                    parts.Add(string.Join(",",group.MonsterId,group.Count.ToString(CultureInfo.InvariantCulture),
+                        group.Health.ToString(CultureInfo.InvariantCulture),group.ContactDamage.ToString(CultureInfo.InvariantCulture)));
+            }
+            using var hash=SHA256.Create();
+            Fingerprint=Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts))));
         }
     }
 

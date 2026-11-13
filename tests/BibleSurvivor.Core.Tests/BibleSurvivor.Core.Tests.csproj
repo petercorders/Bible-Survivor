@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/BibleSurvivor.Core/BibleSurvivor.Core.csproj" />
+    <Compile Include="../../tools/BibleSurvivor.Sim/CatalogReader.cs" Link="CatalogReader.cs" />
   </ItemGroup>
 </Project>

@@ -37,6 +37,8 @@ namespace BibleSurvivor.Core
         [DataMember] public int ChoiceSerial { get; set; } = 1;
         [DataMember] public List<string> Choices { get; set; } = new List<string>();
         [DataMember(EmitDefaultValue=false)] public BattleSnapshot? World {get;set;}
+        // Optional additive schema-1 extension. Missing only on legacy R01 checkpoints.
+        [DataMember(EmitDefaultValue=false)] public string? RoundFingerprint {get;set;}
     }
 
     [DataContract]
@@ -57,7 +59,10 @@ namespace BibleSurvivor.Core
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 10 ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 3 ||
+                (Run.Stage=="normal" && Run.RoundNumber>2) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+                (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
+                (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds") || Run.Level < 1 || Run.Level > 10000 ||
                 Run.KillRemainder < 0 || Run.KillRemainder > 4 || Run.Health <= 0 || Run.MaxHealth <= 0 || Run.Health > Run.MaxHealth ||
                 !Finite(Run.Health) || !Finite(Run.MaxHealth) || !Finite(Run.Experience) || Run.Experience < 0 ||
@@ -82,6 +87,10 @@ namespace BibleSurvivor.Core
             try { EquipmentInventory.Restore(Run.Weapons, Run.Passives); _ = new GrowthLedger(Run.Level, Run.Experience); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid progression", error); }
             if ((Run.Stage == "normal") != (Run.Wave != null)) throw new InvalidDataException("Invalid wave lifecycle");
+            if(Run.Stage=="between_rounds" && (Run.Drops.Count!=0 || Run.Health!=Run.MaxHealth))
+                throw new InvalidDataException("Invalid completion checkpoint");
+            if(Run.Wave!=null && Run.LastHitTime>Run.Wave.Elapsed)
+                throw new InvalidDataException("Last hit is ahead of round clock");
             if (Run.Wave != null && (!Finite(Run.Wave.Elapsed) || Run.Wave.Elapsed < 0 || Run.Wave.Elapsed >= 180))
                 throw new InvalidDataException("Invalid running clock");
         }

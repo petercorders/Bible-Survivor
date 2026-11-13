@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace BibleSurvivor.Core
 {
-    // Engine-independent R01 rules. BattleWorld supplies coordinate combat; rendering and device input adapters remain separate.
+    // R01/R02 engine-independent rules; R03 remains a checkpoint, not an implemented boss round.
     public sealed class AdamSession
     {
         private static readonly string[] Passives = { "scroll","hair","stones","east_wind","seal","cloud","thunder","crown","underwear","whirlwind" };
@@ -15,7 +15,9 @@ namespace BibleSurvivor.Core
         private WaveDirector? Arena => Wave as WaveDirector;
         public GrowthLedger Growth { get; }
         public EquipmentInventory Inventory { get; }
-        public bool IsActive => state.Run == run && run.Stage == "normal";
+        private bool IsCurrent => state.Run == run && run.RoundNumber == definition.Number + (run.Stage=="between_rounds" ? 1 : 0);
+        public bool IsActive => IsCurrent && run.Stage == "normal";
+        public int RoundNumber => definition.Number;
         public IReadOnlyDictionary<int,int> DroppedExperience => new System.Collections.ObjectModel.ReadOnlyDictionary<int,int>(run.Drops);
         public double CurrentHealth => state.Run == run ? run.Health : 0;
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
@@ -41,7 +43,7 @@ namespace BibleSurvivor.Core
             Inventory = new EquipmentInventory(startingWeapon); Growth = new GrowthLedger(); Wave = new WaveDirector(definition);
             var hp = 100 * (1 + 0.1 * PermanentRules.Rank(state.Profile.Upgrades,"health"));
             run = new RunState { RunId = Guid.NewGuid().ToString("N"), Health = hp, MaxHealth = hp,
-                PermanentSnapshot = new Dictionary<string,int>(state.Profile.Upgrades) };
+                PermanentSnapshot = new Dictionary<string,int>(state.Profile.Upgrades), RoundFingerprint=definition.Fingerprint };
             state.Run = run; Capture();
         }
 
@@ -49,8 +51,13 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number != 1 || (run.Stage=="normal" ? run.RoundNumber!=1 || run.Wave==null : run.RoundNumber!=2))
-                throw new InvalidOperationException("Only R01 is implemented; next-round checkpoint is retained");
+            if (definition.Number < 1 || definition.Number > 2 ||
+                (run.Stage=="normal" ? run.RoundNumber!=definition.Number || run.Wave==null : run.RoundNumber!=definition.Number+1))
+                throw new InvalidOperationException("Round definition does not match checkpoint; R03 is not implemented");
+            if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint)
+                throw new ArgumentException("Round catalog changed; checkpoint preserved");
+            if (run.RoundFingerprint == null && definition.Number != 1)
+                throw new ArgumentException("Legacy saves support only R01 and its completion checkpoint");
             this.state = state; this.definition = definition;
             Inventory = EquipmentInventory.Restore(run.Weapons, run.Passives);
             Growth = new GrowthLedger(run.Level, run.Experience); Wave = run.Wave == null ? null : WaveDirector.Restore(definition, run.Wave);
@@ -58,6 +65,19 @@ namespace BibleSurvivor.Core
             if (run.Choices.Any(x => !eligible.Contains(x))) throw new ArgumentException("Invalid saved level-up choices");
         }
         public static AdamSession Resume(GameSnapshot state, RoundDefinition definition) => new AdamSession(state, definition);
+
+        public AdamSession StartNextRound(RoundDefinition next)
+        {
+            if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
+                next.Number!=run.RoundNumber || next.Number!=2 || definition.Number!=1)
+                throw new InvalidOperationException("Next round requires completed R01 and resolved choices; R03 is pending");
+            state.Validate(); Capture();
+            // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
+            var arena=new WaveDirector(next);
+            run.Stage="normal";run.RoundFingerprint=next.Fingerprint;run.Wave=arena.Snapshot();
+            run.World=null;run.Drops.Clear();run.LastHitTime=-1;
+            return Resume(state,next);
+        }
 
         public void Advance(double seconds)
         {
@@ -105,7 +125,7 @@ namespace BibleSurvivor.Core
         }
         public bool Choose(string id)
         {
-            if (state.Run != run || run.PendingLevels <= 0 || !run.Choices.Contains(id)) return false;
+            if (!IsCurrent || run.PendingLevels <= 0 || !run.Choices.Contains(id)) return false;
             if (!Inventory.TryChoose(id, Passives.Contains(id))) return false;
             run.PendingLevels--; run.ChoiceSerial++; run.Choices.Clear(); EnsureChoices(); Capture(); return true;
         }
@@ -126,8 +146,10 @@ namespace BibleSurvivor.Core
             // Only dropped XP is collected. Unspawned/live enemies grant nothing at timeout.
             foreach (var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value)) AwardExperience(xp);
             run.Drops.Clear(); state.Profile.Gold = checked(state.Profile.Gold + definition.CompletionGold);
-            if (!state.Profile.UnlockedWeapons.Contains("wilderness_voice")) state.Profile.UnlockedWeapons.Add("wilderness_voice");
-            run.Health = run.MaxHealth; run.Stage = "between_rounds"; run.RoundNumber = 2;
+            run.World=null; // An earlier host checkpoint cannot describe the completed arena.
+            if (definition.UnlockWeaponId != null && !state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))
+                state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
+            run.Health = run.MaxHealth; run.Stage = "between_rounds"; run.RoundNumber = definition.Number + 1;
         }
         public void Purchase(string key, int displayedPrice)
         {
@@ -136,11 +158,12 @@ namespace BibleSurvivor.Core
         }
         public void Capture()
         {
-            if (state.Run != run) return;
+            if (!IsCurrent) return;
             run.Level = Growth.Level; run.Experience = Growth.Experience;
             run.Weapons = Inventory.Weapons.ToDictionary(x=>x.Key,x=>x.Value);
             run.Passives = Inventory.Passives.ToDictionary(x=>x.Key,x=>x.Value);
             run.Wave = run.Stage == "normal" ? Arena?.Snapshot() : null;
+            run.RoundFingerprint=definition.Fingerprint;
         }
         private int Passive(string id) => Inventory.Passives.TryGetValue(id,out var level) ? level : 0;
     }

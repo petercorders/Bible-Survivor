@@ -50,14 +50,14 @@ internal static class BattleRunner
         return passed?0:1;
     }
 
-    private static Vector2 Movement(BattleWorld world)
+    internal static Vector2 Movement(BattleWorld world)
     {
         if(world.DropPositions.Count>0)
             return world.DropPositions.OrderBy(x=>Vector2.DistanceSquared(x.Value,world.PlayerPosition)).ThenBy(x=>x.Key).First().Value-world.PlayerPosition;
         var phase=(float)(world.SimulationTime*.3);
         return new Vector2((float)Math.Cos(phase),(float)Math.Sin(phase));
     }
-    private static void Resolve(AdamSession game,string preferred)
+    internal static void Resolve(AdamSession game,string preferred)
     {
         while(game.PendingChoices.Count>0)
         {

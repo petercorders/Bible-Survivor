@@ -16,12 +16,19 @@ CASES = [
     ('spawn_backlog_early_clear', 'Waves.cs', '(cursor == schedule.Count && active.Count == 0)', '((expired || cursor == schedule.Count) && active.Count == 0)'),
     ('enemy_nan_restored', 'Waves.cs', 'double.IsNaN(enemy.Health) || double.IsInfinity(enemy.Health) || ', ''),
     ('weapon_kill_credit_lost', 'AdamSession.cs', 'if(damage>=enemy.Health) Kill(id); else Arena!.Hit(id,damage);', 'Arena!.Hit(id,damage);'),
-    ('completion_resume_refused', 'AdamSession.cs', 'if (definition.Number != 1 || (run.Stage=="normal" ? run.RoundNumber!=1 || run.Wave==null : run.RoundNumber!=2))', 'if (definition.Number != 1 || run.RoundNumber != 1 || run.Stage != "normal" || run.Wave == null)'),
+    ('completion_resume_refused', 'AdamSession.cs', 'if (definition.Number < 1 || definition.Number > 2 ||', 'if (run.Stage != "normal" || definition.Number < 1 || definition.Number > 2 ||'),
     ('stale_revision_overwrite', 'SaveState.cs', 'if (revision != expectedRevision)', 'if (false)'),
     ('projectile_double_hit', 'BattleWorld.cs', 'if(projectile.HitIds.Contains(enemy.Key))continue;', ''),
     ('battle_null_hit_entry', 'BattleWorld.cs', 'w.OrbitHits.Any(x=>x==null)||', ''),
     ('stale_world_clock_saved', 'SaveState.cs', 'Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7', 'false'),
     ('wave_null_entry_saved', 'SaveState.cs', '(Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null))', '(Run.Wave.Active==null)'),
+    ('round_entry_ignores_pending_choices', 'AdamSession.cs', 'run.PendingLevels!=0 ||', 'false ||'),
+    ('round_entry_keeps_old_iframe', 'AdamSession.cs', 'run.LastHitTime=-1;', '/* old round hit clock retained */'),
+    ('round_completion_uses_r01_unlock', 'AdamSession.cs', 'state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);', 'state.Profile.UnlockedWeapons.Add("wilderness_voice");'),
+    ('round_completion_uses_r01_gold', 'AdamSession.cs', 'checked(state.Profile.Gold + definition.CompletionGold)', 'checked(state.Profile.Gold + 25)'),
+    ('round_catalog_change_accepted', 'AdamSession.cs', 'run.RoundFingerprint != definition.Fingerprint', 'false'),
+    ('round_entry_stale_session_active', 'AdamSession.cs', 'run.RoundNumber == definition.Number + (run.Stage=="between_rounds" ? 1 : 0)', 'true'),
+    ('round_entry_retains_completed_world', 'AdamSession.cs', 'run.World=null;run.Drops.Clear();run.LastHitTime=-1;', 'run.Drops.Clear();run.LastHitTime=-1;'),
 ]
 
 def main():
@@ -30,12 +37,12 @@ def main():
         print('BLOCKED: .NET SDK missing', file=sys.stderr)
         return 3
     stamp=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    output = ROOT/'evidence'/('r01-mutations-'+stamp)
+    output = ROOT/'evidence'/('r02-mutations-'+stamp)
     output.mkdir(parents=True, exist_ok=False)
     results = []
     with tempfile.TemporaryDirectory(prefix='bible-survivor-mutations-') as directory:
         temp = Path(directory)
-        for name in ('src','tests'):
+        for name in ('src','tests','content','tools/BibleSurvivor.Sim'):
             shutil.copytree(ROOT/name,temp/name,ignore=shutil.ignore_patterns('bin','obj'))
         shutil.copy2(ROOT/'global.json',temp/'global.json')
         env = dict(os.environ, DOTNET_CLI_TELEMETRY_OPTOUT='1',DOTNET_GENERATE_ASPNET_CERTIFICATE='false',DOTNET_NOLOGO='1',DOTNET_CLI_HOME=str(ROOT/'.local/dotnet-home'))
