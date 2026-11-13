@@ -1,0 +1,9 @@
+<linker>
+  <!-- DataContractJsonSerializer constructs this internal dictionary adapter via reflection.
+       The iOS IL2CPP Player otherwise throws MissingMethodException on the first real save. -->
+  <assembly fullname="System.Runtime.Serialization">
+    <type fullname="System.Runtime.Serialization.CollectionDataContract/GenericDictionaryEnumerator`2" preserve="all" />
+    <!-- The reader reflects the Key/Value data members when rebuilding dictionaries. -->
+    <type fullname="System.Runtime.Serialization.KeyValue`2" preserve="all" />
+  </assembly>
+</linker>

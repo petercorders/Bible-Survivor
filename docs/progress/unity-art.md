@@ -124,3 +124,5 @@ AdamPlayTests에 digit1/2/3별 실제 InputSystem 회귀를 준비했다. 정상
 최종 native UI 후속은660 사망 포즈를 관측했지만 포커스 중단이 섞여0.75초 내 입력 차단을 정밀 측정한 것은 아니다.1100 후속은 닫힌 창 복구 조작이 Player를 재실행해 두 프로세스가 겹쳤으므로 NOT_RUN/오염으로 제외했다. 경계 해결 판정은 실제 엔진 입력/원회귀와 코드 가드를 근거로 하며 무제한 native 입력 인증을 뜻하지 않는다. 후속의 종료 상태는660 exit0, 명시1100 SIGTERM143, QA 재실행 프로세스의 exit는 미회수(null)·소멸 확인으로 기록했다. 모든 Player 소멸과 여섯 저장 존재/bytes 원복을 확인했다.
 
 Coordinator는 prepared-art 도구7개와 strict/portable checker를 다시 실행해 exit0을 확인했다. 원격 코어 CI에 도구7개 검사를 추가했으며 이는 실제 Editor 실행이 아니다. [통합 GC](../retrospectives/R01-unity-art.md)를 남기고 허용 파일만 커밋·push·해당 SHA CI 확인을 진행한다. 공개 README 화면은 시각 검토용 연출 배치로 표시했으며 자연 밀도/밸런스 결과로 쓰지 않는다.
+
+완료 커밋 `48910998158eb6e791cf48a5349bd1eac070e4ac`를 원격 작업 브랜치에서 확인했다. [코어·동기화·경계·준비 도구 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43485410634)와 [오프라인 아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43485410596)는 모두 성공했다. 실제 Unity39 EditMode/13 PlayMode·macOS 빌드는 로컬 증거이며 원격 실행 횟수로 합산하지 않는다. 이 단계는 아담 macOS 아트 통합 시제품 완료이고, 남은 기기/모바일·성능·후속 콘텐츠는 별도다.

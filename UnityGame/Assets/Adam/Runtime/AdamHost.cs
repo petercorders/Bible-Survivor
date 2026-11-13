@@ -17,6 +17,8 @@ namespace BibleSurvivor.Unity
         public AdamSession Session { get; private set; }
         public BattleWorld World { get; private set; }
         public string Error { get; private set; }
+        public bool RequiresNewerGame { get; private set; }
+        public bool HasSaveRetry => operation != null;
         public bool Paused { get; private set; } = true;
         public bool Suspended { get; private set; }
         public Vector2 Movement { get; private set; }
@@ -33,10 +35,10 @@ namespace BibleSurvivor.Unity
                 var world = session == null || !session.IsActive ? null : loaded.Run.World == null
                     ? new BattleWorld(session, catalog.Speeds, 7) : BattleWorld.Restore(session, catalog.Speeds, loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
-                operation = null; Error = null; Paused = true; Movement = Vector2.zero; sinceSave = 0;
+                operation = null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;
                 return true;
             }
-            catch (Exception e) { Error = e.Message; Paused = true; Movement = Vector2.zero; return false; }
+            catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
         }
         public void Start(string weapon)
         {
@@ -86,6 +88,13 @@ namespace BibleSurvivor.Unity
             operation = Guid.NewGuid().ToString("N");
             return RetrySave();
         }
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        static void ReportDevelopmentFailure(Exception error)
+        {
+#if !UNITY_EDITOR
+            Debug.LogException(error);
+#endif
+        }
         public bool RetrySave()
         {
             if (operation == null) return false;
@@ -93,9 +102,9 @@ namespace BibleSurvivor.Unity
             {
                 revision = store.Commit(State, revision, operation);
                 State.Revision = revision; State.LastOperationId = operation;
-                operation = null; Error = null; sinceSave = 0; return true;
+                operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0; return true;
             }
-            catch (Exception e) { Error = e.Message; Paused = true; Movement = Vector2.zero; return false; }
+            catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
         }
     }
     static class ChoiceLookup

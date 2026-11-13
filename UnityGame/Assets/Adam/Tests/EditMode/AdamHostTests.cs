@@ -46,11 +46,11 @@ public class AdamHostTests
         var store = new SaveStore(path, () => { if (fail) throw new IOException("injected replacement failure"); });
         var host = NewHost(store); host.Start("sling"); host.Tick(.1);
         var revision = store.Load().Revision;
-        fail = true; Assert.IsFalse(host.Checkpoint());
+        fail = true; Assert.IsFalse(host.Checkpoint()); Assert.IsTrue(host.HasSaveRetry); Assert.IsFalse(host.RequiresNewerGame);
         var time = host.World.SimulationTime;
         host.Tick(10); host.Choose("sling"); host.Start("bible");
         Assert.AreEqual(time, host.World.SimulationTime); Assert.AreEqual(revision, store.Load().Revision);
-        fail = false; Assert.IsTrue(host.RetrySave(), host.Error);
+        fail = false; Assert.IsTrue(host.RetrySave(), host.Error); Assert.IsFalse(host.HasSaveRetry);
         Assert.AreEqual(revision + 1, store.Load().Revision);
         Assert.IsFalse(host.RetrySave()); Assert.AreEqual(revision + 1, store.Load().Revision);
         Assert.AreEqual(time, NewHost().World.SimulationTime);
@@ -100,7 +100,7 @@ public class AdamHostTests
     [Test] public void FutureSaveIsPreservedAndBlocksStarting()
     {
         Directory.CreateDirectory(directory); File.WriteAllText(path, "{\"SchemaVersion\":999}");
-        var host = NewHost(); Assert.IsNotNull(host.Error); host.Start("bible");
+        var host = NewHost(); Assert.IsNotNull(host.Error); Assert.IsTrue(host.RequiresNewerGame); Assert.IsFalse(host.HasSaveRetry); host.Start("bible");
         Assert.AreEqual("{\"SchemaVersion\":999}", File.ReadAllText(path));
     }
     [Test] public void CorruptPrimaryRecoversValidBackup()

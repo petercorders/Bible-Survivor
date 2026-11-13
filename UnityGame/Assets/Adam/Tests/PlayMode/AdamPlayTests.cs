@@ -144,6 +144,23 @@ public class AdamPlayTests
         Assert.AreEqual(Vector2.zero, game.Host.Movement);
         Assert.LessOrEqual(game.Host.World.SimulationTime - time, .15);
     }
+    [UnityTest] public IEnumerator CancelledMovementFingerDoesNotTransferControlToAnExistingSecondFinger()
+    {
+        touchscreen=InputSystem.AddDevice<Touchscreen>();game.Host.Start("sling");yield return null;
+        var origin=new Vector2(Screen.width*.15f,Screen.height*.2f);
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=1,phase=UnityEngine.InputSystem.TouchPhase.Began,position=origin});yield return null;
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=1,phase=UnityEngine.InputSystem.TouchPhase.Moved,position=origin+Vector2.right*80});yield return null;
+        Assert.Greater(game.Host.Movement.x,0);
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=2,phase=UnityEngine.InputSystem.TouchPhase.Began,position=origin});yield return null;
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=1,phase=UnityEngine.InputSystem.TouchPhase.Canceled,position=origin+Vector2.right*80});yield return null;
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=2,phase=UnityEngine.InputSystem.TouchPhase.Moved,position=origin+Vector2.up*80});yield return null;
+        Assert.AreEqual(Vector2.zero,game.Host.Movement,"An existing other finger cannot inherit the cancelled origin");
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=2,phase=UnityEngine.InputSystem.TouchPhase.Ended,position=origin});yield return null;
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=3,phase=UnityEngine.InputSystem.TouchPhase.Began,position=origin});yield return null;
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=3,phase=UnityEngine.InputSystem.TouchPhase.Moved,position=origin+Vector2.up*80});yield return null;
+        Assert.Greater(game.Host.Movement.y,0);
+        InputSystem.QueueStateEvent(touchscreen,new TouchState{touchId=3,phase=UnityEngine.InputSystem.TouchPhase.Ended,position=origin});yield return null;
+    }
     [UnityTest] public IEnumerator OneTwoThreeChoicesAndSameFrameCommandsOnlyApplyOneUpgrade()
     {
         var passives = new[] { "scroll", "hair", "stones", "east_wind", "seal", "cloud", "thunder", "crown", "underwear", "whirlwind" };
@@ -167,6 +184,29 @@ public class AdamPlayTests
         }
     }
 #if UNITY_EDITOR
+    [UnityTest] public IEnumerator MobileScaledStartAndPauseAreClickableWithoutKeyboard()
+    {
+        var window = UnityEngine.ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game=game;window.Mobile=true;
+            window.minSize=window.maxSize=new Vector2(1206,1000);
+            window.position=new Rect(10,10,1206,1000);window.ShowUtility();window.Repaint();yield return null;
+            game.SetLifecycle(true,false);
+            System.Action<Vector2> click=point=>{
+                window.SendEvent(new Event{type=EventType.MouseDown,mousePosition=point,button=0,clickCount=1});
+                window.SendEvent(new Event{type=EventType.MouseUp,mousePosition=point,button=0,clickCount=1});
+            };
+            var start=AdamMobileLayout.StartButton(603,500,2);
+            click(start.center*2);Assert.IsNotNull(game.Host.State.Run);Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("sling"));
+            yield return null;game.SetLifecycle(true,false);
+            click(new Vector2((603-100)*2,(54+33)*2));Assert.IsTrue(game.Host.Paused);
+            var time=game.Host.World.SimulationTime;yield return null;Assert.AreEqual(time,game.Host.World.SimulationTime);
+            game.SetLifecycle(true,false);click(new Vector2(603,(250+20+33)*2));Assert.IsFalse(game.Host.Paused);
+            yield return new WaitForSecondsRealtime(.08f);Assert.Greater(game.Host.World.SimulationTime,time);
+        }
+        finally{window.Close();}
+    }
     [UnityTest] public IEnumerator SmallPauseModalPointerClickResumesBattle()
     {
         game.Host.Start("sling"); game.Host.SetPaused(true);
@@ -198,6 +238,7 @@ public class AdamPlayTests
 public class PauseModalPointerWindow : UnityEditor.EditorWindow
 {
     public AdamGame Game;
-    void OnGUI() { if (Game != null) Game.DrawGameView(new Rect(0, 0, position.width, position.height)); }
+    public bool Mobile;
+    void OnGUI() { if (Game != null) Game.DrawGameView(new Rect(0, 0, position.width, position.height), Mobile); }
 }
 #endif
