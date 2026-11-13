@@ -18,6 +18,10 @@ CASES = [
     ('weapon_kill_credit_lost', 'AdamSession.cs', 'if(damage>=enemy.Health) Kill(id); else Arena!.Hit(id,damage);', 'Arena!.Hit(id,damage);'),
     ('completion_resume_refused', 'AdamSession.cs', 'if (definition.Number != 1 || (run.Stage=="normal" ? run.RoundNumber!=1 || run.Wave==null : run.RoundNumber!=2))', 'if (definition.Number != 1 || run.RoundNumber != 1 || run.Stage != "normal" || run.Wave == null)'),
     ('stale_revision_overwrite', 'SaveState.cs', 'if (revision != expectedRevision)', 'if (false)'),
+    ('projectile_double_hit', 'BattleWorld.cs', 'if(projectile.HitIds.Contains(enemy.Key))continue;', ''),
+    ('battle_null_hit_entry', 'BattleWorld.cs', 'w.OrbitHits.Any(x=>x==null)||', ''),
+    ('stale_world_clock_saved', 'SaveState.cs', 'Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7', 'false'),
+    ('wave_null_entry_saved', 'SaveState.cs', '(Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null))', '(Run.Wave.Active==null)'),
 ]
 
 def main():

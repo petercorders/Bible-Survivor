@@ -16,9 +16,10 @@
 python3 tools/check_all.py
 python3 tools/check_mutations.py
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- bible
+bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --combat sling 7
 ```
 
-시뮬레이션은 처치를 주입해 웨이브·성장·골드·저장 규칙을 확인하는 도구입니다. 실제 전투나 Unity 실행을 대신하지 않습니다. [코어 하네스 안내](docs/harness/standalone-core.md)
+기본 명령은 처치를 주입해 규칙을 확인합니다. `--combat`은 60Hz 좌표 전투에서 적 추적·자동 공격·명중·처치·거리 회수와 중간 저장/복원을 실행합니다. 무기는 `bible`, `jawbone`, `sling`이며 마지막 숫자는 시드입니다. Unity 화면·입력·물리·기기 성능 검증은 아직 하지 않았습니다. [코어 하네스 안내](docs/harness/standalone-core.md)
 
 ## 기획 문서
 

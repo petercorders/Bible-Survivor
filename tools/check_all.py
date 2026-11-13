@@ -32,6 +32,7 @@ def main():
     ]
     for weapon in ('bible', 'jawbone', 'sling'):
         commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--',weapon])
+        commands.append(['bash','tools/dotnet.sh','run','--project','tools/BibleSurvivor.Sim','--','--combat',weapon,'7'])
     records = []
     for index, command in enumerate(commands):
         result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)

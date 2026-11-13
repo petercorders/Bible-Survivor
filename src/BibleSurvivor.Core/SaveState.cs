@@ -36,6 +36,7 @@ namespace BibleSurvivor.Core
         [DataMember] public int PendingLevels { get; set; }
         [DataMember] public int ChoiceSerial { get; set; } = 1;
         [DataMember] public List<string> Choices { get; set; } = new List<string>();
+        [DataMember(EmitDefaultValue=false)] public BattleSnapshot? World {get;set;}
     }
 
     [DataContract]
@@ -66,6 +67,18 @@ namespace BibleSurvivor.Core
                 Run.Choices == null || Run.Choices.Count > 3 || Run.Choices.Distinct().Count() != Run.Choices.Count ||
                 (Run.PendingLevels == 0) != (Run.Choices.Count == 0)) throw new InvalidDataException("Invalid pending progression");
             PermanentRules.Validate(Run.PermanentSnapshot);
+            if(Run.Wave!=null && (Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null)))
+                throw new InvalidDataException("Invalid active enemy collection");
+            Run.World?.Validate();
+            if(Run.World!=null)
+            {
+                if(Run.Wave!=null && (Run.Wave.Active==null || Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7 ||
+                    !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(Run.Wave.Active.Select(x=>x.Id).OrderBy(x=>x))))
+                    throw new InvalidDataException("World checkpoint does not match round clock or enemies");
+                if(!Run.World.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(Run.Drops.Keys.OrderBy(x=>x)) ||
+                    (Run.Stage=="between_rounds" && (Run.World.Enemies.Count!=0 || Run.World.Projectiles.Count!=0)))
+                    throw new InvalidDataException("World checkpoint does not match round lifecycle");
+            }
             try { EquipmentInventory.Restore(Run.Weapons, Run.Passives); _ = new GrowthLedger(Run.Level, Run.Experience); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid progression", error); }
             if ((Run.Stage == "normal") != (Run.Wave != null)) throw new InvalidDataException("Invalid wave lifecycle");

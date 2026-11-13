@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text.Json;
 using BibleSurvivor.Core;
 
@@ -8,6 +9,12 @@ namespace BibleSurvivor.Sim;
 
 public static class CatalogReader
 {
+    public static IReadOnlyDictionary<string,double> MonsterSpeeds(string file)
+    {
+        using var document=JsonDocument.Parse(File.ReadAllText(file));
+        return document.RootElement.GetProperty("monsters").EnumerateArray()
+            .ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x.GetProperty("speed_ratio").GetDouble());
+    }
     public static RoundDefinition Adam(string file)
     {
         using var document=JsonDocument.Parse(File.ReadAllText(file));

@@ -165,6 +165,7 @@ namespace BibleSurvivor.Core
 
         public static WaveDirector Restore(RoundDefinition definition, WaveSnapshot state)
         {
+            if(state==null) throw new ArgumentNullException(nameof(state));
             var wave = new WaveDirector(definition);
             Guard.NonNegative(state.Elapsed, nameof(state.Elapsed));
             if (state.Elapsed > 180 || state.Cursor < 0 || state.Cursor > wave.schedule.Count || state.Active == null ||
@@ -173,6 +174,7 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Invalid wave snapshot");
             foreach (var enemy in state.Active)
             {
+                if(enemy==null) throw new ArgumentException("Null active enemy");
                 if (enemy.Id <= 0 || enemy.Id > state.Cursor) throw new ArgumentException("Invalid spawned ID");
                 var planned = wave.schedule[enemy.Id - 1].Enemy;
                 if (double.IsNaN(enemy.Health) || double.IsInfinity(enemy.Health) || enemy.Health <= 0 || enemy.Health > planned.Health || enemy.MonsterId != planned.MonsterId ||

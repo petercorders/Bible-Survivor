@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace BibleSurvivor.Core
 {
-    // Engine-independent R01 state machine. Rendering, geometry, physics and input adapters are not implemented here.
+    // Engine-independent R01 rules. BattleWorld supplies coordinate combat; rendering and device input adapters remain separate.
     public sealed class AdamSession
     {
         private static readonly string[] Passives = { "scroll","hair","stones","east_wind","seal","cloud","thunder","crown","underwear","whirlwind" };
@@ -16,6 +16,8 @@ namespace BibleSurvivor.Core
         public GrowthLedger Growth { get; }
         public EquipmentInventory Inventory { get; }
         public bool IsActive => state.Run == run && run.Stage == "normal";
+        public IReadOnlyDictionary<int,int> DroppedExperience => new System.Collections.ObjectModel.ReadOnlyDictionary<int,int>(run.Drops);
+        public double CurrentHealth => state.Run == run ? run.Health : 0;
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
         public double MoveSpeedMultiplier => 1 + .05 * PermanentRules.Rank(run.PermanentSnapshot,"move") + .1 * Passive("underwear");
         public double PickupRangeMultiplier => 1 + .1 * PermanentRules.Rank(run.PermanentSnapshot,"pickup");

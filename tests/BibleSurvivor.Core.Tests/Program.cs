@@ -21,6 +21,8 @@ internal static class Program
         GrowthTests.Register(Test);
         CombatTests.Register(Test);
         SaveTests.Register(Test);
+        BattleWorldTests.Register(Test);
+        BattleSaveTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")
