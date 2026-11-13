@@ -89,3 +89,5 @@ QA 앱 terminate와 default/custom QA 기기 shutdown을 실제exit0으로 끝�
 사용자 직접 보기 요청 후 QA Simulator와 정상 앱을 다시 실행했다. 실제 표시 화면은 원본 정상 저장의 레벨업 선택이며 재개 모달이 아니다. 사용자가 플레이 중이므로 자동 GUI 입력·종료·과거 QA 저장 원복을 중단했다. 전시 인계는 ignored `evidence/mobile-ios-user-display-20261114/`에 보존한다. 검수 시점의 종료·복원 증거와 이후 사용자 플레이 상태를 구분한다.
 
 native clip 중 정밀 터치·다른 작은폰/방향·실물 멀티터치/전화/잠금/전원 손실·모바일3분 완료/보상 경계 실플레이·전체 glyph on-device·장기 성능/발열/메모리·Android는 NOT_RUN/별도 게이트다. M0/iOS Simulator 일부 PASS를 전체 모바일 지원 완료로 올리지 않는다.
+
+업로드 결과: `84ccd9190dc1cfe650b32654f8c8c797ce1e28c7`을 `feat/adam-core`에 push했다. 같은 SHA의 [코어·portable Unity CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43517303854)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43517303878)는 모두 success다. 이 원격 검사는 Editor/Simulator 실행을 대체하지 않는다.
