@@ -1,0 +1,1904 @@
+{
+  "schema_version": 2,
+  "evaluation": {
+    "items": {
+      "Compile": [
+        {
+          "path": "repo/src/BibleSurvivor.Core/AdamSession.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/BattleWorld.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Combat.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Growth.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/SaveState.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Waves.cs",
+          "metadata": {}
+        }
+      ],
+      "AdditionalFiles": [],
+      "Analyzer": [],
+      "EmbeddedResource": [],
+      "Content": [],
+      "None": [],
+      "ProjectReference": [],
+      "Reference": [],
+      "ReferencePath": [],
+      "ReferencePathWithRefAssemblies": [],
+      "EditorConfigFiles": [],
+      "GlobalAnalyzerConfigFiles": [
+        {
+          "path": "ancestor1/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor2/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor3/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/.globalconfig",
+          "metadata": {}
+        }
+      ],
+      "CustomAdditionalCompileInputs": []
+    },
+    "files_sha256": {
+      "ancestor1/.globalconfig": null,
+      "ancestor2/.globalconfig": null,
+      "ancestor3/.globalconfig": null,
+      "repo/.globalconfig": null,
+      "repo/src/.globalconfig": null,
+      "repo/src/BibleSurvivor.Core/.globalconfig": null,
+      "repo/src/BibleSurvivor.Core/AdamSession.cs": "84d4eadbfd0ffe1022494caf3976db6228887f509d2d0a5ac72de20fb97d58cf",
+      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "4614fd8d627a74944409509f550712ee81deb4feb656fef82f8a17449008f700",
+      "repo/src/BibleSurvivor.Core/Combat.cs": "f15e4bca8835cae87aea82000a1a2392ae83a8f3442b695a5b26af1bbf87e35a",
+      "repo/src/BibleSurvivor.Core/Growth.cs": "2c9c6478b63941936b255ceb9a0965600e6b298881d49b4c65057dae93bddf91",
+      "repo/src/BibleSurvivor.Core/SaveState.cs": "0bdbec1f56db16ea7f3cb008646fd56aa6f67aff17b326a2ee41391e75aaecd6",
+      "repo/src/BibleSurvivor.Core/Waves.cs": "8c0a1ec9d574da1ffc3eb14deff9c88afc68cda3610d2e05b196f8543eaeebe7"
+    },
+    "properties": {
+      "TargetFramework": "netstandard2.1",
+      "Configuration": "Release",
+      "Platform": "AnyCPU",
+      "PlatformTarget": "",
+      "DefineConstants": "TRACE;RELEASE",
+      "LangVersion": "9.0",
+      "Nullable": "enable",
+      "TreatWarningsAsErrors": "true",
+      "AllowUnsafeBlocks": "false",
+      "Optimize": "true",
+      "CheckForOverflowUnderflow": "false",
+      "Deterministic": "true",
+      "MSBuildVersion": "18.9.15",
+      "NETCoreSdkVersion": "10.0.404",
+      "MSBuildSDKsPath": "${dotnet}/sdk/10.0.404/Sdks",
+      "NuGetPackageRoot": "${nuget}/",
+      "TargetPath": "${repo}/src/BibleSurvivor.Core/bin/Release/netstandard2.1/BibleSurvivor.Core.dll"
+    },
+    "imports_sha256": {
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.android/36.1.2/WorkloadManifest.targets": "8bef6ff47a81a7145d6a5743b9b64645b6949338e092cf63f1ed75bd2a57497c",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.ios/26.0.11017/WorkloadManifest.targets": "99a2b26dfb4c898b3542b5eb862eba657b7f5eccb50644ea60ae6e1399b13e12",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.maccatalyst/26.0.11017/WorkloadManifest.targets": "ecc2c65a5435f4ae28a71cd224250dfba5d8b1cec342a24e032bbd6970cad79b",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.macos/26.0.11017/WorkloadManifest.targets": "adfac98c6e2cfd41b4eb9b4f1e076edff64b0b7b99f65b82252a432f9f7e036e",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.maui/10.0.0/WorkloadManifest.targets": "406fa2fe316cde8ce5da9878a3e68a81e33fcd194850626155f045ee18887a2b",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.tvos/26.0.11017/WorkloadManifest.targets": "b816016bda1f80d0b0e5b53f8bde074f715a99224681f33333952e2cc4f74cd2",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.emscripten.current/10.0.115/WorkloadManifest.targets": "fdb968488afb9f50e880d2a461476aaba48f0f0aefe1a4f829d96008766a22ca",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.emscripten.net6/10.0.115/WorkloadManifest.targets": "9b273ac98144ab6cf19feca2dc271a474eeab1534e39115f6496bdb4b07ffc67",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.emscripten.net7/10.0.115/WorkloadManifest.targets": "fb7d1aa700cf41cbde4864fb70aaa6d3a75eebdb0d5bf51e7c0447587f5b6b8e",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.emscripten.net8/10.0.115/WorkloadManifest.targets": "50a3cbc4713594f9d58b47fc44073f024cefdf03afd4a620f38f0a8f84a12ea6",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.emscripten.net9/10.0.115/WorkloadManifest.targets": "be057de236be34bbafa0382f3d622bc31b9e36cabeb95a7f1c178472132c59f6",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.mono.toolchain.current/10.0.115/WorkloadManifest.targets": "a21d7ac8aabdc5fe698ce886e7ef1d90b128880cb8b9bed26bea95407668e2a8",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.mono.toolchain.net6/10.0.115/WorkloadManifest.targets": "3d418368ebf2bf593fb3d6fab01fd033ad8038ea92edc13a89ef8684c3f2f0f6",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.mono.toolchain.net7/10.0.115/WorkloadManifest.targets": "e91ca1277b7930d2a15906f0c95787298cf50e9b877a786128e8337ed7451b28",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.mono.toolchain.net8/10.0.115/WorkloadManifest.targets": "c3ec35eff46045c63e1166cb10380fe1beee5e3de219d179b619268a13943ecd",
+      "dotnet/sdk-manifests/10.0.100/microsoft.net.workload.mono.toolchain.net9/10.0.115/WorkloadManifest.targets": "f4fe8a31200874a8c75e13caa173c33b10ea42a5257917db9640d9deddcc9449",
+      "dotnet/sdk/10.0.404/Containers/build/Microsoft.NET.Build.Containers.props": "ba1e06fba8d467e835c01432c670885306d724ca096c236766b19089fce2b135",
+      "dotnet/sdk/10.0.404/Containers/build/Microsoft.NET.Build.Containers.targets": "adb3452951768ef6f279fbb118d089c3d302715c4c7bcbb449785c5d11192df0",
+      "dotnet/sdk/10.0.404/Current/Microsoft.Common.props": "87a2707df41f5abbbd8ad5678715c169ba40ee7543fef4a98d7852ff17e94e48",
+      "dotnet/sdk/10.0.404/Current/Microsoft.Common.targets/ImportAfter/Microsoft.NET.Build.Extensions.targets": "b7818806a224741b051fb1395dcd6c74e436dd46a904e015fdad226dcb34713a",
+      "dotnet/sdk/10.0.404/Current/Microsoft.Common.targets/ImportAfter/Microsoft.TestPlatform.ImportAfter.targets": "756dc130cb63c753c0c3e165b6dab8f955cecb5b22e0d34d47c7ff5b726034fe",
+      "dotnet/sdk/10.0.404/Microsoft.CSharp.CurrentVersion.targets": "81b28346851f41d20d643d63ec8ab6389c285b1cb43345312f4942eaa9f6c726",
+      "dotnet/sdk/10.0.404/Microsoft.CSharp.targets": "a88a3a9671ab32ae807e8a7411d9e690a7fb57daf2b0b95d72fdf42a49f11c0e",
+      "dotnet/sdk/10.0.404/Microsoft.Common.CurrentVersion.targets": "879d9742497730b1c8bac7b90c3b14bcb3d4280a87c50b651a1c4430744207ba",
+      "dotnet/sdk/10.0.404/Microsoft.Common.targets": "e7b0bdb12309142f15fbb751b29f606977a5631097862b0d3635195d8066696a",
+      "dotnet/sdk/10.0.404/Microsoft.Managed.After.targets": "14e38f5552ac3ce43879b6612ee015f7815440a092ae875e12b13729c9860cf7",
+      "dotnet/sdk/10.0.404/Microsoft.Managed.Before.targets": "7e992ae947dc7f459c75c5b1fea3955201ad0b8ab0d27ff84caaf21dc16fa472",
+      "dotnet/sdk/10.0.404/Microsoft.NET.props": "ef88d9d0f6109495a5e1fa98b26ca0189704e16e87135ab88d4940272e19fb93",
+      "dotnet/sdk/10.0.404/Microsoft.NETCoreSdk.BundledCliTools.props": "dc531ced0614e581ebd7431f08a2bd781fca8cf57b390bd6afdfb8b46e46dc41",
+      "dotnet/sdk/10.0.404/Microsoft.NETCoreSdk.BundledMSBuildInformation.props": "7987b62e5cf1709f1318d38791fa05b9e87f9e9c4dd8d9be7333f47bfa0cef4c",
+      "dotnet/sdk/10.0.404/Microsoft.NETCoreSdk.BundledVersions.props": "5d4cb2735ad4745fa2bd25591b6de59c7670a49c1010725b1a86c32926281d63",
+      "dotnet/sdk/10.0.404/Microsoft.TestPlatform.targets": "8e7036c73aa93eef90d38969bb1309920cfe38c78db42b218f6b3fcc8313ff84",
+      "dotnet/sdk/10.0.404/Microsoft/Microsoft.NET.Build.Extensions/Microsoft.NET.Build.Extensions.targets": "a8387a9040ccbe0a74143ae5697dc9de8c1c6fe9f7ce116a14324b77309a9776",
+      "dotnet/sdk/10.0.404/NuGet.Build.Tasks.Pack.targets": "811013bb3fcb87286bf9dc941f535d5d26144757db25a2e6f5c971352d7e71c3",
+      "dotnet/sdk/10.0.404/NuGet.props": "0bd56dea541dd607af6287264e4f5aa3dd223e42d2ffcac9a5230d41bbac3d7e",
+      "dotnet/sdk/10.0.404/NuGet.targets": "ce10b22f349503468546cd445e3e0ed7637e6b759b90a225a6c96ba2759bd0fb",
+      "dotnet/sdk/10.0.404/Roslyn/Microsoft.CSharp.Core.targets": "33a63870665f8eb019f43da5effa450f6c8000089a879bc5373061e870bd3780",
+      "dotnet/sdk/10.0.404/Roslyn/Microsoft.Managed.Core.CurrentVersions.targets": "59f057b17096067a5c394ccee2a829429cd8e34f8ecfbdde7d68b01a661d90d5",
+      "dotnet/sdk/10.0.404/Roslyn/Microsoft.Managed.Core.targets": "c25bf275c966978f5a468eecbe2a09b7192f530389e52d1ea167c4f31469e09e",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.Build.Tasks.Git/build/Microsoft.Build.Tasks.Git.props": "9b7e0ede5dd02620ae41fe35f2a659c1426eb63b92fc3de80d2ad2190400de9a",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.Build.Tasks.Git/build/Microsoft.Build.Tasks.Git.targets": "7709fca99f1e00b4c4088d37bd41d81cd95811b573b8eb8df3a94a5cb87a0595",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk.WindowsDesktop/targets/Microsoft.NET.Sdk.WindowsDesktop.WPF.props": "c4e371c48ea73ec7f055919d6d13c20521aaad73df2130b1342d308d3ad4c99d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk.WindowsDesktop/targets/Microsoft.NET.Sdk.WindowsDesktop.WindowsForms.props": "7e8bc3f503cd1d0c547a9f286aca95083941eda37458467da399a6f42f6e77ec",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk.WindowsDesktop/targets/Microsoft.NET.Sdk.WindowsDesktop.props": "7f48487fb82462b5cff21891ff4ddc8d73e304b01717b98396af2b7e22765543",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk.WindowsDesktop/targets/System.Windows.Forms.Analyzers.props": "0309171d90b9bc226ec0db60625b0222d279a8eceaed03be557a3ef4e3a99b11",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/Sdk/Sdk.props": "41dc552e294cd1f0c6e640c302c112b0788fa8776ecac73e7fa013382a3bf713",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/Sdk/Sdk.targets": "435487667eff98890768f67c154fa1d51fb1e47df5d45a50442d978231601a98",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/Sdk/UseArtifactsOutputPath.props": "641c488d3f6fdca384ff00692271817ea47a5be386369615fc30d8bbb65df063",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/analyzers/build/Microsoft.CodeAnalysis.NetAnalyzers.props": "a06f44fc5a2dba7769c946437ea59905332b4428f49f4af35ab3293773a3057d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/codestyle/cs/build/Microsoft.CodeAnalysis.CSharp.CodeStyle.targets": "9793c0c6d35bcc41564ec7999df58c2690639cbf4a8ee7dfc7d57944bcf11c75",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ApiCompat.Common.targets": "2b7f80e3a32595da852e5cb14da532f7b477e643675567c477918c7ff888f0c9",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ApiCompat.ValidatePackage.targets": "78bb5f21044cbde721fb8793e2c9a31d85ae20dfd441b056fdb024f742a5d683",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ApiCompat.targets": "3bca80662b9ccd999001dc03e1231954fa5245f3225356cea2ca43d74d1e795d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.AspireWorkloadDeprecation.targets": "798c0afd43ed5827ce4cab371ccfca636e71cd562f7dcdb8ab83c6e9b7162c10",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ComposeStore.targets": "16c102bf01b63fd8fa228dc6dbc7b9c3970f51edd3b54cc92f779453a0109e39",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ConflictResolution.targets": "040a6500989718c91615eff7857ad1cb6d3fe7c28813a7d73959d0408b228293",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.CrossGen.targets": "45abcf0b2f74be686ed1d9096df3b9a52b68fc3a8962827b55e642ac5aa1a993",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DefaultArtifactsPath.props": "82e516bbd6189617c23d3288b3012a9dea0163f5da750a32dbde20279a716e0e",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DefaultAssemblyInfo.targets": "1fde10e25a61a9f66d6e12616bb79c2eb878657bccfcff2a74d9155c345a0440",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DefaultOutputPaths.targets": "c6d64abd6d24a6a67fb307de15da8c58352b55dd092ea9203e56c858cf3cba4a",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DefaultPackageConflictOverrides.targets": "81aebde1b2108609a0e0500c95645ab5bba23e9c47b53852a949e11e98fb680d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DesignerSupport.targets": "95cb9c7a8dd56a4e40d5806438e56ce0c0f383f2837d57d4c38d904f208f47d2",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.DisableStandardFrameworkResolution.targets": "0fdd515e0e53002ac8c6d112c7eaadc4cbb79d9a2c8176b1190f41492966f5a9",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.EolTargetFrameworks.targets": "743f90acdf2f3744d4d208cc620cf9120ac3a191e19f0c4f502fcf0235788712",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.GenerateAssemblyInfo.targets": "aed5db2d53cb2517edb7cae09dfd543b177ae733d5331536bd044d772bad18e8",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.GenerateGlobalUsings.targets": "ecde6efe033ff19f05aeaedef96a1e34ee7595c48c68b4bf9299fedb413049bb",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.GenerateSupportedRuntime.targets": "abfb2a1102797342aafbe019f1a6b36c2d789a98f9c642bc89416a9c72160c06",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.NuGetOfflineCache.targets": "9f30b51d8a0ebbee598e96c869ae29f7fd8b4d3b66b0ad6a98ad2bbe7893013b",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.ObsoleteReferences.targets": "39edebe465572be739491bc8d9cedd451cdf84a7db7cba44426ecbfc168c1942",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.PackProjectTool.props": "42d6f1d2cdb89520f877fcacf3dfc4217b2aa21ec61f4e50d0452d79eb210160",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.PackProjectTool.targets": "3f093f2c6aff089aade8ca40d82cbe92536be5f68a42d0fc7760b28ce496d1d0",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.PackTool.props": "84f074cc1dda8b50dc79ff191c92f16587e3c0351c23b084383483eac642fb77",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.PreserveCompilationContext.targets": "69575430fa6bc797d299dfbcff7321f471fba1af33a8dfe19b0c80bae0e10459",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Publish.targets": "ea5fe130702f2fc8a4a8cceb81c42d72ceeddb800f615934ee25eedbf7d0bbac",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.RuntimeIdentifierInference.targets": "7a54e00724d8afe42e72482878de7b152369441e76eac7c543b35e83aa11ce09",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.Analyzers.targets": "d5442ad54dbc954440fb344eceb5ae8b3c61cf76971c1b6943e14befcd00098e",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.BeforeCommon.targets": "7889dcdd9b667f93a1fa70a99c37117a4a032995687a7faea1f89efacf63442a",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.CSharp.props": "f87d2992560b148e39c472da8ffb352d979bdafd6d2e7ee05aed842ad3d3e53c",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.CSharp.targets": "76590c9893d1d056a1b24d2ce46b8c653a6ad18bbfc262ce8c2f8db6f18ef88f",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.Common.targets": "70346b311ad470b605689362a10c0f3b2294e99492376ce827a5bb261214fcac",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.DefaultItems.Shared.targets": "6f743d1cf32799d46e6e1c001f4066e934c51d72e78e95a421870a6f9d97a7ba",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.DefaultItems.props": "c83ac956024f908121d1302addf6859b55acf766bcef63f8d8ab49144d020af0",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.DefaultItems.targets": "dbe0853385907c883af2e4ce401f71822666fdc0525a48376aaf7a99a8e9d3ec",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.FrameworkReferenceResolution.targets": "ffd9fabffb90c1a1827ed5523656153f1cd4075a25abf8b55c72da09f013aa13",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.ImportPublishProfile.targets": "a691ac127e3f048d116f0088908caa4a7b413e7580a1e8e283a3889885d4b2b1",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.ImportWorkloads.props": "752fbaf9e95210dd420c20cc620982e318c491cc4677652342bc4a3f6705e8d0",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.ImportWorkloads.targets": "2deb7485b3183b6e47d0010ab95cbe24dffe444c2667fed427b93c0e7876881c",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.Shared.targets": "116bb1116af0c844ac3e75abf93d06889ad411837fc65424695417090f835d34",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.SourceLink.props": "beb81779fada920f819b75c749e3f7433f83a382bb07f8d7d39f72ecda588815",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.SourceLink.targets": "0a7da1dd76b9a8b851b783eda60b622de89d95711507a8a5fca24c9b4159a6b4",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.props": "211a5f89b3eb6076516cee71001baad4d822ab8e4143c1d656db278c7977f356",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Sdk.targets": "7958c0c5010ec8d9092c079ccafac6eb7289db34829b6e2a33ba6eaefaaaa770",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.SupportedPlatforms.props": "34408c2759a463aee4df6ef3e689765c2ea263f04d0a52dc05db3a780fe35022",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.SupportedTargetFrameworks.props": "ab6670d9b270238ad50cb624add948f49627801fcd531bfaec1ce71aad6f4a25",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.TargetFrameworkInference.targets": "6c0f262cf3a0d3bad3293adbfbddf21994fd590348b2d886e1b2f55e5e1c4f8d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Windows.props": "2c0d3ac867ba958ce316a9b554c74d74828007c1f065019cccddd573b70854b9",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.Windows.targets": "0bfd8bc65067855214861184f670b4d0f3fd177ebccdf79c1292ee261a8fb886",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.NET.WindowsSdkSupportedTargetPlatforms.props": "9df5347692908a2624b0d19459d143f27f5abe71d22557470d83f2ba01979fe2",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.NET.Sdk/targets/Microsoft.PackageDependencyResolution.targets": "825da447fff4e47d196b41bea5c2453178d5db4ad06f526d9fd671feab4134d8",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.AzureRepos.Git/build/Microsoft.SourceLink.AzureRepos.Git.props": "0b82000b2258cd1b85346d8642dba49f268947c2f6b31231485ba009b2400f9d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.AzureRepos.Git/build/Microsoft.SourceLink.AzureRepos.Git.targets": "b2290b8ea7eda548da38278cb8db64a284b5fb3a8f0ff2fc3dc75eb64a13d148",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.Bitbucket.Git/build/Microsoft.SourceLink.Bitbucket.Git.props": "1e7407b6e5dd178d1c7978c9d9b1d0fad12f321736b8238cdbfcb855ba6fb0b0",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.Bitbucket.Git/build/Microsoft.SourceLink.Bitbucket.Git.targets": "01a642658ee0dc4be94d72887418947fbb7b0052c6a31b481e54222095116c8b",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.Common/build/InitializeSourceControlInformation.targets": "05e6e19f639b3466884e451b22884aa52f68d3a6a9b4c7720a44410f031bb568",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.Common/build/Microsoft.SourceLink.Common.props": "bc5e99f15cb4f9f9817c9bdb793b9120cd31320da5655e3a1fbc49556ae92374",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.Common/build/Microsoft.SourceLink.Common.targets": "076dda9413fd4cc5bfbf049c571314374af267d6d6ee8b5e71fb6fc56e46e3ee",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitHub/build/Microsoft.SourceLink.GitHub.props": "dfcc2b56c74e971cd3acda711227c8f5e96e9a3d7490694173781d5a23a9bf27",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitHub/build/Microsoft.SourceLink.GitHub.targets": "059107ba3e4670028b0c038b19c606f3ae9d26d007b3939c54441def8a946984",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.props": "30c2b92c9dd157d211238bf502802e6a8c55dac1eab0125f1e006d456a9eb75d",
+      "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.targets": "c708182482beb469a330d5865068e9af779a2a600547ae277983d2dadc37da31",
+      "repo/src/BibleSurvivor.Core/BibleSurvivor.Core.csproj": "09bdf66ed53dab851a847ac8713ccab1ba05fec4eb2423d922d5c34567b8756f",
+      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.props": "0238df1c82a3f04c94133fcaa397416f6e34d6f5d806034d92279e0e0d54119b",
+      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.targets": "b14461e0cb1be3f77fcf9fe2fdd62889325ca92523d0f606980ed59eb5c4aa1c"
+    },
+    "config_sha256": {
+      "repo/global.json": "1e11a016899ad0b6fde981def6e894fb0fba53cb00a837da1514b634126eed9a"
+    },
+    "preprocessed_sha256": "23db6b4d1632f70a5896c08094f9212fd17ebf4df07323d267e447f0dc0214fe"
+  },
+  "build": {
+    "items": {
+      "Compile": [
+        {
+          "path": "repo/src/BibleSurvivor.Core/AdamSession.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/BattleWorld.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Combat.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Growth.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/SaveState.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/Waves.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/.NETStandard,Version=v2.1.AssemblyAttributes.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs",
+          "metadata": {}
+        }
+      ],
+      "AdditionalFiles": [],
+      "Analyzer": [],
+      "EmbeddedResource": [],
+      "Content": [],
+      "None": [],
+      "ProjectReference": [],
+      "Reference": [
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/Microsoft.Win32.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.AppContext.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Buffers.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Concurrent.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.NonGeneric.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Specialized.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Composition.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.EventBasedAsync.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.TypeConverter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Console.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Core.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.Common.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Contracts.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Debug.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.FileVersionInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Process.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.StackTrace.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TextWriterTraceListener.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tools.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TraceSource.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tracing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Dynamic.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Calendars.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.ZipFile.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.DriveInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Watcher.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.IsolatedStorage.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.MemoryMappedFiles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Pipes.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.UnmanagedMemoryStream.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Expressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Queryable.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Memory.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Http.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NameResolution.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NetworkInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Ping.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Requests.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Security.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Sockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebHeaderCollection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.Client.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.Vectors.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ObjectModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.DispatchProxy.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.ILGeneration.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.Lightweight.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Reader.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.ResourceManager.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Writer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.CompilerServices.VisualC.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Handles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.RuntimeInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Formatters.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Json.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Claims.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Algorithms.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Csp.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.X509Certificates.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Principal.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.SecureString.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ServiceModel.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.RegularExpressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Overlapped.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Thread.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.ThreadPool.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Timer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Transactions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ValueTuple.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Windows.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.ReaderWriter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlSerializer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/mscorlib.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/netstandard.dll",
+          "metadata": {}
+        }
+      ],
+      "ReferencePath": [
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/Microsoft.Win32.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.AppContext.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Buffers.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Concurrent.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.NonGeneric.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Specialized.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Composition.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.EventBasedAsync.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.TypeConverter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Console.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Core.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.Common.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Contracts.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Debug.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.FileVersionInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Process.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.StackTrace.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TextWriterTraceListener.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tools.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TraceSource.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tracing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Dynamic.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Calendars.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.ZipFile.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.DriveInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Watcher.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.IsolatedStorage.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.MemoryMappedFiles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Pipes.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.UnmanagedMemoryStream.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Expressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Queryable.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Memory.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Http.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NameResolution.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NetworkInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Ping.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Requests.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Security.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Sockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebHeaderCollection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.Client.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.Vectors.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ObjectModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.DispatchProxy.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.ILGeneration.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.Lightweight.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Reader.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.ResourceManager.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Writer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.CompilerServices.VisualC.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Handles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.RuntimeInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Formatters.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Json.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Claims.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Algorithms.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Csp.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.X509Certificates.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Principal.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.SecureString.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ServiceModel.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.RegularExpressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Overlapped.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Thread.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.ThreadPool.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Timer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Transactions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ValueTuple.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Windows.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.ReaderWriter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlSerializer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/mscorlib.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/netstandard.dll",
+          "metadata": {}
+        }
+      ],
+      "ReferencePathWithRefAssemblies": [
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/Microsoft.Win32.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.AppContext.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Buffers.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Concurrent.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.NonGeneric.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Specialized.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Composition.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.EventBasedAsync.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.TypeConverter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Console.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Core.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.Common.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Contracts.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Debug.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.FileVersionInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Process.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.StackTrace.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TextWriterTraceListener.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tools.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TraceSource.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tracing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Dynamic.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Calendars.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.ZipFile.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.DriveInfo.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Watcher.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.IsolatedStorage.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.MemoryMappedFiles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Pipes.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.UnmanagedMemoryStream.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Expressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Queryable.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Memory.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Http.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NameResolution.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NetworkInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Ping.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Requests.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Security.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Sockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebHeaderCollection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.Client.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.Vectors.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ObjectModel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.DispatchProxy.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.ILGeneration.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.Lightweight.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Reader.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.ResourceManager.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Writer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.CompilerServices.VisualC.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Handles.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.RuntimeInformation.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Numerics.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Formatters.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Json.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Claims.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Algorithms.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Csp.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Primitives.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.X509Certificates.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Principal.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.SecureString.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ServiceModel.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.RegularExpressions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Overlapped.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Extensions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Parallel.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Thread.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.ThreadPool.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Timer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Transactions.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ValueTuple.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Web.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Windows.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Linq.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.ReaderWriter.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Serialization.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.XDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlDocument.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlSerializer.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/mscorlib.dll",
+          "metadata": {}
+        },
+        {
+          "path": "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/netstandard.dll",
+          "metadata": {}
+        }
+      ],
+      "EditorConfigFiles": [
+        {
+          "path": "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig",
+          "metadata": {}
+        }
+      ],
+      "GlobalAnalyzerConfigFiles": [
+        {
+          "path": "ancestor1/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor2/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor3/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/.globalconfig",
+          "metadata": {}
+        }
+      ],
+      "CustomAdditionalCompileInputs": [
+        {
+          "path": "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache",
+          "metadata": {}
+        }
+      ]
+    },
+    "files_sha256": {
+      "ancestor1/.globalconfig": null,
+      "ancestor2/.globalconfig": null,
+      "ancestor3/.globalconfig": null,
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/Microsoft.Win32.Primitives.dll": "2522cb85ef5379a4f716a035e11549b6814f4d426e758649250738358a71c85f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.AppContext.dll": "643ec79d998df16995c4270bf2dc8ba881796179c03fa55d343ee9c43ba074d7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Buffers.dll": "d0648fc3d820c8b225fe991d55d506f3210b698cc02beaf8aa31d990cd990772",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Concurrent.dll": "c882ff60ae9e26a23d149a11aa8bcc546652e1bd2b58656a7c3b11a8f5e227a7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.NonGeneric.dll": "17221b8767355654f5c97b53a4fd8dd413f95e2faf36dd2d28ea863ca7536f4a",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.Specialized.dll": "9572743bf2fa4fd7a5c5e8d2c8a9b44424f38ff67042c833789282dbe241cb88",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Collections.dll": "969da19309c9d0aa44d4ab9c03ad9f85a614fe0c285eaa68ee0bb5dc4dc6e47a",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Composition.dll": "3d9e953036e19ba57ee12c1148a35e067442063c86ad9d40ff393fb289421914",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.EventBasedAsync.dll": "04a7ea907580d9d41ca1d8d67abfe81d61af8fc59125e1383a9502bfd4f9134f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.Primitives.dll": "6522dfefdddfbf58ccc4f3ba6f41121e16ee5b20dd8f325c6983b4ac8c3befd8",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.TypeConverter.dll": "399642afed43a9c150650eeb37cd407c2d14ab005e58d6f2784b726e0be72f53",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ComponentModel.dll": "a488ab63c97df6d45f8dc01ecdd56c4ece383fc88231869caca1a74c29ee1c12",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Console.dll": "98b2c46fda1c10418cddd36e3950058a7d188a48c482074ec77c3daca1dbad04",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Core.dll": "83c8c06c5e59955aad7ef4acc13b63d702764f5b4e20cefb3a431cb2f75a12ed",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.Common.dll": "cfbbe345a3af5c2820492779ce4c9e1d9c7e4c9e714f222a15ab524cf827af52",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Data.dll": "722b754ca36e903c69519e8906ebc0f96f14525d847f73f3b5f2ac765499715b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Contracts.dll": "250ba880b970a355cf626e7ad60f736aab379c7ba06f68ffdebb6f2b852c25cb",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Debug.dll": "3964a2da6b23e89d076faf6a91cf8b2fe6d196d4dea2f954e0c5e1f570ef85b1",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.FileVersionInfo.dll": "3f6ce9c7991ab252c5c704ff91e1c99d21b5fe99937d27132b3b56f8b981a045",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Process.dll": "29f7e89a609dcbcec72a4adf094a458718b23940721cebae0440ad7a0f522921",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.StackTrace.dll": "2b91c8a72755071086c0fe4ab8019480eeabf9ae5243cbf58942761abd1013a5",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TextWriterTraceListener.dll": "d85c7a6c1d9e848b69aa5a8ffb4a9755e8d84fc957ae9c455ead30fd8b688869",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tools.dll": "25d1dec703daa1e68dea27c6f85f4a0c55d24a56d1c597388c6c596e0ff9f856",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.TraceSource.dll": "10ae31d5bdd373bbca96dc83cad65a32d1e788d8f95fb1555b371026025b2643",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Diagnostics.Tracing.dll": "469d5ab04348ab7db62f71d757586e46692695b5c4604a26a01899baceb4b47d",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.Primitives.dll": "da2afcd4237dc4f8e14f66bd9d2983143881e97c3f3c1738620438df94d030e4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Drawing.dll": "c9a3ea4bcb020c63a986fd72a31ce997e62a5f8d04460a32548e6fa31ae8f910",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Dynamic.Runtime.dll": "f34cb31b138244d902cc4220500a60a7ffe6e5cf0874f48678145aa2f42318ea",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Calendars.dll": "03d14391a91d831f15050cd6255cd1097f546760b46f9fd2c0479069735d264b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.Extensions.dll": "744c044a966cde69a0362d7f7eadba7f4b89e28c95cb47ab6022740d381969c0",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Globalization.dll": "a8bb8be1079c4220b202bc873b7ffe39a2e306cd5280843ad5c1aed8376db2d3",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.FileSystem.dll": "2511e6d2df543140d45bf45d8df2cb34b8590db5193157e970021136c20173d6",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.ZipFile.dll": "f721f7c90e0e1a8b04a62ce570eb7f7c238db9136ac213a6c04970e94a737e82",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Compression.dll": "dd36080142c15c7cf005e78e3237cd85a6d9e241b979072c0b82e0a40f6848b3",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.DriveInfo.dll": "25e4ed8748fdbd9cf2fd77014d087ed9ed24dbde2e694e966a68a9d72371f51d",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Primitives.dll": "4e96df37c5713fb21e30c767aa216e1f10878f30e4a89c6d7657b86637a62647",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.Watcher.dll": "c75a0339b10aedcddff7c3acc85f23bfc95c63244abc7edbaec8606b426a6556",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.FileSystem.dll": "3e6b283d0ad07f2d3e33eb1588e0279f52e684d638fe3dcfa6441deefe799c13",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.IsolatedStorage.dll": "7b514b9dfd4ad5b514b54aa9a12f4a9cd02de97a724b21ecaefdd97c2f94b31f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.MemoryMappedFiles.dll": "a7bcea398169e5f8b7bf01ce75d23065590db0d1a62e67df6a5b0894236e46b1",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.Pipes.dll": "c988c381f5ed6e2e8ff84a85f71e859f47c19ac149c8ee8230dc3c315100cad4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.UnmanagedMemoryStream.dll": "52df0618cf4bc35ac97150c1a999220b5e6107b7272042cdd49e2adbc41e8adf",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.IO.dll": "855c8b76c1dd99ecd97f079b073eff83292b1ff90b9c5426cbe36b76c39a34d1",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Expressions.dll": "1a9d4766cc13b2e27d6295d707c3af5d57f11d63f4cb4a9ffd47d9917edacd7c",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Parallel.dll": "f6d2eba7f641721e3a41ee29000430659f0f987ec1b33fc467f715c9d186e58c",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.Queryable.dll": "6c5b11651156aedfbacacadfbe4a388062cbae74a2a43004b590990a0b941a26",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Linq.dll": "0f94f7b2e726b32509e628a8514c6ce5ae903d07c99f99a61933289f13756ca4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Memory.dll": "34abf197fbf191fb83e983571a6f3a6fc460fa80f32038c94d54e96966678f88",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Http.dll": "bba894cb713ef6a2f48776240ee55122c38839af88c72742294b4583f8d2a66e",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NameResolution.dll": "2308c9e1f674c3b854320507d41ba633802c8db7d10ec8dbb3ef9d86acca44fe",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.NetworkInformation.dll": "8fb1051323d2fc34c59f8aeaa3f17cd37907eeaf7d0c274323b12b14aa7027e9",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Ping.dll": "a17b78f469c6622970d1eb6ee5105220235c70d2908c856de6742797c7d82c32",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Primitives.dll": "0a3b1ad27d640a56a55ca750861768271edd211ca1c494ae36b5184ab8e26780",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Requests.dll": "5f2a63d0ec2fd4ccc45ca2ba3dcfd7a4cf72931e97fd41bd36f00ca2f18dab06",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Security.dll": "ca922585b98ea8bc9b2c684dc11cf0a0946211cecec6b3f59c9c9b784a41ba56",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.Sockets.dll": "cb5996625a8ae3b82a2e06d8b27b00e6a4ad480b6dde96492e1a245583275d68",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebHeaderCollection.dll": "edfc6c63a5f6374134bc9b25349978acbc4c2b02ae7de2fe7935e898044e6ff7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.Client.dll": "c212a3431d18b2c678daeb0d1c0a839ea0eb02fb2029ecda32b09e00aed00aa5",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.WebSockets.dll": "538827c5993417c9aba603171200b0f6f096f399e6e7178cf2028735f1b909d7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Net.dll": "b99d8f30be2f3ef351b7e00b6cd6b4c09826dfc3ba334999cfbc2899d87204e8",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.Vectors.dll": "4c6ba8896ea9d26ff732d5afaccb3b13ffa4097799b10b3260bf7f64bc8b09c1",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Numerics.dll": "ff69f92af7abae62302e0b29e7562d3f7392bc11d95d75e587b4ca6f1ceb8cbe",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ObjectModel.dll": "a5d377dbf15d2abe6b00a65ae81766b237354738b275c7a0e2d9466f093cbc20",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.DispatchProxy.dll": "69833afb991f90cf22590b9de9aa95ac3aae9bed2b186321ff73fa5790efe08f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.ILGeneration.dll": "125c6aaab34dec8c7799fc99074ab01a42f67e549187f50cad9da2184bd35d32",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.Lightweight.dll": "5e24ed2d22416fca721f54243e4cbc693e6f293904660947067ba1c0288e79fe",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Emit.dll": "b42bfcd22d815a9ab3d2b2e8a425ecc91e50a6e2aa7e3c5cfa2d5b9b9e127c92",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Extensions.dll": "59ec997a2dd047441fbf886691dffe2fe9eff0e549dd5d6241400aa2241c7c23",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.Primitives.dll": "ebfd6f084c8741e359358711ae6da4b0a06db2369be8c9defb4d6eb17bc8ee14",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Reflection.dll": "00d69622de91ce2e2aeee6c1215debaa721a120d8f59b08e7f4a70796ecf9b3f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Reader.dll": "f73fa653ba6ceb7e7c1d5eeb82d09c77d4101424422ec74f7313a7845cc882c6",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.ResourceManager.dll": "99ed45baff87bd6723ef8dac8d04d21075627141f7525a1ace95ba1dcba9a964",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Resources.Writer.dll": "49e3aaa0b5e6d87c3f1d038877063582811f78ae4fb6d6a8f2cb8920f3782d26",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.CompilerServices.VisualC.dll": "a75c6fa50f10ad888663ab694ca2cb45b8379070065e9d558d4c19086be9f28b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Extensions.dll": "3cb31bf3acb245a0e409b2e6160e8dfbbe7c26fbd9eeabcc8bf2bb81535cbab9",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Handles.dll": "aa5fc7ca286d170bfe32dd15663d508bb94e297a52797984a9aa7d8ffddf5ec5",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.RuntimeInformation.dll": "1ae138913f54d55cea0f40807ee363fdd1ceaf2037f4a029c1d2aca445146183",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.InteropServices.dll": "7e97622025bcbda146408eecbb750345bd373ab9454fb118f11377f215f56400",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Numerics.dll": "e0727d00a0dda8280716df9a2019d4e53cf3da0b6339b1ad4d407ba2dd3396fd",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Formatters.dll": "54c2621c4476473fe95be77a8c91a153c63d6d0cf4912683f6dbc98aae0db85a",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Json.dll": "8c50999e83e5ef46a479498e2010425283b04eb674cf6e9a691f6e1ea39e3b47",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Primitives.dll": "f35293ebdd0b318f02341da4bc7bb236cf0c8e14e1c7ec8e3cba9cc4db2d2aee",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.Xml.dll": "baac69344e578e064dcc277d93bbe1082a72e5d0c21f04b137a3c343c75ef405",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.Serialization.dll": "618f378d908436c7e143ec0ffe95ea791431a728a29815eaa1618ec5906aa05f",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Runtime.dll": "81be9e3c2938390b15445969128e65e5ff14b80193fc531bce4e9e28a368273a",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Claims.dll": "ea04a2840cede1e5ee2281442540f5df410c562cf5943277ab938abf30b386e8",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Algorithms.dll": "39bd261f8befb2334ab3e720c312ead1d584408c29717f8b439371491d0946ae",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Csp.dll": "30f289b46935daa1770373812ac97fe2a3d14806051ba28f900cd305967a0ef9",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Encoding.dll": "2327c771b6f00d194816c7e142ba054b8ee120018295c2d61289dfbf822fbbf7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.Primitives.dll": "4ce2892fa454e46f7d99411caab18db1595bb3650f8fcbe303851731d889f4cd",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Cryptography.X509Certificates.dll": "af66cdf9b9e2ee26174a56aae0bee557edd9a7a61b27a4b99509b338cf68c4b4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.Principal.dll": "f7edd00a5f69766356638b9c8692fa7d8ad2465239c5aeb14d9f071f3832a64b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Security.SecureString.dll": "fd85a43436a9ed3667df457c6a92721052c29405eba2232b867d3797ca72cb8b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ServiceModel.Web.dll": "ef71e6e462f783e8a9ae8d019c7c737256b3d1593659e9831583af4c1b3747e9",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.Extensions.dll": "7d88331223deb5e7226b56fe02a2967c8770b7120d3f23a043192a2396d207d3",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.Encoding.dll": "968665d2b5b1d7a2786b8e35d9df599ac40d45aedc86b3a2ea21ad35bf02f071",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Text.RegularExpressions.dll": "d8839d80664bcaffafada263aded6bda805885fc8c1af0a38eb784f8786a3d2e",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Overlapped.dll": "fb48baf7cb0693c44e907b89a8c792cb4b90de258cd9735bef67d9b4dd85e2f1",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Extensions.dll": "a159ada6a533b86727178129915d53c9c7554b0e55e117fce27b8661f8366f62",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.Parallel.dll": "69efa79ae26cc823964170b3a23f69c8c2346206f3c2670d8d07f60cd4c19a94",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Tasks.dll": "30984a07e22928be7fbea6fc3518ef0171537652402d5622497f8dd5afcb16f4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Thread.dll": "6822f2724465e7c973ae1f2d5a2e7a5755a816b6847498a855fe9c8d0ed69a0b",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.ThreadPool.dll": "cdb2e88636ec5e827305d93e008e69cd205675fed0e19115a03288624769e853",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.Timer.dll": "e9aa691cef3ec721b26e7d0efc1a960ec7fc5661eb1921e06a0ff0afb52f41b9",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Threading.dll": "23c49cba7193aa07fea9c840254433461601ad3b7e9d77d97c889a8b671dee62",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Transactions.dll": "a518484c7988530007547406cc8d14b1cde92fc26f373d49ea155cab472a6131",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.ValueTuple.dll": "1b0ee8e45405c0b4917327b1e44454ffffc63750b7df479a7f6ffbda2a1f92a2",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Web.dll": "2c1b3298574d95c3232a45a073d39dae0908e89dacfbfb42e4f44ebf06368fe4",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Windows.dll": "a1bc4b5483e459783cde59c72f9213d13136695ebbba1b9e6093d50d675d741d",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Linq.dll": "9649dcf62b2882648a5b5de48b931b8c7080da8e8a96fc853e87801fae8d892d",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.ReaderWriter.dll": "ae8db24c60c075fc0cd7c30e9aecc7f7de52fa05048d1d09e3ee35653f4c54d5",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.Serialization.dll": "41738a9f79bbe5dfcf9b5d75960caa091d5b4a7cd276e7176c9d03df260737e7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XDocument.dll": "729c42931e8812e1a993727a0f32c832ebfc3abac2223a5a30c2a8ac1cc9964d",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.XDocument.dll": "857621dc44cff6ac7388d828a5a083d99f149901f2bec74993d87ef3cd541b35",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XPath.dll": "ddcb1eb78a567a323b47dc18a9dd63c066000e3cdbb90a4559607dae69ab4be0",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlDocument.dll": "e683ff6c95f117954a616d304f3b89cb273e8b00b42efef7fe99a48713800645",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.XmlSerializer.dll": "6650b822e73bc40af1f242a6d96c2f25397189b8fa778d22ac6a8c5fa2ea58f7",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Xml.dll": "1191d6b547783fb32061de561a9379fbe7c788518510cc22c71d3c4646dd65f5",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.dll": "2886c15559ef9f2f2c06389d204176ef86f74344416e680d450ac210d40656aa",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/mscorlib.dll": "fb7ac3d0534282d14c3256e66f8d273ea016055ea1307c0f70021e7a236d6c33",
+      "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/netstandard.dll": "79a49049c360a3ff282e747c311fcd567834efde564a96689872564164756e84",
+      "repo/.globalconfig": null,
+      "repo/src/.globalconfig": null,
+      "repo/src/BibleSurvivor.Core/.globalconfig": null,
+      "repo/src/BibleSurvivor.Core/AdamSession.cs": "84d4eadbfd0ffe1022494caf3976db6228887f509d2d0a5ac72de20fb97d58cf",
+      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "4614fd8d627a74944409509f550712ee81deb4feb656fef82f8a17449008f700",
+      "repo/src/BibleSurvivor.Core/Combat.cs": "f15e4bca8835cae87aea82000a1a2392ae83a8f3442b695a5b26af1bbf87e35a",
+      "repo/src/BibleSurvivor.Core/Growth.cs": "2c9c6478b63941936b255ceb9a0965600e6b298881d49b4c65057dae93bddf91",
+      "repo/src/BibleSurvivor.Core/SaveState.cs": "0bdbec1f56db16ea7f3cb008646fd56aa6f67aff17b326a2ee41391e75aaecd6",
+      "repo/src/BibleSurvivor.Core/Waves.cs": "8c0a1ec9d574da1ffc3eb14deff9c88afc68cda3610d2e05b196f8543eaeebe7",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/.NETStandard,Version=v2.1.AssemblyAttributes.cs": "df351ab8cda38d16370d8aa74d934a81faf0e44ecc9a079bb1c5cc7a1f1575af",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "1bdbdf4ea5064afb9bcd2347283276346deb1bbffa6207bef1eacd70131b5a04",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "beec47193358edbf74af3fbb9c7284860c124b00051af63e4cab4e951b22814f",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "2a0ca3009d76a609a56eb4f9d4a54b3b7577637e44a60744cba4724ab39a83d7"
+    }
+  },
+  "dll_sha256": "70de759cb448a6f94368de5b591d64923391d4f90986825bc548aae48b1fd865",
+  "catalog_sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+  "method": "Release Rebuild; evaluated item/import/property set + post-build compiler/reference/generated inputs"
+}

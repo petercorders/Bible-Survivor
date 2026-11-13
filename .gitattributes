@@ -1,0 +1,6 @@
+# Unity writes a space after empty YAML values when serializing these files.
+# Preserve generated text and GUIDs; keep ordinary source whitespace checks active.
+UnityGame/**/*.meta whitespace=-blank-at-eol
+UnityGame/**/*.asset whitespace=-blank-at-eol
+UnityGame/**/*.unity whitespace=-blank-at-eol
+UnityGame/**/*.scenetemplate whitespace=-blank-at-eol

@@ -1,0 +1,15 @@
+{
+  "name": "Adam.PlayMode",
+  "references": [
+    "Adam.Unity",
+    "Unity.InputSystem"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "BibleSurvivor.Core.dll"
+  ]
+}

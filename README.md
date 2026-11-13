@@ -8,6 +8,8 @@
 
 [R01 구현·검증 상태](docs/progress/R01.md) · [R02 구현·검증 상태](docs/progress/R02.md) · [개발 계획](docs/genesis-development-plan.md) · [모바일 고려 사항](docs/mobile-platform-plan.md)
 
+`UnityGame/`은 Unity 6000.6.9f1용 아담 시제품입니다. 프로젝트에서 `Assets/Scenes/Adam.unity`를 열어 실행합니다. 현재 임시 도형을 사용하며, 최종 아트는 독립 QA 후 적용합니다. [Unity 실행·시험·한계](docs/progress/unity-adam.md)에 실제 결과를 구분해 기록합니다. Core를 변경하면 `python3 tools/unity_sync_core.py`로 동기화한 뒤 Unity 컴파일과 관련 시험을 다시 실행해야 합니다.
+
 ## 코어 검사 실행
 
 .NET SDK 10.0.404와 Python 3를 준비한 환경에서:
@@ -21,7 +23,7 @@ bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series sling
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series-combat sling 7
 ```
 
-기본 명령은 처치를 주입해 규칙을 확인합니다. `--combat`은 60Hz 좌표 전투에서 적 추적·자동 공격·명중·처치·거리 회수와 중간 저장/복원을 실행합니다. 무기는 `bible`, `jawbone`, `sling`이며 마지막 숫자는 시드입니다. Unity 화면·입력·물리·기기 성능 검증은 아직 하지 않았습니다. [코어 하네스 안내](docs/harness/standalone-core.md)
+기본 명령은 처치를 주입해 규칙을 확인합니다. `--combat`은 60Hz 좌표 전투에서 적 추적·자동 공격·명중·처치·거리 회수와 중간 저장/복원을 실행합니다. 무기는 `bible`, `jawbone`, `sling`이며 마지막 숫자는 시드입니다. 이 CLI는 Unity 화면·입력·기기 성능을 검증하지 않습니다. 실제 Unity 시험은 별도 진행 문서에 기록합니다. [코어 하네스 안내](docs/harness/standalone-core.md)
 
 `--series`는 R01→R02 예산/성장을 처치 주입으로 확인하고, `--series-combat`은 같은 진행을 실제 좌표 전투로 실행합니다. 라운드별 중간 저장·완료 저장·R02 진입 저장을 복원합니다. 정상 라운드는 시간 종료로도 완료되므로 출력의 실제 처치 수를 함께 확인합니다. 해금된 `wilderness_voice`·`lightning`은 아직 장착/공격을 구현하지 않았습니다.
 

@@ -16,3 +16,5 @@ jobs:
         run: python3 tools/check_all.py
       - name: Concrete regression mutations
         run: python3 tools/check_mutations.py
+      - name: Unity committed Core and catalog artifact consistency (no Editor execution)
+        run: python3 tools/unity_check_portable.py

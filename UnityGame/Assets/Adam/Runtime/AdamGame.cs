@@ -1,0 +1,245 @@
+using System;
+using System.IO;
+using BibleSurvivor.Core;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+
+namespace BibleSurvivor.Unity
+{
+    public sealed class AdamGame : MonoBehaviour
+    {
+        public bool AutoInitialize = true;
+        public AdamHost Host { get; private set; }
+        bool inputReleased;
+        bool focused = true;
+        bool appPaused;
+        bool touchStarted;
+        int touchId;
+        Vector2 touchOrigin;
+        int commandFrame = -1;
+        string startupError;
+        GUIStyle label, button, title, choiceButton;
+        Font uiFont;
+        public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
+        void OnEnable() => EnhancedTouchSupport.Enable();
+        void OnDisable() => EnhancedTouchSupport.Disable();
+        void OnDestroy() { if (uiFont != null) Destroy(uiFont); }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Bootstrap()
+        {
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Adam" && FindFirstObjectByType<AdamGame>() == null)
+                new GameObject("Adam Prototype").AddComponent<AdamGame>();
+        }
+        void Start()
+        {
+            if (!AutoInitialize || Host != null) return;
+            try { Initialize(new AdamHost(AdamCatalog.Load(), new SaveStore(Path.Combine(Application.persistentDataPath, "adam-prototype.json")))); }
+            catch (Exception e) { startupError = e.Message; }
+        }
+        public void Initialize(AdamHost host) { Host = host; inputReleased = false; }
+        public static Vector2 KeyboardMovement(Keyboard keys)
+        {
+            if (keys == null) return Vector2.zero;
+            return Vector2.ClampMagnitude(new Vector2(
+                (keys.dKey.isPressed || keys.rightArrowKey.isPressed ? 1 : 0) - (keys.aKey.isPressed || keys.leftArrowKey.isPressed ? 1 : 0),
+                (keys.wKey.isPressed || keys.upArrowKey.isPressed ? 1 : 0) - (keys.sKey.isPressed || keys.downArrowKey.isPressed ? 1 : 0)), 1);
+        }
+        public static Vector2 DragMovement(Vector2 origin, Vector2 position) => Vector2.ClampMagnitude((position - origin) / 80f, 1);
+        public void SetLifecycle(bool hasFocus, bool paused)
+        {
+            focused = hasFocus; appPaused = paused; inputReleased = false; touchStarted = false;
+            Host?.SetSuspended(!focused || appPaused);
+        }
+        void OnApplicationFocus(bool value) => SetLifecycle(value, appPaused);
+        void OnApplicationPause(bool value) => SetLifecycle(focused, value);
+        void OnApplicationQuit() => Host?.Checkpoint();
+        void Update()
+        {
+            if (Host == null) return;
+            var keys = Keyboard.current;
+            if (keys != null && keys.escapeKey.wasPressedThisFrame && Host.Session != null && Host.Session.IsActive)
+            { Host.SetPaused(!Host.Paused); inputReleased = false; touchStarted = false; }
+            var slot = keys == null ? -1 : keys.digit1Key.wasPressedThisFrame ? 0 : keys.digit2Key.wasPressedThisFrame ? 1 : keys.digit3Key.wasPressedThisFrame ? 2 : -1;
+            if (slot >= 0) SelectSlot(slot);
+            if (keys != null && keys.enterKey.wasPressedThisFrame && Host.Paused && Host.Error == null)
+            { Host.SetPaused(false); inputReleased = false; }
+            var movement = KeyboardMovement(keys);
+            var pressed = false;
+            foreach (var touch in EnhancedTouch.activeTouches)
+                if (touch.phase != UnityEngine.InputSystem.TouchPhase.Ended && touch.phase != UnityEngine.InputSystem.TouchPhase.Canceled) pressed = true;
+            if (!Host.CanPlay) { inputReleased = false; touchStarted = false; }
+            if (!inputReleased)
+            {
+                if (movement == Vector2.zero && !pressed) inputReleased = true;
+                Host.SetMovement(Vector2.zero);
+            }
+            else
+            {
+                if (pressed)
+                {
+                    var found = false;
+                    foreach (var touch in EnhancedTouch.activeTouches)
+                    {
+                        if (touch.phase == UnityEngine.InputSystem.TouchPhase.Ended || touch.phase == UnityEngine.InputSystem.TouchPhase.Canceled) continue;
+                        var position = touch.screenPosition;
+                        if (!touchStarted && touch.phase == UnityEngine.InputSystem.TouchPhase.Began && position.x < Screen.width * .5f && position.y < Screen.height * .65f)
+                        { touchStarted = true; touchOrigin = position; touchId = touch.touchId; }
+                        if (touchStarted && touch.touchId == touchId) { movement = DragMovement(touchOrigin, position); found = true; }
+                    }
+                    if (!found) touchStarted = false;
+                }
+                else touchStarted = false;
+                Host.SetMovement(movement);
+            }
+            Host.Tick(Time.unscaledDeltaTime);
+        }
+        public void SelectSlot(int slot)
+        {
+            if (Host == null || Host.Error != null || Host.Suspended || commandFrame == Time.frameCount || slot < 0 || slot > 2) return;
+            commandFrame = Time.frameCount;
+            if (Host.Session == null || (!Host.Session.IsActive && Host.Session.PendingChoices.Count == 0)) Host.Start(Weapons[slot]);
+            else if (slot < Host.Session.PendingChoices.Count) Host.Choose(Host.Session.PendingChoices[slot]);
+            inputReleased = false; touchStarted = false;
+        }
+        Rect arena;
+        Vector2 center;
+        Vector2 Point(float x, float y) => new Vector2(arena.center.x + (x - center.x) * arena.width / 20f, arena.center.y - (y - center.y) * arena.height / 11.25f);
+        void Mark(float x, float y, float size, Color color, string glyph)
+        {
+            var p = Point(x, y); var rect = new Rect(p.x - size / 2, p.y - size / 2, size, size);
+            var old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = old;
+            if (size >= 18) GUI.Label(rect, glyph, label);
+        }
+        void OnGUI()
+        {
+            var safe = Screen.safeArea;
+            DrawGameView(new Rect(safe.x, Screen.height - safe.yMax, safe.width, safe.height));
+        }
+        // The real game and the pointer regression render the same complete HUD/modal stack.
+        public void DrawGameView(Rect viewport)
+        {
+            var scale = AdamChoiceText.ScreenScale(viewport.width, viewport.height);
+            GUI.matrix = Matrix4x4.TRS(new Vector3(viewport.x, viewport.y, 0), Quaternion.identity, new Vector3(scale, scale, 1));
+            var width = viewport.width / scale; var height = viewport.height / scale;
+            EnsureStyles();
+            GUI.Box(new Rect(0, 0, width, height), "");
+            var modalOpen = Host != null && (Host.Error != null || Host.Session == null || !Host.Session.IsActive || Host.Session.PendingChoices.Count > 0 || Host.Paused || Host.Suspended);
+            // A modal overlaps HUD rows at small sizes; keep all underlying HUD text/controls out of the modal layer.
+            if (!modalOpen) GUI.Label(new Rect(20, 10, width - 40, 36), "창세기 / 아담 · 3분 시제품", title);
+            var instruction = new GUIStyle(label) { fontSize = width < 800 ? 14 : 18 };
+            if (!modalOpen)
+            {
+                GUI.Label(new Rect(20, height - 64, width - 40, 28), "WASD / 방향키 이동 · 자동 공격 · Esc 정지 · Enter 재개", instruction);
+                GUI.Label(new Rect(20, height - 36, width - 40, 28), "1–3 선택 · 왼쪽 아래 터치 이동 · 임시 도형 · 5초 자동 저장", instruction);
+            }
+            if (Host == null)
+            { GUI.Label(new Rect(30, 120, width - 60, 160), startupError ?? "저장 기록을 불러오는 중…", label); return; }
+            var session = Host.Session;
+            if (session != null && !modalOpen)
+            {
+                GUI.Label(new Rect(20, 50, width - 195, 56), $"체력 {session.CurrentHealth:0}/{Host.State.Run?.MaxHealth ?? 100:0}  경험치 {session.Growth.Experience:0.0}  레벨 {session.Growth.Level}\n시간 {Host.World?.SimulationTime ?? 180:0.0}/180초  골드 {Host.State.Profile.Gold}", label);
+                if (GUI.Button(new Rect(width - 175, 54, 150, 44), Host.Paused ? "재개" : "일시정지", button)) { Host.SetPaused(!Host.Paused); inputReleased = false; }
+            }
+            arena = new Rect(20, 116, width - 40, height - 194);
+            GUI.Box(arena, "");
+            if (Host.World != null)
+            {
+                var snapshot = Host.World.Capture(); center = new Vector2(snapshot.PlayerX, snapshot.PlayerY);
+                GUI.BeginGroup(arena); var saved = arena; arena = new Rect(0, 0, arena.width, arena.height);
+                foreach (var drop in snapshot.Drops) Mark(drop.X, drop.Y, 12, Color.cyan, "+");
+                foreach (var enemy in snapshot.Enemies) Mark(enemy.X, enemy.Y, 22, new Color(.7f, .2f, .25f), "E");
+                foreach (var projectile in snapshot.Projectiles) Mark(projectile.X, projectile.Y, 10, Color.yellow, "");
+                foreach (var weapon in snapshot.Weapons)
+                {
+                    if (weapon.WeaponId == "bible" && weapon.ActiveUntil > snapshot.Time)
+                    {
+                        var profile = session.AttackProfile("bible");
+                        var count = profile.Amount;
+                        for (var i = 0; i < count; i++)
+                        {
+                            var angle = (float)(snapshot.Time * 2.5 * WeaponRules.Get("bible", session.Inventory.Weapons["bible"]).RotationSpeedMultiplier + i * Math.PI * 2 / count);
+                            var radius = (float)(snapshot.Tuning.BibleOrbitRadius * profile.AreaMultiplier);
+                            Mark(center.x + Mathf.Cos(angle) * radius, center.y + Mathf.Sin(angle) * radius, 18, Color.yellow, "B");
+                        }
+                    }
+                    if (weapon.WeaponId == "jawbone" && snapshot.Time - weapon.ActiveSince < .15 && weapon.ActiveSince >= 0)
+                        Mark(center.x + snapshot.FacingX, center.y + snapshot.FacingY, 38, new Color(.8f, .7f, .4f), "J");
+                }
+                Mark(center.x, center.y, 26, new Color(.25f, .6f, .9f), "A");
+                arena = saved; GUI.EndGroup();
+            }
+            if (Host.Error != null)
+            {
+                Modal(width, height, "저장 / 불러오기 중단", Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");
+                if (GUI.Button(new Rect(width / 2 - 220, height / 2 + 40, 210, 50), "같은 저장 재시도", button)) Host.RetrySave();
+                if (GUI.Button(new Rect(width / 2 + 10, height / 2 + 40, 210, 50), "저장 다시 불러오기", button)) Host.Reload();
+            }
+            else if (session != null && session.PendingChoices.Count > 0)
+            {
+                var panel = AdamChoiceText.ChoicePanel(width, height);
+                FillPanel(panel);
+                GUI.Box(panel, "");
+                GUI.Label(new Rect(panel.x + 12, panel.y + 10, panel.width - 24, 36), "레벨 상승 · 하나를 선택하세요", title);
+                GUI.Label(new Rect(panel.x + 12, panel.y + 48, panel.width - 24, 36), "전투 정지 중 · 숫자 1–3 / 클릭 · 선택 즉시 저장", instruction);
+                for (var i = 0; i < session.PendingChoices.Count; i++)
+                {
+                    var choice = AdamChoiceText.Describe(session.PendingChoices[i], session.Inventory, session.DamageMultiplier);
+                    if (GUI.Button(AdamChoiceText.ChoiceCard(panel, i), choice.Card(i), choiceButton)) SelectSlot(i);
+                }
+                GUI.Label(new Rect(panel.x + 12, panel.yMax - 30, panel.width - 24, 24), "무기 수치는 기본값 · 보조/영구 강화는 별도 합산 · 진화 미구현", instruction);
+            }
+            else if (session == null || !session.IsActive)
+            {
+                var heading = session == null ? "시작 무기를 선택하세요" : Host.State.Run == null ? "사망 · 이번 도전 종료" : "아담 완료 · 저장됨";
+                Modal(width, height, heading, session == null ? "A: 플레이어 · E: 적 · 청록색: 경험치" : "새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                for (var i = 0; i < 3; i++)
+                    if (GUI.Button(new Rect(width / 2 - 240, height / 2 - 15 + i * 58, 480, 50), $"{i + 1}. {AdamChoiceText.ItemName(Weapons[i])}", button)) SelectSlot(i);
+            }
+            else if (Host.Paused || Host.Suspended)
+            {
+                DrawPauseOverlay(width, height);
+            }
+        }
+        void DrawPauseOverlay(float width, float height)
+        {
+            EnsureStyles();
+            Modal(width, height, "일시정지 · 저장됨", "이동 입력을 놓은 뒤 Enter 또는 아래 재개를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.");
+            var enabled = GUI.enabled;
+            GUI.enabled = enabled && Host != null && Host.Error == null && !Host.Suspended;
+            if (GUI.Button(new Rect(width / 2 - 125, height / 2 + 20, 250, 56), "재개 (Enter)", button))
+            {
+                Host.SetPaused(false); inputReleased = false; touchStarted = false;
+            }
+            GUI.enabled = enabled;
+        }
+        void EnsureStyles()
+        {
+            if (label != null) return;
+            uiFont = AdamChoiceText.CreateKoreanFont();
+            label = new GUIStyle(GUI.skin.label) { font = uiFont, fontSize = 18, alignment = TextAnchor.MiddleCenter, normal = { textColor = Color.white } };
+            title = new GUIStyle(label) { fontSize = 26, fontStyle = FontStyle.Bold };
+            button = new GUIStyle(GUI.skin.button) { font = uiFont, fontSize = 20, fixedHeight = 50 };
+            choiceButton = new GUIStyle(button) { fontSize = 17, fixedHeight = 0, wordWrap = true, alignment = TextAnchor.MiddleLeft, padding = new RectOffset(14, 14, 8, 8) };
+            choiceButton.focused.textColor = Color.yellow;
+        }
+        void Modal(float width, float height, string heading, string detail)
+        {
+            var panel = new Rect(width / 2 - 310, height / 2 - 160, 620, 340);
+            FillPanel(panel);
+            GUI.Box(panel, "");
+            GUI.Label(new Rect(width / 2 - 300, height / 2 - 145, 600, 50), heading, title);
+            var detailStyle = new GUIStyle(label) { wordWrap = true, fontSize = 17 };
+            GUI.Label(new Rect(width / 2 - 280, height / 2 - 95, 560, 70), detail, detailStyle);
+        }
+        static void FillPanel(Rect panel)
+        {
+            var previous = GUI.color;
+            GUI.color = new Color(.035f, .055f, .065f, 1);
+            GUI.DrawTexture(panel, Texture2D.whiteTexture);
+            GUI.color = previous;
+        }
+    }
+}

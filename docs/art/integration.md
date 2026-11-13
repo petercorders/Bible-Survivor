@@ -10,6 +10,8 @@ export/src/scripts/third_party/review의 파일198개를 원본과 SHA256 대조
 
 원격 `.github/workflows/art.yml`에 기본 게이트를 연결했다. 로컬 커밋 훅도 같은 기본 명령을 실행하도록 작업트리에 연결했으며, 소스 훅·Unity 체크의 커밋은 Unity 통합 단계에서 함께 관리한다. 실제 원격 실행 결과는 push 후 확인한다. 원격 검사는 오프라인 패키지 검증이며 Unity·모바일 실행 검증을 하지 않는다.
 
+커밋 `b24881bd448d194e581fbebc2f1e95d59159509a`를 원격 브랜치에서 확인했고 [아트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43460878597)와 [코어 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43460878230)는 모두 성공했다. 이 SHA의 CI는 아직 Unity Editor 실행이나 후속 Unity portable 게이트를 포함하지 않는다.
+
 저장소에서 `python3 tools/check_art.py --full`을 실행해 exit0을 확인했다(`evidence/art-integration-20261113T161157458265Z`). 독립 통합 리뷰에서도 기본 게이트0 및 manifest 오류/하위 시험 exit9/재생성 exit7의 wrapper 실패 전파를 확인했다. 재생성 실패 때 후속 build가 실행되지 않아 원본 차이를 숨기지 않았다. 추가 HIGH/MEDIUM 없음. [통합 리뷰](../reviews/art-integration.md)를 함께 보존한다.
 
 ## GC 판단
