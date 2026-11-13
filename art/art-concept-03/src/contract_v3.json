@@ -1,0 +1,113 @@
+{
+  "schema": "bible-survivors.art-contract",
+  "schemaVersion": 3,
+  "note": "Hand-written expectations for the art handoff (v3). The checker compares the generated manifest and PNGs against THIS file, never against the manifest's own claims. Values come from art-production-workflow.md §4-§5 (proposals) as resolved by art-production-readiness.md (v3). Base cell 32 px is the working size; 48 px enemy versions are comparison candidates only and are not part of this contract.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the parent transform of all player layers (or on a single sprite's renderer), never per layer; path tiles and UI pieces are never flipped"},
+  "manifestTop": {
+    "note": "Top-level manifest fields an importer reads (added for QA A03-01). Each must exist with this JSON type. ppu, pivotSpace, frameLayout and flip must equal the values above in this file; layerOrder must equal player.layers; every player layer asset's own layerOrder must be its index in player.layers.",
+    "types": {"ppu": "int", "pivotSpace": "str", "frameLayout": "str", "layerOrder": "list", "flip": "object"}
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0",
+    "blend": "alpha may take only the alpha values of the palette entries this sprite uses; RGB is 0 wherever alpha is 0"
+  },
+  "sortingLayers": ["Ground", "GroundDecal", "Pickups", "Actors", "WeaponFX", "FX", "UI"],
+  "qualityGroups": {
+    "core": "always drawn",
+    "optional-fx": "may be switched off by the 'FX low' option; gameplay must stay readable without it",
+    "terrain": "ground tiles and decals",
+    "ui": "screen-space pieces"
+  },
+  "stableIds": {
+    "source": {
+      "repo": "Bible-Survivor (feat/adam-core)",
+      "commit": "9758403b8a063675c917a18c0ca7b847db17dd79",
+      "files": {
+        "content/genesis/catalog.json": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+        "src/BibleSurvivor.Core/Growth.cs": "2c9c6478b63941936b255ceb9a0965600e6b298881d49b4c65057dae93bddf91"
+      },
+      "readFrom": "catalog.json weapon_unlocks[].weapon_id, monsters[].id, evolution_pairs[].passive_id; Growth.cs ImplementedWeapons / KnownPassives"
+    },
+    "weapon": ["bible", "jawbone", "sling", "moses_staff", "daniel_lion", "fire_pillar", "lightning", "cross", "wilderness_voice", "elijah_chariot"],
+    "passive": ["scroll", "hair", "stones", "east_wind", "seal", "cloud", "thunder", "crown", "underwear", "whirlwind"],
+    "monster": ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3", "d1", "d2", "d3", "e1", "e2", "e3", "f1", "f2", "f3", "g1", "g2", "g3", "h1", "h2", "h3", "i1", "i2", "i3"],
+    "artOnly": {
+      "note": "Art-side ids with no core counterpart yet (core has no xp-gem type id, no currency id and no appearance/customisation fields). The core implementer must add a mapping; the art side does not invent core ids.",
+      "pickup": ["xp_base", "xp_bonus"],
+      "currency": ["gold"],
+      "player": ["player"],
+      "fx": ["monster_death_common", "hit_common"],
+      "terrain": ["eden_ground", "eden_path", "eden_decal"],
+      "ui": ["hud", "dialog"]
+    }
+  },
+  "player": {
+    "layers": ["cloak_back", "base", "hair_short", "beard", "hood", "cloak_front"],
+    "fileLayerNames": {"cloak_back": "cloak-back", "base": "base", "hair_short": "hair-short", "beard": "beard", "hood": "hood", "cloak_front": "cloak-front"},
+    "animations": {
+      "idle": {"frames": 4, "fps": 6, "loop": true},
+      "walk": {"frames": 4, "fps": 8, "loop": true},
+      "death": {"frames": 6, "fps": 8, "loop": false}
+    },
+    "cell": [32, 32],
+    "pivot": [16, 1],
+    "ground": true,
+    "alpha": "binary",
+    "sorting": "Actors",
+    "facing": "right; left = flipX applied once on the parent of all layers"
+  },
+  "frameChange": {
+    "rule": "an animated strip (fps > 0, frames > 1) must not repeat the previous frame; a looping strip also compares its last frame with its first. Reusing a non-adjacent frame (ping-pong 1 = 3) is allowed.",
+    "holdAllowedPlayerLayers": ["cloak_back", "hair_short", "beard", "hood", "cloak_front"],
+    "why": "these player layers may hold still while the base layer (body) moves; the base layer itself must change every frame"
+  },
+  "uiFonts": {
+    "note": "Fonts named by export/ui/ui-pieces_v3.json (added for QA A03-02). Every role must be there with exactly this file, pixelSize and sha256. Paths are relative to the package root (the checker's --root), use '/', stay under dir and never contain '.', '..' or an empty part. The file must be a regular file (not a link) whose bytes hash to sha256. The licence notice must exist with this hash, and the source must match. Hashes were measured on the files copied byte-for-byte from the release zip named in source.",
+    "dir": "third_party/galmuri/",
+    "roles": {
+      "title": {"file": "third_party/galmuri/Galmuri11Bitmap-Bold-2.40.4.ttf", "pixelSize": 16, "sha256": "0b929fe85c01aba7b98792332ec54249b6143dd7338a220dd7623a9bf62d16c5"},
+      "label": {"file": "third_party/galmuri/Galmuri11Bitmap-Regular-2.40.4.ttf", "pixelSize": 16, "sha256": "0d7e7e8652d8cf666c4501b1dfe8d4ccaee97f068edff4cc4e90f14266ed4a49"},
+      "body": {"file": "third_party/galmuri/Galmuri9Bitmap-Regular-2.40.4.ttf", "pixelSize": 12, "sha256": "897c621bb33ba77ed5645d87137bc3dcdcf153e61ccf1ee75d239a079590485a"},
+      "small": {"file": "third_party/galmuri/Galmuri7Bitmap-Regular-2.40.4.ttf", "pixelSize": 10, "sha256": "c093a0288bb5f73a49b42275468e2ad8be0c7e7356283d7d78d89b0489e3b615"}
+    },
+    "license": {"file": "third_party/galmuri/LICENSE.txt", "name": "SIL OFL 1.1", "sha256": "86a3ee9495f942f0243f18c103da9faca27adb88142613edb8bb852e56c892c1"},
+    "source": {"name": "Galmuri", "version": "2.40.4", "url": "https://github.com/quiple/galmuri/releases/download/v2.40.4/Galmuri-v2.40.4.zip", "sha256": "c8b3d9861a62ae73c8b1178091401cd79994812437ef386413f6dd54856e60e7"}
+  },
+  "assets": [
+    {"id": "enm_a1-small-snake_move_32", "ref": "monster:a1", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "quality": "core"},
+    {"id": "enm_a2-fruit-moth_fly_32", "ref": "monster:a2", "cell": [32, 32], "frames": 4, "fps": 12, "loop": true, "pivot": [16, 1], "ground": false, "alpha": "binary", "sorting": "Actors", "quality": "core"},
+    {"id": "enm_a3-thorn-beast_walk_32", "ref": "monster:a3", "cell": [32, 32], "frames": 4, "fps": 6, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "quality": "core"},
+    {"id": "fx_enemy-death_burst_32", "ref": "fx:monster_death_common", "cell": [32, 32], "frames": 4, "fps": 12, "loop": false, "pivot": [16, 1], "ground": false, "alpha": "binary", "sorting": "FX", "quality": "core"},
+    {"id": "wpn_bible-book_spin_16", "ref": "weapon:bible", "cell": [16, 16], "frames": 2, "fps": 6, "loop": true, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "WeaponFX", "quality": "core"},
+    {"id": "fx_bible-glow_static_20", "ref": "weapon:bible", "cell": [20, 20], "frames": 1, "fps": 0, "loop": false, "pivot": [10, 10], "ground": false, "alpha": "blend", "sorting": "WeaponFX", "quality": "optional-fx"},
+    {"id": "wpn_jawbone_held_16", "ref": "weapon:jawbone", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "WeaponFX", "quality": "core"},
+    {"id": "fx_jawbone-swing-edge_hit_64", "ref": "weapon:jawbone", "cell": [64, 64], "frames": 4, "fps": 20, "loop": false, "pivot": [32, 32], "ground": false, "alpha": "binary", "sorting": "WeaponFX", "quality": "core"},
+    {"id": "fx_jawbone-swing-trail_hit_64", "ref": "weapon:jawbone", "cell": [64, 64], "frames": 4, "fps": 20, "loop": false, "pivot": [32, 32], "ground": false, "alpha": "blend", "sorting": "WeaponFX", "quality": "optional-fx"},
+    {"id": "wpn_sling-stone_spin_8", "ref": "weapon:sling", "cell": [8, 8], "frames": 2, "fps": 12, "loop": true, "pivot": [4, 4], "ground": false, "alpha": "binary", "sorting": "WeaponFX", "quality": "core"},
+    {"id": "fx_sling-trail_static_20x8", "ref": "weapon:sling", "cell": [20, 8], "frames": 1, "fps": 0, "loop": false, "pivot": [19, 4], "ground": false, "alpha": "blend", "sorting": "WeaponFX", "quality": "optional-fx"},
+    {"id": "fx_hit-spark_hit_16", "ref": "fx:hit_common", "cell": [16, 16], "frames": 3, "fps": 15, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "FX", "quality": "core"},
+    {"id": "pkp_xp-gem-base_idle_8", "ref": "pickup:xp_base", "cell": [8, 8], "frames": 2, "fps": 4, "loop": true, "pivot": [4, 4], "ground": false, "alpha": "binary", "sorting": "Pickups", "quality": "core"},
+    {"id": "pkp_xp-gem-bonus_idle_8", "ref": "pickup:xp_bonus", "cell": [8, 8], "frames": 2, "fps": 4, "loop": true, "pivot": [4, 4], "ground": false, "alpha": "binary", "sorting": "Pickups", "quality": "core"},
+    {"id": "fx_shadow_static_16x6", "ref": "player:player", "cell": [16, 6], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 3], "ground": false, "alpha": "blend", "sorting": "GroundDecal", "quality": "core"},
+    {"id": "fx_shadow-snake_static_20x4", "ref": "monster:a1", "cell": [20, 4], "frames": 1, "fps": 0, "loop": false, "pivot": [10, 2], "ground": false, "alpha": "blend", "sorting": "GroundDecal", "quality": "core"},
+    {"id": "fx_shadow-wide_static_24x6", "ref": "monster:a3", "cell": [24, 6], "frames": 1, "fps": 0, "loop": false, "pivot": [12, 3], "ground": false, "alpha": "blend", "sorting": "GroundDecal", "quality": "core"},
+    {"id": "fx_shadow-small_static_12x4", "ref": "monster:a2", "cell": [12, 4], "frames": 1, "fps": 0, "loop": false, "pivot": [6, 2], "ground": false, "alpha": "blend", "sorting": "GroundDecal", "quality": "core"},
+    {"id": "til_eden_path-16mask_static_32", "ref": "terrain:eden_path", "cell": [32, 32], "frames": 16, "fps": 0, "loop": false, "pivot": [16, 16], "ground": false, "alpha": "binary", "sorting": "Ground", "quality": "terrain", "tileRule": "frame index = 4-direction neighbour mask N1+E2+S4+W8"},
+    {"id": "ico_wpn_bible_static_16", "ref": "weapon:bible", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_wpn_jawbone_static_16", "ref": "weapon:jawbone", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_wpn_sling_static_16", "ref": "weapon:sling", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_psv_scroll_static_16", "ref": "passive:scroll", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_psv_hair_static_16", "ref": "passive:hair", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_psv_stones_static_16", "ref": "passive:stones", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"},
+    {"id": "ico_res_gold_static_16", "ref": "currency:gold", "cell": [16, 16], "frames": 1, "fps": 0, "loop": false, "pivot": [8, 8], "ground": false, "alpha": "binary", "sorting": "UI", "quality": "ui"}
+  ],
+  "assetGroups": {
+    "note": "Groups whose members are listed by prefix; every member must exist with these values.",
+    "groundTiles": {"prefix": "til_eden_", "exclude": ["til_eden_path-16mask_static_32"], "min": 6, "cell": [32, 32], "frames": 1, "pivot": [16, 16], "alpha": "binary", "sorting": "Ground", "quality": "terrain", "ref": "terrain:eden_ground"},
+    "decals": {"prefix": "dec_eden_", "min": 10, "frames": 1, "pivot": "bottom-centre: [w/2, 0]", "alpha": "binary", "sorting": "GroundDecal", "quality": "terrain", "ref": "terrain:eden_decal"},
+    "uiPieces": {"prefix": "ui_", "min": 10, "alpha": "binary", "sorting": "UI", "quality": "ui", "ref": "ui:dialog", "requires": ["border or content or states in ui-pieces_v3.json"]}
+  }
+}

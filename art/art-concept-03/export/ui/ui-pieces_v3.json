@@ -1,0 +1,266 @@
+{
+ "schema": "bible-survivors.ui-pieces",
+ "schemaVersion": 3,
+ "status": "production-draft (art data, not implemented UI)",
+ "pixelScale": "pieces are 1x game pixels; the game view is integer-scaled",
+ "nineSlice": "border_LBRT = left, bottom, right, top in pixels (Unity Sprite Editor order). Edges and centre repeat (tile), corners fixed",
+ "pieces": {
+  "ui_panel_9slice_16": {
+   "file": "export/png/ui_panel_9slice_16.png",
+   "frameSize": [
+    16,
+    16
+   ],
+   "states": [
+    "default"
+   ],
+   "border_LBRT": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "content_xywh_topLeft": null,
+   "note": "dialog/panel background; centre and edges tile"
+  },
+  "ui_card_9slice_24": {
+   "file": "export/png/ui_card_9slice_24.png",
+   "frameSize": [
+    24,
+    24
+   ],
+   "states": [
+    "normal",
+    "focus",
+    "pressed",
+    "disabled"
+   ],
+   "border_LBRT": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "content_xywh_topLeft": null,
+   "note": "selectable card; content moves down 1 px when pressed; disabled uses text.2 for labels"
+  },
+  "ui_button_9slice_16": {
+   "file": "export/png/ui_button_9slice_16.png",
+   "frameSize": [
+    16,
+    16
+   ],
+   "states": [
+    "normal",
+    "focus",
+    "pressed",
+    "disabled"
+   ],
+   "border_LBRT": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "content_xywh_topLeft": null,
+   "note": "text button / selector arrow button"
+  },
+  "ui_slot_18": {
+   "file": "export/png/ui_slot_18.png",
+   "frameSize": [
+    18,
+    18
+   ],
+   "states": [
+    "empty",
+    "filled",
+    "new",
+    "max"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": [
+    1,
+    1,
+    16,
+    16
+   ],
+   "note": "16x16 icon centred in content rect; pips drawn on row 15"
+  },
+  "ui_pip_2": {
+   "file": "export/png/ui_pip_2.png",
+   "frameSize": [
+    2,
+    2
+   ],
+   "states": [
+    "off",
+    "on"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "weapon level pip, 1 px gap"
+  },
+  "ui_bar-frame_9slice_8x6": {
+   "file": "export/png/ui_bar-frame_9slice_8x6.png",
+   "frameSize": [
+    8,
+    6
+   ],
+   "states": [
+    "default"
+   ],
+   "border_LBRT": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "content_xywh_topLeft": [
+    1,
+    1,
+    6,
+    4
+   ],
+   "note": "outline only; centre is transparent, fill and back are drawn inside the content rect"
+  },
+  "ui_bar-xp_tile_1x4": {
+   "file": "export/png/ui_bar-xp_tile_1x4.png",
+   "frameSize": [
+    1,
+    4
+   ],
+   "states": [
+    "back",
+    "fill"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "repeat horizontally; fill width = round(content_w * value)"
+  },
+  "ui_bar-hp_tile_1x2": {
+   "file": "export/png/ui_bar-hp_tile_1x2.png",
+   "frameSize": [
+    1,
+    2
+   ],
+   "states": [
+    "back",
+    "fill"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "player HP under the feet; repeat horizontally"
+  },
+  "ui_swatch_12": {
+   "file": "export/png/ui_swatch_12.png",
+   "frameSize": [
+    12,
+    12
+   ],
+   "states": [
+    "normal",
+    "selected"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": [
+    2,
+    2,
+    8,
+    8
+   ],
+   "note": "content rect is filled with the option colour (ramp index 1) at runtime"
+  },
+  "ui_arrow_6x9": {
+   "file": "export/png/ui_arrow_6x9.png",
+   "frameSize": [
+    6,
+    9
+   ],
+   "states": [
+    "default"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "points right; flipX for left"
+  },
+  "ui_badge-evolve_8": {
+   "file": "export/png/ui_badge-evolve_8.png",
+   "frameSize": [
+    8,
+    8
+   ],
+   "states": [
+    "default"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "evolution marker on the top-right of an icon"
+  }
+ },
+ "stateRules": {
+  "focus": "keyboard/gamepad focus or touch-down highlight",
+  "pressed": "content moves down 1 px",
+  "disabled": "labels use text.2; not selectable",
+  "new": "slot just gained an item this level-up",
+  "max": "item reached its max level"
+ },
+ "fonts": {
+  "title": {
+   "file": "third_party/galmuri/Galmuri11Bitmap-Bold-2.40.4.ttf",
+   "pixelSize": 16,
+   "sha256": "0b929fe85c01aba7b98792332ec54249b6143dd7338a220dd7623a9bf62d16c5",
+   "use": "titles, numbers"
+  },
+  "label": {
+   "file": "third_party/galmuri/Galmuri11Bitmap-Regular-2.40.4.ttf",
+   "pixelSize": 16,
+   "sha256": "0d7e7e8652d8cf666c4501b1dfe8d4ccaee97f068edff4cc4e90f14266ed4a49",
+   "use": "card names"
+  },
+  "body": {
+   "file": "third_party/galmuri/Galmuri9Bitmap-Regular-2.40.4.ttf",
+   "pixelSize": 12,
+   "sha256": "897c621bb33ba77ed5645d87137bc3dcdcf153e61ccf1ee75d239a079590485a",
+   "use": "descriptions"
+  },
+  "small": {
+   "file": "third_party/galmuri/Galmuri7Bitmap-Regular-2.40.4.ttf",
+   "pixelSize": 10,
+   "sha256": "c093a0288bb5f73a49b42275468e2ad8be0c7e7356283d7d78d89b0489e3b615",
+   "use": "level numbers, tags"
+  },
+  "render": "no anti-aliasing (bitmap strikes at exactly these sizes); 1 px outline in outline.0 on the game view",
+  "license": {
+   "file": "third_party/galmuri/LICENSE.txt",
+   "name": "SIL OFL 1.1",
+   "copyright": "Copyright 2019-2025 Lee Minseo"
+  },
+  "source": {
+   "name": "Galmuri",
+   "version": "2.40.4",
+   "url": "https://github.com/quiple/galmuri/releases/download/v2.40.4/Galmuri-v2.40.4.zip",
+   "sha256": "c8b3d9861a62ae73c8b1178091401cd79994812437ef386413f6dd54856e60e7"
+  }
+ },
+ "colors": {
+  "text.0": "#f4efe1ff",
+  "text.1": "#ffe8a0ff",
+  "text.2": "#a89cb4ff",
+  "panel.0": "#1b1424ff",
+  "panel.1": "#2c2236ff",
+  "panel.2": "#4a3c56ff",
+  "panel.3": "#8a7a9aff",
+  "gold.0": "#ffe8a0ff",
+  "gold.1": "#d8a840ff",
+  "hp.0": "#ff8a8aff",
+  "hp.1": "#d04a5aff",
+  "hp.2": "#5a1a2aff",
+  "xp.0": "#d8fffaff",
+  "xp.1": "#4fe8e0ff",
+  "xp.2": "#1a9aa8ff",
+  "xp.3": "#123844ff",
+  "dim.0": "#1b1424b0",
+  "dim.1": "#1b142480"
+ },
+ "layoutsNote": "layouts in this file are mock-up candidates for review; orientation, safe areas and touch sizes are NOT decided"
+}

@@ -1,0 +1,549 @@
+{
+ "definition": "CIE76 colour difference across every 4-neighbour boundary between an opaque hair-layer pixel and a visible skin pixel; weak = dE < 12. v03 = the worst of all 14 frames (idle4+walk4+death6); v02 = the single 02 frame. Evidence for the boundary fix only, not a quality score.",
+ "combos": {
+  "s1/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 62.4,
+    "median_dE": 73.0,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s1/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 51.4,
+    "median_dE": 64.3,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s1/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 43.2,
+    "median_dE": 56.4,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s1/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 38.3,
+    "median_dE": 53.8,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s1/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 29.9,
+    "median_dE": 41.3,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s1/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 22.5,
+    "median_dE": 24.1,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 57.9,
+    "median_dE": 68.9,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 56.0,
+    "median_dE": 69.7,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 43.4,
+    "median_dE": 58.9,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 35.1,
+    "median_dE": 50.7,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 28.6,
+    "median_dE": 46.4,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 32.2,
+    "median_dE": 40.2,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s2/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 24.0,
+    "median_dE": 27.9,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 51.5,
+    "median_dE": 65.5,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 50.4,
+    "median_dE": 65.0,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 36.9,
+    "median_dE": 52.8,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 28.5,
+    "median_dE": 44.4,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 21.9,
+    "median_dE": 38.5,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 30.8,
+    "median_dE": 38.6,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s3/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 25.2,
+    "median_dE": 31.6,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 46.3,
+    "median_dE": 60.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 40.3,
+    "median_dE": 52.4,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 25.4,
+    "median_dE": 39.0,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 17.3,
+    "median_dE": 30.6,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 10.6,
+    "median_dE": 24.4,
+    "weak_share": 0.231
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 28.9,
+    "median_dE": 31.3,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s4/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 28.2,
+    "median_dE": 33.7,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 36.5,
+    "median_dE": 48.2,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 30.5,
+    "median_dE": 41.4,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 14.3,
+    "median_dE": 27.1,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 6.5,
+    "median_dE": 18.8,
+    "weak_share": 0.308
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 11.4,
+    "median_dE": 14.8,
+    "weak_share": 0.231
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 21.7,
+    "median_dE": 28.0,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s5/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 28.4,
+    "median_dE": 37.2,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 27.9,
+    "median_dE": 37.7,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s6/black": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 24.9,
+    "median_dE": 32.9,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 23.0,
+    "median_dE": 29.6,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s6/darkbrown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 8.0,
+    "median_dE": 17.9,
+    "weak_share": 0.308
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 23.0,
+    "median_dE": 29.6,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s6/brown": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 4.0,
+    "median_dE": 9.7,
+    "weak_share": 0.615
+   },
+   "v03": {
+    "pairs": 19,
+    "min_dE": 7.8,
+    "median_dE": 29.6,
+    "weak_share": 0.053
+   },
+   "frames": 14
+  },
+  "s6/auburn": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 7.9,
+    "median_dE": 14.7,
+    "weak_share": 0.308
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 23.0,
+    "median_dE": 29.6,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s6/gray": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 20.2,
+    "median_dE": 26.3,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 23.0,
+    "median_dE": 29.6,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  },
+  "s6/white": {
+   "v02": {
+    "pairs": 13,
+    "min_dE": 31.8,
+    "median_dE": 41.9,
+    "weak_share": 0.0
+   },
+   "v03": {
+    "pairs": 13,
+    "min_dE": 23.0,
+    "median_dE": 29.6,
+    "weak_share": 0.0
+   },
+   "frames": 14
+  }
+ },
+ "weak_share_over_0.10": {
+  "v02": 6,
+  "v03": 0
+ }
+}

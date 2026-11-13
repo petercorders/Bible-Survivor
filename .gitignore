@@ -15,6 +15,11 @@
 .DS_Store
 /Assembly-CSharp*.csproj
 /Assembly-CSharp*.sln
+# Generated Unity project solutions (not the standalone core project files)
+/UnityGame/*.csproj
+/UnityGame/*.sln
+/UnityGame/*.slnx
+/UnityGame/.vscode/
 *.user
 *.pidb
 *.booproj
@@ -36,3 +41,6 @@ evidence/
 **/obj/
 .local/
 TestResults/
+__pycache__/
+*.pyc
+/art/art-concept-03/tests/results/

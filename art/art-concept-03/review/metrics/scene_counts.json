@@ -1,0 +1,11 @@
+{
+ "alive_in_pc_view": 40,
+ "by_kind": {
+  "a1": 24,
+  "a2": 11,
+  "a3": 5
+ },
+ "within_64px_of_player": 7,
+ "outside_view": 16,
+ "death_bursts": 1
+}

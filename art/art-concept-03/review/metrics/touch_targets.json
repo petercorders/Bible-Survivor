@@ -1,0 +1,68 @@
+{
+ "assumption": "CANDIDATE ONLY. Phone layouts aim for touch targets >= 44 game px (Apple HIG 44 pt / Material 48 dp would hold only if 1 game px >= ~1.09 dp, i.e. a 360-px-tall landscape view on a >= ~390 dp tall screen). Orientation, device scale and safe-area values are NOT decided; safe areas here are example insets. PC layouts are mouse/keyboard: touch sizes do not apply. Nothing here is implemented UI.",
+ "screens": [
+  {
+   "screen": "levelup",
+   "layout": "pc",
+   "targets": 3,
+   "meeting_44px": "n/a (mouse)",
+   "all_meet": null
+  },
+  {
+   "screen": "levelup",
+   "layout": "phone-l",
+   "targets": 3,
+   "meeting_44px": 3,
+   "all_meet": true
+  },
+  {
+   "screen": "levelup",
+   "layout": "phone-p",
+   "targets": 3,
+   "meeting_44px": 3,
+   "all_meet": true
+  },
+  {
+   "screen": "reward",
+   "layout": "pc",
+   "targets": 4,
+   "meeting_44px": "n/a (mouse)",
+   "all_meet": null
+  },
+  {
+   "screen": "reward",
+   "layout": "phone-l",
+   "targets": 4,
+   "meeting_44px": 4,
+   "all_meet": true
+  },
+  {
+   "screen": "reward",
+   "layout": "phone-p",
+   "targets": 4,
+   "meeting_44px": 4,
+   "all_meet": true
+  },
+  {
+   "screen": "custom",
+   "layout": "pc",
+   "targets": 30,
+   "meeting_44px": "n/a (mouse)",
+   "all_meet": null
+  },
+  {
+   "screen": "custom",
+   "layout": "phone-l",
+   "targets": 30,
+   "meeting_44px": 30,
+   "all_meet": true
+  },
+  {
+   "screen": "custom",
+   "layout": "phone-p",
+   "targets": 30,
+   "meeting_44px": 30,
+   "all_meet": true
+  }
+ ]
+}

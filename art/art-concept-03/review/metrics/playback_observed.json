@@ -1,0 +1,149 @@
+{
+ "what": "review/index.html opened from file:// in Orca's embedded browser and sampled for 3 s after pressing 'replay' (frame counter read every 5 ms). Loops: changes ~= fps*3; once-only: plays its frames once then stops.",
+ "browser_user_agent": "Mozilla/5.0 () AppleWebKit/537.36 () Chrome/150.0.7871.250 Safari/537.36",
+ "date": "2026-11-14",
+ "rows": [
+  {
+   "id": "idle 6fps 반복",
+   "changes_in_3s": 18,
+   "sequence": "3123412341234123412",
+   "manifest_fps": 6,
+   "loop": true,
+   "frames": 4,
+   "expected_changes_3s": 18,
+   "match_within_1": true
+  },
+  {
+   "id": "walk 8fps 반복",
+   "changes_in_3s": 23,
+   "sequence": "123412341234123412341234",
+   "manifest_fps": 8,
+   "loop": true,
+   "frames": 4,
+   "expected_changes_3s": 24,
+   "match_within_1": true
+  },
+  {
+   "id": "death 8fps 1회",
+   "changes_in_3s": 6,
+   "sequence": "6123456",
+   "manifest_fps": 8,
+   "loop": false,
+   "frames": 6,
+   "expected_changes_3s": 6,
+   "match_within_1": true
+  },
+  {
+   "id": "enm_a1-small-snake_move_32",
+   "changes_in_3s": 23,
+   "sequence": "123412341234123412341234",
+   "manifest_fps": 8,
+   "loop": true,
+   "frames": 4,
+   "expected_changes_3s": 24,
+   "match_within_1": true
+  },
+  {
+   "id": "enm_a2-fruit-moth_fly_32",
+   "changes_in_3s": 36,
+   "sequence": "2123412341234123412341234123412341234",
+   "manifest_fps": 12,
+   "loop": true,
+   "frames": 4,
+   "expected_changes_3s": 36,
+   "match_within_1": true
+  },
+  {
+   "id": "enm_a3-thorn-beast_walk_32",
+   "changes_in_3s": 18,
+   "sequence": "3123412341234123412",
+   "manifest_fps": 6,
+   "loop": true,
+   "frames": 4,
+   "expected_changes_3s": 18,
+   "match_within_1": true
+  },
+  {
+   "id": "fx_enemy-death_burst_32",
+   "changes_in_3s": 4,
+   "sequence": "41234",
+   "manifest_fps": 12,
+   "loop": false,
+   "frames": 4,
+   "expected_changes_3s": 4,
+   "match_within_1": true
+  },
+  {
+   "id": "wpn_bible-book_spin_16",
+   "changes_in_3s": 17,
+   "sequence": "121212121212121212",
+   "manifest_fps": 6,
+   "loop": true,
+   "frames": 2,
+   "expected_changes_3s": 18,
+   "match_within_1": true
+  },
+  {
+   "id": "fx_jawbone-swing-edge_hit_64",
+   "changes_in_3s": 4,
+   "sequence": "41234",
+   "manifest_fps": 20,
+   "loop": false,
+   "frames": 4,
+   "expected_changes_3s": 4,
+   "match_within_1": true
+  },
+  {
+   "id": "fx_jawbone-swing-trail_hit_64",
+   "changes_in_3s": 4,
+   "sequence": "41234",
+   "manifest_fps": 20,
+   "loop": false,
+   "frames": 4,
+   "expected_changes_3s": 4,
+   "match_within_1": true
+  },
+  {
+   "id": "wpn_sling-stone_spin_8",
+   "changes_in_3s": 36,
+   "sequence": "2121212121212121212121212121212121212",
+   "manifest_fps": 12,
+   "loop": true,
+   "frames": 2,
+   "expected_changes_3s": 36,
+   "match_within_1": true
+  },
+  {
+   "id": "fx_hit-spark_hit_16",
+   "changes_in_3s": 3,
+   "sequence": "3123",
+   "manifest_fps": 15,
+   "loop": false,
+   "frames": 3,
+   "expected_changes_3s": 3,
+   "match_within_1": true
+  },
+  {
+   "id": "pkp_xp-gem-base_idle_8",
+   "changes_in_3s": 11,
+   "sequence": "121212121212",
+   "manifest_fps": 4,
+   "loop": true,
+   "frames": 2,
+   "expected_changes_3s": 12,
+   "match_within_1": true
+  },
+  {
+   "id": "pkp_xp-gem-bonus_idle_8",
+   "changes_in_3s": 11,
+   "sequence": "121212121212",
+   "manifest_fps": 4,
+   "loop": true,
+   "frames": 2,
+   "expected_changes_3s": 12,
+   "match_within_1": true
+  }
+ ],
+ "all_match": true,
+ "not_covered": "browser timer playback only: no Unity Animator / device frame pacing was observed"
+}

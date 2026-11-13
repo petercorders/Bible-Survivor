@@ -1,0 +1,936 @@
+{
+ "palette_name": "master-v0.1",
+ "palette": {
+  ".": null,
+  "k": "#1b1424",
+  "w": "#f4efe1",
+  "W": "#ffffff",
+  "1": "#e6b48a",
+  "2": "#c98d5e",
+  "3": "#9a6440",
+  "4": "#efe3c4",
+  "5": "#d6c39a",
+  "6": "#a8936a",
+  "7": "#6f8fc4",
+  "8": "#44609e",
+  "9": "#2c3f6e",
+  "A": "#6e4a32",
+  "a": "#4e3424",
+  "b": "#33221a",
+  "l": "#8a5a32",
+  "L": "#5a3820",
+  "p": "#6a3a7e",
+  "P": "#3e2050",
+  "q": "#9a62b0",
+  "g": "#a6c34a",
+  "G": "#6a8a2a",
+  "e": "#e8f06a",
+  "r": "#c8404c",
+  "R": "#7e2234",
+  "E": "#f08890",
+  "t": "#8a6a4a",
+  "T": "#4e3828",
+  "i": "#f0e6cc",
+  "I": "#c4b48e",
+  "j": "#6a4a2e",
+  "J": "#4a3020",
+  "y": "#ffe8a0",
+  "Y": "#e0b04a",
+  "x": "#a8a8b4",
+  "X": "#6a6a7a",
+  "c": "#4fe8e0",
+  "C": "#1a9aa8",
+  "h": "#d8fffa",
+  "v": "#8ab4ff",
+  "V": "#3a5ad0",
+  "n": "#7aa257",
+  "m": "#5e8a45",
+  "M": "#4a7238",
+  "N": "#3a5c2e",
+  "s": "#9a8a62",
+  "S": "#76684a",
+  "f": "#d8cf86",
+  "F": "#d9a0b0",
+  "d": "#8a8a4e",
+  "D": "#6a6a3a",
+  "u": "#6b5a48",
+  "U": "#4e4236",
+  "z": "#1b142459"
+ },
+ "alpha_ok_keys": [
+  "z"
+ ],
+ "recolor_keys": {
+  "skin": [
+   "1",
+   "2",
+   "3"
+  ],
+  "tunic": [
+   "4",
+   "5",
+   "6"
+  ],
+  "cloak": [
+   "7",
+   "8",
+   "9"
+  ],
+  "hair": [
+   "A",
+   "a",
+   "b"
+  ]
+ },
+ "recolor_ramps": {
+  "skin": {
+   "s1": [
+    "#f6d7b8",
+    "#e8b48e",
+    "#c48a66"
+   ],
+   "s2": [
+    "#eec39a",
+    "#d49a6a",
+    "#a8704a"
+   ],
+   "s3": [
+    "#e6b48a",
+    "#c98d5e",
+    "#9a6440"
+   ],
+   "s4": [
+    "#b9825a",
+    "#95603c",
+    "#6a4026"
+   ],
+   "s5": [
+    "#8e5a3a",
+    "#6e4228",
+    "#4a2a1a"
+   ],
+   "s6": [
+    "#6a4029",
+    "#4e2c1c",
+    "#331c12"
+   ]
+  },
+  "dye": {
+   "linen": [
+    "#efe3c4",
+    "#d6c39a",
+    "#a8936a"
+   ],
+   "madder": [
+    "#e07a64",
+    "#b24a3a",
+    "#7e2e28"
+   ],
+   "indigo": [
+    "#6f8fc4",
+    "#44609e",
+    "#2c3f6e"
+   ],
+   "ochre": [
+    "#ecc66e",
+    "#c4953e",
+    "#8e6628"
+   ],
+   "olive": [
+    "#aebb6e",
+    "#7d8a44",
+    "#55602c"
+   ],
+   "purple": [
+    "#b06a9a",
+    "#8a3f74",
+    "#5e2650"
+   ]
+  },
+  "hair": {
+   "black": [
+    "#3a2e34",
+    "#2a2024",
+    "#151014"
+   ],
+   "darkbrown": [
+    "#6e4a32",
+    "#4e3424",
+    "#33221a"
+   ],
+   "brown": [
+    "#9a6a40",
+    "#7a5232",
+    "#55381f"
+   ],
+   "auburn": [
+    "#b06a3a",
+    "#8e4a2a",
+    "#62301a"
+   ],
+   "gray": [
+    "#c8c4c0",
+    "#a8a4a0",
+    "#76726e"
+   ],
+   "white": [
+    "#f2eee6",
+    "#e0dcd4",
+    "#b6b2aa"
+   ]
+  }
+ },
+ "status": "concept",
+ "batch": "art-b01",
+ "created": "2026-11-13",
+ "note": "1-frame concept grids; frames_planned is the target count. Tiles and the jawbone arc are seeded generations.",
+ "sprites": [
+  {
+   "name": "chr_player_a-tunic_idle_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 6,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": true,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "............kkkkkkkk............",
+     "...........kaAAAaaaak...........",
+     "..........kaAAaaaaaaak..........",
+     "..........kaaaaaaaaaak..........",
+     "..........kaaabaa2222k..........",
+     "..........kaab22222k2k..........",
+     "..........kab322222k2k..........",
+     "..........kab22222221k..........",
+     "...........kb2222232k...........",
+     "............kk3333kk............",
+     "...........k45555556k...........",
+     ".........kk4455555566kk.........",
+     ".........k6k45555556k6k.........",
+     ".........k6k44555566k6k.........",
+     ".........k6klLlllllLk6k.........",
+     ".........k2k45555556k2k.........",
+     "..........k4455555566k..........",
+     "..........k4455555566k..........",
+     "..........k4555555556k..........",
+     "..........k5555555666k..........",
+     "..........kkkkkkkkkkkk..........",
+     "............k22kk22k............",
+     "............k23kk23k............",
+     "............kLlkklLlk...........",
+     "............kkkk.kkkkk..........",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "chr_player_b-cloak-beard_idle_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 6,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": true,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "............kkkkkkkk............",
+     "...........kaAAAaaaak...........",
+     "..........kaAAaaaaaaak..........",
+     "..........kaaaaaaaaaak..........",
+     "..........kaaabaa2222k..........",
+     "..........kaab22222k2k..........",
+     "..........kab322222k2k..........",
+     "..........kab22222221k..........",
+     "...........kb222aaaak...........",
+     "............kkaaaakk............",
+     "..........k7788888889k..........",
+     ".........k778888888899k.........",
+     "........k78k45555556k9k.........",
+     "........k78k44555566k9k.........",
+     "........k78klLlllllLk9k.........",
+     "........k78k45555556k2k.........",
+     "........k7k4455555566k..........",
+     "........k8k4455555566k..........",
+     "........k8k4555555556k..........",
+     "........k9k5555555666k..........",
+     "........kkkkkkkkkkkkkk..........",
+     "............k22kk22k............",
+     "............k23kk23k............",
+     "............kLlkklLlk...........",
+     "............kkkk.kkkkk..........",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "chr_player_c-hood_idle_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 6,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": true,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "............kkkkkkkk............",
+     "...........k77888888k...........",
+     "..........k7788888889k..........",
+     "..........k7888888889k..........",
+     "..........k8888899999k..........",
+     "..........k8888912222k..........",
+     "..........k88889222k2k..........",
+     "..........k88889222k2k..........",
+     "..........k8888922221k..........",
+     "...........k88892232k...........",
+     "............kk9333kk............",
+     "...........k45555556k...........",
+     ".........kk4455555566kk.........",
+     ".........k6k45555556k6k.........",
+     ".........k6k44555566k6k.........",
+     ".........k6klLlllllLk6k.........",
+     ".........k2k45555556k2k.........",
+     "..........k4455555566k..........",
+     "..........k4455555566k..........",
+     "..........k4555555556k..........",
+     "..........k5555555666k..........",
+     "..........kkkkkkkkkkkk..........",
+     "............k22kk22k............",
+     "............k23kk23k............",
+     "............kLlkklLlk...........",
+     "............kkkk.kkkkk..........",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "enm_a1-small-snake_move_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 8,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": true,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     ".....................kkkk.......",
+     "....................kpppek......",
+     "....................kppppkR.....",
+     "...................kPppkkk......",
+     ".............kkk..kPpk..........",
+     "............kpppk.kPpk..........",
+     "..........kkpgpPkkpPk...........",
+     ".........kppPk.kPpgpk...........",
+     "........kPpk....kkkk............",
+     ".........kk.....................",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "enm_a2-fruit-moth_fly_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 12,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": false,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     ".......kkk............kkk.......",
+     "......kqqpk..........kpqqk......",
+     "......kqpppk..kGGk..kpppqk......",
+     "......kqpePpkkrrrrkkpPepqk......",
+     "......kqpPPpkrEErrRkpPPpqk......",
+     ".......kpPPpkrErrkRkpPPpk.......",
+     "........kpPpkrrrrRRkpPpk........",
+     ".........kkkkrrrRRRkkkk.........",
+     "............kRRRRRRk............",
+     ".............kkkkkk.............",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "enm_a3-thorn-beast_walk_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    1
+   ],
+   "fps": 6,
+   "loop": true,
+   "frames_planned": 4,
+   "ground": true,
+   "frames": [
+    [
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "................................",
+     "..........t.....t.....t.........",
+     ".........tTk...tTk...tTk........",
+     "........kkTkkkkkTkkkkkTk........",
+     ".......kPPppppppppppppqqk.......",
+     ".....tTkPppqqpppppqqpppqkTt.....",
+     "......tkPppppppppppppppqkt......",
+     ".......kPppppppppppkeekqk.......",
+     ".......kPpppppppppppkkpqk.......",
+     ".......kPPpppppppppppppqk.......",
+     ".......kPPpppppppppkiikqk.......",
+     ".....tTkPPPppppppppkkkkqkTt.....",
+     "......tkPPPPpppppppppppqkt......",
+     ".......kPPPPPppppppppppPk.......",
+     ".......kPPPPPPPPpppppPPPk.......",
+     ".......kPPPPPPPPPPPPPPPPk.......",
+     ".....tTkPPPPPPPPPPPPPPPPkTt.....",
+     "........kkkkkkkkkkkkkkkk........",
+     "........kTk.kTk..kTk.kTk........",
+     "........kTk.kTk..kTk.kTk........",
+     "........kTk.kTk..kTk.kTk........",
+     "........kTk.kTk..kTk.kTk........",
+     "........kkk.kkk..kkk.kkk........",
+     "................................"
+    ]
+   ]
+  },
+  {
+   "name": "wpn_bible-book_spin_16",
+   "cell": [
+    16,
+    16
+   ],
+   "pivot_px": [
+    8,
+    8
+   ],
+   "fps": 6,
+   "loop": true,
+   "frames_planned": 2,
+   "frames": [
+    [
+     "................",
+     ".............y..",
+     "...kkkkkkkkkk...",
+     "..kjjjjjjjjjjk..",
+     "..kjjjjYYjjjJk..",
+     "..kjjjjYYjjjJk..",
+     "..kjjYYYYYYjJk..",
+     "..kjjYYYYYYjJk..",
+     "..kjjjjYYjjjJk..",
+     "..kjjjjYYjjjJk..",
+     "..kjjjjYYjjjJk..",
+     "..kJJJJJJJJJJk..",
+     "..kwwwwwwwwwwk..",
+     "...kkkkkkkkkk...",
+     "..y.............",
+     "................"
+    ]
+   ]
+  },
+  {
+   "name": "ico_wpn_jawbone_static_16",
+   "cell": [
+    16,
+    16
+   ],
+   "pivot_px": [
+    8,
+    8
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "frames": [
+    [
+     "................",
+     "................",
+     "................",
+     "................",
+     "...........kk...",
+     "..........kiik..",
+     "..........kiIk..",
+     ".kwkwkwkwkkiIk..",
+     "kiiiiiiiiiiiIk..",
+     "kIiiiiiiiiiIIk..",
+     ".kIIIIIIIIIIk...",
+     "..kkkkkkkkkk....",
+     "................",
+     "................",
+     "................",
+     "................"
+    ]
+   ]
+  },
+  {
+   "name": "wpn_sling-stone_spin_8",
+   "cell": [
+    8,
+    8
+   ],
+   "pivot_px": [
+    4,
+    4
+   ],
+   "fps": 12,
+   "loop": true,
+   "frames_planned": 2,
+   "frames": [
+    [
+     "........",
+     "..kkkk..",
+     ".kxxxXk.",
+     "kxWxxxXk",
+     "kxxxxXXk",
+     "kxxxXXXk",
+     ".kXXXXk.",
+     "..kkkk.."
+    ]
+   ]
+  },
+  {
+   "name": "ico_wpn_sling_static_16",
+   "cell": [
+    16,
+    16
+   ],
+   "pivot_px": [
+    8,
+    8
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "frames": [
+    [
+     "................",
+     ".kk..........kk.",
+     "..kl........lk..",
+     "...kl......lk...",
+     "....kl....lk....",
+     ".....kl..lk.....",
+     "....kLllllLk....",
+     "...kLlxxxxlLk...",
+     "...kLlxWxXlLk...",
+     "...kLlxxXXlLk...",
+     "....kLllllLk....",
+     ".....kkkkkk.....",
+     "................",
+     "................",
+     "................",
+     "................"
+    ]
+   ]
+  },
+  {
+   "name": "pkp_xp-gem-base_idle_8",
+   "cell": [
+    8,
+    8
+   ],
+   "pivot_px": [
+    4,
+    4
+   ],
+   "fps": 4,
+   "loop": true,
+   "frames_planned": 2,
+   "frames": [
+    [
+     "...kk...",
+     "..khck..",
+     ".khccCk.",
+     "khcccCCk",
+     "kcccCCCk",
+     ".kcCCCk.",
+     "..kCCk..",
+     "...kk..."
+    ]
+   ]
+  },
+  {
+   "name": "pkp_xp-gem-bonus_idle_8",
+   "cell": [
+    8,
+    8
+   ],
+   "pivot_px": [
+    4,
+    4
+   ],
+   "fps": 4,
+   "loop": true,
+   "frames_planned": 2,
+   "frames": [
+    [
+     "...kk...",
+     "..khvk..",
+     ".khvvVk.",
+     "khvvvVVk",
+     "kvvvVVVk",
+     ".kvVVVk.",
+     "..kVVk..",
+     "...kk..."
+    ]
+   ]
+  },
+  {
+   "name": "fx_shadow_static_16",
+   "cell": [
+    16,
+    6
+   ],
+   "pivot_px": [
+    8,
+    3
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "alpha_ok": true,
+   "frames": [
+    [
+     "....zzzzzzzz....",
+     "..zzzzzzzzzzzz..",
+     ".zzzzzzzzzzzzzz.",
+     ".zzzzzzzzzzzzzz.",
+     "..zzzzzzzzzzzz..",
+     "....zzzzzzzz...."
+    ]
+   ]
+  },
+  {
+   "name": "fx_jawbone-swing_hit_64",
+   "cell": [
+    64,
+    64
+   ],
+   "pivot_px": [
+    32,
+    32
+   ],
+   "frames": [
+    [
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "............................................iiWW................",
+     "............................................IiiWWW..............",
+     ".............................................IiiWWW.............",
+     ".............................................IIiiiWW............",
+     "..............................................IIiiiWWW..........",
+     "..............................................IIIiiiWWW.........",
+     "...............................................IIiiiWWW.........",
+     "...............................................IIIiiiWWW........",
+     "...............................................IIIiiiiWWW.......",
+     "................................................IIIiiiWWWW......",
+     "................................................IIIiiiiWWW......",
+     "................................................IIIIiiiWWWW.....",
+     "................................................IIIIiiiiWWW.....",
+     "................................................IIIIiiiiWWW.....",
+     ".................................................IIIIiiiiWWW....",
+     ".................................................IIIIiiiiWWW....",
+     ".................................................IIIIiiiiWWW....",
+     ".................................................IIIIiiiiWWWW...",
+     ".................................................IIIIiiiiWWWW...",
+     ".................................................IIIIiiiiiWWW...",
+     ".................................................IIIIIiiiiWWW...",
+     ".................................................IIIIIiiiiWWW...",
+     ".................................................IIIIIiiiiWWW...",
+     ".................................................IIIIIiiiiWWW...",
+     ".................................................IIIIiiiiiWWW...",
+     ".................................................IIIIiiiiWWWW...",
+     ".................................................IIIIiiiiWWWW...",
+     ".................................................IIIIiiiiWWW....",
+     ".................................................IIIIiiiiWWW....",
+     ".................................................IIIIiiiiWWW....",
+     "................................................IIIIiiiiWWW.....",
+     "................................................IIIIiiiiWWW.....",
+     "................................................IIIIiiiWWWW.....",
+     "................................................IIIiiiiWWW......",
+     "................................................IIIiiiWWWW......",
+     "...............................................IIIiiiiWWW.......",
+     "...............................................IIIiiiWWW........",
+     "...............................................IIiiiWWW.........",
+     "..............................................IIIiiiWWW.........",
+     "..............................................IIiiiWWW..........",
+     ".............................................IIiiiWW............",
+     ".............................................IiiWWW.............",
+     "............................................IiiWWW..............",
+     "............................................iiWW................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................",
+     "................................................................"
+    ]
+   ],
+   "fps": 20,
+   "loop": false,
+   "frames_planned": 4,
+   "generated": "arc r17-29, -60..60deg, seedless"
+  },
+  {
+   "name": "til_eden_grass-01_static_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    16
+   ],
+   "frames": [
+    [
+     "mmmmmmnmmmmmmnmmmMMmmmmmmmmmmmmm",
+     "mmmmmmMmmmmmmMmmmmmnmmmmmmmmmmmm",
+     "mmmmmmnmmmmmmmmmmmmMmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmnmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmMmmmmmmm",
+     "mmmmmmmmmmMMMmmmmmmmmmmmmnmmmmmm",
+     "mmmmmmmmmmMmMmmmmmmmmmmmmMnmmmmm",
+     "mmmmmmmmmmmmmmNmmmmmmmmmmmMmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmNmmmmmmmmmmmmmmmmmmmmmmmmmmn",
+     "mmmmmmmmmmmmmmmnmmmmmmmmmmmmmmmm",
+     "mNmmmmmmmnmmmmmMmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmMmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmMMnmmnmmmmmmmmmmmmmmm",
+     "mmmmMMMmmmmMMMmmmmmmmmmmmnmmmmmm",
+     "mmmmMMMmmmmmnNmmmmmmmmmmmMmmmmmm",
+     "mmmmmmmmmmmmMmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmnmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "nmmmmmmmmmmmmmmmmmmnmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmMmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmnmmmmmmmm",
+     "mmmmmmmmnmmmnmmmmMMmmmmmmmmmmmmm",
+     "mmmmmmmnMmmmmmmmmMMMmmmmnmmmmmmm",
+     "mmmmmnmMnmmmmmmmmmmmmmmmMmmmmmmm",
+     "mmmmmMmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmnmmmmmmmmmmmMMMmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmMMMMMMmm",
+     "mmmmNmmmnmmmmmmmmmmmmmmmmmmmmMmm",
+     "mmmmmmmmmmmmmmmmmMNMmmmmmmmmmmmm"
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "generated": "tile seed 11 kind grass, wraps mod 32"
+  },
+  {
+   "name": "til_eden_grass-02_static_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    16
+   ],
+   "frames": [
+    [
+     "mmmmmmmMmmmmmmmmmnmmmmmmMmmmmmmm",
+     "mmmmmmnmmmmNmmmmmMmmmmmmmmmmmmmm",
+     "mmmmmmmmmFmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmFfFmmmnmmmmnmmmmmmmmmmmm",
+     "mmmmmmmmmFmmmmmmmmmmmmmmmmnmmmmm",
+     "mmmmmmMMmmmmmnmmmMMMmmmmmmNmnmmm",
+     "mmmmmmMMMnmmmMmmmMMMmmmmmmmmMmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mnmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmnmmmmm",
+     "mmmmmmmmmmmmmmmmmmmNmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmnmmmmmm",
+     "MMmmmmmmmmnmmmmmmmmmmmmmmmmmmmmM",
+     "mMmmmmmnmmnmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmnNmmmmMmmmmmmmmmmmmmmmmmmFmm",
+     "mmmmMmmmmmmmmmmmmmmmmmmmmmmmFfFm",
+     "mmmmmmmmmmmmmmmnmmmmmmMMMmmmmFmm",
+     "mmmmmmmmmmmmmmmMmmmmmmmMMmmmmmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmnmmmmmmmmmmmmmmmmmmmmmmnmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmMMMmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmMMMmmm",
+     "mmmmmmmmmmmmmmmmmmmmmmMMMmmmmmmm",
+     "mmmmmmmmmmmmmmfmmmmmmmmmmmmmmmmm",
+     "mmmnmmmmmmmmmfdfmmmmmmmmmmmmmmmm",
+     "mmmMmmmmmmmmmmfmmmmmmnmmmmmmmmmm",
+     "mmmmmmmmmmnmmmmmmmmmmMmmmmmNmMnM",
+     "mmmmmmmmmmmmnmmmmmmmmmmmmmmmmMMM",
+     "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+     "mmmmmmmnmmmmmmmmmmmmmmmmnmmmmmmm"
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "generated": "tile seed 23 kind flowers, wraps mod 32"
+  },
+  {
+   "name": "til_eden_thorn-01_static_32",
+   "cell": [
+    32,
+    32
+   ],
+   "pivot_px": [
+    16,
+    16
+   ],
+   "frames": [
+    [
+     "mdmMMMmmmmmmmmmmmmmddmmmmmmmdmmm",
+     "dmmdmdmmmmmmmmmmmmmmmmdmmdmdmmdm",
+     "dmmmmmmmnmummmdmmdMMMmmdmmmmmmmd",
+     "mmmmmdmmMUUmmmmmmmMMdmmmmmdmdmdm",
+     "mmdmmmmmmUmdmmmmdmmdmmmmdmmmmmdm",
+     "mmmmmuUmUmmmmmmmmmmmmmmmmdmmmmmm",
+     "mmmmmUUUmmmdmmmmmmmmdmmmmmmmmmmm",
+     "mdmdUmUUUUdUmdmmmmmmmmdmmmmmmmmm",
+     "mmunuUmmudUumummnmmmdmmmmmmmmmmm",
+     "mmUUUmmmmmmUUUUudmmmmmmmmmmmmmdm",
+     "UUummmmmmmmmmumUUmmmmmmmmdmmmmmU",
+     "mmmmmmmNmmmmddmmUmmmmmmmdmmmmmuU",
+     "NmmmmmmmmmnmmmmmmUmmmmmnmmUmmmUm",
+     "NmmmmmdmmmMmmNmmmmUmmmmMmmuUUUmm",
+     "mmmdmmmmmmmmmmmmmmmUmmmmuUUdmmmm",
+     "mmmmmmmmmmmmmmmmdmmmUUumUdmmmmmm",
+     "mmmdmmmdmmmmmmmmmmmmmUUUmmmmmmdm",
+     "mmdmmmmmmmnmmnmmmdmmuUUummmmmmmm",
+     "mmmmmmmmmmMmmMmmmmmmUmdUmdmmmmmm",
+     "mmmmmmmmmmmmmdmdmmuUmmmmUdmmmmmm",
+     "mmmmmnmmmmmmmmmmUmUmmdmmmUUmmddn",
+     "mmmmmmmmmmmmmmmmUUmmmmmdmmUmmmmU",
+     "mmmmmmmmmmmmmmUUmmmmmmmmmMMUUumu",
+     "UndmUmmmmmmUmUummmmmmmmmmmmMuUUU",
+     "mUUumummmmumUmmmmdmmdmmmmmmmmdmm",
+     "mmmUUUmummUUmmdmmmmmmmmmmdmmmmmm",
+     "mmmNmmUUmUmmmmmmmmnmmmmmmmmmmmmm",
+     "mmnmnmmmUmmmmmdmmmMdmmmmmnmmmmmm",
+     "mMMdmmmUmmmdmmmmmmmdmmmmmMmmmmmm",
+     "mMMMmmmmmmmmdmmmmmddmmmmmmmmmmmm",
+     "mmmmdmmmmmmmmmdmmmmmmmmmmmmmmmmm",
+     "mdmMmmmmmdmmmdmmmmmmmmmmmmmmmmmm"
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "frames_planned": 1,
+   "generated": "tile seed 37 kind thorn, wraps mod 32"
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+# art 03 tool versions used to make and check this package (pinned; checked by scripts/verify_all.py's version line)
+# Python 3.11.6
+#   build_export03.py      needs numpy (PNG bytes come from the standard-library writer scripts/pngio.py + zlib 1.2.12)
+#   check_art03.py, tests/test_check_art03.py, regen_check.py, convert_source.py, anim_meta_check.py,
+#   build_no_pillow_check.py, verify_all.py: standard library only (tests/results/stdlib_only.txt)
+#   build_review03.py      needs numpy + Pillow (review GIF/APNG/boards and Galmuri text rasterising; not handoff input)
+numpy==2.4.3
+Pillow==12.1.1

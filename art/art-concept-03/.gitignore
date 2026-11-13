@@ -1,0 +1,4 @@
+# art 03: regenerable caches never go into the handoff (bytecode holds machine-specific paths)
+__pycache__/
+*.pyc
+.DS_Store

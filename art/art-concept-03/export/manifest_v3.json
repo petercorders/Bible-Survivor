@@ -1,0 +1,5189 @@
+{
+ "schema": "bible-survivors.art-manifest",
+ "schemaVersion": 3,
+ "status": "production-draft",
+ "statusNote": "offline handoff draft: not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "layerOrder": [
+  "cloak_back",
+  "base",
+  "hair_short",
+  "beard",
+  "hood",
+  "cloak_front"
+ ],
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the parent transform of all player layers (or on a single sprite's renderer), never per layer; path tiles and UI pieces are never flipped"
+ },
+ "palette": {
+  "file": "src/palette_v03.json",
+  "name": "master-v0.3",
+  "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_v3.json",
+   "sha256": "80444372c948b1bb60cb03422c3eeab169e134f7acc50c21c4e317aac51c8b98"
+  },
+  "rig": {
+   "file": "src/player_rig_v3.json",
+   "sha256": "3c0c261667b3ac37f7edaf188005ef25fc41e6fba2331348c81f71a803058986"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_v3.json",
+   "sha256": "5e3024af2b4a4b7b6b5b4d883676fdd3f4ef35bfa7c977d41562ad5d364c102c"
+  },
+  "tiles": {
+   "file": "export/tiles/path-16mask_v3.json",
+   "sha256": "a81ef02adf3e448492c3ef4c732de8a17c1386b337b43e745e7f817786363def"
+  },
+  "ui": {
+   "file": "export/ui/ui-pieces_v3.json",
+   "sha256": "7117b480b2f88d721e7bd9422a285da64bc7a5bb6f29a053dd43b18ebf9da77f"
+  }
+ },
+ "build": {
+  "command": "python3 -I scripts/build_export03.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3",
+   "zlib": "1.2.12"
+  }
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors: player parts are cut from the project's own 02 drafts and edited by hand; everything else is drawn by this folder's scripts from src/palette_v03.json. No third-party images, traces or reference art.",
+  "fonts": {
+   "files": "third_party/galmuri/*.ttf (Galmuri 2.40.4)",
+   "license": "SIL OFL 1.1",
+   "notice": "third_party/galmuri/LICENSE.txt",
+   "source": {
+    "name": "Galmuri",
+    "version": "2.40.4",
+    "url": "https://github.com/quiple/galmuri/releases/download/v2.40.4/Galmuri-v2.40.4.zip",
+    "sha256": "c8b3d9861a62ae73c8b1178091401cd79994812437ef386413f6dd54856e60e7"
+   },
+   "use": "review boards and UI mock-up text only; no export PNG contains font glyphs"
+  }
+ },
+ "assets": [
+  {
+   "id": "chr_player_layer-cloak-back_idle_32",
+   "file": "export/png/chr_player_layer-cloak-back_idle_32.png",
+   "sha256": "737efef890538b9a0f2730f8c9baf02e719e2daf22f6fe1c03f144757790c5d3",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-back_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_back",
+   "animation": "idle",
+   "layerOrder": 0,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-base_idle_32",
+   "file": "export/png/chr_player_layer-base_idle_32.png",
+   "sha256": "e9fde7fca6be3b851ef946207ec0864a405b1da23ad32986d91630ea5fa48a78",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-base_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "base",
+   "animation": "idle",
+   "layerOrder": 1,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hair-short_idle_32",
+   "file": "export/png/chr_player_layer-hair-short_idle_32.png",
+   "sha256": "09785e9875ffbb3c518d86bb7bcc5e3b599802b5113c945da4a09838f90b5d8c",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hair-short_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "hair_short",
+   "animation": "idle",
+   "layerOrder": 2,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-beard_idle_32",
+   "file": "export/png/chr_player_layer-beard_idle_32.png",
+   "sha256": "3e305885454c20766661b71c9a54aa5a86a4cf7fb8f6b3ba97e74a121a0d9f57",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-beard_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "beard",
+   "animation": "idle",
+   "layerOrder": 3,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hood_idle_32",
+   "file": "export/png/chr_player_layer-hood_idle_32.png",
+   "sha256": "d1c1224cc1323f7fad51cb21aca3cbceefd7960647cc15fa90492ba1e648e4f6",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hood_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "hood",
+   "animation": "idle",
+   "layerOrder": 4,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-cloak-front_idle_32",
+   "file": "export/png/chr_player_layer-cloak-front_idle_32.png",
+   "sha256": "8c10832cf79a03bac18322c58cda5bcc828f5051753bd3692e879fcafaaa2aa3",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-front_idle_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_front",
+   "animation": "idle",
+   "layerOrder": 5,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-cloak-back_walk_32",
+   "file": "export/png/chr_player_layer-cloak-back_walk_32.png",
+   "sha256": "65b608ce13148dfd1b89631b96ceb4da3795ba469973796cc7db06e628e621d7",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-back_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_back",
+   "animation": "walk",
+   "layerOrder": 0,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-base_walk_32",
+   "file": "export/png/chr_player_layer-base_walk_32.png",
+   "sha256": "1893ed8d8a76a33e033aaeedd8556c507c0c19458a88ed2270bf3b822ac7563a",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-base_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "base",
+   "animation": "walk",
+   "layerOrder": 1,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hair-short_walk_32",
+   "file": "export/png/chr_player_layer-hair-short_walk_32.png",
+   "sha256": "5323cf3ab81f4faf88a55fb8589c425388513e79b0579ebefa0550434b3cd832",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hair-short_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "hair_short",
+   "animation": "walk",
+   "layerOrder": 2,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-beard_walk_32",
+   "file": "export/png/chr_player_layer-beard_walk_32.png",
+   "sha256": "aaa8259728c6db5f2a3953028467415a485dd71fe4556110e418a1e1557a8c12",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-beard_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "beard",
+   "animation": "walk",
+   "layerOrder": 3,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hood_walk_32",
+   "file": "export/png/chr_player_layer-hood_walk_32.png",
+   "sha256": "790d77cb02a148f86eeb26f668efe4164f3cdd1db33caa0e4c4488ea3605c81a",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hood_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "hood",
+   "animation": "walk",
+   "layerOrder": 4,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-cloak-front_walk_32",
+   "file": "export/png/chr_player_layer-cloak-front_walk_32.png",
+   "sha256": "1254e4e37272ca7fa849ad0e4ae1cf1712304d62fca48d208e16d60526200629",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-front_walk_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_front",
+   "animation": "walk",
+   "layerOrder": 5,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-cloak-back_death_32",
+   "file": "export/png/chr_player_layer-cloak-back_death_32.png",
+   "sha256": "b18ecd3d78ff641dcfd4a9c96010eb3c88921f3f60239f08b12d41246bed98ca",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-back_death_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_back",
+   "animation": "death",
+   "layerOrder": 0,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-base_death_32",
+   "file": "export/png/chr_player_layer-base_death_32.png",
+   "sha256": "576f12cf35a6e68656f652cb786e951d38cc0fb9779919fe09c10c2e466b29a9",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-base_death_32"
+   },
+   "status": "production-draft",
+   "layer": "base",
+   "animation": "death",
+   "layerOrder": 1,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hair-short_death_32",
+   "file": "export/png/chr_player_layer-hair-short_death_32.png",
+   "sha256": "8400b7e229f619bca10d28595264c2cd81a8b21354ce31515b5bde27300ca958",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hair-short_death_32"
+   },
+   "status": "production-draft",
+   "layer": "hair_short",
+   "animation": "death",
+   "layerOrder": 2,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-beard_death_32",
+   "file": "export/png/chr_player_layer-beard_death_32.png",
+   "sha256": "673064525e57c53e7d16fc10b7636607742445958fb2fc6a202ff2a672339391",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-beard_death_32"
+   },
+   "status": "production-draft",
+   "layer": "beard",
+   "animation": "death",
+   "layerOrder": 3,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-hood_death_32",
+   "file": "export/png/chr_player_layer-hood_death_32.png",
+   "sha256": "b788a3419773f369229e8fcd6cd2b3b0a8329235053e0e7b2fccf036dc40d888",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-hood_death_32"
+   },
+   "status": "production-draft",
+   "layer": "hood",
+   "animation": "death",
+   "layerOrder": 4,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "chr_player_layer-cloak-front_death_32",
+   "file": "export/png/chr_player_layer-cloak-front_death_32.png",
+   "sha256": "abe958a55ee7ec924aaeecbe7dca7e4fc2773e8bf9457854e7d9b301422daa57",
+   "size": [
+    192,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": "layer",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "src/player_rig_v3.json",
+    "method": "hand-placed parts (cut from the hand-drawn 02 layers and edited) placed per frame by the pose table in the rig; scripts/player03.py",
+    "pixelSource": "export/source/pixel-source_v3.json#chr_player_layer-cloak-front_death_32"
+   },
+   "status": "production-draft",
+   "layer": "cloak_front",
+   "animation": "death",
+   "layerOrder": 5,
+   "recolorGroups": {
+    "skin": "1234",
+    "hair": "AabB",
+    "tunic": "5678",
+    "cloak": "90oO"
+   },
+   "keysFromRig": true
+  },
+  {
+   "id": "enm_a1-small-snake_move_32",
+   "file": "export/png/enm_a1-small-snake_move_32.png",
+   "sha256": "5fb9bd3684945ed1ed13c8f91e7b301ef7e08d76051eeb195b6cc2b81c94e048",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:a1",
+   "source": {
+    "authoring": "scripts/enemies03.py:snake",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#enm_a1-small-snake_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_a2-fruit-moth_fly_32",
+   "file": "export/png/enm_a2-fruit-moth_fly_32.png",
+   "sha256": "122e9d089dfba70e4940359bef7eaa484bc296f3a0d5bc7d7dad9567be8c4c09",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:a2",
+   "source": {
+    "authoring": "scripts/enemies03.py:moth",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#enm_a2-fruit-moth_fly_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_a3-thorn-beast_walk_32",
+   "file": "export/png/enm_a3-thorn-beast_walk_32.png",
+   "sha256": "c106b026306d3bed8302ac570002634b05042bfd77fc386006424612a3746c8e",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:a3",
+   "source": {
+    "authoring": "scripts/enemies03.py:beast",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#enm_a3-thorn-beast_walk_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_enemy-death_burst_32",
+   "file": "export/png/fx_enemy-death_burst_32.png",
+   "sha256": "f3962942d960270c1c218a90cb36ca34b6b56b6411665675edd99a8e65793005",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 12,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "FX",
+   "quality": "core",
+   "ref": "fx:monster_death_common",
+   "source": {
+    "authoring": "scripts/fx03.py:death_burst",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_enemy-death_burst_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "wpn_bible-book_spin_16",
+   "file": "export/png/wpn_bible-book_spin_16.png",
+   "sha256": "dfbffbb9f952c0df9b61f17f1c4c515a3a95eed6a73d119650fad771138a556f",
+   "size": [
+    32,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "core",
+   "ref": "weapon:bible",
+   "source": {
+    "authoring": "scripts/fx03.py:BOOK",
+    "method": "hand grid",
+    "pixelSource": "export/source/pixel-source_v3.json#wpn_bible-book_spin_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_bible-glow_static_20",
+   "file": "export/png/fx_bible-glow_static_20.png",
+   "sha256": "3457bdaf28c5878edb8c11a29cc2bcfa726a9552d27f92ed4c32add4f499cf5f",
+   "size": [
+    20,
+    20
+   ],
+   "cell": [
+    20,
+    20
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     20,
+     20
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     10,
+     10
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     96,
+     176,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "optional-fx",
+   "ref": "weapon:bible",
+   "source": {
+    "authoring": "scripts/fx03.py:book_glow",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_bible-glow_static_20"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "wpn_jawbone_held_16",
+   "file": "export/png/wpn_jawbone_held_16.png",
+   "sha256": "fc71c4dc2f89be4929ec7e8aac17084ba90acc57ce741e3d81288898812edd88",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "core",
+   "ref": "weapon:jawbone",
+   "source": {
+    "authoring": "scripts/fx03.py:jawbone",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#wpn_jawbone_held_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_jawbone-swing-edge_hit_64",
+   "file": "export/png/fx_jawbone-swing-edge_hit_64.png",
+   "sha256": "ee6de575a768dd01112dace5e63c998e3497679697e4dc7f5cd2716bba01f50f",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 20,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     32
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "core",
+   "ref": "weapon:jawbone",
+   "source": {
+    "authoring": "scripts/fx03.py:jaw_swing (opaque pixels)",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_jawbone-swing-edge_hit_64"
+   },
+   "status": "production-draft",
+   "attachPx": [
+    [
+     59,
+     44
+    ],
+    [
+     60,
+     24
+    ],
+    [
+     49,
+     8
+    ],
+    [
+     47,
+     6
+    ]
+   ],
+   "attachNote": "jawbone sprite centre per frame, pixel coordinates from the TOP-LEFT of the 64x64 frame; art faces right (0 deg); rotate the whole effect to the swing direction about the pivot; flipX for left",
+   "pairedWith": "fx_jawbone-swing-trail_hit_64"
+  },
+  {
+   "id": "fx_jawbone-swing-trail_hit_64",
+   "file": "export/png/fx_jawbone-swing-trail_hit_64.png",
+   "sha256": "bdadc4e80ae41891aa0ea9bda4cfa8ec58694dbcf20145bf6853b92c170eb977",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 20,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     32
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     112,
+     176
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "optional-fx",
+   "ref": "weapon:jawbone",
+   "source": {
+    "authoring": "scripts/fx03.py:jaw_swing (see-through pixels)",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_jawbone-swing-trail_hit_64"
+   },
+   "status": "production-draft",
+   "attachPx": [
+    [
+     59,
+     44
+    ],
+    [
+     60,
+     24
+    ],
+    [
+     49,
+     8
+    ],
+    [
+     47,
+     6
+    ]
+   ],
+   "attachNote": "jawbone sprite centre per frame, pixel coordinates from the TOP-LEFT of the 64x64 frame; art faces right (0 deg); rotate the whole effect to the swing direction about the pivot; flipX for left",
+   "pairedWith": "fx_jawbone-swing-edge_hit_64"
+  },
+  {
+   "id": "wpn_sling-stone_spin_8",
+   "file": "export/png/wpn_sling-stone_spin_8.png",
+   "sha256": "abc32a7897a201e265a44ede5bf348d6ac9c6322c2bece80d6c700f1878f664a",
+   "size": [
+    16,
+    8
+   ],
+   "cell": [
+    8,
+    8
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     8,
+     8
+    ],
+    [
+     8,
+     0,
+     8,
+     8
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "pivot": {
+    "px": [
+     4,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "core",
+   "ref": "weapon:sling",
+   "source": {
+    "authoring": "scripts/fx03.py:stone_spin",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#wpn_sling-stone_spin_8"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_sling-trail_static_20x8",
+   "file": "export/png/fx_sling-trail_static_20x8.png",
+   "sha256": "2b8964a7ad25dcbcc4936152ebbdbaede4a43acce515249367ac2facf1d45a14",
+   "size": [
+    20,
+    8
+   ],
+   "cell": [
+    20,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     20,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     19,
+     4
+    ],
+    "normalized": [
+     0.95,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     112,
+     136
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "optional-fx",
+   "ref": "weapon:sling",
+   "source": {
+    "authoring": "scripts/fx03.py:stone_trail",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_sling-trail_static_20x8"
+   },
+   "status": "production-draft",
+   "note": "points left from the stone (pivot at the stone end); rotate with the shot direction"
+  },
+  {
+   "id": "fx_hit-spark_hit_16",
+   "file": "export/png/fx_hit-spark_hit_16.png",
+   "sha256": "e10cf82bf788637526fc1e48f3720c0633115376ee1cefcd634e04bf95b495fd",
+   "size": [
+    48,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ],
+    [
+     32,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 15,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "FX",
+   "quality": "core",
+   "ref": "fx:hit_common",
+   "source": {
+    "authoring": "scripts/fx03.py:hit",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_hit-spark_hit_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "pkp_xp-gem-base_idle_8",
+   "file": "export/png/pkp_xp-gem-base_idle_8.png",
+   "sha256": "9c7191b272c063db523da8c7d23c1f31132cd7a42fecd28919cdb32e0dbcee69",
+   "size": [
+    16,
+    8
+   ],
+   "cell": [
+    8,
+    8
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     8,
+     8
+    ],
+    [
+     8,
+     0,
+     8,
+     8
+    ]
+   ],
+   "fps": 4,
+   "loop": true,
+   "pivot": {
+    "px": [
+     4,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Pickups",
+   "quality": "core",
+   "ref": "pickup:xp_base",
+   "source": {
+    "authoring": "scripts/fx03.py:GEM/GEM1",
+    "method": "hand grid",
+    "pixelSource": "export/source/pixel-source_v3.json#pkp_xp-gem-base_idle_8"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "pkp_xp-gem-bonus_idle_8",
+   "file": "export/png/pkp_xp-gem-bonus_idle_8.png",
+   "sha256": "e249b60e3d9ca40dd7c48767565e113b4022633d1ba5580d5cac72fd6ed587ef",
+   "size": [
+    16,
+    8
+   ],
+   "cell": [
+    8,
+    8
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     8,
+     8
+    ],
+    [
+     8,
+     0,
+     8,
+     8
+    ]
+   ],
+   "fps": 4,
+   "loop": true,
+   "pivot": {
+    "px": [
+     4,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Pickups",
+   "quality": "core",
+   "ref": "pickup:xp_bonus",
+   "source": {
+    "authoring": "scripts/fx03.py:GEM/GEM1",
+    "method": "hand grid",
+    "pixelSource": "export/source/pixel-source_v3.json#pkp_xp-gem-bonus_idle_8"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_shadow_static_16x6",
+   "file": "export/png/fx_shadow_static_16x6.png",
+   "sha256": "15723bddb50ecca80f3928f16934222f3c9d02a0a018fe9d0c70a382c9f245b1",
+   "size": [
+    16,
+    6
+   ],
+   "cell": [
+    16,
+    6
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     6
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     3
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     89
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "ref": "player:player",
+   "source": {
+    "authoring": "scripts/fx03.py:shadow",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_shadow_static_16x6"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_shadow-snake_static_20x4",
+   "file": "export/png/fx_shadow-snake_static_20x4.png",
+   "sha256": "c2c15536d5ea42aa63cc7afb5c811fb51ed4a1be1af2e373f8ac1dd3300d6c49",
+   "size": [
+    20,
+    4
+   ],
+   "cell": [
+    20,
+    4
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     20,
+     4
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     10,
+     2
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     51
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "ref": "monster:a1",
+   "source": {
+    "authoring": "scripts/fx03.py:shadow",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_shadow-snake_static_20x4"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_shadow-wide_static_24x6",
+   "file": "export/png/fx_shadow-wide_static_24x6.png",
+   "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef",
+   "size": [
+    24,
+    6
+   ],
+   "cell": [
+    24,
+    6
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     24,
+     6
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     12,
+     3
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     89
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "ref": "monster:a3",
+   "source": {
+    "authoring": "scripts/fx03.py:shadow",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_shadow-wide_static_24x6"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_shadow-small_static_12x4",
+   "file": "export/png/fx_shadow-small_static_12x4.png",
+   "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "size": [
+    12,
+    4
+   ],
+   "cell": [
+    12,
+    4
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     12,
+     4
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     6,
+     2
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     51
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "ref": "monster:a2",
+   "source": {
+    "authoring": "scripts/fx03.py:shadow",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#fx_shadow-small_static_12x4"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "til_eden_path-16mask_static_32",
+   "file": "export/png/til_eden_path-16mask_static_32.png",
+   "sha256": "1d2013a938e8e88a3dbf94bf53385a4a381ff919dcb9a6984bbde095fb0f01d9",
+   "size": [
+    512,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 16,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ],
+    [
+     128,
+     0,
+     32,
+     32
+    ],
+    [
+     160,
+     0,
+     32,
+     32
+    ],
+    [
+     192,
+     0,
+     32,
+     32
+    ],
+    [
+     224,
+     0,
+     32,
+     32
+    ],
+    [
+     256,
+     0,
+     32,
+     32
+    ],
+    [
+     288,
+     0,
+     32,
+     32
+    ],
+    [
+     320,
+     0,
+     32,
+     32
+    ],
+    [
+     352,
+     0,
+     32,
+     32
+    ],
+    [
+     384,
+     0,
+     32,
+     32
+    ],
+    [
+     416,
+     0,
+     32,
+     32
+    ],
+    [
+     448,
+     0,
+     32,
+     32
+    ],
+    [
+     480,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_path",
+   "source": {
+    "authoring": "scripts/tiles03.py:path_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_path-16mask_static_32"
+   },
+   "status": "production-draft",
+   "tileRule": "frame index = mask = N*1 + E*2 + S*4 + W*8 (neighbour is path); diagonals ignored",
+   "mapping": "export/tiles/path-16mask_v3.json"
+  },
+  {
+   "id": "til_eden_grass-a_static_32",
+   "file": "export/png/til_eden_grass-a_static_32.png",
+   "sha256": "1f6a8cd289566e67896414cdc0fbbffaaf86b4ecdf24585491fbab5231ca4ab6",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_grass-a_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "til_eden_grass-b_static_32",
+   "file": "export/png/til_eden_grass-b_static_32.png",
+   "sha256": "4773bb8b592250ae6ac666821f2ffb84cdaff6bf4fd76afae3adb4de5a59d201",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_grass-b_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "til_eden_grass-c_static_32",
+   "file": "export/png/til_eden_grass-c_static_32.png",
+   "sha256": "19d545ca9e0463afe07eea877b64e55c6546b5a0ec3305ab4cedf4b43bfe6dac",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_grass-c_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "til_eden_grass-d_static_32",
+   "file": "export/png/til_eden_grass-d_static_32.png",
+   "sha256": "a430efb1729faf25ce62c3c5f608d1895afc303c008a697d6aaae094462ac6bd",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_grass-d_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "til_eden_meadow-a_static_32",
+   "file": "export/png/til_eden_meadow-a_static_32.png",
+   "sha256": "77f81270b222920489de4baeacfed2bb75ec1cff6f3c953d58656af41ae9ff32",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_meadow-a_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "til_eden_meadow-b_static_32",
+   "file": "export/png/til_eden_meadow-b_static_32.png",
+   "sha256": "a12a6a449662a91a939620d495dda9f71555ba85b516447152556a481aa3a1c8",
+   "size": [
+    32,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     16
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "Ground",
+   "quality": "terrain",
+   "ref": "terrain:eden_ground",
+   "source": {
+    "authoring": "scripts/terrain03.py:base_tile",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#til_eden_meadow-b_static_32"
+   },
+   "status": "production-draft",
+   "placement": "random pick among grass-a..d (meadow-a..b inside meadow patches) + random flipX"
+  },
+  {
+   "id": "dec_eden_tuft-1_11x8",
+   "file": "export/png/dec_eden_tuft-1_11x8.png",
+   "sha256": "ec6f90ce25819678ae6827a56a5f2da0e4275251ccd7ee5400f3a37a8586ee99",
+   "size": [
+    11,
+    8
+   ],
+   "cell": [
+    11,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     11,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.454545,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_tuft-1_11x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_tuft-2_11x8",
+   "file": "export/png/dec_eden_tuft-2_11x8.png",
+   "sha256": "8e55cdcdc1dd9b4c706911fd9ace621378f1e120d06a1bd9f39e00072e053d0e",
+   "size": [
+    11,
+    8
+   ],
+   "cell": [
+    11,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     11,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.454545,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_tuft-2_11x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_tuft-3_11x8",
+   "file": "export/png/dec_eden_tuft-3_11x8.png",
+   "sha256": "eb12d34f09abe24b0ff4856423065dfd4a0b92fea8dac5e2d13a67fd6c69dc15",
+   "size": [
+    11,
+    8
+   ],
+   "cell": [
+    11,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     11,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.454545,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_tuft-3_11x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_tuft-dry_11x8",
+   "file": "export/png/dec_eden_tuft-dry_11x8.png",
+   "sha256": "8e18f6ecbcaec710c2fd07f47abdce10fbdfbe684909d79ee0f533d6e1deae98",
+   "size": [
+    11,
+    8
+   ],
+   "cell": [
+    11,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     11,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.454545,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_tuft-dry_11x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_flowers-1_16x10",
+   "file": "export/png/dec_eden_flowers-1_16x10.png",
+   "sha256": "059d5a0469f4f6cef9e3892089eee9a236527ae47fd5b3425d700ea795583d7b",
+   "size": [
+    16,
+    10
+   ],
+   "cell": [
+    16,
+    10
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     10
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_flowers-1_16x10"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_flowers-2_16x10",
+   "file": "export/png/dec_eden_flowers-2_16x10.png",
+   "sha256": "05c68527102e0d6765c8d8e792f6ba8d6d8a4d4af3ccd23d232f8c7147312ab6",
+   "size": [
+    16,
+    10
+   ],
+   "cell": [
+    16,
+    10
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     10
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_flowers-2_16x10"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_flowers-3_16x10",
+   "file": "export/png/dec_eden_flowers-3_16x10.png",
+   "sha256": "46d165eec23b99f018d41bf542834595dc58d11d661435def63f65f7f8cbe789",
+   "size": [
+    16,
+    10
+   ],
+   "cell": [
+    16,
+    10
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     10
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_flowers-3_16x10"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_pebbles_10x6",
+   "file": "export/png/dec_eden_pebbles_10x6.png",
+   "sha256": "b42d312efb7957ba4ce8c4c2c015efeae94f2836e4c66615e68b4564d5727a78",
+   "size": [
+    10,
+    6
+   ],
+   "cell": [
+    10,
+    6
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     10,
+     6
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_pebbles_10x6"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_clover-1_14x8",
+   "file": "export/png/dec_eden_clover-1_14x8.png",
+   "sha256": "c0995dee202a55846fc5c36eda319fa864a131945883417313fb5440974e291d",
+   "size": [
+    14,
+    8
+   ],
+   "cell": [
+    14,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     14,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     7,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_clover-1_14x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_clover-2_14x8",
+   "file": "export/png/dec_eden_clover-2_14x8.png",
+   "sha256": "8266dcfd73d3316aa323d3943974810f7ee22d93dee1cfb175fd02ad4d9c22d1",
+   "size": [
+    14,
+    8
+   ],
+   "cell": [
+    14,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     14,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     7,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_clover-2_14x8"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_rock-m_14x9",
+   "file": "export/png/dec_eden_rock-m_14x9.png",
+   "sha256": "9c186a150d0d752fbe98d58a2452302b0dacd9056af1ff9c05cf466cf5f7e53e",
+   "size": [
+    14,
+    9
+   ],
+   "cell": [
+    14,
+    9
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     14,
+     9
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     7,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_rock-m_14x9"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_rock-s_10x7",
+   "file": "export/png/dec_eden_rock-s_10x7.png",
+   "sha256": "7720bf29a5604b012f1fc53aa32d380f16266a729f877787e765f9945eb01731",
+   "size": [
+    10,
+    7
+   ],
+   "cell": [
+    10,
+    7
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     10,
+     7
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     5,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_rock-s_10x7"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_edge-stone-1_7x5",
+   "file": "export/png/dec_eden_edge-stone-1_7x5.png",
+   "sha256": "f8868a784a702d92c66ea03420d11703b10227bb81b058e400d251a6d1c3ac16",
+   "size": [
+    7,
+    5
+   ],
+   "cell": [
+    7,
+    5
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     7,
+     5
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     3,
+     0
+    ],
+    "normalized": [
+     0.428571,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_edge-stone-1_7x5"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_edge-stone-2_7x5",
+   "file": "export/png/dec_eden_edge-stone-2_7x5.png",
+   "sha256": "f8868a784a702d92c66ea03420d11703b10227bb81b058e400d251a6d1c3ac16",
+   "size": [
+    7,
+    5
+   ],
+   "cell": [
+    7,
+    5
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     7,
+     5
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     3,
+     0
+    ],
+    "normalized": [
+     0.428571,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_edge-stone-2_7x5"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_root_46x18",
+   "file": "export/png/dec_eden_root_46x18.png",
+   "sha256": "a258874b0fb6f853fe482a0aa7357f059ad93319074520a82233b6425cd1f187",
+   "size": [
+    46,
+    18
+   ],
+   "cell": [
+    46,
+    18
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     46,
+     18
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     23,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_root_46x18"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_leaves_12x7",
+   "file": "export/png/dec_eden_leaves_12x7.png",
+   "sha256": "24a4546a0af55c21f80152dbbf4afadb48cf180388eb1edf8b383c3c0bc04222",
+   "size": [
+    12,
+    7
+   ],
+   "cell": [
+    12,
+    7
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     12,
+     7
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     6,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_leaves_12x7"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": false
+  },
+  {
+   "id": "dec_eden_thorn-vine-1_44x22",
+   "file": "export/png/dec_eden_thorn-vine-1_44x22.png",
+   "sha256": "1c30535c3e3d22a42e982b56b077c1cfcee3a7d8ab2c2bffccd11861b6a88632",
+   "size": [
+    44,
+    22
+   ],
+   "cell": [
+    44,
+    22
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     44,
+     22
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     22,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_thorn-vine-1_44x22"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": true
+  },
+  {
+   "id": "dec_eden_thorn-vine-2_44x22",
+   "file": "export/png/dec_eden_thorn-vine-2_44x22.png",
+   "sha256": "b594b6ae804643725c163e2a02962c2d0e448870b176a81886e96914d298104c",
+   "size": [
+    44,
+    22
+   ],
+   "cell": [
+    44,
+    22
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     44,
+     22
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     22,
+     0
+    ],
+    "normalized": [
+     0.5,
+     0.0
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "quality": "terrain",
+   "ref": "terrain:eden_decal",
+   "source": {
+    "authoring": "scripts/terrain03.py:build_decals",
+    "method": "procedural generator (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_v3.json#dec_eden_thorn-vine-2_44x22"
+   },
+   "status": "production-draft",
+   "collider": false,
+   "late": true
+  },
+  {
+   "id": "ico_wpn_bible_static_16",
+   "file": "export/png/ico_wpn_bible_static_16.png",
+   "sha256": "8ad95e89aa3732d5cf434856e69db6d198e20ce8b65d57dead24142a7c0362bd",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "weapon:bible",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_wpn_bible_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_wpn_bible_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_wpn_jawbone_static_16",
+   "file": "export/png/ico_wpn_jawbone_static_16.png",
+   "sha256": "fc71c4dc2f89be4929ec7e8aac17084ba90acc57ce741e3d81288898812edd88",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "weapon:jawbone",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_wpn_jawbone_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_wpn_jawbone_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_wpn_sling_static_16",
+   "file": "export/png/ico_wpn_sling_static_16.png",
+   "sha256": "10c4f9602328ed3654b1245f2987e2ebf03e673c3dd27fc9cea135dfa8ca76a5",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "weapon:sling",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_wpn_sling_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_wpn_sling_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_psv_scroll_static_16",
+   "file": "export/png/ico_psv_scroll_static_16.png",
+   "sha256": "48cfa29aba0aee5535cd69fc29ac271fc2cdfdd3b5f11a7ee3805e99dc9b492e",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "passive:scroll",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_psv_scroll_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_psv_scroll_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_psv_hair_static_16",
+   "file": "export/png/ico_psv_hair_static_16.png",
+   "sha256": "a0a59495022c6e95f8a0d026f2097e446bc813ee04a1c4c359a33d5542a76867",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "passive:hair",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_psv_hair_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_psv_hair_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_psv_stones_static_16",
+   "file": "export/png/ico_psv_stones_static_16.png",
+   "sha256": "13f7b33f400caf4afa14bfe0b6f1debb23b484869d4a601cf48d4d341fe3f170",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "passive:stones",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_psv_stones_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_psv_stones_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ico_res_gold_static_16",
+   "file": "export/png/ico_res_gold_static_16.png",
+   "sha256": "84b43586a396a6e33bb2e9fabb502723499f1fcc1a1cadc94e20b3bec5eafb3a",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "currency:gold",
+   "source": {
+    "authoring": "scripts/ui03.py:icons (ico_res_gold_static_16)",
+    "method": "procedural/hand",
+    "pixelSource": "export/source/pixel-source_v3.json#ico_res_gold_static_16"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "ui_panel_9slice_16",
+   "file": "export/png/ui_panel_9slice_16.png",
+   "sha256": "18e36042007873510a39665b1bd5284c4097ef7b67eb64caf4b7a3e05a0fafe0",
+   "size": [
+    16,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_panel_9slice_16"
+   },
+   "status": "production-draft",
+   "states": [
+    "default"
+   ],
+   "border_LBRT": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "content_xywh_topLeft": null,
+   "note": "dialog/panel background; centre and edges tile"
+  },
+  {
+   "id": "ui_card_9slice_24",
+   "file": "export/png/ui_card_9slice_24.png",
+   "sha256": "e4ad3620c8939cf9e2953aad89bb18fd9559362ae6b9267835e4cac5f0ea525e",
+   "size": [
+    96,
+    24
+   ],
+   "cell": [
+    24,
+    24
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     24,
+     24
+    ],
+    [
+     24,
+     0,
+     24,
+     24
+    ],
+    [
+     48,
+     0,
+     24,
+     24
+    ],
+    [
+     72,
+     0,
+     24,
+     24
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     12,
+     12
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_card_9slice_24"
+   },
+   "status": "production-draft",
+   "states": [
+    "normal",
+    "focus",
+    "pressed",
+    "disabled"
+   ],
+   "border_LBRT": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "content_xywh_topLeft": null,
+   "note": "selectable card; content moves down 1 px when pressed; disabled uses text.2 for labels"
+  },
+  {
+   "id": "ui_button_9slice_16",
+   "file": "export/png/ui_button_9slice_16.png",
+   "sha256": "dba4f8b27a333a7db5ff4e6947df71596ba9318a275ec9621824db4751085d00",
+   "size": [
+    64,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ],
+    [
+     32,
+     0,
+     16,
+     16
+    ],
+    [
+     48,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_button_9slice_16"
+   },
+   "status": "production-draft",
+   "states": [
+    "normal",
+    "focus",
+    "pressed",
+    "disabled"
+   ],
+   "border_LBRT": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "content_xywh_topLeft": null,
+   "note": "text button / selector arrow button"
+  },
+  {
+   "id": "ui_slot_18",
+   "file": "export/png/ui_slot_18.png",
+   "sha256": "e57904a5704035dc07b20850a5e2252d7ff43b347953ac9f4e079ee9b44c682e",
+   "size": [
+    72,
+    18
+   ],
+   "cell": [
+    18,
+    18
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     18,
+     18
+    ],
+    [
+     18,
+     0,
+     18,
+     18
+    ],
+    [
+     36,
+     0,
+     18,
+     18
+    ],
+    [
+     54,
+     0,
+     18,
+     18
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     9,
+     9
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_slot_18"
+   },
+   "status": "production-draft",
+   "states": [
+    "empty",
+    "filled",
+    "new",
+    "max"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": [
+    1,
+    1,
+    16,
+    16
+   ],
+   "note": "16x16 icon centred in content rect; pips drawn on row 15"
+  },
+  {
+   "id": "ui_pip_2",
+   "file": "export/png/ui_pip_2.png",
+   "sha256": "382bd86705dda72e24b665ca32da863ef51eebf46f00636bb30b2bff0af393a0",
+   "size": [
+    4,
+    2
+   ],
+   "cell": [
+    2,
+    2
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     2,
+     2
+    ],
+    [
+     2,
+     0,
+     2,
+     2
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     1,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_pip_2"
+   },
+   "status": "production-draft",
+   "states": [
+    "off",
+    "on"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "weapon level pip, 1 px gap"
+  },
+  {
+   "id": "ui_bar-frame_9slice_8x6",
+   "file": "export/png/ui_bar-frame_9slice_8x6.png",
+   "sha256": "b11d56556ad0aa1fe0a960f23d61f7eea17ff735146bec42c822309faf5311b7",
+   "size": [
+    8,
+    6
+   ],
+   "cell": [
+    8,
+    6
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     8,
+     6
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     4,
+     3
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_bar-frame_9slice_8x6"
+   },
+   "status": "production-draft",
+   "states": [
+    "default"
+   ],
+   "border_LBRT": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "content_xywh_topLeft": [
+    1,
+    1,
+    6,
+    4
+   ],
+   "note": "outline only; centre is transparent, fill and back are drawn inside the content rect"
+  },
+  {
+   "id": "ui_bar-xp_tile_1x4",
+   "file": "export/png/ui_bar-xp_tile_1x4.png",
+   "sha256": "6579b63c65c68635d218999e4cb864e9f7f75e61dda60e8cf9343bb586ca5df5",
+   "size": [
+    2,
+    4
+   ],
+   "cell": [
+    1,
+    4
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     1,
+     4
+    ],
+    [
+     1,
+     0,
+     1,
+     4
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     0,
+     2
+    ],
+    "normalized": [
+     0.0,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_bar-xp_tile_1x4"
+   },
+   "status": "production-draft",
+   "states": [
+    "back",
+    "fill"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "repeat horizontally; fill width = round(content_w * value)"
+  },
+  {
+   "id": "ui_bar-hp_tile_1x2",
+   "file": "export/png/ui_bar-hp_tile_1x2.png",
+   "sha256": "7bc48242574a2cdf060b37ae9c0dd14b7e701827e7f7ac443c6f496e584499aa",
+   "size": [
+    2,
+    2
+   ],
+   "cell": [
+    1,
+    2
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     1,
+     2
+    ],
+    [
+     1,
+     0,
+     1,
+     2
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     0,
+     1
+    ],
+    "normalized": [
+     0.0,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_bar-hp_tile_1x2"
+   },
+   "status": "production-draft",
+   "states": [
+    "back",
+    "fill"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "player HP under the feet; repeat horizontally"
+  },
+  {
+   "id": "ui_swatch_12",
+   "file": "export/png/ui_swatch_12.png",
+   "sha256": "ceade2514481d4cfa2b14d276e0dcda42f43f3fecf91407d661748947535768e",
+   "size": [
+    24,
+    12
+   ],
+   "cell": [
+    12,
+    12
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     12,
+     12
+    ],
+    [
+     12,
+     0,
+     12,
+     12
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     6,
+     6
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_swatch_12"
+   },
+   "status": "production-draft",
+   "states": [
+    "normal",
+    "selected"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": [
+    2,
+    2,
+    8,
+    8
+   ],
+   "note": "content rect is filled with the option colour (ramp index 1) at runtime"
+  },
+  {
+   "id": "ui_arrow_6x9",
+   "file": "export/png/ui_arrow_6x9.png",
+   "sha256": "805a1e33b8d9961f462f5df656a997bbd5362aee39fdc697327f2cdac1b0bef5",
+   "size": [
+    6,
+    9
+   ],
+   "cell": [
+    6,
+    9
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     6,
+     9
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     3,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.444444
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_arrow_6x9"
+   },
+   "status": "production-draft",
+   "states": [
+    "default"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "points right; flipX for left"
+  },
+  {
+   "id": "ui_badge-evolve_8",
+   "file": "export/png/ui_badge-evolve_8.png",
+   "sha256": "df82adb213b4d5ce9d9fd1d81af4bafbd66df8db34fa763c9ab4dded33ec1724",
+   "size": [
+    8,
+    8
+   ],
+   "cell": [
+    8,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     8,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     4,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "UI",
+   "quality": "ui",
+   "ref": "ui:dialog",
+   "source": {
+    "authoring": "scripts/ui03.py:build",
+    "method": "procedural pixel boxes",
+    "pixelSource": "export/source/pixel-source_v3.json#ui_badge-evolve_8"
+   },
+   "status": "production-draft",
+   "states": [
+    "default"
+   ],
+   "border_LBRT": null,
+   "content_xywh_topLeft": null,
+   "note": "evolution marker on the top-right of an icon"
+  }
+ ]
+}

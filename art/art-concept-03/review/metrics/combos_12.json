@@ -1,0 +1,153 @@
+{
+ "count": 12,
+ "scope": "representative sample, not all combinations",
+ "coverage": {
+  "skins": [
+   "s1",
+   "s3",
+   "s5",
+   "s6"
+  ],
+  "hairs": [
+   "auburn",
+   "black",
+   "brown",
+   "darkbrown",
+   "gray",
+   "white"
+  ],
+  "tunic_dyes": [
+   "indigo",
+   "linen",
+   "madder",
+   "ochre",
+   "olive",
+   "purple"
+  ],
+  "cloak_dyes": [
+   "indigo",
+   "linen",
+   "madder",
+   "ochre",
+   "olive",
+   "purple"
+  ],
+  "variants": [
+   "a-tunic",
+   "b-cloak-beard",
+   "c-hood",
+   "d-hood-cloak-beard"
+  ]
+ },
+ "combos": [
+  {
+   "no": 1,
+   "skin": "s6",
+   "hair": "black",
+   "tunic": "linen",
+   "cloak": "indigo",
+   "variant": "b-cloak-beard",
+   "why": "가장 어두운 피부 × 머리 6색 (경계 위험 최대, 1/6)"
+  },
+  {
+   "no": 2,
+   "skin": "s6",
+   "hair": "darkbrown",
+   "tunic": "madder",
+   "cloak": "olive",
+   "variant": "b-cloak-beard",
+   "why": "s6 × darkbrown: 02에서 약했던 조합"
+  },
+  {
+   "no": 3,
+   "skin": "s6",
+   "hair": "brown",
+   "tunic": "ochre",
+   "cloak": "purple",
+   "variant": "b-cloak-beard",
+   "why": "s6 × brown: 02에서 가장 약했던 조합"
+  },
+  {
+   "no": 4,
+   "skin": "s6",
+   "hair": "auburn",
+   "tunic": "olive",
+   "cloak": "madder",
+   "variant": "a-tunic",
+   "why": "s6 × auburn: 02 약함 · 수염 없음 얼굴"
+  },
+  {
+   "no": 5,
+   "skin": "s6",
+   "hair": "gray",
+   "tunic": "indigo",
+   "cloak": "ochre",
+   "variant": "a-tunic",
+   "why": "s6 × gray: 밝은 머리 대비"
+  },
+  {
+   "no": 6,
+   "skin": "s6",
+   "hair": "white",
+   "tunic": "purple",
+   "cloak": "linen",
+   "variant": "a-tunic",
+   "why": "s6 × white: 가장 밝은 머리 (6/6)"
+  },
+  {
+   "no": 7,
+   "skin": "s6",
+   "hair": "brown",
+   "tunic": "linen",
+   "cloak": "indigo",
+   "variant": "c-hood",
+   "why": "두건이 머리를 가림 · 어두운 피부"
+  },
+  {
+   "no": 8,
+   "skin": "s6",
+   "hair": "darkbrown",
+   "tunic": "indigo",
+   "cloak": "madder",
+   "variant": "d-hood-cloak-beard",
+   "why": "가림 최대 (두건+망토+수염)"
+  },
+  {
+   "no": 9,
+   "skin": "s1",
+   "hair": "black",
+   "tunic": "madder",
+   "cloak": "indigo",
+   "variant": "b-cloak-beard",
+   "why": "가장 밝은 피부 × 가장 어두운 머리 (반대 극단)"
+  },
+  {
+   "no": 10,
+   "skin": "s1",
+   "hair": "white",
+   "tunic": "olive",
+   "cloak": "purple",
+   "variant": "a-tunic",
+   "why": "밝은 피부 × 흰 머리 (낮은 명도 차)"
+  },
+  {
+   "no": 11,
+   "skin": "s3",
+   "hair": "brown",
+   "tunic": "linen",
+   "cloak": "indigo",
+   "variant": "b-cloak-beard",
+   "why": "중간 피부 · 기본 색"
+  },
+  {
+   "no": 12,
+   "skin": "s5",
+   "hair": "darkbrown",
+   "tunic": "ochre",
+   "cloak": "olive",
+   "variant": "d-hood-cloak-beard",
+   "why": "어두운 중간 피부 · 가림 최대"
+  }
+ ],
+ "full_product_checked_elsewhere": "skin6 x hair6 = 36 combinations x 14 frames: metrics/hair_boundary_36.json"
+}
