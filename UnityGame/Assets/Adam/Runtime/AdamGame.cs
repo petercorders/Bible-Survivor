@@ -25,6 +25,7 @@ namespace BibleSurvivor.Unity
         GUIStyle label, button, title, choiceButton, clearButton, clearChoice, cardHeading, cardEffect;
         AdamFonts fonts;
         AdamArt art;
+        public AdamImpactAudio ImpactAudio {get;private set;}
         public AdamArtWorld ArtWorld { get; } = new AdamArtWorld();
         // Reviewed death strip: six frames at 8 fps. Keep the actor visible before covering it with restart controls.
         public bool DeathPresentationVisible => Host?.Session != null && !Host.Session.IsActive && Host.Session.CurrentHealth <= 0 &&
@@ -32,8 +33,8 @@ namespace BibleSurvivor.Unity
         static readonly Color TextColor = new Color32(244,239,225,255); // art03 text.0
         public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
         void OnEnable() => EnhancedTouchSupport.Enable();
-        void OnDisable() => EnhancedTouchSupport.Disable();
-        void OnDestroy() { ArtWorld.Clear(); fonts?.Dispose(); }
+        void OnDisable() {EnhancedTouchSupport.Disable();ImpactAudio?.Stop();}
+        void OnDestroy() { ArtWorld.Clear(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -47,7 +48,7 @@ namespace BibleSurvivor.Unity
             try { Initialize(new AdamHost(AdamCatalog.Load(), new SaveStore(Path.Combine(Application.persistentDataPath, "adam-prototype.json")))); }
             catch (Exception e) { startupError = e.Message; }
         }
-        public void Initialize(AdamHost host) { Host = host; inputReleased = false; }
+        public void Initialize(AdamHost host) { Host = host; inputReleased = false; ImpactAudio?.Dispose(); ImpactAudio=new AdamImpactAudio(gameObject); }
         public static Vector2 KeyboardMovement(Keyboard keys)
         {
             if (keys == null) return Vector2.zero;
@@ -60,6 +61,7 @@ namespace BibleSurvivor.Unity
         {
             focused = hasFocus; appPaused = paused; inputReleased = false; touchStarted = false;
             Host?.SetSuspended(!focused || appPaused);
+            if(!focused || appPaused)ImpactAudio?.Stop();
         }
         void OnApplicationFocus(bool value) => SetLifecycle(value, appPaused);
         void OnApplicationPause(bool value) => SetLifecycle(focused, value);
@@ -83,6 +85,9 @@ namespace BibleSurvivor.Unity
 #endif
             previousTouchSafe = safe;
             var keys = Keyboard.current;
+            if(keys!=null && keys.f6Key.wasPressedThisFrame) ArtWorld.FeedbackEnabled=!ArtWorld.FeedbackEnabled;
+            if(keys!=null && keys.f7Key.wasPressedThisFrame) ImpactAudio.Muted=!ImpactAudio.Muted;
+            if(keys!=null && keys.f8Key.wasPressedThisFrame) ImpactAudio.Volume=ImpactAudio.Volume>=.99f?.25f:Mathf.Min(1,ImpactAudio.Volume+.25f);
             if (keys != null && keys.escapeKey.wasPressedThisFrame && Host.Session != null && Host.Session.IsActive)
             { Host.SetPaused(!Host.Paused); inputReleased = false; touchStarted = false; }
             var slot = keys == null ? -1 : keys.digit1Key.wasPressedThisFrame ? 0 : keys.digit2Key.wasPressedThisFrame ? 1 : keys.digit3Key.wasPressedThisFrame ? 2 : -1;
@@ -119,6 +124,7 @@ namespace BibleSurvivor.Unity
             }
             Host.Tick(Time.unscaledDeltaTime);
             ArtWorld.Update(Host, Time.unscaledDeltaTime);
+            ImpactAudio?.Update(Host,ArtWorld);
         }
         public void SelectSlot(int slot)
         {
@@ -149,7 +155,7 @@ namespace BibleSurvivor.Unity
             if (!modalOpen)
             {
                 GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : "WASD / 방향키 이동 · 자동 공격 · Esc 정지 · Enter 재개", instruction);
-                GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" : "1–3 선택 · 왼쪽 아래 터치 이동 · 아트03 · 5초 자동 저장", instruction);
+                GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" :  $"1–3 선택 · F6 효과 {(ArtWorld.FeedbackEnabled ? "기본" : "낮음")} · F7 소리 {(ImpactAudio?.Muted == true ? "끔" : "켬")} · F8 음량 {ImpactAudio?.Volume*100:0}%", instruction);
             }
             if (Host == null)
             { GUI.Label(new Rect(30, 120, width - 60, 160), startupError ?? "저장 기록을 불러오는 중…", label); return; }
@@ -160,6 +166,7 @@ namespace BibleSurvivor.Unity
                 if (ArtButton(new Rect(width - 175, 54, 150, mobile ? 66 : 44), Host.Paused ? "재개" : "일시정지", button)) { Host.SetPaused(!Host.Paused); inputReleased = false; }
             }
             var arena = new Rect(20, 116, width - 40, height - 194);
+            art.OptionalEffects=ArtWorld.FeedbackEnabled;
             if (Host.World != null) ArtWorld.Draw(art, Host, arena);
             if (Host.Error != null)
             {

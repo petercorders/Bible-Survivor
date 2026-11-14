@@ -1,0 +1,33 @@
+// QA-only first scene. Probe exits before loading Adam/FeedbackQa or creating any Host/SaveStore.
+using System;
+using System.IO;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using BibleSurvivor.Unity;
+public sealed class FeedbackPathGate : MonoBehaviour
+{
+    public string Destination;
+    [Serializable] sealed class Facts {public string company,product,bundle,path,destination;public bool probe;}
+    void Awake(){Application.runInBackground=true;}
+    void Start()
+    {
+        var path=Path.GetFullPath(Application.persistentDataPath);
+        var home=Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        var originals=new[]{Path.Combine(home,"Library/Application Support/com.DefaultCompany.2D-URP"),Path.Combine(home,"Library/Application Support/BibleSurvivor/Adam Prototype")};
+        var probe=Array.IndexOf(Environment.GetCommandLineArgs(),"-qaSaveProbe")>=0;
+        Debug.Log("QA_PATH_PROBE "+JsonUtility.ToJson(new Facts{company=Application.companyName,product=Application.productName,bundle=Application.identifier,path=path,destination=Destination,probe=probe}));
+        if(Application.identifier!="com.biblesurvivor.adam.combatfeedbackqa" || Application.companyName!="BibleSurvivorQA") {Application.Quit(3);return;}
+        foreach(var original in originals)
+        {var normalized=Path.GetFullPath(original);if(path.Equals(normalized,StringComparison.OrdinalIgnoreCase)||path.StartsWith(normalized+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)){Application.Quit(3);return;}}
+        if(probe){Application.Quit(0);return;}
+        if(Destination!="Adam" && Destination!="FeedbackQa"){Application.Quit(3);return;}
+        if(Destination=="Adam")SceneManager.sceneLoaded+=StartAdam;
+        SceneManager.LoadScene(Destination);
+    }
+    static void StartAdam(Scene scene,LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded-=StartAdam;
+        // RuntimeInitialize AfterSceneLoad is the first-scene callback, so the QA path gate loads the normal bootstrap explicitly.
+        if(scene.name=="Adam" && UnityEngine.Object.FindFirstObjectByType<AdamGame>()==null)new GameObject("Adam Prototype").AddComponent<AdamGame>();
+    }
+}

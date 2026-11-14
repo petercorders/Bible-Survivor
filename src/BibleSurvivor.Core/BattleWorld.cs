@@ -173,6 +173,26 @@ namespace BibleSurvivor.Core
         private double remainder;
         private Vector2 facing=Vector2.UnitX;
         private long nextProjectile=1;
+        private readonly BattleImpact[] impacts=new BattleImpact[ImpactCapacity];
+        private long stepOrdinal;
+        public const int ImpactCapacity=256;
+        public long ImpactSequence {get;private set;}
+        // World-local cursor. Retain the newest events on overflow; readers learn exactly how many were lost.
+        // Neither cursor nor events are checkpoint data. Restore starts with an empty history.
+        public long ReadImpacts(long after,List<BattleImpact> destination)
+        {
+            if(destination==null)throw new ArgumentNullException(nameof(destination));
+            if(after<0||after>ImpactSequence)throw new ArgumentOutOfRangeException(nameof(after));
+            destination.Clear();
+            var first=Math.Max(after+1,Math.Max(1,ImpactSequence-ImpactCapacity+1));
+            for(var sequence=first;sequence<=ImpactSequence;sequence++)destination.Add(impacts[(int)((sequence-1)%ImpactCapacity)]);
+            return Math.Max(0,first-after-1);
+        }
+        private void Impact(string cause,int target,Vector2 position,double damage,bool killed)
+        {
+            var sequence=++ImpactSequence;
+            impacts[(int)((sequence-1)%ImpactCapacity)]=new BattleImpact(sequence,stepOrdinal,SimulationTime,cause,target,position,damage,killed);
+        }
         public AdamSession Session {get;}
         public Vector2 PlayerPosition {get;private set;}
         public IReadOnlyDictionary<int,Vector2> EnemyPositions=>new ReadOnlyDictionary<int,Vector2>(new Dictionary<int,Vector2>(enemies));
@@ -211,6 +231,7 @@ namespace BibleSurvivor.Core
         }
         private void Step(Vector2 movement)
         {
+            stepOrdinal++;
             if(movement.LengthSquared()>0)facing=Vector2.Normalize(movement);
             PlayerPosition+=movement*(float)(tuning.PlayerSpeed*Session.MoveSpeedMultiplier*FixedStep);
             if(!BattleSnapshot.Position(PlayerPosition.X,PlayerPosition.Y))throw new InvalidOperationException("World coordinate limit exceeded");
@@ -236,11 +257,13 @@ namespace BibleSurvivor.Core
                 if(Vector2.DistanceSquared(pair.Value,PlayerPosition)>(tuning.PlayerRadius+tuning.EnemyRadius)*(tuning.PlayerRadius+tuning.EnemyRadius))continue;
                 if(Session.Wave==null||!Session.Wave.Active.TryGetValue(pair.Key,out var contact))continue;
                 var before=Session.CurrentHealth;Session.Damage(contact.ContactDamage);
-                DamageTaken+=(int)Math.Min(before,Math.Max(0,before-Session.CurrentHealth));
+                var received=Math.Min(before,Math.Max(0,before-Session.CurrentHealth));
+                DamageTaken+=(int)received;
+                if(received>0)Impact("contact",0,PlayerPosition,received,!Session.IsActive);
                 if(!Session.IsActive){ClearEnded();return;}
                 var counter=Session.LastRetaliationDamage;
                 if(counter>0)foreach(var target in enemies.OrderBy(x=>x.Key).ToArray())
-                    if(Vector2.DistanceSquared(target.Value,PlayerPosition)<=tuning.BibleOrbitRadius*tuning.BibleOrbitRadius)Hit(target.Key,counter);
+                    if(Vector2.DistanceSquared(target.Value,PlayerPosition)<=tuning.BibleOrbitRadius*tuning.BibleOrbitRadius)Hit(target.Key,counter,"retaliation",target.Value);
                 if(!Running)break;
             }
             if(!Running){if(!Session.IsActive)ClearEnded();return;}
@@ -305,7 +328,7 @@ namespace BibleSurvivor.Core
                         var position=PlayerPosition+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)(tuning.BibleOrbitRadius*profile.AreaMultiplier);
                         if(Vector2.DistanceSquared(position,pair.Value)>(tuning.BookRadius+tuning.EnemyRadius)*(tuning.BookRadius+tuning.EnemyRadius))continue;
                         if(old==null){old=new BattleHitState{Id=pair.Key};clock.OrbitHits.Add(old);}old.At=SimulationTime;
-                        Hit(pair.Key,profile.Damage);break;
+                        Hit(pair.Key,profile.Damage,"bible",position);break;
                     }
                     if(!Running)break;
                 }
@@ -320,7 +343,7 @@ namespace BibleSurvivor.Core
                     foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
                     {
                         var relative=pair.Value-PlayerPosition;
-                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,tuning.JawboneRange*profile.AreaMultiplier+tuning.EnemyRadius,120))Hit(pair.Key,profile.Damage);
+                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,tuning.JawboneRange*profile.AreaMultiplier+tuning.EnemyRadius,120))Hit(pair.Key,profile.Damage,"jawbone",pair.Value);
                         if(!Running)break;
                     }
                 }
@@ -356,7 +379,7 @@ namespace BibleSurvivor.Core
                 foreach(var collision in collisions.OrderBy(x=>x.At).ThenBy(x=>x.Id))
                 {
                     if(!enemies.ContainsKey(collision.Id))continue;
-                    projectile.HitIds.Add(collision.Id);projectile.RemainingPierce--;Hit(collision.Id,projectile.Damage);
+                    projectile.HitIds.Add(collision.Id);projectile.RemainingPierce--;Hit(collision.Id,projectile.Damage,"sling",from+(to-from)*(float)collision.At);
                     if(projectile.RemainingPierce==0||!Running)break;
                 }
                 projectile.Position=to;projectile.Lifetime-=duration;
@@ -372,14 +395,15 @@ namespace BibleSurvivor.Core
             var b=2*Vector2.Dot(from,delta);var disc=b*b-4*a*c;if(disc<0)return null;
             var time=(-b-Math.Sqrt(disc))/(2*a);return time>=0&&time<=1?time:(double?)null;
         }
-        private void Hit(int id,double damage)
+        private void Hit(int id,double damage,string cause,Vector2 contact)
         {
             if(!Running||!enemies.TryGetValue(id,out var position)||Session.Wave==null)return;
             var before=Session.Wave.Active[id].Health;Session.Hit(id,damage);
             if(Session.Wave==null||!Session.Wave.Active.TryGetValue(id,out var after)){Hits++;Kills++;enemies.Remove(id);
                 if(Session.DroppedExperience.ContainsKey(id))drops[id]=position;
+                Impact(cause,id,contact,before,true);
             }
-            else if(after.Health<before)Hits++;
+            else if(after.Health<before){Hits++;Impact(cause,id,contact,before-after.Health,false);}
         }
         private void CollectNearby()
         {

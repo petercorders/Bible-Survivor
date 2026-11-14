@@ -1,0 +1,73 @@
+// Isolated QA experiment only: built-in ParticleSystem -> Point RenderTexture -> IMGUI arena.
+using System;
+using BibleSurvivor.Unity;
+using UnityEngine;
+public sealed class ParticleQaOverlay : IDisposable
+{
+    public const int Emitters=16,ParticlesPerEmitter=16;
+    readonly GameObject root;readonly Camera camera;readonly ParticleSystem[] slots=new ParticleSystem[Emitters];
+    readonly ParticleSystem.Particle[] buffer=new ParticleSystem.Particle[ParticlesPerEmitter];
+    RenderTexture texture;long cursor;int next,generation=-1;public int Dropped;public int ParticleCount {get;private set;}
+    public ParticleQaOverlay()
+    {
+        root=new GameObject("Particle QA only");var eye=new GameObject("QA transparent camera");eye.transform.SetParent(root.transform);camera=eye.AddComponent<Camera>();
+        camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.clear;camera.cullingMask=1<<30;camera.orthographic=true;camera.allowHDR=false;camera.allowMSAA=false;
+        var material=Resources.Load<Material>("ParticleQa");if(material==null)throw new InvalidOperationException("QA particle material not built");
+        for(var i=0;i<slots.Length;i++)
+        {
+            var owner=new GameObject("burst "+i);owner.layer=30;owner.transform.SetParent(root.transform);var ps=owner.AddComponent<ParticleSystem>();slots[i]=ps;
+            ps.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);var main=ps.main;main.loop=false;main.playOnAwake=false;main.duration=.3f;main.maxParticles=ParticlesPerEmitter;
+            main.simulationSpace=ParticleSystemSimulationSpace.World;main.startSpeed=0;main.startLifetime=.15f;main.startSize=.05f;main.gravityModifier=0;
+            var emission=ps.emission;emission.enabled=false;var shape=ps.shape;shape.enabled=false;
+            var color=ps.colorOverLifetime;color.enabled=true;var gradient=new Gradient();gradient.SetKeys(new[]{new GradientColorKey(Color.white,0),new GradientColorKey(Color.white,1)},new[]{new GradientAlphaKey(1,0),new GradientAlphaKey(0,1)});color.color=gradient;
+            ps.useAutoRandomSeed=false;ps.randomSeed=(uint)(i+1);var renderer=owner.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.renderMode=ParticleSystemRenderMode.Billboard;
+        }
+    }
+    public void Update(AdamHost host,AdamArtWorld view,float delta,bool enabled)
+    {
+        if(generation!=view.Generation){Clear();cursor=0;generation=view.Generation;}
+        if(!enabled){Clear();foreach(var e in view.FrameImpacts)cursor=Math.Max(cursor,e.Sequence);return;}
+        if(host.Paused||host.Suspended||!host.Session.IsActive)return;
+        ParticleCount=0;foreach(var slot in slots){slot.Simulate(delta,false,false,false);slot.Pause(false);ParticleCount+=slot.particleCount;}
+        foreach(var impact in view.FrameImpacts)
+        {
+            if(impact.Sequence<=cursor)continue;cursor=impact.Sequence;if(impact.TargetId==0)continue;
+            var found=-1;for(var i=0;i<slots.Length;i++){var candidate=(next+i)%slots.Length;if(slots[candidate].particleCount==0){found=candidate;break;}}
+            if(found<0){Dropped++;continue;}next=(found+1)%slots.Length;var ps=slots[found];
+            var count=impact.Cause=="jawbone"?8:impact.Cause=="bible"?6:4;
+            for(var i=0;i<count;i++)
+            {
+                var angle=(impact.Sequence*.618+i/(double)count)*Math.PI*2;var speed=impact.Cause=="jawbone"?.9:1.6;
+                var color=impact.Cause=="bible"?new Color32(247,220,133,255):impact.Cause=="jawbone"?new Color32(182,138,101,255):new Color32(230,224,211,255);
+                ps.Emit(new ParticleSystem.EmitParams{position=new Vector3(impact.Position.X,impact.Position.Y,0),velocity=new Vector3((float)Math.Cos(angle),(float)Math.Sin(angle),0)*(float)speed,
+                    startSize=impact.Cause=="jawbone"?.075f:.045f,startLifetime=impact.Cause=="jawbone"?.2f:.13f,startColor=color},1);
+            }
+            // Manually simulated paused systems can retain a zero auto-bound; keep culling tied to the emitted world region.
+            ps.GetComponent<ParticleSystemRenderer>().bounds=new Bounds(new Vector3(impact.Position.X,impact.Position.Y,0),new Vector3(2,2,2));
+            ps.Pause(false);ParticleCount+=count;
+        }
+        if(ParticleCount>Emitters*ParticlesPerEmitter)throw new InvalidOperationException("Particle bound exceeded");
+    }
+    public void Prepare(Rect arena,AdamArtWorld view)
+    {
+        if(view.Snapshot==null)return;var scale=AdamArtWorld.PixelScale(arena);var width=Math.Max(1,Mathf.RoundToInt(arena.width/scale));var height=Math.Max(1,Mathf.RoundToInt(arena.height/scale));
+        if(texture==null||texture.width!=width||texture.height!=height)
+        {if(texture!=null){texture.Release();UnityEngine.Object.Destroy(texture);}texture=new RenderTexture(width,height,16,RenderTextureFormat.ARGB32){filterMode=FilterMode.Point,antiAliasing=1,wrapMode=TextureWrapMode.Clamp};texture.Create();camera.targetTexture=texture;}
+        camera.transform.position=new Vector3(view.Snapshot.PlayerX,view.Snapshot.PlayerY,-10);camera.orthographicSize=texture.height/64f;camera.aspect=texture.width/(float)texture.height;
+        var center=camera.WorldToViewportPoint(new Vector3(view.Snapshot.PlayerX,view.Snapshot.PlayerY,0));
+        var right=camera.WorldToViewportPoint(new Vector3(view.Snapshot.PlayerX+1,view.Snapshot.PlayerY,0));
+        if(Mathf.Abs(center.x-.5f)>.001f || Mathf.Abs((right.x-center.x)*arena.width-32*scale)>.05f)throw new InvalidOperationException("Particle projection differs from IMGUI world pixels");
+    }
+    public void Draw(Rect arena,AdamArtWorld view)
+    {Prepare(arena,view);GUI.BeginGroup(arena);GUI.DrawTexture(new Rect(0,0,arena.width,arena.height),texture,ScaleMode.StretchToFill,true);GUI.EndGroup();}
+    public void Stress(Vector2 position)
+    {for(var i=0;i<slots.Length;i++){var slot=slots[i];slot.Stop(false,ParticleSystemStopBehavior.StopEmittingAndClear);slot.Simulate(0,false,true,false);slot.Emit(new ParticleSystem.EmitParams{position=new Vector3(position.x+(i%3-1)*.25f,position.y,0),startLifetime=1,startSize=.1f,startColor=Color.yellow},ParticlesPerEmitter);slot.GetComponent<ParticleSystemRenderer>().bounds=new Bounds(new Vector3(position.x+(i%3-1)*.25f,position.y,0),new Vector3(.3f,.3f,2));slot.Pause(false);}ParticleCount=Emitters*ParticlesPerEmitter;}
+    public string Trace(Vector2 point)
+    {var value="world="+point+" viewport="+camera.WorldToViewportPoint(new Vector3(point.x,point.y,0))+" camera="+camera.transform.position+" "+Projection;
+        for(var i=0;i<3;i++){var n=slots[i].GetParticles(buffer);value+="\nslot="+i+" alive="+n+" stopped="+slots[i].isStopped+" paused="+slots[i].isPaused+" bounds="+slots[i].GetComponent<ParticleSystemRenderer>().bounds;if(n>0)value+=" first="+buffer[0].position+" life="+buffer[0].remainingLifetime;}return value;}
+    public string Projection => texture==null?"none":texture.width+"x"+texture.height+" Point AA1 aspect="+camera.aspect;
+    public string Signature()
+    {var value="";foreach(var slot in slots){var count=slot.GetParticles(buffer);value+=count+":";for(var i=0;i<count;i++)value+=buffer[i].position+"/"+buffer[i].remainingLifetime+";";}return value;}
+    void Clear(){foreach(var slot in slots)if(slot!=null)slot.Stop(false,ParticleSystemStopBehavior.StopEmittingAndClear);ParticleCount=0;}
+    public void Dispose(){Clear();if(texture!=null){texture.Release();UnityEngine.Object.Destroy(texture);}UnityEngine.Object.Destroy(root);}
+}

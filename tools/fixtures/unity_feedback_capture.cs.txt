@@ -1,0 +1,74 @@
+// Copied only into the isolated QA project. Not compiled into the actual game assembly.
+using System;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization.Json;
+using BibleSurvivor.Core;
+using BibleSurvivor.Unity;
+using UnityEngine;
+
+public sealed class FeedbackCapture : MonoBehaviour
+{
+    AdamHost host;AdamArt art;AdamArtWorld current;LegacyArtWorld legacy;AdamImpactAudio audio;QaMixedPcm pcm;
+    string root,mode,weapon;int segment;readonly List<string> facts=new List<string>();
+    void Awake()
+    {
+        var args=Environment.GetCommandLineArgs();var i=Array.IndexOf(args,"-captureRoot");
+        if(i<0||i+1>=args.Length||!Path.IsPathRooted(args[i+1])||!File.Exists(Path.Combine(args[i+1],".adam-feedback-qa"))){Debug.LogError("Missing private capture root marker");Application.Quit(2);enabled=false;return;}
+        Application.runInBackground=true;
+        root=args[i+1];art=new AdamArt();audio=new AdamImpactAudio(gameObject);pcm=gameObject.AddComponent<QaMixedPcm>();
+        QualitySettings.vSyncCount=0;Application.targetFrameRate=30;
+    }
+    IEnumerator Start()
+    {
+        if(!enabled)yield break;
+        foreach(var w in AdamGame.Weapons)foreach(var m in new[]{"before","after"})
+        {
+            weapon=w;mode=m;var directory=Path.Combine(root,weapon+"-"+mode);Directory.CreateDirectory(directory);
+            if(File.Exists(Path.Combine(directory,"save.json")))throw new IOException("Fresh capture root required");
+            var store=new SaveStore(Path.Combine(directory,"save.json"));host=new AdamHost(AdamCatalog.Load(),store);host.Start(weapon);
+            // Staged valid QA checkpoint: 40 real spawned enemies close to camera, no synthetic damage/hit calls.
+            host.Session.Advance(20);var world=new BattleWorld(host.Session,AdamCatalog.Load().Speeds,7);var snap=world.Capture();
+            var index=0;foreach(var enemy in snap.Enemies){var angle=index++*2*Math.PI/Math.Max(1,snap.Enemies.Count);enemy.X=(float)(Math.Cos(angle)*2.2);enemy.Y=(float)(Math.Sin(angle)*2.2);}
+            host.Session.Capture();host.State.Run.RunId="feedback-qa-"+weapon;host.State.Run.World=snap;store.Commit(host.State,host.State.Revision,Guid.NewGuid().ToString("N"));
+            if(!host.Reload())throw new InvalidOperationException(host.Error);host.SetPaused(false);
+            if(current==null)current=new AdamArtWorld();else current.Clear();legacy=new LegacyArtWorld();audio.Stop();facts.Clear();pcm.Begin();
+            for(var tick=0;tick<600;tick++)
+            {
+                if(host.Session.PendingChoices.Count>0)host.Choose(host.Session.PendingChoices[0]);
+                host.SetMovement(new Vector2((float)Math.Cos(tick*.025),(float)Math.Sin(tick*.025)));host.Tick(1d/30);
+                current.Update(host,1f/30);legacy.Update(host,1f/30);
+                if(mode=="after")audio.Update(host,current);
+                facts.Add(tick+","+host.World.SimulationTime+","+host.World.Hits+","+host.World.Kills+","+current.ConsumedImpacts+","+audio.ActiveVoices);
+                yield return new WaitForEndOfFrame();
+                if(tick%3==0)ScreenCapture.CaptureScreenshot(Path.Combine(directory,$"frame-{tick/3:0000}.png"));
+                yield return null;
+            }
+            audio.Stop();pcm.End(Path.Combine(directory,"engine-mix.wav"));host.SetPaused(true);File.WriteAllLines(Path.Combine(directory,"events.csv"),facts);
+            using(var stream=File.Create(Path.Combine(directory,"world.json")))new DataContractJsonSerializer(typeof(BattleSnapshot)).WriteObject(stream,host.World.Capture());
+            File.WriteAllText(Path.Combine(directory,"complete.txt"),"600 fixed input ticks; "+host.World.Hits+" hits; "+host.World.Kills+" kills; actual QA checkpoint, not balance/performance");
+            segment++;yield return new WaitForSecondsRealtime(.2f);
+        }
+        Debug.Log("FEEDBACK_CAPTURE_COMPLETE segments="+segment);Application.Quit(0);
+    }
+    void OnGUI()
+    {
+        if(host==null||current==null)return;GUI.color=Color.white;
+        GUI.Label(new Rect(20,10,1060,40),weapon+" / "+mode+" / staged QA / hits "+host.World.Hits+" kills "+host.World.Kills);
+        var rect=new Rect(20,70,Screen.width-40,Screen.height-100);
+        if(mode=="before")legacy.Draw(art,host,rect);else current.Draw(art,host,rect);
+    }
+    void OnDestroy(){audio?.Dispose();}
+}
+public sealed class QaMixedPcm : MonoBehaviour
+{
+    readonly object gate=new object();float[] data;int count,channels;bool recording;
+    public void Begin(){lock(gate){data=new float[AudioSettings.outputSampleRate*2*50];count=0;channels=2;recording=true;}}
+    void OnAudioFilterRead(float[] block,int ch){lock(gate){if(!recording)return;channels=ch;var n=Math.Min(block.Length,data.Length-count);Array.Copy(block,0,data,count,n);count+=n;}}
+    public void End(string path)
+    {
+        lock(gate){recording=false;using(var writer=new BinaryWriter(File.Create(path))){writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));writer.Write(36+count*2);writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));writer.Write(16);writer.Write((short)1);writer.Write((short)channels);writer.Write(AudioSettings.outputSampleRate);writer.Write(AudioSettings.outputSampleRate*channels*2);writer.Write((short)(channels*2));writer.Write((short)16);writer.Write(System.Text.Encoding.ASCII.GetBytes("data"));writer.Write(count*2);for(var i=0;i<count;i++)writer.Write((short)(Mathf.Clamp(data[i],-1,1)*32767));}}
+    }
+}

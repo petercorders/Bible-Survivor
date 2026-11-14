@@ -22,6 +22,7 @@ internal static class Program
         CombatTests.Register(Test);
         SaveTests.Register(Test);
         BattleWorldTests.Register(Test);
+        ImpactTests.Register(Test);
         BattleSaveTests.Register(Test);
         RoundTransitionTests.Register(Test);
         var failed = results.Count(r => r.Error != null);

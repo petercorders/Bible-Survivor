@@ -33,3 +33,5 @@ APK SHA256: `c1bfedd63f797ab9d91db45a7c2c296f29c7180f464d868469bc9d9a61a02d91` �
 새 빌드 헬퍼 guard/실패구조의 별도 변이 시험은 NOT_RUN이며 실제 컴파일/정상 빌드와 구분한다.
 
 PC 코드/Editor 범위 독립 검토에서 원본608개·기존SDK/AVD설정24개·격리입력239개·binding3개의 해시, PC42개 XML과 설치APK·저장 왕복 근거를 읽기 전용 대조했다. 검토 보고서는 `../reviews/mobile-android-code.md`, 통합 GC는 `../retrospectives/R01-mobile-android.md`에 남긴다. Android native 독립 재실행은 추가하지 않았다. 원격 커밋/CI 결과는 후속 기록으로 구분한다.
+
+업로드 결과: `a64254c66fe7b2ff0fd3b95627a3cf00922875fe`를 `feat/adam-core`에 push했다. 같은 SHA의 [코어·portable Unity CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43520276351)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43520276322)는 모두 success다. 사용자 iOS 앱은 변경하지 않았으며 다음 표현 작업은 이 커밋 경계 뒤 별도 진행한다.

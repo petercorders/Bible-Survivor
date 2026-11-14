@@ -1,0 +1,12 @@
+using UnityEditor;
+using UnityEngine;
+public static class ParticleQaBuild
+{
+    public static void Build()
+    {
+        var shader=Shader.Find("Universal Render Pipeline/Particles/Unlit");if(shader==null)throw new System.Exception("Official URP particle shader missing");
+        var material=new Material(shader);material.SetFloat("_Surface",1);material.SetFloat("_ZWrite",0);material.SetFloat("_SrcBlend",(float)UnityEngine.Rendering.BlendMode.SrcAlpha);material.SetFloat("_DstBlend",(float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");material.renderQueue=3000;
+        if(!AssetDatabase.IsValidFolder("Assets/Resources"))AssetDatabase.CreateFolder("Assets","Resources");AssetDatabase.CreateAsset(material,"Assets/Resources/ParticleQa.mat");AssetDatabase.SaveAssets();
+        BibleSurvivor.Unity.Editor.AdamFeedbackEvidence.BuildQaMac();
+    }
+}

@@ -15,21 +15,26 @@ namespace BibleSurvivor.Unity
             public string Clip;
             public Vector2 Position;
             public double Started;
+            public int Priority;
         }
         public sealed class EffectPool
         {
             public readonly Effect[] Slots = new Effect[EffectCapacity];
             int next;
             public EffectPool() { for(var i=0;i<Slots.Length;i++) Slots[i]=new Effect(); }
-            public void Emit(string clip,Vector2 position,double started)
+            public void Emit(string clip,Vector2 position,double started,int priority=0)
             {
-                var e=Slots[next];next=(next+1)%Slots.Length;
+                // Lower-priority decoration cannot evict an active player warning.
+                var slot=-1;
+                for(var i=0;i<Slots.Length;i++) {var candidate=(next+i)%Slots.Length;if(!Slots[candidate].Active || Slots[candidate].Priority<=priority){slot=candidate;break;}}
+                if(slot<0)return;
+                var e=Slots[slot];next=(slot+1)%Slots.Length;e.Priority=priority;
                 e.Active=false;e.Clip=clip;e.Position=position;e.Started=started;e.Active=true;
             }
             public void Clear()
             {
                 next=0;
-                foreach(var e in Slots) {e.Active=false;e.Clip=null;e.Position=Vector2.zero;e.Started=0;}
+                foreach(var e in Slots) {e.Active=false;e.Clip=null;e.Position=Vector2.zero;e.Started=0;e.Priority=0;}
             }
         }
         readonly EffectPool effectPool = new EffectPool();
@@ -40,33 +45,56 @@ namespace BibleSurvivor.Unity
         public double Clock { get; private set; }
         public int ActiveEffects { get { var n=0; foreach(var e in Effects) if(e.Active)n++; return n; } }
         readonly Dictionary<int, Vector2> previousPositions = new Dictionary<int, Vector2>();
-        readonly Dictionary<int, double> previousHealth = new Dictionary<int, double>();
+        readonly Dictionary<int,double> reactions=new Dictionary<int,double>();
+        readonly List<BattleImpact> frameImpacts=new List<BattleImpact>(BattleWorld.ImpactCapacity);
+        readonly HashSet<int> reportedKills=new HashSet<int>();
+        public IReadOnlyList<BattleImpact> FrameImpacts => frameImpacts;
+        public long ConsumedImpacts {get;private set;}
+        public long DroppedImpacts {get;private set;}
+        public int Generation {get;private set;}
+        public bool FeedbackEnabled=true;
+        public double PlayerHitUntil {get;private set;}
+        long impactCursor;
+        public bool EnemyReacting(int id) => reactions.TryGetValue(id,out var until) && Clock<until;
+        public static Matrix4x4 ReactionMatrix(Vector2 feet,float strength) => Matrix4x4.Translate(feet)*
+            Matrix4x4.Scale(new Vector3(1+.12f*strength,1-.15f*strength,1))*Matrix4x4.Translate(-feet);
         BattleWorld source;
         bool wasActive;
         double deathAt = -1;
         public void Update(AdamHost host, float delta)
         {
             if(host?.World == null) { Clear(); return; }
-            if(source != host.World) { Clear(); source=host.World; }
+            if(source != host.World) { Clear(); source=host.World; Generation++; }
+            DroppedImpacts+=source.ReadImpacts(impactCursor,frameImpacts);
+            impactCursor=source.ImpactSequence;reportedKills.Clear();
             var next=source.Capture();var active=host.Session.IsActive;var monsters=host.Session.Wave?.Active;
             // A fatal contact (or retaliation opening a choice) can change the arena without advancing Core time.
             if(Snapshot == null || next.Time != Snapshot.Time || active != wasActive || next.Hits != Snapshot.Hits ||
                 next.Kills != Snapshot.Kills || next.Collected != Snapshot.Collected || next.DamageTaken != Snapshot.DamageTaken ||
-                next.PlayerX != Snapshot.PlayerX || next.PlayerY != Snapshot.PlayerY)
+                next.PlayerX != Snapshot.PlayerX || next.PlayerY != Snapshot.PlayerY || frameImpacts.Count>0)
             {
-                PlayerMotion = Snapshot != null && (next.PlayerX != Snapshot.PlayerX || next.PlayerY != Snapshot.PlayerY) ? "walk" : "idle";
+                PlayerMotion = Snapshot != null && (next.PlayerX != Snapshot.PlayerX || next.PlayerY != Snapshot.PlayerY || frameImpacts.Count>0) ? "walk" : "idle";
                 Clock=next.Time;
+                foreach(var impact in frameImpacts)
+                {
+                    ConsumedImpacts++;
+                    var position=new Vector2(impact.Position.X,impact.Position.Y);
+                    if(impact.TargetId==0)
+                    {PlayerHitUntil=Clock+.1;effectPool.Emit("fx_hit-spark_hit_16",position,Clock,2);continue;}
+                    if(FeedbackEnabled) {Emit("fx_hit-spark_hit_16",position);reactions[impact.TargetId]=Clock+.09;}
+                    if(impact.Killed){reportedKills.Add(impact.TargetId);Emit("fx_enemy-death_burst_32",position);}
+                }
                 if(active && monsters!=null)
                 {
                     foreach(var pair in previousPositions)
-                        if(!monsters.ContainsKey(pair.Key)) Emit("fx_enemy-death_burst_32",pair.Value);
-                    foreach(var enemy in monsters)
-                        if(previousHealth.TryGetValue(enemy.Key,out var health) && enemy.Value.Health<health && previousPositions.TryGetValue(enemy.Key,out var pos))
-                            Emit("fx_hit-spark_hit_16",pos+new Vector2(0,.4f));
+                        if(!monsters.ContainsKey(pair.Key) && !reportedKills.Contains(pair.Key)) Emit("fx_enemy-death_burst_32",pair.Value);
+                    // Direct Session.Kill callers can still remove an enemy without a World impact. Never infer hit sounds/sparks from HP deltas.
                 }
-                previousPositions.Clear(); previousHealth.Clear();
+                previousPositions.Clear();
                 foreach(var enemy in next.Enemies) previousPositions[enemy.Id]=new Vector2(enemy.X,enemy.Y);
-                if(active && monsters!=null)foreach(var enemy in monsters) previousHealth[enemy.Key]=enemy.Value.Health;
+
+                foreach(var id in new List<int>(reactions.Keys))
+                    if(!previousPositions.ContainsKey(id) || reactions[id]<=Clock)reactions.Remove(id);
                 Snapshot=next;
                 wasActive=active;
             }
@@ -80,12 +108,13 @@ namespace BibleSurvivor.Unity
             foreach(var effect in Effects) if(effect.Active && Clock-effect.Started>=1) effect.Active=false;
         }
         void Emit(string clip, Vector2 pos)
-        { effectPool.Emit(clip,pos,Clock); }
+        { effectPool.Emit(clip,pos,Clock,1); }
         public double PlayerSeconds => PlayerMotion=="death" ? Math.Max(0,Clock-deathAt) : Clock;
         public void Clear()
         {
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
-            previousHealth.Clear(); previousPositions.Clear();
+            previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
+            impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
             effectPool.Clear();
         }
         public static string EnemyClip(string id)
@@ -151,14 +180,21 @@ namespace BibleSurvivor.Unity
                         art.Draw(xp>1?"pkp_xp-gem-bonus_idle_8":"pkp_xp-gem-base_idle_8",Point(drop.X,drop.Y),scale,Clock);
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
-                        art.Draw(EnemyClip(monster.MonsterId),Point(enemy.X,enemy.Y),scale,Clock,enemy.X>snap.PlayerX);
+                    {
+                        var anchor=Point(enemy.X,enemy.Y);var before=GUI.matrix;var tint=GUI.color;
+                        if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor,1);GUI.color=new Color(1,.55f,.35f,1);}
+                        art.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        GUI.matrix=before;GUI.color=tint;
+                    }
             }
             // All six layers share ONE parent reflection about the registered feet pivot.
             var feet=Point(snap.PlayerX,snap.PlayerY); var matrix=GUI.matrix;
             if(PlayerLeft) GUI.matrix=matrix*Matrix4x4.Translate(new Vector3(feet.x,feet.y,0))*Matrix4x4.Scale(new Vector3(-1,1,1))*Matrix4x4.Translate(new Vector3(-feet.x,-feet.y,0));
+            var playerTint=GUI.color;
+            if(Clock<PlayerHitUntil) GUI.color=new Color(1,.4f,.4f,1);
             foreach(var layer in art.Index.layers)
                 art.Draw("chr_player_layer-"+layer.Replace('_','-')+"_"+PlayerMotion+"_32",feet,scale,PlayerSeconds);
-            GUI.matrix=matrix;
+            GUI.color=playerTint;GUI.matrix=matrix;
             if(!host.Session.IsActive) {GUI.EndGroup();return;}
             foreach(var p in snap.Projectiles)
             {
