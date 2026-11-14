@@ -72,3 +72,5 @@ QA 수집 첫 시도는 상태 JSON 파일 생성 직후 쓰기가 끝나기 전
 최신 native PC 리뷰의 창 포커스가 도구 호출 뒤 다시 background-suspended로 돌아가 연속 전투/실제 파티클·성장의 입력 귀속은 확인하지 못했다. 살아 있는 정확한 본인 PID/창에만 전경 유지 한 번을 시도했으며 해결되지 않아 추가 루프·권한 변경·다른 앱 조작을 중단했다. 이를 제품 결함이나 최신 native 전투 PASS로 판정하지 않는다. 실제 확인한 시작/정지·저장 재실행·두 크기 모달과 원본 보존은 `../reviews/combat-particles-ui.md`의 범위를 따른다. 전체 PC 시각·조작 수용 완료를 주장하지 않으며 남은 native 활성 전투/파티클/성장 검증은 열린 상태다.
 
 이번 통합은 제품 연결 코드·독립 코드 검토·엔진 회귀·제한된 PC 관측을 보존하는 checkpoint다. native 전체 수용/모바일/실물/GPU/최대256입자 실전 성능·공식 팩 임포트를 완료 처리하지 않는다. 다음 R02 기술 연결은 명시 개발용 표현과 저장/전환 검증을 독립 진행하며 이 미검증 상태를 이월해 공개한다.
+
+업로드 결과: `4971277bc97c59b189c4be015b7c1701518615e6`을 `feat/adam-core`에 push했다. 같은 SHA의 [코어·portable Unity CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43541621606)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43541621820)는 모두 success다. 원격 CI가 native 전체 수용·GPU/모바일 실물 검증을 대체하지 않는다.

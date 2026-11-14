@@ -73,7 +73,7 @@ public class AdamHostTests
         Assert.AreEqual("between_rounds", restored.State.Run.Stage);
         restored.Session.Advance(180); Assert.IsTrue(restored.Checkpoint());
         Assert.AreEqual(gold, restored.State.Profile.Gold);
-        restored.Start("jawbone"); restored.Session.Damage(1000); Assert.IsTrue(restored.Checkpoint(), restored.Error);
+        restored.Start("jawbone"); Assert.IsTrue(restored.AwaitingR02,"new challenge must not discard R01 completion");restored.SetPaused(false);Assert.AreEqual(2,restored.Session.RoundNumber);restored.Session.Damage(1000); Assert.IsTrue(restored.Checkpoint(), restored.Error);
         var dead = NewHost(); Assert.IsNull(dead.State.Run); Assert.IsNull(dead.Session);
         Assert.AreEqual(gold, dead.State.Profile.Gold);
     }

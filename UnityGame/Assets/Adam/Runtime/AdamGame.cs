@@ -13,6 +13,7 @@ namespace BibleSurvivor.Unity
         public bool AutoInitialize = true;
         public AdamHost Host { get; private set; }
         bool inputReleased;
+        BattleWorld inputWorld;
         bool focused = true;
         bool appPaused;
         bool touchStarted;
@@ -83,6 +84,7 @@ namespace BibleSurvivor.Unity
                 Screen.SetResolution(Mathf.Max(660, Screen.width), Mathf.Max(440, Screen.height), FullScreenMode.Windowed);
 #endif
             if (Host == null) return;
+            ReleaseOnWorldChange();
             var safe = Screen.safeArea;
             if (Application.isMobilePlatform && previousTouchSafe != default && safe != previousTouchSafe)
             {
@@ -133,7 +135,12 @@ namespace BibleSurvivor.Unity
                 Host.SetMovement(movement);
             }
             Host.Tick(Time.unscaledDeltaTime);
+            ReleaseOnWorldChange();
             UpdatePresentation(Time.unscaledDeltaTime);
+        }
+        void ReleaseOnWorldChange()
+        {
+            if(inputWorld==Host.World)return;inputWorld=Host.World;inputReleased=false;touchStarted=false;Host.SetMovement(Vector2.zero);
         }
         public void UpdatePresentation(float delta)
         {
@@ -166,11 +173,11 @@ namespace BibleSurvivor.Unity
             GUI.Box(new Rect(0, 0, width, height), "");
             var modalOpen = Host != null && (Host.Error != null || Host.Session == null || !Host.Session.IsActive || Host.Session.PendingChoices.Count > 0 || Host.Paused || Host.Suspended);
             // A modal overlaps HUD rows at small sizes; keep all underlying HUD text/controls out of the modal layer.
-            if (!modalOpen) GUI.Label(new Rect(20, 10, width - 40, 36), "창세기 / 아담 · 3분 시제품", title);
+            if (!modalOpen) GUI.Label(new Rect(20, 10, width - 40, 36), AdamRoundPresentation.Title(Host), title);
             var instruction = new GUIStyle(label) { font = mobile ? fonts.Body : fonts.Small, fontSize = mobile ? 20 : 16, wordWrap = true };
             if (!modalOpen)
             {
-                GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : "WASD / 방향키 이동 · 자동 공격 · Esc 정지 · Enter 재개", instruction);
+                GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : AdamRoundPresentation.ControlHint(Host?.Session?.RoundNumber??1), instruction);
                 GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" :  $"1–3 선택 · F6 효과 {(ArtWorld.FeedbackEnabled ? "기본" : "낮음")} · F7 소리 {(ImpactAudio?.Muted == true ? "끔" : "켬")} · F8 음량 {ImpactAudio?.Volume*100:0}% · F9 입자 {(ImpactParticles?.Enabled == true ? "켬" : "끔")}", instruction);
             }
             if (Host == null)
@@ -212,10 +219,17 @@ namespace BibleSurvivor.Unity
                 if (Host.Paused || Host.Suspended) DrawPauseOverlay(width, height);
                 else GUI.Label(new Rect(20, height - 60, width - 40, 36), "사망 · 이번 도전이 끝났습니다", label);
             }
+            else if(Host.AwaitingR02)
+            {
+                Modal(width,height,"아담 완료 · 가인 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장\nR02 적은 개발용 기하 표식입니다");
+                var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
+                if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),"가인 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}
+                GUI.enabled=enabled;
+            }
             else if (session == null || !session.IsActive)
             {
-                var heading = session == null ? "시작 무기를 선택하세요" : Host.State.Run == null ? "사망 · 이번 도전 종료" : "아담 완료 · 저장됨";
-                Modal(width, height, heading, session == null ? "이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요" : "새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"가인 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
+                Modal(width,height,heading,Host.ContentComplete?"노아 라운드 준비 중 (R03 미구현)\n새 도전은 성장 초기화 · 영구 골드와 해금 유지":session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
                 for (var i = 0; i < 3; i++)
                     if (ArtButton(mobile ? AdamMobileLayout.StartButton(width, height, i) : new Rect(width / 2 - 240, height / 2 - 15 + i * 58, 480, 50), $"{i + 1}. {AdamChoiceText.ItemName(Weapons[i])}", button)) SelectSlot(i);
             }

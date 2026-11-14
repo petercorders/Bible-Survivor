@@ -174,7 +174,7 @@ namespace BibleSurvivor.Unity
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
                         var id=monster.MonsterId;
-                        art.Draw(id=="a1"?"fx_shadow-snake_static_20x4":id=="a2"?"fx_shadow-small_static_12x4":"fx_shadow-wide_static_24x6",Point(enemy.X,enemy.Y),scale);
+                        art.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);
                     }
                 foreach(var drop in snap.Drops)
                     if(experience.TryGetValue(drop.Id,out var xp))
@@ -184,7 +184,8 @@ namespace BibleSurvivor.Unity
                     {
                         var anchor=Point(enemy.X,enemy.Y);var before=GUI.matrix;var tint=GUI.color;
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        art.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        if(AdamRoundPresentation.DevelopmentEnemy(monster.MonsterId))AdamRoundPresentation.DrawDevelopmentEnemy(monster.MonsterId,anchor,scale);
+                        else art.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
                         GUI.matrix=before;GUI.color=tint;
                     }
             }

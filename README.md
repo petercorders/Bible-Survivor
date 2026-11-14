@@ -10,6 +10,8 @@
 
 `UnityGame/`은 Unity 6000.6.9f1용 아담 시제품입니다. 프로젝트에서 `Assets/Scenes/Adam.unity`를 열어 실행합니다. 검수된 픽셀 아트03·6레이어 캐릭터·적3종·세 무기 표현·외곽선 한국어 폰트를 연결했습니다. [아트 연결·실제 시험·한계](docs/progress/unity-art.md)와 [기반 시제품 기록](docs/progress/unity-adam.md)을 구분합니다. 현재 외형 편집·후속 보스·모바일 실기기·성능은 미완료입니다. Core를 변경하면 `python3 tools/unity_sync_core.py`로 동기화한 뒤 Unity 컴파일과 관련 시험을 다시 실행해야 합니다.
 
+[가인 R02 기술 연결](docs/progress/unity-r02.md)은 아담 완료 후 성장/장비 유지·새 라운드 저장/복원·가인 완료 뒤 R03 대기를 지원합니다. R02 적은 현재 명시 개발용 기하 표식이며 최종 적 아트와 native 연속 조작/밸런스는 미검증입니다. R03 보스는 아직 구현하지 않았습니다.
+
 iOS Simulator의 지정 휴대폰 profile에서 IL2CPP 빌드·터치·세로/가로 UI·중단/재실행 저장 복구를 검증했고 독립 코드/UI 리뷰를 통과했습니다. [iOS 검증 범위와 남은 게이트](docs/progress/mobile-ios.md)를 확인하세요. Android·다른 화면 크기·실물 기기·성능은 별도 검증 대상입니다.
 
 PC 타격감 P0에 정확한 명중 사건·적 피격 반응·세 무기 효과음과 저효과/음량 설정을 추가했습니다. [P0 검증 범위](docs/progress/combat-feedback.md)의 독립 코드·PC 화면/조작 리뷰와 청감 미검증을 구분합니다. Unity 기본 파티클도 실제 게임 화면에 연결했고 [파티클 구현·회귀·한정 성능 측정](docs/progress/combat-particles.md)을 기록했습니다. 최신 앱의 native 연속 전투 조작·GPU/모바일 실물 성능은 미검증입니다. Android 최소 빌드·저장 복구 근거는 [Android 진행 문서](docs/progress/mobile-android.md)에 있습니다.

@@ -1,0 +1,67 @@
+// QA-only deterministic driver. Product Host, Core combat and full renderer remain the test subjects.
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.Serialization.Json;
+using BibleSurvivor.Core;
+using BibleSurvivor.Unity;
+using UnityEngine;
+public sealed class RoundProductCapture:MonoBehaviour
+{
+    AdamGame game;AdamHost host;string root;bool draw;
+    string Arg(string key){var args=Environment.GetCommandLineArgs();var i=Array.IndexOf(args,key);return i<0||i+1>=args.Length?null:args[i+1];}
+    void Awake(){root=Arg("-roundCaptureRoot");if(root==null){enabled=false;return;}if(!Path.IsPathRooted(root)||!File.Exists(Path.Combine(root,".adam-rounds-qa")))throw new Exception("QA marker required");Application.runInBackground=true;}
+    void Save(string name,object value){using(var s=File.Create(Path.Combine(root,name)))new DataContractJsonSerializer(value.GetType()).WriteObject(s,value);}
+    void Require(bool value,string message){if(!value)throw new Exception(message);}
+    IEnumerator Start()
+    {
+        if(!enabled)yield break;var steps=Run();while(true){bool more=false;object item=null;try{more=steps.MoveNext();if(more)item=steps.Current;}catch(Exception e){Debug.LogException(e);Application.Quit(2);}if(!more)yield break;yield return item;}
+    }
+    void Resolve(){while(host.Session.PendingChoices.Count>0){var choices=host.Session.PendingChoices;var preferred=host.Session.Inventory.Weapons.Keys.First();Require(host.Choose(choices.Contains(preferred)?preferred:choices.FirstOrDefault(x=>x!="scroll")??choices[0]),host.Error);}}
+    void Install(AdamHost value){host=value;game.Initialize(host);game.ImpactAudio.Muted=true;game.UpdatePresentation(0);}
+    IEnumerator Shot(string name){game.UpdatePresentation(0);yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot(Path.Combine(root,name+".png"));yield return null;}
+    IEnumerator Run()
+    {
+        while((game=UnityEngine.Object.FindFirstObjectByType<AdamGame>())==null)yield return null;
+        while(game.Host==null)yield return null;game.enabled=false;game.Initialize(game.Host);draw=true;
+        // Own fresh identity only; no PC fixture paths. First launch persists an R02 checkpoint; second proves actual Load.
+        var persistent=Path.Combine(Application.persistentDataPath,"adam-prototype.json");
+        if(Arg("-roundReload")!=null)
+        {
+            while(game.Host==null)yield return null;host=game.Host;
+            Save("reload-state.json",host.State);Save("reload-world.json",host.World.Capture());Require(host.Session.RoundNumber==2 && host.Paused,"actual fresh-process R02 Load");
+            yield return Shot("reload-r02-paused");host.SetPaused(false);host.Tick(.1);Require(host.Checkpoint(),host.Error);Save("reload-commit.json",host.State);Application.Quit(0);yield break;
+        }
+        var observations=new List<string>();
+        // Fixed-step bot, no injected kills/health/advances. A death is reported as death, not a completed round.
+        foreach(var weapon in AdamGame.Weapons)
+        {
+            Install(new AdamHost(AdamCatalog.Load(),new SaveStore(Path.Combine(root,"bot-"+weapon+".json"))));host.Start(weapon);
+            for(var tick=0;tick<21660 && host.State.Run!=null && !host.ContentComplete;tick++)
+            {
+                Resolve();if(!host.Session.IsActive)break;
+                var world=host.World;var phase=(float)(world.SimulationTime*.3);
+                var target=world.DropPositions.Count>0?world.DropPositions.OrderBy(x=>System.Numerics.Vector2.DistanceSquared(x.Value,world.PlayerPosition)).First().Value-world.PlayerPosition:new System.Numerics.Vector2(Mathf.Cos(phase),Mathf.Sin(phase));
+                host.SetMovement(new Vector2(target.X,target.Y));host.Tick(1d/60);game.UpdatePresentation(1f/60);Require(host.Error==null,host.Error);
+                if(tick%240==0)yield return null;
+            }
+            Resolve();Require(host.Checkpoint(),host.Error);Save("bot-"+weapon+"-state.json",host.State);
+            observations.Add(weapon+" round="+host.Session.RoundNumber+" active="+host.Session.IsActive+" stage="+(host.State.Run?.Stage??"dead")+" hits="+host.World.Hits+" kills="+host.World.Kills+" collected="+host.World.Collected+" time="+host.World.SimulationTime);yield return Shot("bot-"+weapon);
+        }
+        // Explicit forced completion fixture: pending choices resolved while paused, then one saved entry.
+        Install(new AdamHost(AdamCatalog.Load(),new SaveStore(persistent)));host.Start("jawbone");host.Session.Advance(180);host.SetPaused(true);Resolve();Require(host.AwaitingR02,"fixture completion");var id=host.State.Run.RunId;var gold=host.State.Profile.Gold;
+        yield return Shot("r01-complete-1100");host.SetPaused(false);Require(host.Session.RoundNumber==2 && host.World.SimulationTime==0,"saved R02 time0");Require(id==host.State.Run.RunId && gold==host.State.Profile.Gold,"carry identity and gold");game.UpdatePresentation(0);Require(game.ArtWorld.ActiveEffects==0 && game.ImpactParticles.ParticleCount==0 && game.ImpactAudio.ActiveVoices==0,"presentation cleared");Save("entry-state.json",host.State);yield return Shot("r02-entry-1100");
+        // Advance/clear at fixture boundaries to expose all b IDs, never reuse a sprites.
+        for(var pass=0;pass<8;pass++){host.Session.Advance(pass==0?80:0);if(host.Session.Wave.Active.Values.Any(e=>e.MonsterId=="b2"))break;var keep=host.Session.Wave.Active.Values.GroupBy(e=>e.MonsterId).Select(g=>g.First().Id).ToArray();foreach(var e in host.Session.Wave.Active.Keys.Where(id=>!keep.Contains(id)).ToArray())host.Session.Kill(e);}
+        host.Session.Capture();var store=new SaveStore(persistent);var state=host.State;var world2=new BattleWorld(host.Session,AdamCatalog.Load().Speeds,7).Capture();foreach(var drop in host.Session.DroppedExperience.Keys)world2.Drops.Add(new BattleEntityState{Id=drop,X=100,Y=100});var index=0;foreach(var e in world2.Enemies){e.X=(index%10-5)*.5f;e.Y=(index/10-2)*.6f;index++;}state.Run.World=world2;store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Require(host.Reload(),host.Error);game.UpdatePresentation(0);
+        observations.Add("staged displayed IDs="+string.Join(",",host.Session.Wave.Active.Values.Select(e=>e.MonsterId).Distinct()));yield return Shot("r02-geometric-1100");
+        Screen.SetResolution(660,440,false);for(var i=0;i<60 && Screen.width!=660;i++)yield return null;Require(Screen.width==660,"660 resize");yield return Shot("r02-geometric-660-paused");
+        host.SetPaused(false);host.Tick(.1);game.UpdatePresentation(.1f);yield return Shot("r02-geometric-660-active");host.SetSuspended(true);var time=host.World.SimulationTime;host.Tick(30);Require(time==host.World.SimulationTime,"suspend clock");host.SetSuspended(false);Require(host.Paused,"resume confirmation");Require(host.Checkpoint(),host.Error);Save("persisted-r02.json",host.State);Save("persisted-world.json",host.World.Capture());
+        // Finish in a separate own file, preserving persistent R02 for actual process restart.
+        var ending=new AdamHost(AdamCatalog.Load(),new SaveStore(Path.Combine(root,"ending.json")));ending.Start("bible");ending.Session.Advance(180);ending.SetPaused(true);Install(ending);Resolve();ending.SetPaused(false);ending.Session.Advance(180);ending.SetPaused(true);Resolve();Require(ending.ContentComplete,"R03 must wait");Save("between3.json",ending.State);yield return Shot("r03-wait-660");
+        File.WriteAllLines(Path.Combine(root,"observations.txt"),observations);File.WriteAllText(Path.Combine(root,"complete.txt"),"Automated fixed-step bots plus explicitly forced completion/staged coordinates; final R02 art NOT_RUN; native manual combat NOT_RUN");Application.Quit(0);
+    }
+    void OnGUI(){if(draw && game!=null)game.DrawGameView(AdamGame.ScreenViewport());}
+}
