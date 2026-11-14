@@ -1,0 +1,137 @@
+// Isolated QA driver invokes the product AdamGame/AdamArtWorld/AdamImpactParticles, never a copied renderer.
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.Serialization.Json;
+using BibleSurvivor.Core;
+using BibleSurvivor.Unity;
+using UnityEngine;
+using Unity.Profiling;
+using Debug=UnityEngine.Debug;
+public sealed class ParticleProductCapture:MonoBehaviour
+{
+    bool stateProbe;AdamGame game;AdamHost host;string root,directory,weapon,mode;Rect viewport;bool recording;long updateStart,updateEnd,drawStart,drawTicks;double allocStart;int frame;
+    string Arg(string name){var a=Environment.GetCommandLineArgs();var i=Array.IndexOf(a,name);return i<0||i+1>=a.Length?null:a[i+1];}
+    void Awake(){root=Arg("-captureRoot");if(root==null){root=Arg("-stateProbeRoot");if(root!=null)stateProbe=true;else{enabled=false;return;}}if(!Path.IsPathRooted(root)||!File.Exists(Path.Combine(root,".adam-particles-qa")))throw new Exception("Fresh QA capture marker required");Application.runInBackground=true;QualitySettings.vSyncCount=0;Application.targetFrameRate=-1;}
+    AdamHost Fixture(string file,string selected,int population=20,bool edge=false)
+    {
+        var json=Resources.Load<TextAsset>("genesis-catalog").text;
+        if(population>=40){var catalog=JsonUtility.FromJson<AdamCatalog.Root>(json);var round=catalog.rounds.Single(r=>r.number==1);round.concurrency_cap=population;round.waves[0].composition[0].count=population;round.spawn_budget=round.waves.Sum(w=>w.composition.Sum(g=>g.count));json=JsonUtility.ToJson(catalog);}
+        var catalogData=new AdamCatalog(json);var store=new SaveStore(file);var result=new AdamHost(catalogData,store);result.Start(selected);result.Session.Advance(population>=40?60:20);
+        var world=new BattleWorld(result.Session,catalogData.Speeds,7);var snapshot=world.Capture();snapshot.PlayerX=100;snapshot.PlayerY=70;
+        var arena=AdamGame.Arena(viewport.width,viewport.height);var scale=AdamArtWorld.PixelScale(arena);var index=0;
+        foreach(var enemy in snapshot.Enemies)
+        {
+            var angle=index++*Math.PI*2/Math.Max(1,snapshot.Enemies.Count);
+            enemy.X=100+(float)Math.Cos(angle)*1.3f;enemy.Y=70+(float)Math.Sin(angle)*1.3f;
+            if(population>=40){enemy.X=100+(index%15-7)*.7f;enemy.Y=70+(index/15-4)*.5f;}
+            if(edge){enemy.X=100+Mathf.Round(arena.width/2)/(32f*scale)+.085f;enemy.Y=70;}
+        }
+        if(population>=40){snapshot.Enemies[0].X=101;snapshot.Enemies[0].Y=70;}
+        snapshot.NextProjectileId=population>=40?41:3;
+        for(var i=1;i<snapshot.NextProjectileId;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=edge?snapshot.Enemies[0].X-.25f:100.8f,Y=70,VelocityX=100,Lifetime=1,Damage=.001,RemainingPierce=1,Radius=.1});
+        if(edge || population>=40){snapshot.Weapons.Clear();snapshot.Weapons.Add(new BattleWeaponState{WeaponId=selected,NextCycle=1000});}
+        result.Session.Capture();result.State.Run.RunId="particle-product-qa-"+selected;result.State.Run.World=snapshot;store.Commit(result.State,result.State.Revision,Guid.NewGuid().ToString("N"));
+        if(!result.Reload())throw new Exception(result.Error);result.SetPaused(false);return result;
+    }
+    void Install(AdamHost value){host=value;game.Initialize(host);game.ArtWorld.FeedbackEnabled=true;game.ImpactParticles.Enabled=mode=="on";game.ImpactAudio.Muted=true;}
+    void Step(float delta){updateStart=Stopwatch.GetTimestamp();game.UpdatePresentation(delta);game.PrepareParticles(viewport);updateEnd=Stopwatch.GetTimestamp();}
+    IEnumerator Start()
+    {
+        var steps=Run();
+        while(true)
+        {
+            var more=false;object current=null;
+            try{more=steps.MoveNext();if(more)current=steps.Current;}catch(Exception failure){Debug.LogException(failure);Application.Quit(2);}
+            if(!more)yield break;yield return current;
+        }
+    }
+    IEnumerator Run()
+    {
+        if(!enabled)yield break;
+        while((game=UnityEngine.Object.FindFirstObjectByType<AdamGame>())==null)yield return null;
+        if(stateProbe)
+        {
+            while(game.Host==null)yield return null;
+            var file=Path.Combine(root,"loaded-state.json");if(File.Exists(file))throw new Exception("Fresh state probe root required");
+            using(var stream=File.Create(file))new DataContractJsonSerializer(typeof(GameSnapshot)).WriteObject(stream,game.Host.State);
+            if(game.Host.World!=null)using(var stream=File.Create(Path.Combine(root,"loaded-world.json")))new DataContractJsonSerializer(typeof(BattleSnapshot)).WriteObject(stream,game.Host.World.Capture());
+            Debug.Log("PARTICLE_STATE_PROBE_COMPLETE");enabled=false;yield break;
+        }
+        game.enabled=false;viewport=AdamGame.ScreenViewport();
+        if(Arg("-benchmark")!=null){yield return Benchmark();Application.Quit(0);yield break;}
+        var initialWidth=Screen.width;var initialHeight=Screen.height;
+        foreach(var w in AdamGame.Weapons)foreach(var m in new[]{"off","on"})
+        {
+            weapon=w;mode=m;directory=Path.Combine(root,weapon+"-"+mode);Directory.CreateDirectory(directory);if(File.Exists(Path.Combine(directory,"complete.txt")))throw new Exception("Fresh output only");
+            if(Screen.width!=initialWidth || Screen.height!=initialHeight){Screen.SetResolution(initialWidth,initialHeight,false);for(var retry=0;retry<60 && Screen.width!=initialWidth;retry++)yield return null;}
+            viewport=AdamGame.ScreenViewport();Install(Fixture(Path.Combine(directory,"save.json"),weapon));
+            var facts=new List<string>();
+            for(var tick=0;tick<180;tick++)
+            {
+                if(host.Session.PendingChoices.Count>0)host.Choose(host.Session.PendingChoices[0]);
+                if(tick==100 || (tick==145 && Arg("-resize")!=null)){Install(Fixture(Path.Combine(directory,"edge-save.json"),weapon,20,true));}
+                host.SetMovement(new Vector2((float)Math.Cos(tick*.025),(float)Math.Sin(tick*.025)));host.Tick(1d/30);Step(1f/30);
+                if(tick==101 || (tick==146 && Arg("-resize")!=null))
+                {
+                    var p=game.ImpactParticles.Projection;File.WriteAllText(Path.Combine(directory,tick==101?"edge-projection.txt":"resize-projection.txt"),"screen="+Screen.width+"x"+Screen.height+" viewport="+viewport+" arena="+p.Arena+" RT="+p.TextureWidth+"x"+p.TextureHeight+" scale="+p.Scale+" impacts="+game.ImpactParticles.EmittedImpacts+" particles="+game.ImpactParticles.ParticleCount+" camera="+p.CameraPosition);
+                }
+                if(tick==102)
+                {
+                    if(mode=="on" && game.ImpactParticles.ParticleCount==0)throw new Exception("Pause fixture must contain living particles");
+                    host.SetPaused(true);Step(0);var systems=game.ImpactParticles.OverlayCamera.transform.parent.GetComponentsInChildren<ParticleSystem>();
+                    var before=Signature(systems);var time=host.World.SimulationTime;
+                    yield return new WaitForSecondsRealtime(.15f);Step(.1f);
+                    if(before!=Signature(systems)||time!=host.World.SimulationTime)throw new Exception("Pause moved particle state");
+                    yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot(Path.Combine(directory,"pause.png"));yield return null;host.SetPaused(false);
+                    File.WriteAllText(Path.Combine(directory,"pause.txt"),"PASS exact position/lifetime and Core time frozen");
+                }
+                if(tick==120){game.ArtWorld.FeedbackEnabled=false;Step(0);if(game.ImpactParticles.ParticleCount!=0)throw new Exception("Low FX kept particles");}
+                if(tick==130)game.ArtWorld.FeedbackEnabled=true;
+                if(tick==140 && Arg("-resize")!=null)
+                {
+                    Screen.SetResolution(883,587,false);for(var retry=0;retry<60 && Screen.width!=883;retry++)yield return null;
+                    if(Screen.width!=883)throw new Exception("Resize not applied");viewport=new Rect(30,24,823,539);game.PrepareParticles(viewport);yield return null;
+                    File.WriteAllText(Path.Combine(directory,"resize.txt"),"actual="+Screen.width+"x"+Screen.height+" OSsafe="+Screen.safeArea+" syntheticViewport="+viewport+" arena="+game.ImpactParticles.Projection.Arena);
+                }
+                facts.Add(tick+","+host.World.SimulationTime.ToString("R",CultureInfo.InvariantCulture)+","+host.World.Hits+","+host.World.Kills+","+game.ImpactParticles.EmittedImpacts+","+game.ImpactParticles.ParticleCount);
+                yield return new WaitForEndOfFrame();
+                if(tick%3==0 || tick==101 || tick==146)ScreenCapture.CaptureScreenshot(Path.Combine(directory,tick==101?"edge.png":tick==146?"resize-edge.png":$"frame-{tick:000}.png"));yield return null;
+            }
+            File.WriteAllLines(Path.Combine(directory,"events.csv"),facts);using(var stream=File.Create(Path.Combine(directory,"world.json")))new DataContractJsonSerializer(typeof(BattleSnapshot)).WriteObject(stream,host.World.Capture());
+            host.Checkpoint();File.WriteAllText(Path.Combine(directory,"complete.txt"),"180 fixed Core steps; actual product full HUD/draw; source PNG unmodified; lowFX120-129; pause102");
+        }
+        Debug.Log("PARTICLE_PRODUCT_CAPTURE_COMPLETE");Application.Quit(0);
+    }
+    static string Signature(ParticleSystem[] systems)
+    {var a=new ParticleSystem.Particle[16];var s="";foreach(var ps in systems){var n=ps.GetParticles(a);for(var i=0;i<n;i++)s+=a[i].position+"/"+a[i].remainingLifetime+";";}return s;}
+    IEnumerator Benchmark()
+    {
+        foreach(var population in new[]{40,120})foreach(var m in new[]{"off","on"})
+        {
+            mode=m;directory=Path.Combine(root,population+"-"+mode);Directory.CreateDirectory(directory);Install(Fixture(Path.Combine(directory,"save.json"),"sling",population));host.Tick(1d/60);Step(0);
+            if(game.ArtWorld.Snapshot.Enemies.Count!=population)throw new Exception("Population not exact "+population+" actual "+game.ArtWorld.Snapshot.Enemies.Count);
+            if(mode=="on" && game.ImpactParticles.ParticleCount==0)throw new Exception("Benchmark requires living actual-hit particles");
+            var data=new List<string>(600);var last=Stopwatch.GetTimestamp();
+            var gc=ProfilerRecorder.StartNew(ProfilerCategory.Memory,"GC Allocated In Frame");
+            if(!gc.Valid)throw new Exception("Unity GC frame counter unavailable");
+            for(frame=-120;frame<600;frame++)
+            {
+                allocStart=GC.GetAllocatedBytesForCurrentThread();recording=frame>=0;Step(0);drawTicks=0;
+                yield return new WaitForEndOfFrame();var now=Stopwatch.GetTimestamp();var bytes=gc.LastValue;
+                if(recording)data.Add(frame+","+((now-last)*1000d/Stopwatch.Frequency).ToString("R",CultureInfo.InvariantCulture)+","+((updateEnd-updateStart+drawTicks)*1000d/Stopwatch.Frequency).ToString("R",CultureInfo.InvariantCulture)+","+bytes+","+game.ImpactParticles.ParticleCount);
+                last=now;yield return null;
+            }
+            recording=false;gc.Dispose();File.WriteAllLines(Path.Combine(directory,"frames.csv"),data);using(var stream=File.Create(Path.Combine(directory,"world.json")))new DataContractJsonSerializer(typeof(BattleSnapshot)).WriteObject(stream,host.World.Capture());
+            File.WriteAllText(Path.Combine(directory,"condition.txt"),"fixed actual Core snapshot; exact "+population+" enemies; 120warmup600samples; arena="+game.ImpactParticles.Projection.Arena+" RT="+game.ImpactParticles.Projection.TextureWidth+"x"+game.ImpactParticles.Projection.TextureHeight+" particleCount="+game.ImpactParticles.ParticleCount);
+        }
+    }
+    void OnGUI()
+    {
+        if(game==null||host==null)return;drawStart=Stopwatch.GetTimestamp();game.DrawGameView(viewport);if(Event.current.type==EventType.Repaint)drawTicks+=Stopwatch.GetTimestamp()-drawStart;
+    }
+}

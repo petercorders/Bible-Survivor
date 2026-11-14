@@ -26,15 +26,24 @@ namespace BibleSurvivor.Unity
         AdamFonts fonts;
         AdamArt art;
         public AdamImpactAudio ImpactAudio {get;private set;}
+        public AdamImpactParticles ImpactParticles {get;private set;}
+        public static Rect Arena(float width,float height) => new Rect(20,116,width-40,height-194);
+        public static Rect ScreenViewport() {var safe=Screen.safeArea;return new Rect(safe.x,Screen.height-safe.yMax,safe.width,safe.height);}
+        public void PrepareParticles(Rect viewport,bool mobile=false)
+        {
+            if(ArtWorld.Snapshot==null || ImpactParticles==null)return;
+            var scale=mobile?AdamMobileLayout.Scale(viewport):AdamChoiceText.ScreenScale(viewport.width,viewport.height);
+            ImpactParticles.Prepare(new AdamWorldProjection(Arena(viewport.width/scale,viewport.height/scale),new Vector2(ArtWorld.Snapshot.PlayerX,ArtWorld.Snapshot.PlayerY)));
+        }
         public AdamArtWorld ArtWorld { get; } = new AdamArtWorld();
         // Reviewed death strip: six frames at 8 fps. Keep the actor visible before covering it with restart controls.
         public bool DeathPresentationVisible => Host?.Session != null && !Host.Session.IsActive && Host.Session.CurrentHealth <= 0 &&
             ArtWorld.PlayerMotion == "death" && ArtWorld.PlayerSeconds < 6d / 8;
         static readonly Color TextColor = new Color32(244,239,225,255); // art03 text.0
         public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
-        void OnEnable() => EnhancedTouchSupport.Enable();
-        void OnDisable() {EnhancedTouchSupport.Disable();ImpactAudio?.Stop();}
-        void OnDestroy() { ArtWorld.Clear(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
+        void OnEnable() {EnhancedTouchSupport.Enable();if(Host!=null && ImpactParticles==null)ImpactParticles=new AdamImpactParticles();}
+        void OnDisable() {EnhancedTouchSupport.Disable();ImpactAudio?.Stop();ImpactParticles?.Dispose();ImpactParticles=null;}
+        void OnDestroy() { ArtWorld.Clear(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -48,7 +57,7 @@ namespace BibleSurvivor.Unity
             try { Initialize(new AdamHost(AdamCatalog.Load(), new SaveStore(Path.Combine(Application.persistentDataPath, "adam-prototype.json")))); }
             catch (Exception e) { startupError = e.Message; }
         }
-        public void Initialize(AdamHost host) { Host = host; inputReleased = false; ImpactAudio?.Dispose(); ImpactAudio=new AdamImpactAudio(gameObject); }
+        public void Initialize(AdamHost host) { Host = host; inputReleased = false; ImpactAudio?.Dispose(); ImpactAudio=new AdamImpactAudio(gameObject);ImpactParticles?.Dispose();ImpactParticles=new AdamImpactParticles(); }
         public static Vector2 KeyboardMovement(Keyboard keys)
         {
             if (keys == null) return Vector2.zero;
@@ -86,6 +95,7 @@ namespace BibleSurvivor.Unity
             previousTouchSafe = safe;
             var keys = Keyboard.current;
             if(keys!=null && keys.f6Key.wasPressedThisFrame) ArtWorld.FeedbackEnabled=!ArtWorld.FeedbackEnabled;
+            if(keys!=null && keys.f9Key.wasPressedThisFrame) ImpactParticles.Enabled=!ImpactParticles.Enabled;
             if(keys!=null && keys.f7Key.wasPressedThisFrame) ImpactAudio.Muted=!ImpactAudio.Muted;
             if(keys!=null && keys.f8Key.wasPressedThisFrame) ImpactAudio.Volume=ImpactAudio.Volume>=.99f?.25f:Mathf.Min(1,ImpactAudio.Volume+.25f);
             if (keys != null && keys.escapeKey.wasPressedThisFrame && Host.Session != null && Host.Session.IsActive)
@@ -123,8 +133,14 @@ namespace BibleSurvivor.Unity
                 Host.SetMovement(movement);
             }
             Host.Tick(Time.unscaledDeltaTime);
-            ArtWorld.Update(Host, Time.unscaledDeltaTime);
+            UpdatePresentation(Time.unscaledDeltaTime);
+        }
+        public void UpdatePresentation(float delta)
+        {
+            ArtWorld.Update(Host,delta);
             ImpactAudio?.Update(Host,ArtWorld);
+            ImpactParticles?.Update(Host,ArtWorld,delta);
+            PrepareParticles(ScreenViewport(),Application.isMobilePlatform);
         }
         public void SelectSlot(int slot)
         {
@@ -155,7 +171,7 @@ namespace BibleSurvivor.Unity
             if (!modalOpen)
             {
                 GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : "WASD / 방향키 이동 · 자동 공격 · Esc 정지 · Enter 재개", instruction);
-                GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" :  $"1–3 선택 · F6 효과 {(ArtWorld.FeedbackEnabled ? "기본" : "낮음")} · F7 소리 {(ImpactAudio?.Muted == true ? "끔" : "켬")} · F8 음량 {ImpactAudio?.Volume*100:0}%", instruction);
+                GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" :  $"1–3 선택 · F6 효과 {(ArtWorld.FeedbackEnabled ? "기본" : "낮음")} · F7 소리 {(ImpactAudio?.Muted == true ? "끔" : "켬")} · F8 음량 {ImpactAudio?.Volume*100:0}% · F9 입자 {(ImpactParticles?.Enabled == true ? "켬" : "끔")}", instruction);
             }
             if (Host == null)
             { GUI.Label(new Rect(30, 120, width - 60, 160), startupError ?? "저장 기록을 불러오는 중…", label); return; }
@@ -165,9 +181,9 @@ namespace BibleSurvivor.Unity
                 GUI.Label(new Rect(20, 50, width - 195, 56), $"체력 {session.CurrentHealth:0}/{Host.State.Run?.MaxHealth ?? 100:0}  경험치 {session.Growth.Experience:0.0}  레벨 {session.Growth.Level}\n시간 {Host.World?.SimulationTime ?? 180:0.0}/180초  골드 {Host.State.Profile.Gold}", label);
                 if (ArtButton(new Rect(width - 175, 54, 150, mobile ? 66 : 44), Host.Paused ? "재개" : "일시정지", button)) { Host.SetPaused(!Host.Paused); inputReleased = false; }
             }
-            var arena = new Rect(20, 116, width - 40, height - 194);
+            var arena = Arena(width,height);
             art.OptionalEffects=ArtWorld.FeedbackEnabled;
-            if (Host.World != null) ArtWorld.Draw(art, Host, arena);
+            if (Host.World != null) ArtWorld.Draw(art, Host, arena, ImpactParticles);
             if (Host.Error != null)
             {
                 Modal(width, height, "저장 / 불러오기 중단", mobile ? Host.RequiresNewerGame ? "더 새 게임 버전이 필요한 저장입니다.\n원본과 백업은 보존했습니다. 게임을 업데이트하세요." : "저장할 수 없어 진행을 멈췄습니다.\n재시도하거나 마지막 저장을 불러오세요." : Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");

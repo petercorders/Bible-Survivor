@@ -12,6 +12,8 @@
 
 iOS Simulator의 지정 휴대폰 profile에서 IL2CPP 빌드·터치·세로/가로 UI·중단/재실행 저장 복구를 검증했고 독립 코드/UI 리뷰를 통과했습니다. [iOS 검증 범위와 남은 게이트](docs/progress/mobile-ios.md)를 확인하세요. Android·다른 화면 크기·실물 기기·성능은 별도 검증 대상입니다.
 
+PC 타격감 P0에 정확한 명중 사건·적 피격 반응·세 무기 효과음과 저효과/음량 설정을 추가했습니다. [P0 검증 범위](docs/progress/combat-feedback.md)의 독립 코드·PC 화면/조작 리뷰와 청감 미검증을 구분합니다. Unity 기본 파티클도 실제 게임 화면에 연결했고 [파티클 구현·회귀·한정 성능 측정](docs/progress/combat-particles.md)을 기록했습니다. 최신 앱의 native 연속 전투 조작·GPU/모바일 실물 성능은 미검증입니다. Android 최소 빌드·저장 복구 근거는 [Android 진행 문서](docs/progress/mobile-android.md)에 있습니다.
+
 ![아담 macOS 개발 빌드 시각 검토 장면](docs/images/adam-r01-art03.png)
 
 macOS 개발 빌드의 시각 검토용 배치입니다. 적·경험치 위치를 연출했으며 자연 전투 밀도나 밸런스 검증 화면은 아닙니다.

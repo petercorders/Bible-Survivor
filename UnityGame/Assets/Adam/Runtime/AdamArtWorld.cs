@@ -145,12 +145,13 @@ namespace BibleSurvivor.Unity
             }
             return latest;
         }
-        public void Draw(AdamArt art, AdamHost host, Rect arena)
+        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null)
         {
             if(Snapshot==null || source!=host.World) return;
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);
-            Vector2 Point(float x,float y) => new Vector2(Mathf.Round(arena.width/2+(x-origin.x)*pixels), Mathf.Round(arena.height/2-(y-origin.y)*pixels));
+            var projection=new AdamWorldProjection(arena,origin);
+            Vector2 Point(float x,float y) => projection.Point(x,y);
             GUI.BeginGroup(arena);
             var rx=Mathf.Min(10,arena.width/(float)pixels/2+1); var ry=Mathf.Min(5.625f,arena.height/(float)pixels/2+1);
             // Terrain is deterministic by integer coordinate, not gameplay RNG. Tiles are never rotated/flipped.
@@ -187,6 +188,8 @@ namespace BibleSurvivor.Unity
                         GUI.matrix=before;GUI.color=tint;
                     }
             }
+            // Transparent particles sit above terrain/enemies but below actor/weapons and every HUD/modal control.
+            particles?.Draw(projection);
             // All six layers share ONE parent reflection about the registered feet pivot.
             var feet=Point(snap.PlayerX,snap.PlayerY); var matrix=GUI.matrix;
             if(PlayerLeft) GUI.matrix=matrix*Matrix4x4.Translate(new Vector3(feet.x,feet.y,0))*Matrix4x4.Scale(new Vector3(-1,1,1))*Matrix4x4.Translate(new Vector3(-feet.x,-feet.y,0));

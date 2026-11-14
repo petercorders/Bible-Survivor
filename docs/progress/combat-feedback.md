@@ -52,3 +52,5 @@ ignored 근거 루트는 `evidence/combat-feedback-20261114/`다. `video/{bible,
 통합 결과: [독립 PC 코드 리뷰](../reviews/combat-feedback-code.md)는 최종302개 소스와 최신4앱 각334파일 SHA·QA path gate·47Edit/16Play·기존18변이를 확인해 CFB-01 CLOSED, 추가 HIGH/MEDIUM 없음으로 마쳤다. [독립 PC 화면·조작 리뷰](../reviews/combat-feedback-ui.md)는 실제1100/660에서 세 무기·자연 피격/사망/새 도전·성장 선택/중복 입력·정지/재개·HUD를 확인해 해당 범위 PASS다. 두 Player 정상exit0, PC6/QA3 보존·복원9/9, 최종소스/앱SHA 불변이다.
 
 청감 선호/실제 청취·90ms 정밀 체감·F6–F8 실제 hotkey는 NOT_RUN으로 유지한다. 이 제한을 사람 승인·전체 타격감 수용으로 바꾸지 않는다. 프로젝트 GC는 `../retrospectives/R01-combat-feedback.md`에 기록했다. 이번 커밋은 P0 구현·해당 PC 검증과 별도 파티클 실험 근거를 보존하는 범위이며, 제품 ParticleSystem 연결은 다음 단계다.
+
+업로드 결과: `96bab9217cd98a884b5cab1fef06eaeb696bddb8`을 `feat/adam-core`에 push했다. 같은 SHA의 [코어·portable Unity CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43534121023)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43534121030)는 모두 success다. 후속 제품 파티클 작업은 `../harness/combat-particles-product-task.md`로 별도 인계했으며 기존 iOS 앱은 교체하지 않았다.
