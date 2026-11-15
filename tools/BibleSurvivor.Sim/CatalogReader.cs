@@ -18,7 +18,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number<1 || number>3) throw new ArgumentOutOfRangeException(nameof(number),"Only R01/R02/R03 core is implemented");
+        if(number<1 || number>4) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R04 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
         if(root.GetProperty("schema_version").GetInt32()!=1 || root.GetProperty("chapter_id").GetString()!="genesis")
@@ -43,6 +43,15 @@ public static class CatalogReader
                 monsters["c1"].GetProperty("max_health").GetInt32()!=30||monsters["c1"].GetProperty("contact_damage").GetInt32()!=6||
                 monsters["c1"].GetProperty("speed_ratio").GetDouble()!=.55)
                 throw new InvalidDataException("Unsupported first boss contract");
+        }
+        if(number==4)
+        {
+            var dash=monsters["d3"].GetProperty("dash");
+            if(monsters["d3"].GetProperty("behavior_id").GetString()!="telegraphed_dash"||
+                monsters["d1"].GetProperty("speed_ratio").GetDouble()!=.65||monsters["d2"].GetProperty("speed_ratio").GetDouble()!=.5||monsters["d3"].GetProperty("speed_ratio").GetDouble()!=.6||
+                dash.GetProperty("telegraph_seconds").GetDouble()!=1.2||dash.GetProperty("speed_ratio").GetDouble()!=1.3||
+                dash.GetProperty("duration_seconds").GetDouble()!=.6||dash.GetProperty("cooldown_seconds").GetDouble()!=6)
+                throw new InvalidDataException("Unsupported R04 charge contract");
         }
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(
             w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),

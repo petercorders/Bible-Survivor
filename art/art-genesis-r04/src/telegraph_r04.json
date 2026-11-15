@@ -1,0 +1,40 @@
+{
+  "schema": "bible-survivors.art-r04-telegraph",
+  "schemaVersion": 1,
+  "note": "Style contract for the D3 raider steed's charge warning lane. There is deliberately NO PNG in this file: where the danger is and which way it points come only from Core, through the shared world projection Unity already uses for actors. The art never decides the edge.",
+  "core": {
+    "owner": "Core (single writer). Rules quoted from docs/harness/r04-implementation-01.md and docs/genesis-balance.md D3 as technical tuning, not balance-final",
+    "rule": "warning 1.2 s while D3 stands still; the target is the player position locked at warning start; then a 0.6 s straight dash at speed ratio 1.30 along the locked direction; 6 s reuse from the dash end; overlapping target uses Core's stable fixed direction; arena bounds and contact damage / invulnerability follow the existing Core rules; no extra dash damage",
+    "projectionNeeded": "for drawing, Unity reads from Core: the dash start point (D3 position at warning start), the dash end point Core will actually reach (after any arena clamp), and the contact half-width Core uses for the D3 contact test. Unity must not recompute these from art numbers",
+    "nominalForBoardsOnly": {
+      "read": "BattleTuning defaults in src/BibleSurvivor.Core/BattleWorld.cs at the start of this task (read-only): PlayerSpeed 3 wu/s, PlayerRadius 0.25 wu, EnemyRadius 0.2 wu",
+      "dashLengthWu": 2.34,
+      "dashLengthWhy": "1.30 x 3 wu/s x 0.6 s, before any arena clamp",
+      "halfWidthWu": 0.45,
+      "halfWidthWhy": "PlayerRadius + EnemyRadius, the contact distance in the current Core contact test",
+      "sourcePx": {"length": 74.88, "halfWidth": 14.4, "meaning": "world units x PPU 32 at SOURCE asset density, for the review board only; not Unity screen pixels"},
+      "warning": "if Core changes any of these, the runtime lane follows Core; nothing here is re-tuned by hand"
+    }
+  },
+  "placement": {
+    "shape": "capsule (stadium): the set of points within halfWidth of the segment start -> end. It is the area where the player's centre would meet D3's contact test during the dash",
+    "boundary": "the OUTER edge of the black line is the danger boundary. Nothing is drawn outside it, so the picture never makes the danger look larger than Core's",
+    "direction": "two chevrons inside the capsule on the centre line, pointing from start to end, at 45% and 75% of the segment; each chevron stays inside the capsule (arm reach <= halfWidth - 2 line widths)",
+    "mustNot": ["use a sprite or texture whose drawn edge decides the hit area", "fit the lane into the 32 px actor cell", "add a fill or glow outside the boundary", "re-aim, extend or shorten the lane during the warning (the target is locked)"]
+  },
+  "style": {
+    "reuse": "same line style as the R03 slam warning (art-genesis-r03 src/telegraph_r03.json): black outer + white inner",
+    "lines": [
+      {"name": "outer", "colour": "outline.0 (#1b1424)", "widthSourcePx": 2, "from": "boundary inward"},
+      {"name": "inner", "colour": "white.0 (#ffffff)", "widthSourcePx": 2, "from": "2 source px inside the boundary, inward"},
+      {"name": "chevrons", "colour": "white.0 with a 1 source px outline.0 edge", "widthSourcePx": 2}
+    ],
+    "widthRule": "widths scale with the actor pixel scale (source px x scale) and never drop below 1 screen px each",
+    "fill": "none. The ground stays visible inside the lane",
+    "timing": "appears at warning start, static for the whole 1.2 s (no blinking, pulsing or full-screen flash), removed when the dash starts. Progress is shown by the D3 pose (windup frames 0 -> 1 at 0.6 s), not by the lane",
+    "lowFx": "always shown: the lane is gameplay information, not an optional effect; same in low-effects, muted and small-window modes",
+    "sorting": "GroundDecal, under actors",
+    "readability": "black outer + white inner reads on dark grass, the light path and in greyscale"
+  },
+  "assets": []
+}

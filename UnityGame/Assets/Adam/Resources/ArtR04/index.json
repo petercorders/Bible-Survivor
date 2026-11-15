@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "b47bd8861ea71534eb78d347bd106336b27fa795f698ede11af6c72bf9276e4e",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_d1-wild-stalker_move_32",
+      "source": "art/art-genesis-r04/export/png/enm_d1-wild-stalker_move_32.png",
+      "sha256": "9681e4ed564ab0124a442fcf5163ba6653c221e63ea23415fd7123843e356002",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_d2-luring-lamp_move_32",
+      "source": "art/art-genesis-r04/export/png/enm_d2-luring-lamp_move_32.png",
+      "sha256": "cbd2dd0e9efb9fde97a44725a578bd8376056fbb0c474555bb483fcbcf1cff36",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_d3-raider-steed_move_32",
+      "source": "art/art-genesis-r04/export/png/enm_d3-raider-steed_move_32.png",
+      "sha256": "ba62d1da6ea37fb9795e62084e05b9ec21c8f668d1ec71a3cb2eaf5991662bca",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_d3-raider-steed_windup_32",
+      "source": "art/art-genesis-r04/export/png/enm_d3-raider-steed_windup_32.png",
+      "sha256": "2a689d5918e7a9967bc93b949c6ed8f0f7a0b9271eb94fcf03fe6efda796561e",
+      "width": 32,
+      "height": 32,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_d3-raider-steed_dash_32",
+      "source": "art/art-genesis-r04/export/png/enm_d3-raider-steed_dash_32.png",
+      "sha256": "f7f69a42c4fe0cc8562cdb1d17c623815aa12fa7d284585c26a0b258455bd237",
+      "width": 32,
+      "height": 32,
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

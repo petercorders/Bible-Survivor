@@ -201,6 +201,12 @@ namespace BibleSurvivor.Unity
             }
             if(session!=null && session.Inventory.Forms.Count>0 && !modalOpen)
                 GUI.Label(new Rect(30,167,width-60,28),AdamBossPresentation.Forms(session),instruction);
+            if(session?.RoundNumber==4 && ArtWorld.Snapshot?.Charges!=null && !modalOpen)
+            {
+                var phase="";foreach(var charge in ArtWorld.Snapshot.Charges)
+                {if(charge.Phase=="charge"){phase="돌진 진행 · 고정 방향";break;}if(charge.Phase=="telegraph")phase="돌진 예고 · 고정 방향";}
+                if(phase!="")GUI.Label(new Rect(30,122,width-60,28),"약탈 기병마 · "+phase,instruction);
+            }
             if (Host.Error != null)
             {
                 Modal(width, height, "저장 / 불러오기 중단", mobile ? Host.RequiresNewerGame ? "더 새 게임 버전이 필요한 저장입니다.\n원본과 백업은 보존했습니다. 게임을 업데이트하세요." : "저장할 수 없어 진행을 멈췄습니다.\n재시도하거나 마지막 저장을 불러오세요." : Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");
@@ -229,7 +235,7 @@ namespace BibleSurvivor.Unity
                 var panel = mobile ? AdamMobileLayout.ChoicePanel(width, height) : AdamChoiceText.ChoicePanel(width, height);
                 FillPanel(panel);
                 art.Panel(panel);
-                GUI.Label(new Rect(panel.x + 12, panel.y + 10, panel.width - 24, 36), session.Stage=="boss_settlement"?"보상 적용됨 · 남은 성장 선택":"레벨 상승 · 하나를 선택하세요", title);
+                GUI.Label(new Rect(panel.x + 12, panel.y + 10, panel.width - 24, 36), session.Stage=="boss_settlement"?"보상 적용됨 · 남은 성장 선택":session.Stage=="round_settlement"?"라운드 완료 · 남은 성장 선택":"레벨 상승 · 하나를 선택하세요", title);
                 GUI.Label(new Rect(panel.x + 12, panel.y + 48, panel.width - 24, 36), mobile ? "전투 정지 중 · 선택 즉시 저장" : "전투 정지 중 · 숫자 1–3 / 클릭 · 선택 즉시 저장", instruction);
                 for (var i = 0; i < session.PendingChoices.Count; i++)
                 {
@@ -245,21 +251,21 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":"노아";
+                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":"아브라함";
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}
                 GUI.enabled=enabled;
             }
-            else if(session?.Stage=="boss_settlement")
+            else if(session?.Stage=="boss_settlement"||session?.Stage=="round_settlement")
             {
                 Modal(width,height,"보상 적용됨 · 완료 정산",AdamBossPresentation.Forms(session));
-                if(ArtButton(new Rect(width/2-150,height/2+30,300,56),"완료 정산",button))Host.CompleteBossSettlement();
+                if(ArtButton(new Rect(width/2-150,height/2+30,300,56),"완료 정산",button)){if(session.Stage=="boss_settlement")Host.CompleteBossSettlement();else Host.CompleteNormalSettlement();}
             }
             else if (session == null || !session.IsActive)
             {
-                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"노아 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
-                Modal(width,height,heading,Host.ContentComplete?"R04 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"아브라함 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
+                Modal(width,height,heading,Host.ContentComplete?"R05 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
                 for (var i = 0; i < 3; i++)
                     if (ArtButton(mobile ? AdamMobileLayout.StartButton(width, height, i) : new Rect(width / 2 - 240, height / 2 - 15 + i * 58, 480, 50), $"{i + 1}. {AdamChoiceText.ItemName(Weapons[i])}", button)) SelectSlot(i);
             }

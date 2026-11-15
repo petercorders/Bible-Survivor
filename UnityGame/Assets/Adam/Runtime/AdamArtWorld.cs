@@ -10,6 +10,9 @@ namespace BibleSurvivor.Unity
     {
         AdamR02Art r02;
         AdamR03Art r03;
+        AdamR04Art r04;
+        readonly AdamChargeLane chargeLane=new AdamChargeLane();
+        readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
         BossEncounterState bossVisual;
         Vector2 bossFeet;
@@ -161,13 +164,15 @@ namespace BibleSurvivor.Unity
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
             effectPool.Clear();enemySprites.Clear();
             bossVisual=null;bossDeathAt=-1;bossImpactAt=-1;
+            chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;danger.Dispose();}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;danger.Dispose();chargeLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
                 case "b1":case "b2":case "b3":return AdamRoundPresentation.R02ClipId(id);
                 case "c1":case "c2":case "c3":case "nephilim_tyrant":return AdamR03Art.EnemyClip(id);
+                case "d1":case "d2":case "d3":return AdamR04Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -237,7 +242,20 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.R03Enemy(monster.MonsterId))
+                        if(AdamRoundPresentation.R04Enemy(monster.MonsterId))
+                        {
+                            if(r04==null)r04=new AdamR04Art();var id=monster.MonsterId;var clip=EnemyClip(id);var frame=-1;var seconds=Clock;var left=enemy.X>snap.PlayerX;
+                            if(id=="d3")
+                            {
+                                EnemyChargeState charge=null;if(snap.Charges!=null)foreach(var c in snap.Charges)if(c.Id==enemy.Id){charge=c;break;}
+                                clip=AdamChargeLane.Clip(charge,snap.Time,out frame,out seconds);
+                                if(charge!=null&&charge.Phase!="cooldown")
+                                {if(charge.DirectionX!=0)left=charge.DirectionX<0;else if(chargeFacing.TryGetValue(enemy.Id,out var previous))left=previous;}
+                                chargeFacing[enemy.Id]=left;
+                            }
+                            r04.Draw(clip,anchor,scale,seconds,left,frame);
+                        }
+                        else if(AdamRoundPresentation.R03Enemy(monster.MonsterId))
                         {
                             if(r03==null)r03=new AdamR03Art();var id=monster.MonsterId;
                             if(id=="nephilim_tyrant")
@@ -317,6 +335,8 @@ namespace BibleSurvivor.Unity
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
             if(bossVisual?.Telegraphing==true && host.Session.Stage=="boss")
                 danger.Draw(projection,new Vector2(bossVisual.TargetX,bossVisual.TargetY),(float)BossDefinition.SlamRadius);
+            if(snap.Charges!=null)foreach(var charge in snap.Charges)
+                if(AdamChargeLane.TryGeometry(snap,charge,out var geometry))chargeLane.Draw(projection,geometry);
             GUI.EndGroup();
         }
         public static string BossClip(string stage,BossEncounterState boss,double impactAt,double clock,out int frame)

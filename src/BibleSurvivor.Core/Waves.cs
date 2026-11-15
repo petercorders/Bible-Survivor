@@ -84,6 +84,7 @@ namespace BibleSurvivor.Core
                 PreviousBossFingerprint=Convert.ToBase64String(previousHash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts.Concat(new[]{BossDefinition.LegacyContract})))));
                 parts.Add(BossDefinition.Contract);
             }
+            if(number==4)parts.Add(BattleWorld.ChargeContract);
             using var hash=SHA256.Create();
             Fingerprint=Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts))));
         }
@@ -97,6 +98,7 @@ namespace BibleSurvivor.Core
         [DataMember] public double Health { get; set; }
         [DataMember] public int ContactDamage { get; set; }
         [DataMember] public int RawExperience { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? SpawnedAt {get;set;}
         internal SpawnedEnemy Copy() => (SpawnedEnemy)MemberwiseClone();
     }
 
@@ -170,7 +172,9 @@ namespace BibleSurvivor.Core
             while (cursor < schedule.Count && schedule[cursor].At <= Math.Min(Elapsed, 170) + 1e-8 && active.Count < definition.ConcurrencyCap)
             {
                 if (expired) break;
-                var spawn = schedule[cursor++]; active.Add(spawn.Enemy.Id, spawn.Enemy.Copy());
+                var spawn = schedule[cursor++]; var enemy=spawn.Enemy.Copy();
+                if(definition.Number==4&&enemy.MonsterId=="d3")enemy.SpawnedAt=Elapsed;
+                active.Add(enemy.Id,enemy);
             }
             if (Elapsed > 170) expired = true;
         }
@@ -209,6 +213,11 @@ namespace BibleSurvivor.Core
                 if (double.IsNaN(enemy.Health) || double.IsInfinity(enemy.Health) || enemy.Health <= 0 || enemy.Health > planned.Health || enemy.MonsterId != planned.MonsterId ||
                     enemy.RawExperience != planned.RawExperience || enemy.ContactDamage != planned.ContactDamage)
                     throw new ArgumentException("Invalid active enemy");
+                if(definition.Number==4&&enemy.MonsterId=="d3")
+                {
+                    if(!enemy.SpawnedAt.HasValue||!BattleSnapshot.Finite(enemy.SpawnedAt.Value)||enemy.SpawnedAt<0||enemy.SpawnedAt>state.Elapsed)throw new ArgumentException("Invalid charge birth clock");
+                }
+                else if(enemy.SpawnedAt.HasValue)throw new ArgumentException("Unexpected charge birth clock");
                 wave.active.Add(enemy.Id, enemy.Copy());
             }
             if (state.Cursor > 0 && wave.schedule[state.Cursor - 1].At > Math.Min(state.Elapsed, 170) + 1e-8)

@@ -29,7 +29,7 @@ namespace BibleSurvivor.Core
             if(!Targets.TryGetValue(id,out var target))throw new ArgumentException("Target gone");
             return definition.Waves.SelectMany(x=>x.Groups).First(x=>x.MonsterId==target.MonsterId).Health;
         }
-        public double CombatTime => run.Boss?.CombatTime ?? Wave?.Elapsed ?? 0;
+        public double CombatTime => run.Boss?.CombatTime ?? Wave?.Elapsed ?? run.NormalEndedAt ?? 0;
         public bool SimulationRunning => IsActive && !(run.Boss?.Paused ?? Wave?.Paused ?? false) && run.PendingLevels==0;
         public bool CanAttack => SimulationRunning && run.Stage!="boss_intro";
         public IReadOnlyDictionary<int,SpawnedEnemy> Targets => run.Boss==null ? Wave?.Active ?? new Dictionary<int,SpawnedEnemy>() :
@@ -76,7 +76,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > 3 ||
+            if (definition.Number < 1 || definition.Number > 4 ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -95,11 +95,13 @@ namespace BibleSurvivor.Core
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number>3 || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number>4 || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             state.Validate(); Capture();
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
             var arena=new WaveDirector(next);
+            if(run.Boss!=null){run.CompletedBoss=run.Boss.Copy();run.Boss=null;}
+            run.NormalEndedAt=null;run.RoundCompletionApplied=false;
             run.Stage="normal";run.RoundFingerprint=next.Fingerprint;run.Wave=arena.Snapshot();
             run.World=null;run.Drops.Clear();run.LastHitTime=-1;
             return Resume(state,next);
@@ -192,7 +194,9 @@ namespace BibleSurvivor.Core
         {
             if (!IsCurrent || run.Stage=="boss_reward" || run.PendingLevels <= 0 || !run.Choices.Contains(id)) return false;
             if (!Inventory.TryChoose(id, Passives.Contains(id))) return false;
-            run.PendingLevels--; run.ChoiceSerial++; run.Choices.Clear(); EnsureChoices(); Capture(); return true;
+            run.PendingLevels--; run.ChoiceSerial++; run.Choices.Clear(); EnsureChoices();
+            if(run.Stage=="round_settlement"&&run.PendingLevels==0)CompleteNormalSettlement();
+            Capture(); return true;
         }
         public void Damage(int incoming)
         {
@@ -216,6 +220,14 @@ namespace BibleSurvivor.Core
                 run.Boss=new BossEncounterState{EncounterId=BossDefinition.EncounterId(run.RunId),NormalEndedAt=ended};
                 return;
             }
+            if(definition.Number==4)
+            {
+                run.NormalEndedAt=Wave!.Elapsed;
+                foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
+                run.Drops.Clear();run.World=null;Wave=null;run.Stage="round_settlement";
+                if(run.PendingLevels==0)CompleteNormalSettlement();
+                return;
+            }
             // Only dropped XP is collected. Unspawned/live enemies grant nothing at timeout.
             foreach (var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value)) AwardExperience(xp);
             run.Drops.Clear(); state.Profile.Gold = checked(state.Profile.Gold + definition.CompletionGold);
@@ -223,6 +235,13 @@ namespace BibleSurvivor.Core
             if (definition.UnlockWeaponId != null && !state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))
                 state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
             run.Health = run.MaxHealth; run.Stage = "between_rounds"; run.RoundNumber = definition.Number + 1;
+        }
+        public bool CompleteNormalSettlement()
+        {
+            if(!IsCurrent||definition.Number!=4||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
+            state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
+            if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
+            run.Health=run.MaxHealth;run.RoundCompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=5;run.World=null;Capture();return true;
         }
         public bool PromoteBossReward()
         {

@@ -104,7 +104,7 @@ internal static class RewardEvolutionTests
             var broken=new SaveStore(store.Path,()=>throw new IOException("replace fault"));Check.Throws<IOException>(()=>broken.Commit(loaded,1,"complete"));
             Check.Equal("boss_settlement",store.Load()!.Run!.Stage);store.Commit(loaded,1,"complete");store.Commit(loaded,1,"complete");
             loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,3));Check.True(!game.IsActive);Check.True(!game.CompleteBossSettlement());
-            Check.Equal(gold+50,loaded.Profile.Gold);Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(4,60,1100,50,CatalogReader.Round(Catalog,3).Waves)));
+            Check.Equal(gold+50,loaded.Profile.Gold);Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(5,60,1100,50,CatalogReader.Round(Catalog,3).Waves)));
         }));
         test("R03 Bible sanctuary preserves max base stats continuous orbit pulse hit ledger and disk replay",()=>Store(store=>{
             var (state,game)=Prepared("bible");Check.True(game.Inventory.TryEvolve(EvolutionRules.Bible));game.Capture();game.Advance(180);game.Advance(2);

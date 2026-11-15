@@ -39,13 +39,13 @@ public sealed class AdamR03HostTests
         var frozen=Bytes(h.State);var gold=h.State.Profile.Gold;h.Tick(20);Assert.IsFalse(h.ChooseBossReward(reward,choice.Id));Assert.IsFalse(h.CompleteBossSettlement());CollectionAssert.AreEqual(frozen,Bytes(h.State));
         fail=false;Assert.IsTrue(h.RetrySave(),h.Error);Assert.AreEqual(gold,h.State.Profile.Gold);
         if(!settlementFailure)Assert.IsTrue(h.CompleteBossSettlement());
-        Assert.IsTrue(h.ContentComplete);Assert.AreEqual(4,h.State.Run.RoundNumber);Assert.AreEqual(h.State.Run.MaxHealth,h.Session.CurrentHealth);Assert.IsFalse(h.CompleteBossSettlement());var finalGold=h.State.Profile.Gold;Assert.IsTrue(h.Reload());Assert.IsTrue(h.ContentComplete);Assert.AreEqual(finalGold,h.State.Profile.Gold);Assert.AreEqual(EvolutionRules.Sling,h.Session.WeaponForm("sling"));
+        Assert.IsTrue(h.AwaitingR04);Assert.AreEqual(4,h.State.Run.RoundNumber);Assert.AreEqual(h.State.Run.MaxHealth,h.Session.CurrentHealth);Assert.IsFalse(h.CompleteBossSettlement());var finalGold=h.State.Profile.Gold;Assert.IsTrue(h.Reload());Assert.IsTrue(h.AwaitingR04);Assert.AreEqual(finalGold,h.State.Profile.Gold);Assert.AreEqual(EvolutionRules.Sling,h.Session.WeaponForm("sling"));
     }
     [Test]public void RemainingGrowthBlocksCompletionAfterRewardAndLastChoiceCanSettle()
     {
         var h=Intro(path);h.SetPaused(false);for(var i=0;i<20;i++)h.Tick(.1);h.Session.Hit(BossDefinition.ActorId,BossDefinition.Health);h.Checkpoint();
         var state=new SaveStore(path).Load();state.Run.PendingLevels=1;state.Run.Choices=h.Session.Inventory.Choices(state.Profile.UnlockedWeapons,new[]{"scroll","hair","stones","east_wind","seal","cloud","thunder","crown","underwear","whirlwind"},3,state.Run.ChoiceSerial).ToList();new SaveStore(path).Commit(state,state.Revision,"pending-growth-fixture");Assert.IsTrue(h.Reload(),h.Error);
-        var reward=h.Session.Boss.Reward.RewardId;Assert.IsTrue(h.ChooseBossReward(reward,h.Session.BossChoices[0].Id));Assert.Greater(h.Session.PendingChoices.Count,0);Assert.IsFalse(h.CompleteBossSettlement());Assert.IsTrue(h.Choose(h.Session.PendingChoices[0]));Assert.IsTrue(h.CompleteBossSettlement());Assert.IsTrue(h.ContentComplete);
+        var reward=h.Session.Boss.Reward.RewardId;Assert.IsTrue(h.ChooseBossReward(reward,h.Session.BossChoices[0].Id));Assert.Greater(h.Session.PendingChoices.Count,0);Assert.IsFalse(h.CompleteBossSettlement());Assert.IsTrue(h.Choose(h.Session.PendingChoices[0]));Assert.IsTrue(h.CompleteBossSettlement());Assert.IsTrue(h.AwaitingR04);
     }
     [Test]public void ProjectionUsesLockedCoreRadiusAndClockFramesWithoutOptionalFlag()
     {

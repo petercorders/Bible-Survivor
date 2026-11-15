@@ -149,7 +149,7 @@ internal static class BossTests
             var (state,game,world)=Boss();state.Run!.World=world.Capture();store.Commit(state,0,"before-future");
             var backup=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",backup);
             foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["Boss"]!["Version"]=3,n=>n["Run"]!["Boss"]!["Unknown"]=7,
-                n=>n["Run"]!["World"]!["SchemaVersion"]=3,n=>n["Run"]!["Boss"]!["Reward"]=new JsonObject{["PolicyId"]="future"}})
+                n=>n["Run"]!["World"]!["SchemaVersion"]=4,n=>n["Run"]!["Boss"]!["Reward"]=new JsonObject{["PolicyId"]="future"}})
             {
                 var node=JsonNode.Parse(backup)!;change(node);var original=node.ToJsonString();File.WriteAllText(store.Path,original);
                 Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));

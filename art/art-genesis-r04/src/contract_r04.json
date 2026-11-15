@@ -1,0 +1,49 @@
+{
+  "schema": "bible-survivors.art-r04-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R04 (Abraham) normal enemies D1-D3 and the D3 charge states. Same 32 px rules as art 03 / R02 / R03 (PPU 32, pivot (16,1), art faces right, flipX once on the parent). Gameplay numbers (HP, speed, radius, timings, dash path) belong to Core and the catalog; they are quoted only where a clip's timing depends on them. The D3 danger lane is NOT a PNG: see src/telegraph_r04.json.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02 / R03. D3 windup and dash face the Core locked direction: flipX when its x is negative; vertical charges keep the last facing"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"},
+  "edgeMargin": {"px": 1, "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y"},
+  "colourLimit": {"32": 16, "fx": 24, "note": "distinct RGBA values per PNG"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+    "ext": {"file": "src/palette_r04_ext.json", "name": "r04-ext-v1", "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246", "monsters": {"d1": "광야 추적자", "d2": "미혹의 등불", "d3": "약탈 기병마"}},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "assets": [
+    {"id": "enm_d1-wild-stalker_move_32", "ref": "monster:d1", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "chase loop. The dust trail is drawn into the clip (puffs kicked up behind the hind feet on frames 1 and 3); no separate ground decal"},
+    {"id": "enm_d2-luring-lamp_move_32", "ref": "monster:d2", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": false, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-small_static_12x4", "facing": "right",
+     "use": "floating chase loop (bob is inside the frames). No projectile or barrage art: D2 has no barrage in this round"},
+    {"id": "enm_d3-raider-steed_move_32", "ref": "monster:d3", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "normal chase, and again after each dash"},
+    {"id": "enm_d3-raider-steed_windup_32", "ref": "monster:d3", "cell": [32, 32], "frames": 2, "fps": 0, "loop": false, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "the 1.2 s charge warning, D3 standing still. Driven by the Core warning clock, not by fps: frame 0 (head down, pawing) for warning elapsed 0-0.6 s, frame 1 (reared, gathered) from 0.6 s held until the dash starts. Faces the Core locked direction. Shown together with the procedural lane of src/telegraph_r04.json"},
+    {"id": "enm_d3-raider-steed_dash_32", "ref": "monster:d3", "cell": [32, 32], "frames": 2, "fps": 12, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "the 0.6 s straight dash: loops from the Core dash start until the dash ends, then back to move. Faces the Core locked direction"}
+  ],
+  "notProduced": {
+    "dash lane PNG": "not made on purpose: the danger lane is drawn by Unity from the Core projection (src/telegraph_r04.json). A picture must not define or suggest the hit area",
+    "D1 dust ground decal": "not needed for the first slice; the trail is inside the move clip. Make an optional-fx decal only if the Unity screen review asks for a longer trail",
+    "death / hit clips": "not in the R04 brief; the existing shared enemy hit/death handling applies"
+  },
+  "motifs": {
+    "source": "Genesis 12-14: Abraham's journey through the wilderness and the Negev, and the raid of the four kings who took the goods of Sodom and Gomorrah and Lot (14:11-12). Creative adaptation for the game.",
+    "d1": "a lean, dust-coloured wilderness beast that tracks travellers by scent, kicking up dust behind it (a created monster, not an animal named in the text)",
+    "d2": "a deceiving lantern spirit: a hanging cage lamp with a sly face and a pink-violet false light that lures travellers off the road (a created monster)",
+    "d3": "a riderless raider war-horse with a bone mask, a red raid blanket and saddlebags of plunder (a created monster that stands for the raid, not a soldier or king)",
+    "excluded": "Abraham, Sarah, Lot, Melchizedek, Hagar, God, angels and the covenant signs (the smoking fire pot and flaming torch of 15:17, the stars, the altar) are never enemies or enemy effects. No human riders, captives or victims are drawn"
+  }
+}

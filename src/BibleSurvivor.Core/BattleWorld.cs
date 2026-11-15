@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.Serialization;
 
@@ -99,9 +100,40 @@ namespace BibleSurvivor.Core
         [DataMember] public double Ratio {get;set;}
     }
     [DataContract]
+    public sealed class EnemyChargeState
+    {
+        [DataMember] public int Version {get;set;}=1;
+        [DataMember] public int Id {get;set;}
+        [DataMember] public string Phase {get;set;}="cooldown";
+        [DataMember] public double NextAt {get;set;}
+        [DataMember] public double Until {get;set;}
+        [DataMember] public float TargetX {get;set;}
+        [DataMember] public float TargetY {get;set;}
+        [DataMember] public float DirectionX {get;set;}=1;
+        [DataMember] public float DirectionY {get;set;}
+        internal EnemyChargeState Copy()=>(EnemyChargeState)MemberwiseClone();
+        internal void Validate(double time)
+        {
+            if(Version>1)throw new UnsupportedSaveVersionException();
+            if(Version!=1||Id<1||!BattleSnapshot.Finite(NextAt)||NextAt<0||!BattleSnapshot.Finite(Until)||Until<0||
+                !BattleSnapshot.Position(TargetX,TargetY)||!BattleSnapshot.Position(DirectionX,DirectionY)||Math.Abs((double)DirectionX*DirectionX+(double)DirectionY*DirectionY-1)>.0001)
+                throw new ArgumentException("Invalid charge state");
+            if(Phase=="cooldown")
+            {if(Until!=0||NextAt<time-1e-7||NextAt>time+BattleWorld.ChargeCooldown+1e-7)throw new ArgumentException("Invalid charge cooldown");}
+            else if(Phase=="telegraph"||Phase=="charge")
+            {
+                var duration=Phase=="telegraph"?BattleWorld.ChargeTelegraph:BattleWorld.ChargeDuration;
+                var offset=BattleWorld.ChargeTelegraph+(Phase=="charge"?BattleWorld.ChargeDuration:0);
+                if(Until<time-1e-7||Until>time+duration+1e-7||Math.Abs(Until-NextAt-offset)>1e-7)throw new ArgumentException("Invalid charge timing");
+            }
+            else throw new UnsupportedSaveVersionException();
+        }
+    }
+    [DataContract]
     public sealed class BattleSnapshot
     {
         [DataMember] public int SchemaVersion {get;set;}=1;
+        [DataMember(EmitDefaultValue=false)] public List<EnemyChargeState>? Charges {get;set;}
         [DataMember] public double Time {get;set;}
         [DataMember] public double Remainder {get;set;}
         [DataMember] public float PlayerX {get;set;}
@@ -124,8 +156,14 @@ namespace BibleSurvivor.Core
         [DataMember] public List<BattleSpeedState> MonsterSpeeds {get;set;}=new List<BattleSpeedState>();
         public void Validate()
         {
-            if((SchemaVersion!=1&&SchemaVersion!=2)||Tuning==null)throw new ArgumentException("Unsupported battle snapshot");
+            if((SchemaVersion!=1&&SchemaVersion!=2&&SchemaVersion!=3)||Tuning==null)throw new ArgumentException("Unsupported battle snapshot");
             Tuning.Validate();
+            if(SchemaVersion==3)
+            {
+                if(Charges==null||Charges.Any(x=>x==null)||Charges.Select(x=>x.Id).Distinct().Count()!=Charges.Count)throw new ArgumentException("Invalid charge collection");
+                foreach(var charge in Charges)charge.Validate(Time);
+            }
+            else if(Charges!=null)throw new ArgumentException("Charge state requires World3");
             if(!Finite(Time)||Time<0||(SchemaVersion==1&&Time>180.000001)||!Finite(Remainder)||Remainder<0||Remainder>=BattleWorld.FixedStep+
                 1e-9||!Position(PlayerX,PlayerY)||!Position(FacingX,FacingY)||
                 Math.Abs((double)FacingX*FacingX+(double)FacingY*FacingY-1)>.0001||RandomState==0||NextProjectileId<1||
@@ -153,7 +191,7 @@ namespace BibleSurvivor.Core
             {
                 if(w.WeaponForm!=null)
                 {
-                    if(SchemaVersion!=2||EvolutionRules.Base(w.WeaponForm)!=w.WeaponId||!Finite(w.NextPulse)||w.NextPulse<0||w.NextPulse>Time+EvolutionRules.PulsePeriod+1e-7||!Finite(w.PulseUntil)||w.PulseUntil<0||w.PulseUntil>Time+EvolutionRules.PulseLifetime+1e-7||w.FocusTargetId<0||
+                    if((SchemaVersion!=2&&SchemaVersion!=3)||EvolutionRules.Base(w.WeaponForm)!=w.WeaponId||!Finite(w.NextPulse)||w.NextPulse<0||w.NextPulse>Time+EvolutionRules.PulsePeriod+1e-7||!Finite(w.PulseUntil)||w.PulseUntil<0||w.PulseUntil>Time+EvolutionRules.PulseLifetime+1e-7||w.FocusTargetId<0||
                         (w.PulseHitIds!=null&&(w.PulseHitIds.Any(x=>x<1)||w.PulseHitIds.Count!=w.PulseHitIds.Distinct().Count()))||
                         (w.FormHits!=null&&(w.FormHits.Any(x=>x==null||x.Id<1||!Finite(x.At)||x.At<0||x.At>Time+1e-7)||w.FormHits.Select(x=>x.Id).Distinct().Count()!=w.FormHits.Count)))
                         throw new ArgumentException("Invalid evolution clock");
@@ -180,6 +218,10 @@ namespace BibleSurvivor.Core
     public sealed class BattleWorld
     {
         public const double FixedStep=1.0/60;
+        public const double ChargeCooldown=6, ChargeTelegraph=1.2, ChargeDuration=.6, ChargeSpeed=1.3;
+        public static string ChargeContract=>"r04-charge-v1:locked:overlap1,0:end-cooldown:"+string.Join(":",new[]{ChargeCooldown,ChargeTelegraph,ChargeDuration,ChargeSpeed,.65,.5,.6}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
+        private readonly Dictionary<int,EnemyChargeState> charges=new Dictionary<int,EnemyChargeState>();
+        public IReadOnlyDictionary<int,EnemyChargeState> ChargeStates=>new ReadOnlyDictionary<int,EnemyChargeState>(charges.ToDictionary(x=>x.Key,x=>x.Value.Copy()));
         private readonly BattleTuning tuning;
         private readonly Dictionary<string,double> speeds;
         private readonly Dictionary<int,Vector2> enemies=new Dictionary<int,Vector2>();
@@ -230,6 +272,7 @@ namespace BibleSurvivor.Core
                 !BattleSnapshot.Finite(x.Value)||x.Value<=0||x.Value>10))throw new ArgumentException("Invalid monster speeds");
             if(session.RoundNumber==3&&(!monsterSpeeds.TryGetValue("c1",out var supportSpeed)||supportSpeed!=BossDefinition.SupportSpeed))
                 throw new ArgumentException("Unsupported boss support speed");
+            if(session.RoundNumber==4&&(!monsterSpeeds.TryGetValue("d1",out var d1)||d1!=.65||!monsterSpeeds.TryGetValue("d2",out var d2)||d2!=.5||!monsterSpeeds.TryGetValue("d3",out var d3)||d3!=.6))throw new ArgumentException("Unsupported R04 monster speed");
             speeds=monsterSpeeds.ToDictionary(x=>x.Key,x=>x.Value,StringComparer.Ordinal);
             random=unchecked((uint)seed);if(random==0)random=0x9e3779b9;
             SimulationTime=session.CombatTime;
@@ -240,7 +283,7 @@ namespace BibleSurvivor.Core
         {
             Guard.NonNegative(seconds,nameof(seconds));if(seconds>30)throw new ArgumentOutOfRangeException(nameof(seconds));
             if(!BattleSnapshot.Position(movement.X,movement.Y))throw new ArgumentException("Invalid movement");
-            if(!Running)return;
+            if(!Running){if(!Session.IsActive)ClearEnded();return;}
             if(movement.LengthSquared()>1)movement=Vector2.Normalize(movement);
             remainder+=seconds;
             while(remainder+1e-10>=FixedStep)
@@ -263,6 +306,8 @@ namespace BibleSurvivor.Core
             {
                 var monster=Session.Wave!.Active[pair.Key];
                 if(!speeds.TryGetValue(monster.MonsterId,out var ratio))throw new InvalidOperationException("Missing monster speed");
+                if(Session.RoundNumber==4&&monster.MonsterId=="d3")
+                {enemies[pair.Key]=MoveCharge(charges[pair.Key],pair.Value,SimulationTime,Math.Min(180,SimulationTime+FixedStep));continue;}
                 var offset=PlayerPosition-pair.Value;
                 var distance=offset.Length();
                 var direction=distance>1e-6?offset/distance:Vector2.Zero;
@@ -330,7 +375,43 @@ namespace BibleSurvivor.Core
                 var y=edge>=2?(edge==2?-1:1)*(tuning.CameraHalfHeight+tuning.SpawnMargin):value*tuning.CameraHalfHeight;
                 enemies.Add(enemy.Id,PlayerPosition+new Vector2((float)x,(float)y));
             }
+            foreach(var id in charges.Keys.Where(x=>!active.ContainsKey(x)).ToArray())charges.Remove(id);
+            if(Session.RoundNumber==4)foreach(var actor in active.Values.Where(x=>x.MonsterId=="d3"))
+                if(!charges.ContainsKey(actor.Id))charges.Add(actor.Id,new EnemyChargeState{Id=actor.Id,NextAt=(actor.SpawnedAt??throw new InvalidOperationException("Missing D3 spawn clock"))+ChargeCooldown});
             foreach(var id in drops.Keys.Where(x=>!Session.DroppedExperience.ContainsKey(x)).ToArray())drops.Remove(id);
+        }
+        private Vector2 MoveCharge(EnemyChargeState state,Vector2 position,double from,double to)
+        {
+            var cursor=from;
+            while(cursor<to-1e-10)
+            {
+                if(state.Phase=="cooldown")
+                {
+                    var end=Math.Min(to,state.NextAt);var offset=PlayerPosition-position;var distance=offset.Length();
+                    if(distance>1e-6)position+=offset/distance*(float)Math.Min(distance,tuning.PlayerSpeed*speeds["d3"]*Math.Max(0,end-cursor));
+                    cursor=Math.Max(cursor,end);
+                    if(state.NextAt>to+1e-9)break;
+                    state.Phase="telegraph";state.Until=state.NextAt+ChargeTelegraph;state.TargetX=PlayerPosition.X;state.TargetY=PlayerPosition.Y;
+                    offset=new Vector2(state.TargetX,state.TargetY)-position;
+                    var direction=offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX;
+                    state.DirectionX=direction.X;state.DirectionY=direction.Y;
+                }
+                else if(state.Phase=="telegraph")
+                {
+                    cursor=Math.Max(cursor,Math.Min(to,state.Until));
+                    if(state.Until>to+1e-9)break;
+                    state.Phase="charge";state.Until+=ChargeDuration;
+                }
+                else
+                {
+                    var end=Math.Min(to,state.Until);
+                    position+=new Vector2(state.DirectionX,state.DirectionY)*(float)(tuning.PlayerSpeed*ChargeSpeed*Math.Max(0,end-cursor));cursor=Math.Max(cursor,end);
+                    if(state.Until>to+1e-9)break;
+                    state.NextAt=state.Until+ChargeCooldown;state.Until=0;state.Phase="cooldown";
+                }
+            }
+            if(!BattleSnapshot.Position(position.X,position.Y))throw new InvalidOperationException("World coordinate limit exceeded");
+            return position;
         }
         private double TargetRadius(int id)=>Session.Encounter!=null&&id==BossDefinition.ActorId?BossDefinition.Radius:tuning.EnemyRadius;
         private void EnterBossGeometry()
@@ -536,7 +617,7 @@ namespace BibleSurvivor.Core
         {
             if(!Session.CanAttack||!enemies.TryGetValue(id,out var position)||!Session.Targets.ContainsKey(id))return;
             var before=Session.Targets[id].Health;Session.Hit(id,damage);
-            if(!Session.Targets.TryGetValue(id,out var after)){Hits++;if(id==BossDefinition.ActorId&&Session.Encounter!=null)BossKills++;else Kills++;enemies.Remove(id);
+            if(!Session.Targets.TryGetValue(id,out var after)){Hits++;if(id==BossDefinition.ActorId&&Session.Encounter!=null)BossKills++;else Kills++;enemies.Remove(id);charges.Remove(id);
                 if(Session.DroppedExperience.ContainsKey(id))drops[id]=position;
                 if(Session.Stage=="boss_reward"||Session.Stage=="boss_settlement")impactFloor=ImpactSequence+1;
                 Impact(cause,id,contact,before,true);
@@ -563,13 +644,14 @@ namespace BibleSurvivor.Core
                 if(!Running)break;
             }
         }
-        private void ClearEnded(){enemies.Clear();drops.Clear();projectiles.Clear();}
+        private void ClearEnded(){enemies.Clear();drops.Clear();projectiles.Clear();charges.Clear();}
         private uint NextUInt(){random^=random<<13;random^=random>>17;random^=random<<5;return random;}
         private int Next(int bound)=>(int)(NextUInt()%(uint)bound);
         private double NextUnit()=>NextUInt()/(double)uint.MaxValue;
         public BattleSnapshot Capture()=>new BattleSnapshot{Time=SimulationTime,Remainder=remainder,PlayerX=PlayerPosition.X,PlayerY=PlayerPosition.Y,
             FacingX=facing.X,FacingY=facing.Y,RandomState=random,NextProjectileId=nextProjectile,ShotsFired=ShotsFired,Hits=Hits,Kills=Kills,
-            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,Tuning=tuning.Copy(),
+            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber==4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
+            Charges=Session.RoundNumber==4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
             Enemies=enemies.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
             Drops=drops.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
             Projectiles=projectiles.Select(x=>x.Copy()).ToList(),Weapons=weapons.Values.OrderBy(x=>x.WeaponId,StringComparer.Ordinal).Select(x=>x.Copy()).ToList(),
@@ -585,10 +667,12 @@ namespace BibleSurvivor.Core
                 !snapshot.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Keys.OrderBy(x=>x))||
                 !snapshot.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.DroppedExperience.Keys.OrderBy(x=>x))||
                 snapshot.Weapons.Any(x=>!session.Inventory.Weapons.ContainsKey(x.WeaponId)||x.WeaponForm!=(session.Inventory.Forms.TryGetValue(x.WeaponId,out var f)?f:null)))throw new ArgumentException("Checkpoint does not match session");
+            if(session.RoundNumber==4&&(snapshot.SchemaVersion!=3||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
             world.PlayerPosition=new Vector2(snapshot.PlayerX,snapshot.PlayerY);world.facing=new Vector2(snapshot.FacingX,snapshot.FacingY);
             world.random=snapshot.RandomState;world.remainder=snapshot.Remainder;world.SimulationTime=snapshot.Time;world.nextProjectile=snapshot.NextProjectileId;
             world.BossKills=snapshot.BossKills;world.ShotsFired=snapshot.ShotsFired;world.Hits=snapshot.Hits;world.Kills=snapshot.Kills;world.Collected=snapshot.Collected;world.DamageTaken=snapshot.DamageTaken;
             world.enemies.Clear();foreach(var enemy in snapshot.Enemies)world.enemies.Add(enemy.Id,enemy.Position);
+            world.charges.Clear();if(snapshot.Charges!=null)foreach(var charge in snapshot.Charges)world.charges.Add(charge.Id,charge.Copy());
             world.drops.Clear();foreach(var drop in snapshot.Drops)world.drops.Add(drop.Id,drop.Position);
             world.projectiles.Clear();world.projectiles.AddRange(snapshot.Projectiles.Select(x=>x.Copy()));
             world.weapons.Clear();foreach(var clock in snapshot.Weapons)world.weapons.Add(clock.WeaponId,clock.Copy());

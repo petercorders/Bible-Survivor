@@ -26,8 +26,9 @@ namespace BibleSurvivor.Unity
         public bool CanPlay => Error == null && !Paused && !Suspended && Session != null && Session.IsActive && Session.PendingChoices.Count == 0;
         public bool AwaitingR02 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==2 && Session?.RoundNumber==1;
         public bool AwaitingR03 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==3 && Session?.RoundNumber==2;
-        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03;
-        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==4 && Session?.RoundNumber==3;
+        public bool AwaitingR04 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==4 && Session?.RoundNumber==3;
+        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04;
+        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==5 && Session?.RoundNumber==4;
         public bool CanStartNew => State!=null && (State.Run==null || (ContentComplete && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
@@ -61,6 +62,7 @@ namespace BibleSurvivor.Unity
             {
                 if(RoundEntryReady){EnterNextRound();return;}
                 if(Session?.Stage=="boss_settlement" && Session.PendingChoices.Count==0){CompleteBossSettlement();return;}
+                if(Session?.Stage=="round_settlement" && Session.PendingChoices.Count==0){CompleteNormalSettlement();return;}
             }
             if (!CanPlay) { Movement = Vector2.zero; return; }
             // Never accumulate wall-clock downtime. A long frame advances at most 0.1 simulation seconds.
@@ -91,6 +93,11 @@ namespace BibleSurvivor.Unity
         public bool CompleteBossSettlement()
         {
             if(Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
+            Movement=Vector2.zero;return Checkpoint();
+        }
+        public bool CompleteNormalSettlement()
+        {
+            if(Error!=null || Suspended || Session==null || !Session.CompleteNormalSettlement())return false;
             Movement=Vector2.zero;return Checkpoint();
         }
         public void SetPaused(bool value)

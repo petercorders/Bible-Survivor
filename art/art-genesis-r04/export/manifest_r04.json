@@ -1,0 +1,574 @@
+{
+ "schema": "bible-survivors.art-manifest-r04",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R04 (Abraham) D1-D3 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02 / R03. D3 windup and dash face the Core locked direction: flipX when its x is negative; vertical charges keep the last facing"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r04_ext.json",
+   "name": "r04-ext-v1",
+   "sha256": "8c4788203ddada740b41c46c7c825a1023da733019b2ecc244bc41aff8f3f78e"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r04.json",
+   "sha256": "8af7e5f3f6ce4f8192e97ff4d03218da4ba3c608784cf0bd61a4317af53480b2"
+  },
+  "telegraph": {
+   "file": "src/telegraph_r04.json",
+   "sha256": "6e179d2ea070614462efbe5cc212e548d793325d6bd27a127d8b0e2721facda6"
+  },
+  "generator": {
+   "file": "scripts/actors_r04.py",
+   "sha256": "36242437a1a915b7f5e86bfe972c993d2499b1fb3b8a097ece3dc0d9ca9f16f4"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r04.json",
+   "sha256": "668b05f7b5960fd0f1c07b55c7cecff9e06fcce7ad07dbafecda118cf6d80b9b"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "d1": "광야 추적자",
+    "d2": "미혹의 등불",
+    "d3": "약탈 기병마"
+   }
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "notProduced": {
+  "dash lane PNG": "not made on purpose: the danger lane is drawn by Unity from the Core projection (src/telegraph_r04.json). A picture must not define or suggest the hit area",
+  "D1 dust ground decal": "not needed for the first slice; the trail is inside the move clip. Make an optional-fx decal only if the Unity screen review asks for a longer trail",
+  "death / hit clips": "not in the R04 brief; the existing shared enemy hit/death handling applies"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r04.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r04.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r04_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 12-14: Abraham's journey through the wilderness and the Negev, and the raid of the four kings who took the goods of Sodom and Gomorrah and Lot (14:11-12). Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_d1-wild-stalker_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r04.json",
+   "file": "export/png/enm_d1-wild-stalker_move_32.png",
+   "sha256": "9681e4ed564ab0124a442fcf5163ba6653c221e63ea23415fd7123843e356002",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:d1",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     12,
+     29,
+     30
+    ],
+    [
+     2,
+     11,
+     29,
+     30
+    ],
+    [
+     2,
+     12,
+     29,
+     30
+    ],
+    [
+     2,
+     11,
+     29,
+     30
+    ]
+   ],
+   "use": "chase loop. The dust trail is drawn into the clip (puffs kicked up behind the hind feet on frames 1 and 3); no separate ground decal",
+   "source": {
+    "authoring": "scripts/actors_r04.py:wild_stalker",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r04.json#enm_d1-wild-stalker_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_d2-luring-lamp_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r04.json",
+   "file": "export/png/enm_d2-luring-lamp_move_32.png",
+   "sha256": "cbd2dd0e9efb9fde97a44725a578bd8376056fbb0c474555bb483fcbcf1cff36",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:d2",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     4,
+     24,
+     24
+    ],
+    [
+     2,
+     3,
+     25,
+     24
+    ],
+    [
+     3,
+     2,
+     23,
+     22
+    ],
+    [
+     2,
+     3,
+     26,
+     23
+    ]
+   ],
+   "use": "floating chase loop (bob is inside the frames). No projectile or barrage art: D2 has no barrage in this round",
+   "source": {
+    "authoring": "scripts/actors_r04.py:luring_lamp",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r04.json#enm_d2-luring-lamp_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_d3-raider-steed_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r04.json",
+   "file": "export/png/enm_d3-raider-steed_move_32.png",
+   "sha256": "ba62d1da6ea37fb9795e62084e05b9ec21c8f668d1ec71a3cb2eaf5991662bca",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:d3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 14,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     5,
+     29,
+     30
+    ],
+    [
+     1,
+     4,
+     29,
+     30
+    ],
+    [
+     1,
+     5,
+     29,
+     30
+    ],
+    [
+     1,
+     4,
+     29,
+     30
+    ]
+   ],
+   "use": "normal chase, and again after each dash",
+   "source": {
+    "authoring": "scripts/actors_r04.py:steed_move",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r04.json#enm_d3-raider-steed_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_d3-raider-steed_windup_32",
+   "kind": "actor",
+   "contract": "src/contract_r04.json",
+   "file": "export/png/enm_d3-raider-steed_windup_32.png",
+   "sha256": "2a689d5918e7a9967bc93b949c6ed8f0f7a0b9271eb94fcf03fe6efda796561e",
+   "size": [
+    64,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:d3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 14,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     11,
+     29,
+     30
+    ],
+    [
+     1,
+     2,
+     28,
+     30
+    ]
+   ],
+   "use": "the 1.2 s charge warning, D3 standing still. Driven by the Core warning clock, not by fps: frame 0 (head down, pawing) for warning elapsed 0-0.6 s, frame 1 (reared, gathered) from 0.6 s held until the dash starts. Faces the Core locked direction. Shown together with the procedural lane of src/telegraph_r04.json",
+   "source": {
+    "authoring": "scripts/actors_r04.py:steed_windup",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r04.json#enm_d3-raider-steed_windup_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_d3-raider-steed_dash_32",
+   "kind": "actor",
+   "contract": "src/contract_r04.json",
+   "file": "export/png/enm_d3-raider-steed_dash_32.png",
+   "sha256": "f7f69a42c4fe0cc8562cdb1d17c623815aa12fa7d284585c26a0b258455bd237",
+   "size": [
+    64,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:d3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 14,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     8,
+     29,
+     30
+    ],
+    [
+     1,
+     8,
+     29,
+     30
+    ]
+   ],
+   "use": "the 0.6 s straight dash: loops from the Core dash start until the dash ends, then back to move. Faces the Core locked direction",
+   "source": {
+    "authoring": "scripts/actors_r04.py:steed_dash",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r04.json#enm_d3-raider-steed_dash_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

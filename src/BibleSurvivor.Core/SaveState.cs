@@ -41,6 +41,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public string? RoundFingerprint {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? Boss {get;set;}
         [DataMember(EmitDefaultValue=false)] public Dictionary<string,string>? Forms {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedBoss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
+        [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
     }
 
     [DataContract]
@@ -61,11 +64,11 @@ namespace BibleSurvivor.Core
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 4 ||
-                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:3)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 5 ||
+                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:4)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
-                (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement") || Run.Level < 1 || Run.Level > 10000 ||
+                (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
                 Run.KillRemainder < 0 || Run.KillRemainder > 4 || Run.Health <= 0 || Run.MaxHealth <= 0 || Run.Health > Run.MaxHealth ||
                 !Finite(Run.Health) || !Finite(Run.MaxHealth) || !Finite(Run.Experience) || Run.Experience < 0 ||
                 !Finite(Run.LastHitTime) || Run.LastHitTime < -1 || Run.Weapons == null || Run.Passives == null || Run.PermanentSnapshot == null)
@@ -80,6 +83,18 @@ namespace BibleSurvivor.Core
             if(bossStage!=(Run.Boss!=null)||bossStage&&(SchemaVersion!=2||(Run.Stage=="between_rounds"?Run.RoundNumber!=4:Run.RoundNumber!=3)))throw new InvalidDataException("Invalid boss lifecycle");
             if(Run.Forms!=null&&(SchemaVersion!=2||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
             Run.Boss?.Validate(Run);
+            var r04=Run.RoundNumber==4&&Run.Stage!="between_rounds"||Run.RoundNumber==5;
+            if(r04)
+            {
+                if(SchemaVersion!=2||Run.CompletedBoss==null||(Run.Stage=="between_rounds"?Run.RoundNumber!=5:Run.RoundNumber!=4)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                    Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
+                    (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
+                    (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
+                    throw new InvalidDataException("Invalid R04 lifecycle");
+                Run.CompletedBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=4,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,
+                    Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
+            }
+            else if(Run.Stage=="round_settlement"||Run.CompletedBoss!=null||Run.NormalEndedAt!=null||Run.RoundCompletionApplied)throw new InvalidDataException("R04 receipt outside R04");
             Run.World?.Validate();
             if(Run.World!=null)
             {
@@ -101,13 +116,20 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Evolution ledger target outside issued actors");
                 if(Run.World.Weapons.Any(w=>w.WeaponForm!=(Run.Forms!=null&&Run.Forms.TryGetValue(w.WeaponId,out var form)?form:null)))
                     throw new InvalidDataException("World weapon form does not match inventory");
-                if(Run.Boss==null && (Run.World.SchemaVersion!=(Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
+                if(Run.Boss==null && (Run.World.SchemaVersion!=(r04?3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
+                if(r04 && (Run.World.Charges==null||!Run.World.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Wave?.Active??new List<SpawnedEnemy>()).Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))||
+                    (Run.NormalEndedAt.HasValue&&Math.Abs(Run.World.Time-Run.NormalEndedAt.Value)>1e-7)))throw new InvalidDataException("R04 charge world does not match round");
                 if(Run.Wave!=null && (Run.Wave.Active==null || Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7 ||
                     !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(Run.Wave.Active.Select(x=>x.Id).OrderBy(x=>x))))
                     throw new InvalidDataException("World checkpoint does not match round clock or enemies");
                 if(!Run.World.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(Run.Drops.Keys.OrderBy(x=>x)) ||
                     (Run.Stage=="between_rounds" && (Run.World.Enemies.Count!=0 || Run.World.Projectiles.Count!=0)))
                     throw new InvalidDataException("World checkpoint does not match round lifecycle");
+            }
+            if(r04&&Run.Wave!=null)
+            {
+                if(Run.Wave.Active.Any(x=>x.MonsterId=="d3"&&(!x.SpawnedAt.HasValue||!Finite(x.SpawnedAt.Value)||x.SpawnedAt<0||x.SpawnedAt>Run.Wave.Elapsed)))throw new InvalidDataException("Invalid D3 spawn time");
+                if(Run.Wave.Active.Any(x=>x.MonsterId=="d3")&&Run.World==null)throw new InvalidDataException("D3 checkpoint requires geometry and charge state");
             }
             try { EquipmentInventory.Restore(Run.Weapons, Run.Passives,Run.Forms); _ = new GrowthLedger(Run.Level, Run.Experience); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid progression", error); }

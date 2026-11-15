@@ -12,6 +12,7 @@ internal static class Program
     {
         try
         {
+            if(args.Length>0 && args[0]=="--r04-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true);
             if(args.Length>0 && args[0]=="--boss-series")return BossRunner.Run(args.Skip(1).ToArray(),true);
             if(args.Length>0 && args[0]=="--boss-combat")return BossRunner.Run(args.Skip(1).ToArray());
             if(args.Length>0 && (args[0]=="--series" || args[0]=="--series-combat"))

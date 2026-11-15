@@ -1,0 +1,15 @@
+{
+  "name": "r04-ext-v1",
+  "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+  "note": "Extra actor ramps for the R04 (Abraham) enemies, light to dark, added on top of the unchanged art 03 master palette (byte copy in src/palette_v03.json). Ramp names must not collide with the base. Reused base ramps: bone (D1 mane, dust, D3 mask), stone (D2 cage), lining (D3 raid blanket), leather (saddlebags), gold (plunder glint), ribbon (D3 eye), eye (D1 eye), white, outline.",
+  "actor": {
+    "rust": ["#c27a52", "#94503a", "#64322a", "#3e1e20"],
+    "lure": ["#fff0fa", "#f2a6ec", "#c062cc", "#7a3490"],
+    "steed": ["#8c6c62", "#604646", "#402c34", "#281a24"]
+  },
+  "why": {
+    "rust": "D1 body: a warm rust-brown, darker than the light path and redder than the grass, so a D1 pack reads on both grounds",
+    "lure": "D2 false light: pink-violet, away from the cyan XP gems, the gold pickups and the green grass; the brightest D2 pixels are the lie that draws the eye",
+    "steed": "D3 coat: a dark bay-charcoal, the darkest R04 body so the bone mask and red blanket of the charger stand out"
+  }
+}
