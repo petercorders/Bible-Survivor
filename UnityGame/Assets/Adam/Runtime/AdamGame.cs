@@ -251,7 +251,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":"아브라함";
+                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":"롯";
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}
@@ -264,8 +264,8 @@ namespace BibleSurvivor.Unity
             }
             else if (session == null || !session.IsActive)
             {
-                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"아브라함 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
-                Modal(width,height,heading,Host.ContentComplete?"R05 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"롯 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
+                Modal(width,height,heading,Host.ContentComplete?"R06 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
                 for (var i = 0; i < 3; i++)
                     if (ArtButton(mobile ? AdamMobileLayout.StartButton(width, height, i) : new Rect(width / 2 - 240, height / 2 - 15 + i * 58, 480, 50), $"{i + 1}. {AdamChoiceText.ItemName(Weapons[i])}", button)) SelectSlot(i);
             }

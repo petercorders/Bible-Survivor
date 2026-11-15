@@ -1,0 +1,410 @@
+{
+ "schema": "bible-survivors.art-manifest-r05",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R05 (Lot) E1-E3 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02 / R03 / R04"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r05_ext.json",
+   "name": "r05-ext-v1",
+   "sha256": "30fc8f48bf81434f3e41074178c0b3872d86fa314ad4e8b6c3162d8f2da3f9a8"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r05.json",
+   "sha256": "5a902a785f0d1b505a0aad692faa4534caaac8dad9287abc76195503a2bb868f"
+  },
+  "generator": {
+   "file": "scripts/actors_r05.py",
+   "sha256": "153097e8e2f1ffe7d92254940dff212d0a70363207aa4cc2d1927bf800a47e7a"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r05.json",
+   "sha256": "4ccbf6e69991139c5616bfd63f6f2c0d3e909f41320d976de2a969bda88a8385"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "e1": "탐욕의 입",
+    "e2": "미련의 손",
+    "e3": "연기 추격자"
+   }
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "notProduced": {
+  "smoke trail / cloud decal": "not made on purpose: E3 has no damage ground, and a lingering smoke decal could read as one",
+  "projectile, dash, pull or debuff art": "E1-E3 are chase + contact only in R05",
+  "death / hit clips": "not in the R05 brief; the existing shared enemy hit/death handling applies"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r05.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r05.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r05_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 13:10-13 (Lot chooses the well-watered plain toward Sodom), 19:16 (Lot lingers), 19:26 (looking back) and 19:28 (smoke rising from the plain like a furnace). Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_e1-greed-maw_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r05.json",
+   "file": "export/png/enm_e1-greed-maw_move_32.png",
+   "sha256": "677576b60594603585b7c0a54aa1bbf9bc7541276dd552e9e8abbd0218fe2951",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:e1",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 12,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     6,
+     22,
+     30
+    ],
+    [
+     5,
+     5,
+     24,
+     30
+    ],
+    [
+     5,
+     6,
+     24,
+     30
+    ],
+    [
+     5,
+     6,
+     24,
+     30
+    ]
+   ],
+   "use": "chase loop: a waddling sack that is mostly a chomping mouth (open, closing, shut, opening), gold crown and coins. The chomp is look only: contact damage stays Core's ordinary touch",
+   "source": {
+    "authoring": "scripts/actors_r05.py:greed_maw",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r05.json#enm_e1-greed-maw_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_e2-lingering-hand_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r05.json",
+   "file": "export/png/enm_e2-lingering-hand_move_32.png",
+   "sha256": "d3002163b98a00d02d47ebaef135fe0889ced91a71d890bd36c4621a1e90d959",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:e2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     6,
+     26,
+     30
+    ],
+    [
+     1,
+     6,
+     26,
+     30
+    ],
+    [
+     1,
+     6,
+     26,
+     30
+    ],
+    [
+     1,
+     6,
+     26,
+     30
+    ]
+   ],
+   "use": "slow chase loop: the body creeps forward while one long arm drags behind, fingers scraping the ground. The arm is look only: it never pulls or holds the player and has no reach of its own",
+   "source": {
+    "authoring": "scripts/actors_r05.py:lingering_hand",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r05.json#enm_e2-lingering-hand_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_e3-smoke-chaser_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r05.json",
+   "file": "export/png/enm_e3-smoke-chaser_move_32.png",
+   "sha256": "d1ac8612dd525d8258d2dc97cc40c46458a1615230a83a3dc9493d0f5fa78ae9",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:e3",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     7,
+     26,
+     30
+    ],
+    [
+     1,
+     6,
+     26,
+     30
+    ],
+    [
+     1,
+     7,
+     26,
+     30
+    ],
+    [
+     1,
+     6,
+     26,
+     30
+    ]
+   ],
+   "use": "fast chase loop: a lean sprinter wrapped in smoke with ember eyes. The smoke stays inside the 32 px clip; it is not a cloud, trail decal or damage area",
+   "source": {
+    "authoring": "scripts/actors_r05.py:smoke_chaser",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r05.json#enm_e3-smoke-chaser_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

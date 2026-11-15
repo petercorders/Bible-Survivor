@@ -83,7 +83,7 @@ internal static class RoundFourTests
             Check.Equal("between_rounds",game.Stage);Check.Equal(5,loaded.Run!.RoundNumber);Check.Near(loaded.Run.MaxHealth,game.CurrentHealth);Check.Equal(gold+65,loaded.Profile.Gold);
             Check.True(loaded.Profile.UnlockedWeapons.Contains("fire_pillar"));Check.True(!game.Inventory.TryChoose("fire_pillar",false));Check.True(!game.CompleteNormalSettlement());game.Advance(180);Check.Equal(gold+65,loaded.Profile.Gold);
             store.Commit(loaded,1,"complete");store.Commit(loaded,1,"complete");game=AdamSession.Resume(store.Load()!,CatalogReader.Round(Catalog,4));Check.True(!game.IsActive);
-            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,5));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,6));
         }));
         test("R04 D3 uses only contact damage and shared iframe with stable overlap direction",()=>{
             var (state,game,world,id)=Charger();var snapshot=world.Capture();var actor=snapshot.Enemies.Single(x=>x.Id==id);actor.X=actor.Y=0;

@@ -11,6 +11,7 @@ namespace BibleSurvivor.Unity
         AdamR02Art r02;
         AdamR03Art r03;
         AdamR04Art r04;
+        AdamR05Art r05;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
@@ -173,6 +174,7 @@ namespace BibleSurvivor.Unity
                 case "b1":case "b2":case "b3":return AdamRoundPresentation.R02ClipId(id);
                 case "c1":case "c2":case "c3":case "nephilim_tyrant":return AdamR03Art.EnemyClip(id);
                 case "d1":case "d2":case "d3":return AdamR04Art.EnemyClip(id);
+                case "e1":case "e2":case "e3":return AdamR05Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -242,7 +244,11 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.R04Enemy(monster.MonsterId))
+                        if(AdamRoundPresentation.R05Enemy(monster.MonsterId))
+                        {
+                            if(r05==null)r05=new AdamR05Art();r05.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        }
+                        else if(AdamRoundPresentation.R04Enemy(monster.MonsterId))
                         {
                             if(r04==null)r04=new AdamR04Art();var id=monster.MonsterId;var clip=EnemyClip(id);var frame=-1;var seconds=Clock;var left=enemy.X>snap.PlayerX;
                             if(id=="d3")

@@ -21,7 +21,7 @@ namespace BibleSurvivor.Core
         private static readonly HashSet<string> RunFields = new HashSet<string> {
             "RunId", "RoundNumber", "Stage", "Health", "MaxHealth", "Level", "Experience", "KillRemainder",
             "LastHitTime", "PermanentSnapshot", "Weapons", "Passives", "Wave", "Drops", "PendingLevels",
-            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "NormalEndedAt", "RoundCompletionApplied" };
+            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "NormalEndedAt", "RoundCompletionApplied", "PreviousNormalRound" };
         // Explicit serialized shapes avoid reflection/code generation in the Unity/IL2CPP reader.
         // Dictionary keys are data inside Key/Value entries, not names of DTO members.
         private sealed class ContentShape
@@ -138,7 +138,7 @@ namespace BibleSurvivor.Core
                 CheckWorldVersion(members.SingleOrDefault(x => x.Name == "World"));
                 if (members.Any(x => !RunFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown run field for this save format");
                 var boss=members.SingleOrDefault(x=>x.Name=="Boss");
-                if(version==1 && (boss!=null||members.Any(x=>x.Name=="Forms"||x.Name=="CompletedBoss"||x.Name=="NormalEndedAt"||x.Name=="RoundCompletionApplied")))throw new InvalidDataException("Schema1 cannot contain Boss");
+                if(version==1 && (boss!=null||members.Any(x=>x.Name=="Forms"||x.Name=="CompletedBoss"||x.Name=="NormalEndedAt"||x.Name=="RoundCompletionApplied"||x.Name=="PreviousNormalRound")))throw new InvalidDataException("Schema1 cannot contain Boss");
                 if(boss!=null && boss.GetAttribute("type")=="object")
                 {
                     var bossFields=boss.ChildNodes.OfType<XmlElement>().ToArray();
@@ -161,7 +161,7 @@ namespace BibleSurvivor.Core
                     if (stage != null && round != null && round.GetAttribute("type") == "number" &&
                         round.InnerText.Length > 0 && round.InnerText.All(c => c >= '0' && c <= '9') &&
                         (!int.TryParse(round.InnerText, NumberStyles.None, CultureInfo.InvariantCulture, out var numberValue) ||
-                         (stage.InnerText == "normal" && numberValue > 4) || (stage.InnerText == "between_rounds" && numberValue > 5) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>3) || (stage.InnerText=="round_settlement"&&numberValue>4)))
+                         (stage.InnerText == "normal" && numberValue > 5) || (stage.InnerText == "between_rounds" && numberValue > 6) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>3) || (stage.InnerText=="round_settlement"&&numberValue>5)))
                         throw new UnsupportedSaveVersionException();
                 }
             }

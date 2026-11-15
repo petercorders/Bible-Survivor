@@ -218,6 +218,8 @@ namespace BibleSurvivor.Core
     public sealed class BattleWorld
     {
         public const double FixedStep=1.0/60;
+        public const double E1Speed=.60,E2Speed=.45,E3Speed=.95;
+        public static string RoundFiveContract=>"r05-chase-v1:no-forced-movement:"+string.Join(":",new[]{E1Speed,E2Speed,E3Speed}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
         public const double ChargeCooldown=6, ChargeTelegraph=1.2, ChargeDuration=.6, ChargeSpeed=1.3;
         public static string ChargeContract=>"r04-charge-v1:locked:overlap1,0:end-cooldown:"+string.Join(":",new[]{ChargeCooldown,ChargeTelegraph,ChargeDuration,ChargeSpeed,.65,.5,.6}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
         private readonly Dictionary<int,EnemyChargeState> charges=new Dictionary<int,EnemyChargeState>();
@@ -273,6 +275,7 @@ namespace BibleSurvivor.Core
             if(session.RoundNumber==3&&(!monsterSpeeds.TryGetValue("c1",out var supportSpeed)||supportSpeed!=BossDefinition.SupportSpeed))
                 throw new ArgumentException("Unsupported boss support speed");
             if(session.RoundNumber==4&&(!monsterSpeeds.TryGetValue("d1",out var d1)||d1!=.65||!monsterSpeeds.TryGetValue("d2",out var d2)||d2!=.5||!monsterSpeeds.TryGetValue("d3",out var d3)||d3!=.6))throw new ArgumentException("Unsupported R04 monster speed");
+            if(session.RoundNumber==5&&(!monsterSpeeds.TryGetValue("e1",out var e1)||e1!=E1Speed||!monsterSpeeds.TryGetValue("e2",out var e2)||e2!=E2Speed||!monsterSpeeds.TryGetValue("e3",out var e3)||e3!=E3Speed))throw new ArgumentException("Unsupported R05 monster speed");
             speeds=monsterSpeeds.ToDictionary(x=>x.Key,x=>x.Value,StringComparer.Ordinal);
             random=unchecked((uint)seed);if(random==0)random=0x9e3779b9;
             SimulationTime=session.CombatTime;
@@ -650,8 +653,8 @@ namespace BibleSurvivor.Core
         private double NextUnit()=>NextUInt()/(double)uint.MaxValue;
         public BattleSnapshot Capture()=>new BattleSnapshot{Time=SimulationTime,Remainder=remainder,PlayerX=PlayerPosition.X,PlayerY=PlayerPosition.Y,
             FacingX=facing.X,FacingY=facing.Y,RandomState=random,NextProjectileId=nextProjectile,ShotsFired=ShotsFired,Hits=Hits,Kills=Kills,
-            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber==4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
-            Charges=Session.RoundNumber==4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
+            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber>=4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
+            Charges=Session.RoundNumber>=4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
             Enemies=enemies.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
             Drops=drops.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
             Projectiles=projectiles.Select(x=>x.Copy()).ToList(),Weapons=weapons.Values.OrderBy(x=>x.WeaponId,StringComparer.Ordinal).Select(x=>x.Copy()).ToList(),
@@ -667,7 +670,7 @@ namespace BibleSurvivor.Core
                 !snapshot.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Keys.OrderBy(x=>x))||
                 !snapshot.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.DroppedExperience.Keys.OrderBy(x=>x))||
                 snapshot.Weapons.Any(x=>!session.Inventory.Weapons.ContainsKey(x.WeaponId)||x.WeaponForm!=(session.Inventory.Forms.TryGetValue(x.WeaponId,out var f)?f:null)))throw new ArgumentException("Checkpoint does not match session");
-            if(session.RoundNumber==4&&(snapshot.SchemaVersion!=3||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
+            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=3||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
             world.PlayerPosition=new Vector2(snapshot.PlayerX,snapshot.PlayerY);world.facing=new Vector2(snapshot.FacingX,snapshot.FacingY);
             world.random=snapshot.RandomState;world.remainder=snapshot.Remainder;world.SimulationTime=snapshot.Time;world.nextProjectile=snapshot.NextProjectileId;
             world.BossKills=snapshot.BossKills;world.ShotsFired=snapshot.ShotsFired;world.Hits=snapshot.Hits;world.Kills=snapshot.Kills;world.Collected=snapshot.Collected;world.DamageTaken=snapshot.DamageTaken;

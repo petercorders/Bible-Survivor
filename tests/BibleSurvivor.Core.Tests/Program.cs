@@ -14,6 +14,7 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r05-only")&&!name.StartsWith("R05 ",StringComparison.Ordinal))return;
             if(args.Contains("--r04-only")&&!name.StartsWith("R04 ",StringComparison.Ordinal))return;
             try { action(); results.Add((name, null)); }
             catch (Exception error) { results.Add((name, error)); Console.Error.WriteLine($"FAIL {name}: {error}"); }
@@ -33,6 +34,7 @@ internal static class Program
         if(!args.Contains("--reward-only"))BossTests.Register(Test);
         if(!args.Contains("--boss-only"))RewardEvolutionTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFourTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFiveTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

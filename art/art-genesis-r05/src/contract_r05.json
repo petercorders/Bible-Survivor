@@ -1,0 +1,45 @@
+{
+  "schema": "bible-survivors.art-r05-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R05 (Lot) normal enemies E1-E3. Same 32 px rules as art 03 / R02 / R03 / R04 (PPU 32, pivot (16,1), art faces right, flipX once on the parent, binary alpha). All three only chase and touch: no projectile, dash, debuff, forced movement or damage-ground art. Gameplay numbers belong to Core and the catalog.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02 / R03 / R04"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"},
+  "edgeMargin": {"px": 1, "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y"},
+  "colourLimit": {"32": 16, "fx": 24, "note": "distinct RGBA values per PNG"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+    "ext": {"file": "src/palette_r05_ext.json", "name": "r05-ext-v1", "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246", "monsters": {"e1": "탐욕의 입", "e2": "미련의 손", "e3": "연기 추격자"}},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "assets": [
+    {"id": "enm_e1-greed-maw_move_32", "ref": "monster:e1", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "chase loop: a waddling sack that is mostly a chomping mouth (open, closing, shut, opening), gold crown and coins. The chomp is look only: contact damage stays Core's ordinary touch"},
+    {"id": "enm_e2-lingering-hand_move_32", "ref": "monster:e2", "cell": [32, 32], "frames": 4, "fps": 6, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "slow chase loop: the body creeps forward while one long arm drags behind, fingers scraping the ground. The arm is look only: it never pulls or holds the player and has no reach of its own"},
+    {"id": "enm_e3-smoke-chaser_move_32", "ref": "monster:e3", "cell": [32, 32], "frames": 4, "fps": 12, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-small_static_12x4", "facing": "right",
+     "use": "fast chase loop: a lean sprinter wrapped in smoke with ember eyes. The smoke stays inside the 32 px clip; it is not a cloud, trail decal or damage area"}
+  ],
+  "notProduced": {
+    "smoke trail / cloud decal": "not made on purpose: E3 has no damage ground, and a lingering smoke decal could read as one",
+    "projectile, dash, pull or debuff art": "E1-E3 are chase + contact only in R05",
+    "death / hit clips": "not in the R05 brief; the existing shared enemy hit/death handling applies"
+  },
+  "motifs": {
+    "source": "Genesis 13:10-13 (Lot chooses the well-watered plain toward Sodom), 19:16 (Lot lingers), 19:26 (looking back) and 19:28 (smoke rising from the plain like a furnace). Creative adaptation for the game.",
+    "e1": "greed as a gold-decked purse-like creature that is mostly mouth (a created monster)",
+    "e2": "lingering as a hooded creeper whose long arm keeps reaching back to what it left (a created monster; not Lot's wife and not a pillar of salt)",
+    "e3": "a lean runner wrapped in the smoke of the burning plain, ember-eyed (a created monster; not the fire and brimstone of the judgment itself)",
+    "excluded": "Lot, Lot's wife, his daughters, Abraham, the angels, God, the judgment fire and the pillar of salt are never enemies or enemy effects. No burning city, victims or human figures are drawn"
+  }
+}

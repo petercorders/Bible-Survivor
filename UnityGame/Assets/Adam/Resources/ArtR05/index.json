@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "9b39deaef69e08fc983de6d34f14f39c4bd4ab732fedcbca7dee92ae68ed6ada",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_e1-greed-maw_move_32",
+      "source": "art/art-genesis-r05/export/png/enm_e1-greed-maw_move_32.png",
+      "sha256": "677576b60594603585b7c0a54aa1bbf9bc7541276dd552e9e8abbd0218fe2951",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_e2-lingering-hand_move_32",
+      "source": "art/art-genesis-r05/export/png/enm_e2-lingering-hand_move_32.png",
+      "sha256": "d3002163b98a00d02d47ebaef135fe0889ced91a71d890bd36c4621a1e90d959",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_e3-smoke-chaser_move_32",
+      "source": "art/art-genesis-r05/export/png/enm_e3-smoke-chaser_move_32.png",
+      "sha256": "d1ac8612dd525d8258d2dc97cc40c46458a1615230a83a3dc9493d0f5fa78ae9",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}
