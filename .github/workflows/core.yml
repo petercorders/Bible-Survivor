@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified when added
+        with:
+          fetch-depth: 0 # schema compatibility checks build the pinned historical Core
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4, verified when added
         with:
           dotnet-version: '10.0.404'
@@ -16,6 +18,10 @@ jobs:
         run: python3 tools/check_all.py
       - name: Concrete regression mutations
         run: python3 tools/check_mutations.py
+      - name: Save schema compatibility against the historical binary
+        run: python3 tools/check_schema_compat.py
+      - name: Save schema concrete regression mutations
+        run: python3 tools/check_schema_mutations.py
       - name: Unity committed Core and catalog artifact consistency (no Editor execution)
         run: python3 tools/unity_check_portable.py
       - name: Unity declared assembly boundary regressions (no Editor execution)

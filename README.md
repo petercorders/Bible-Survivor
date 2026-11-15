@@ -10,7 +10,9 @@
 
 `UnityGame/`은 Unity 6000.6.9f1용 아담 시제품입니다. 프로젝트에서 `Assets/Scenes/Adam.unity`를 열어 실행합니다. 검수된 픽셀 아트03·6레이어 캐릭터·적3종·세 무기 표현·외곽선 한국어 폰트를 연결했습니다. [아트 연결·실제 시험·한계](docs/progress/unity-art.md)와 [기반 시제품 기록](docs/progress/unity-adam.md)을 구분합니다. 현재 외형 편집·후속 보스·모바일 실기기·성능은 미완료입니다. Core를 변경하면 `python3 tools/unity_sync_core.py`로 동기화한 뒤 Unity 컴파일과 관련 시험을 다시 실행해야 합니다.
 
-[가인 R02 기술 연결](docs/progress/unity-r02.md)은 아담 완료 후 성장/장비 유지·새 라운드 저장/복원·가인 완료 뒤 R03 대기를 지원합니다. R02 적은 현재 명시 개발용 기하 표식이며 최종 적 아트와 native 연속 조작/밸런스는 미검증입니다. R03 보스는 아직 구현하지 않았습니다.
+[가인 R02 기술 연결](docs/progress/unity-r02.md)은 아담 완료 후 성장/장비 유지·새 라운드 저장/복원·가인 완료 뒤 R03 대기를 지원합니다. [R02 실제 적 시트 연결](docs/progress/unity-r02-art.md)에 세 적의 애니메이션·발 깊이 정렬·짧은 피격 실루엣과 실제 화면의 발 pivot 정정을 기록했습니다. 최신 schema2 Core를 연결한 macOS 개발 빌드의 컴파일·Edit90/Play31·저장 재실행을 확인했으며 최종 독립 코드·PC 시각 리뷰를 한정 범위에서 통과했습니다. native 연속 조작/자연 밸런스·모바일 실물/성능과 R03 보스는 아직 미검증 또는 미구현입니다.
+
+[schema2 저장 준비](docs/progress/r03-schema.md)는 기존 R01/R02 저장의 무쓰기 읽기·최초 갱신 전 원문 보존·미래 저장/전투 버전의 덮어쓰기 방지를 지원합니다. 순수 Core와 macOS Player 검증 범위를 분리하며 새 저장 코드의 IL2CPP/모바일 검증은 아직 하지 않았습니다.
 
 iOS Simulator의 지정 휴대폰 profile에서 IL2CPP 빌드·터치·세로/가로 UI·중단/재실행 저장 복구를 검증했고 독립 코드/UI 리뷰를 통과했습니다. [iOS 검증 범위와 남은 게이트](docs/progress/mobile-ios.md)를 확인하세요. Android·다른 화면 크기·실물 기기·성능은 별도 검증 대상입니다.
 
@@ -27,6 +29,9 @@ macOS 개발 빌드의 시각 검토용 배치입니다. 적·경험치 위치�
 ```sh
 python3 tools/check_all.py
 python3 tools/check_mutations.py
+python3 tools/check_schema_compat.py
+python3 tools/check_schema_mutations.py
+python3 -I -S -B tools/unity_prepare_r02_art.py
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- bible
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --combat sling 7
 bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series sling

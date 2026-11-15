@@ -44,7 +44,7 @@ namespace BibleSurvivor.Core
     [DataContract]
     public sealed class GameSnapshot
     {
-        [DataMember] public int SchemaVersion { get; set; } = 1;
+        [DataMember] public int SchemaVersion { get; set; } = SaveFormat.CurrentVersion;
         [DataMember] public long Revision { get; set; }
         [DataMember] public string LastOperationId { get; set; } = "";
         [DataMember] public ProfileState Profile { get; set; } = new ProfileState();
@@ -53,8 +53,8 @@ namespace BibleSurvivor.Core
 
         public void Validate()
         {
-            if (SchemaVersion > 1) throw new UnsupportedSaveVersionException();
-            if (SchemaVersion != 1 || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
+            if (SchemaVersion > SaveFormat.CurrentVersion) throw new UnsupportedSaveVersionException();
+            if ((SchemaVersion != 1 && SchemaVersion != SaveFormat.CurrentVersion) || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
                 Profile.Upgrades == null || Profile.UnlockedWeapons == null || Profile.UnlockedWeapons.Distinct().Count() != Profile.UnlockedWeapons.Count ||
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
@@ -104,25 +104,32 @@ namespace BibleSurvivor.Core
     {
         private readonly object gate = new object();
         private readonly Action? beforeReplace;
+        private readonly Action? beforeMigrationArchivePublish;
         public string Path { get; }
-        public SaveStore(string path, Action? beforeReplace = null)
-        { Path = System.IO.Path.GetFullPath(path); this.beforeReplace = beforeReplace; }
+        public SaveStore(string path, Action? beforeReplace = null, Action? beforeMigrationArchivePublish = null)
+        { Path = System.IO.Path.GetFullPath(path); this.beforeReplace = beforeReplace; this.beforeMigrationArchivePublish = beforeMigrationArchivePublish; }
 
         public GameSnapshot? Load()
         {
             lock (gate)
             {
-                if (!File.Exists(Path)) return File.Exists(Path + ".bak") ? Read(Path + ".bak") : null;
-                try { return Read(Path); }
-                catch (UnsupportedSaveVersionException) { throw; }
-                catch (Exception error) when (error is SerializationException || error is InvalidDataException || error is ArgumentException)
-                {
-                    if (File.Exists(Path + ".bak")) return Read(Path + ".bak");
-                    throw new InvalidDataException("Save corrupt and no valid backup available", error);
-                }
+                return LoadCore(out _);
             }
         }
         public GameSnapshot? LoadBackup() { lock (gate) return File.Exists(Path + ".bak") ? Read(Path + ".bak") : null; }
+
+        private GameSnapshot? LoadCore(out int sourceVersion)
+        {
+            sourceVersion = SaveFormat.CurrentVersion;
+            if (!File.Exists(Path)) return File.Exists(Path + ".bak") ? Read(Path + ".bak", out sourceVersion) : null;
+            try { return Read(Path, out sourceVersion); }
+            catch (UnsupportedSaveVersionException) { throw; }
+            catch (Exception error) when (error is SerializationException || error is InvalidDataException || error is ArgumentException)
+            {
+                if (File.Exists(Path + ".bak")) return Read(Path + ".bak", out sourceVersion);
+                throw new InvalidDataException("Save corrupt and no valid backup available", error);
+            }
+        }
 
         // Execute against a fresh deserialized aggregate; a failed write never mutates the last committed state.
         // Callers retain expectedRevision/operationId on uncertain results, and reload before new input.
@@ -146,7 +153,7 @@ namespace BibleSurvivor.Core
                 Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
                 // Single process host + OS lock across store instances. No silent last-writer-wins.
                 using var fileLock = new FileStream(Path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                var current = Load();
+                var current = LoadCore(out var sourceVersion);
                 var revision = current?.Revision ?? 0;
                 if (current != null && current.LastOperationId == operationId)
                 {
@@ -161,7 +168,9 @@ namespace BibleSurvivor.Core
                 {
                     using (var output = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                     { var bytes = Encode(candidate); output.Write(bytes, 0, bytes.Length); output.Flush(true); }
-                    Read(staged); beforeReplace?.Invoke();
+                    Read(staged);
+                    if (sourceVersion == 1) SaveMigrationArchive.Ensure(Path, beforeMigrationArchivePublish);
+                    beforeReplace?.Invoke();
                     if (File.Exists(Path))
                     {
                         // If primary is corrupt, keep the last valid backup instead of backing up corruption.
@@ -182,10 +191,13 @@ namespace BibleSurvivor.Core
             var copy = Decode(Encode(state)); copy.Revision = 0; copy.LastOperationId = "";
             return Encoding.UTF8.GetString(Encode(copy));
         }
-        private static GameSnapshot Read(string path)
+        private static GameSnapshot Read(string path) => Read(path, out _);
+        private static GameSnapshot Read(string path, out int sourceVersion)
         {
-            var info = new FileInfo(path); if (info.Length > 4 * 1024 * 1024) throw new InvalidDataException("Save too large");
-            return Decode(File.ReadAllBytes(path));
+            var info = new FileInfo(path); if (info.Length > SaveFormat.MaximumBytes) throw new InvalidDataException("Save too large");
+            var bytes = File.ReadAllBytes(path);
+            sourceVersion = SaveFormat.Probe(bytes);
+            return Decode(bytes);
         }
         private static byte[] Encode(GameSnapshot state)
         {
@@ -194,9 +206,13 @@ namespace BibleSurvivor.Core
         }
         private static GameSnapshot Decode(byte[] bytes)
         {
+            var sourceVersion = SaveFormat.Probe(bytes); // Header before typed Run: future bodies must never trigger backup recovery.
             using var stream = new MemoryStream(bytes);
             var state = new DataContractJsonSerializer(typeof(GameSnapshot)).ReadObject(stream) as GameSnapshot;
-            if (state == null) throw new InvalidDataException("Missing save state"); state.Validate(); return state;
+            if (state == null || state.SchemaVersion != sourceVersion) throw new InvalidDataException("Missing or inconsistent save state");
+            state.Validate();
+            state.SchemaVersion = SaveFormat.CurrentVersion; // Memory migration only; Load never writes the original.
+            return state;
         }
     }
 

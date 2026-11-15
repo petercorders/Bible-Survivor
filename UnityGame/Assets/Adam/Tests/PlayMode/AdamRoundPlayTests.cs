@@ -102,12 +102,15 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(2,host.Session.RoundNumber);Assert.Greater(game.ArtWorld.Generation,generation);Assert.Zero(game.ArtWorld.ActiveEffects);Assert.Zero(game.ImpactParticles.ParticleCount);Assert.Zero(game.ImpactAudio.ActiveVoices);
         Assert.IsFalse(game.DeathPresentationVisible);Assert.AreEqual("idle",game.ArtWorld.PlayerMotion);yield return null;
     }
-    [UnityTest] public IEnumerator R02FeedbackOnAndOffPreserveExactRunProfileAndWorld()
+    [UnityTest] public IEnumerator R02FeedbackOnAndOffPreserveExactRunProfileAndWorld()=>FeedbackEquivalence("sling");
+    [UnityTest] public IEnumerator R02BibleFeedbackDoesNotChangeCombat()=>FeedbackEquivalence("bible");
+    [UnityTest] public IEnumerator R02JawboneFeedbackDoesNotChangeCombat()=>FeedbackEquivalence("jawbone");
+    IEnumerator FeedbackEquivalence(string weapon)
     {
         CompleteR01();var host=game.Host;host.SetPaused(false);
         for(var i=0;i<20 && host.World.Capture().Enemies.Count<2;i++)host.Tick(.1);
         host.Checkpoint();var path=Path.Combine(directory,"save.json");var store=new SaveStore(path);var state=store.Load();
-        foreach(var e in state.Run.World.Enemies){e.X=1.4f;e.Y=0;}state.Run.World.Weapons.Clear();store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));
+        foreach(var e in state.Run.World.Enemies){var angle=weapon=="bible"?(state.Run.World.Time+1d/60)*2.5:0;e.X=(float)Math.Cos(angle)*1.4f;e.Y=(float)Math.Sin(angle)*1.4f;}state.Run.World.Weapons.Clear();state.Run.Weapons.Clear();state.Run.Weapons.Add(weapon,1);store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));
         game.enabled=false;string expected=null;
         foreach(var enabled in new[]{false,true})
         {

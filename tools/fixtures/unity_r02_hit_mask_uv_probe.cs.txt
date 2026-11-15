@@ -1,0 +1,37 @@
+// QA-only actual GPU test of the product DrawHit UV/flip path; separate from full combat captures.
+using System;
+using System.IO;
+using System.Collections;
+using BibleSurvivor.Unity;
+using UnityEngine;
+public sealed class R02ArtCapture:MonoBehaviour
+{
+    AdamR02Art art;AdamR02Entry entry;int frame,scale;bool left,ready;string root;
+    string Arg(string key){var a=Environment.GetCommandLineArgs();var i=Array.IndexOf(a,key);return i<0||i+1>=a.Length?null:a[i+1];}
+    IEnumerator Start()
+    {
+        root=Arg("-r02ArtCaptureRoot");if(root==null)yield break;
+        if(!Path.IsPathRooted(root)||!File.Exists(Path.Combine(root,".adam-r02-art-qa")))throw new Exception("QA marker required");
+        AdamGame game;while((game=UnityEngine.Object.FindFirstObjectByType<AdamGame>())==null||game.Host==null)yield return null;game.enabled=false;
+        art=new AdamR02Art();art.PrepareHitMasks();ready=true;
+        foreach(var size in new[]{660,1100})
+        {
+            Screen.SetResolution(size,size==660?440:720,false);for(var i=0;i<90&&Screen.width!=size;i++)yield return null;scale=size==660?1:2;
+            foreach(var e in art.Index.assets)foreach(var flip in new[]{false,true})for(var f=0;f<4;f++)
+            {
+                entry=e;left=flip;frame=f;for(var i=0;i<3;i++)yield return null;yield return new WaitForEndOfFrame();
+                var capture=ScreenCapture.CaptureScreenshotAsTexture();var actual=capture.GetPixels32();var source=art.Sprite(entry.clip.id,frame).texture.GetPixels32();var rect=AdamArt.PlacedRect(entry.clip,new Vector2(200,200),scale);var matches=0;
+                for(var y=0;y<32;y++)for(var x=0;x<32;x++)
+                {
+                    var expected=source[y*128+frame*32+x].a==0?actual[50*Screen.width+50]:new Color32(255,255,255,255);var tx=Mathf.FloorToInt(rect.x+(left?31-x:x)*scale+scale/2f);var ty=Screen.height-1-Mathf.FloorToInt(rect.y+(31-y)*scale+scale/2f);var color=actual[ty*Screen.width+tx];
+                    if(Math.Abs(color.r-expected.r)<=1&&Math.Abs(color.g-expected.g)<=1&&Math.Abs(color.b-expected.b)<=1)matches++;
+                }
+                var name="mask-"+size+"-"+entry.monster+"-"+left+"-"+frame;File.WriteAllBytes(Path.Combine(root,name+".png"),capture.EncodeToPNG());UnityEngine.Object.Destroy(capture);File.AppendAllText(Path.Combine(root,"uv-probes.txt"),name+" matched="+matches+"/1024\n");
+                if(matches!=1024){Debug.LogError("Mask frame/alpha/flip mismatch: "+name);Application.Quit(2);yield break;}
+            }
+        }
+        ready=false;art.Dispose();yield return null;File.WriteAllText(Path.Combine(root,"complete.txt"),"48 actual product DrawHit GPU alpha/frame/flip probes; separate controlled surface, not combat/native input");Application.Quit(0);
+    }
+    void OnGUI(){if(!ready)return;GUI.matrix=Matrix4x4.identity;GUI.color=Color.white;GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.blackTexture);if(entry!=null)art.DrawHit(entry.clip.id,new Vector2(200,200),scale,frame/(double)entry.clip.fps,left,1);}
+    void OnDestroy(){art?.Dispose();}
+}

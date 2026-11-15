@@ -21,6 +21,7 @@ internal static class Program
         GrowthTests.Register(Test);
         CombatTests.Register(Test);
         SaveTests.Register(Test);
+        SaveSchemaTests.Register(Test);
         BattleWorldTests.Register(Test);
         ImpactTests.Register(Test);
         BattleSaveTests.Register(Test);

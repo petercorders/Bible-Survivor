@@ -44,7 +44,7 @@ namespace BibleSurvivor.Unity
         public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
         void OnEnable() {EnhancedTouchSupport.Enable();if(Host!=null && ImpactParticles==null)ImpactParticles=new AdamImpactParticles();}
         void OnDisable() {EnhancedTouchSupport.Disable();ImpactAudio?.Stop();ImpactParticles?.Dispose();ImpactParticles=null;}
-        void OnDestroy() { ArtWorld.Clear(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
+        void OnDestroy() { ArtWorld.Dispose(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -221,7 +221,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingR02)
             {
-                Modal(width,height,"아담 완료 · 가인 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장\nR02 적은 개발용 기하 표식입니다");
+                Modal(width,height,"아담 완료 · 가인 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장\n가인 라운드 · 시기 / 분노 / 갈라짐의 창작 적");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),"가인 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}
                 GUI.enabled=enabled;

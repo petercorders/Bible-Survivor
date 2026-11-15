@@ -70,7 +70,7 @@ internal static class SaveTests
         }));
         test("Store refuses future schema even when valid older backup exists", () => WithStore(store => {
             var state = GameSnapshot.New(); store.Commit(state, 0, "one"); store.Commit(state, 1, "two");
-            var json = File.ReadAllText(store.Path).Replace("\"SchemaVersion\":1", "\"SchemaVersion\":999");
+            var json = File.ReadAllText(store.Path).Replace("\"SchemaVersion\":" + SaveFormat.CurrentVersion, "\"SchemaVersion\":999");
             File.WriteAllText(store.Path, json); Check.Throws<UnsupportedSaveVersionException>(() => store.Load());
         }));
         test("Store failure during staging leaves committed state intact", () => WithStore(store => {

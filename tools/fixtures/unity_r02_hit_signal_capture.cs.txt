@@ -1,0 +1,76 @@
+// QA-only: the actual product DrawGameView/Host/ParticleSystem. No copied enemy renderer or modified combat rules.
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.Serialization.Json;
+using BibleSurvivor.Core;
+using BibleSurvivor.Unity;
+using UnityEngine;
+public sealed class R02ArtCapture:MonoBehaviour
+{
+    AdamGame game;AdamHost host;string root;bool draw;
+    readonly List<string> facts=new List<string>();
+    string Arg(string key){var a=Environment.GetCommandLineArgs();var i=Array.IndexOf(a,key);return i<0||i+1>=a.Length?null:a[i+1];}
+    void Awake(){root=Arg("-r02ArtCaptureRoot");if(root==null){enabled=false;return;}if(!Path.IsPathRooted(root)||!File.Exists(Path.Combine(root,".adam-r02-art-qa")))throw new Exception("Fresh R02 art capture marker required");Application.runInBackground=true;}
+    void Require(bool value,string message){if(!value)throw new Exception(message);}
+    void Save(string name,object value){using(var s=File.Create(Path.Combine(root,name)))new DataContractJsonSerializer(value.GetType()).WriteObject(s,value);}
+    IEnumerator Start(){if(!enabled)yield break;var steps=Run();while(true){var more=false;object item=null;try{more=steps.MoveNext();if(more)item=steps.Current;}catch(Exception e){Debug.LogException(e);Application.Quit(2);}if(!more)yield break;yield return item;}}
+    void Install(AdamHost value,bool fx=true){host=value;game.Initialize(host);game.SetLifecycle(true,false);game.ArtWorld.FeedbackEnabled=fx;game.ImpactParticles.Enabled=true;game.ImpactAudio.Muted=true;host.SetPaused(false);game.UpdatePresentation(0);}
+    AdamHost Fixture(string file,string weapon,int population,double time=80,string isolate=null,bool left=false,float isolateDistance=3,float isolateHeight=1)
+    {
+        var catalog=AdamCatalog.Load();var store=new SaveStore(file);var h=new AdamHost(catalog,store);h.Start(weapon);h.Session.Advance(180);h.SetPaused(true);h.SetPaused(false);
+        for(var pass=0;pass<8;pass++)
+        {
+            h.Session.Advance(pass==0?time:0);if(h.Session.Wave.Active.Values.Any(x=>x.MonsterId=="b2"))break;
+            var keep=h.Session.Wave.Active.Values.GroupBy(x=>x.MonsterId).Select(g=>g.First().Id).ToArray();foreach(var id in h.Session.Wave.Active.Keys.Where(x=>!keep.Contains(x)).ToArray())h.Session.Kill(id);
+        }
+        while(h.Session.Wave.Active.Count>population){var id=h.Session.Wave.Active.Values.GroupBy(x=>x.MonsterId).OrderByDescending(g=>g.Count()).First().Last().Id;h.Session.Kill(id);}
+        h.Session.Capture();var state=h.State;state.Run.RunId="depth-fixture-"+weapon+"-"+population+"-"+time.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+"-"+isolate+"-"+left;var world=new BattleWorld(h.Session,catalog.Speeds,7).Capture();var i=0;
+        var target=isolate==null?0:h.Session.Wave.Active.Values.Where(x=>x.MonsterId==isolate).OrderBy(x=>x.Id).First().Id;
+        foreach(var e in world.Enemies)
+        {
+            if(isolate!=null){e.X=e.Id==target?(left?isolateDistance:-isolateDistance):100;e.Y=e.Id==target?isolateHeight:100;}
+            else{e.X=(i%10-5)*.6f;e.Y=(i/10-2)*.65f;i++;}
+        }
+        foreach(var id in h.Session.DroppedExperience.Keys)world.Drops.Add(new BattleEntityState{Id=id,X=100,Y=100});state.Run.World=world;store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Require(h.Reload(),h.Error);return h;
+    }
+    IEnumerator Resize(int width,int height){Screen.SetResolution(width,height,false);for(var i=0;i<90&&(Screen.width!=width||Screen.height!=height);i++)yield return null;Require(Screen.width==width&&Screen.height==height,"Resolution mismatch");game.SetLifecycle(true,false);}
+    IEnumerator Shot(string name){game.UpdatePresentation(0);yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot(Path.Combine(root,name+".png"));yield return null;}
+    IEnumerator Run()
+    {
+        while((game=UnityEngine.Object.FindFirstObjectByType<AdamGame>())==null||game.Host==null)yield return null;
+        game.enabled=false;game.Initialize(game.Host);draw=true;
+        var persistent=Path.Combine(Application.persistentDataPath,"adam-prototype.json");
+        if(Arg("-r02ArtReload")!=null)
+        {
+            host=game.Host;Require(host.Session.RoundNumber==2&&host.Paused,"Reload R02 paused");Save("loaded-state.json",host.State);Save("loaded-world.json",host.World.Capture());yield return Shot("loaded-r02");Application.Quit(0);yield break;
+        }
+        foreach(var size in new[]{660,1100})foreach(var species in new[]{"b1","b2","b3"})foreach(var crowd in new[]{false,true})foreach(var fx in new[]{false,true})
+        {
+            yield return Resize(size,size==660?440:720);var name="reaction-"+size+"-"+species+"-"+(crowd?"crowd":"single")+"-"+(fx?"normal":"low");
+            if(Arg("-r02SignalCase")!=null && Arg("-r02SignalCase")!=name)continue;
+            Install(Fixture(Path.Combine(root,name+".json"),"sling",50,80,species,true,1.4f,0),fx);
+            var target=host.Session.Wave.Active.Values.Where(x=>x.MonsterId==species).OrderBy(x=>x.Id).First().Id;
+            if(crowd)
+            {
+                var state=host.State;state.Run.World=host.World.Capture();var ordinal=0;
+                foreach(var enemy in state.Run.World.Enemies)if(enemy.Id!=target){enemy.X=1.6f+(ordinal%10)*.28f;enemy.Y=(ordinal/10-2)*.25f;ordinal++;}
+                var store=new SaveStore(Path.Combine(root,name+".json"));store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Require(host.Reload(),host.Error);host.SetPaused(false);game.UpdatePresentation(0);
+            }
+            var hitTime=-1d;
+            for(var tick=0;tick<60;tick++){host.Tick(1d/60);game.UpdatePresentation(1f/60);if(game.ArtWorld.FrameImpacts.Any(impact=>impact.TargetId==target && !impact.Killed)){hitTime=host.World.SimulationTime;break;}}
+            Require(hitTime>=0 && host.Session.Wave.Active.ContainsKey(target),"Real nonfatal "+species+" hit required");
+            var previous=0;foreach(var ticksAfter in new[]{0,2,5,6})
+            {
+                for(var i=previous;i<ticksAfter;i++){host.Tick(1d/60);game.UpdatePresentation(1f/60);}previous=ticksAfter;var elapsed=host.World.SimulationTime-hitTime;
+                Require(game.ArtWorld.EnemyReacting(target)==(fx && elapsed<.09),"Reaction boundary");Require(host.Checkpoint(),host.Error);
+                for(var settle=0;settle<3;settle++)yield return null;yield return Shot(name+"-tick"+ticksAfter);Save(name+"-tick"+ticksAfter+"-state.json",host.State);
+                var position=host.World.Capture().Enemies.First(x=>x.Id==target);facts.Add(name+" ticksAfter="+ticksAfter+" elapsed="+elapsed.ToString("R",System.Globalization.CultureInfo.InvariantCulture)+" target="+target+" position="+position.X+","+position.Y+" particles="+game.ImpactParticles.ParticleCount);File.WriteAllLines(Path.Combine(root,"reactions.txt"),facts);
+            }
+        }
+        Install(Fixture(persistent,"sling",50));host.Tick(.1);host.SetPaused(true);Require(host.Checkpoint(),host.Error);Save("persisted-state.json",host.State);Save("persisted-world.json",host.World.Capture());yield return Shot("persisted-r02-paused");File.WriteAllText(Path.Combine(root,"complete.txt"),"Actual product 24 species/crowd/resolution/FX cases,96 timed reaction captures; automated staged observation, not native input/balance/performance/mobile");Application.Quit(0);
+    }
+    void OnGUI(){if(draw&&game!=null)game.DrawGameView(AdamGame.ScreenViewport());}
+}

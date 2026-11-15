@@ -63,3 +63,5 @@ Design 담당의 sidecar 초안은 독립 QA에서 계약 검사 결함이 발�
 [독립 코드 리뷰](../reviews/unity-r02-code.md)는331소스/334앱·보호222/QA27파일과66Edit/26Play·원래구조5변이·새 프로세스 Run/Profile/World 복구를 직접 대조해 해당 범위 PASS, 추가 HIGH/MEDIUM 없음으로 마쳤다. [독립 PC UI 검토](../reviews/unity-r02-ui.md)는 실제 전체 DrawGameView 캡처9장과자동 입력/저장 근거를 직접 읽어 완료/계속·가인HUD·개발표식/모달·R03대기 안내의 기술checkpoint를 수용했다.
 
 UI 검토자는 native 앱/저장을 다시 실행·조작하지 않았다. 캡처셋에 없는 R01 완료 전 미처리 성장 카드의 시각 관측, 최종 R02 아트·혼잡 시각·최신 native active 조작·자연 수동/밸런스·모바일/성능은 계속 NOT_RUN이다. 봇의 마지막 R03 대기 PNG를 무기 전투 장면으로 바꾸어 부르지 않는다. 이번 기록은 기술 연결 checkpoint이며 R02 최종 시각/전체 플레이 수용 완료가 아니다. 프로젝트 GC는 `../retrospectives/R02-unity.md`에 기록했다.
+
+업로드 결과: `2edd86eda18d6552e5a47408d0962ba238deea80`을 `feat/adam-core`에 push했다. 같은 SHA의 [코어·portable Unity CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43546123933)와 [아트·폰트 CI](https://github.com/petercorders/Bible-Survivor/actions/runs/43546123815)는 모두 success다. 이 CI가 최종 아트·native 연속 조작·실물/밸런스 수용을 대신하지 않는다. 아트 검사기 수정은 같은 독립 QA의 재주입으로 별도 검토 중이다.

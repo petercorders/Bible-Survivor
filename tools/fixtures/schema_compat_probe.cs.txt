@@ -1,0 +1,108 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Numerics;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Text.Json.Nodes;
+using BibleSurvivor.Core;
+using BibleSurvivor.Sim;
+
+internal static class Program
+{
+    private static int Main(string[] args)
+    {
+        try
+        {
+            if (args[0] == "generate") Generate(args[1], args[2]);
+            else if (args[0] == "migrate") Migrate(args[1]);
+            else if (args[0] == "old-reject") OldReject(args[1], args[2]);
+            else throw new ArgumentException("Unknown probe mode");
+            return 0;
+        }
+        catch (Exception error) { Console.Error.WriteLine("ASSERTION FAIL: " + error); return 1; }
+    }
+    private static void Generate(string catalog, string output)
+    {
+        Directory.CreateDirectory(output); var speeds = CatalogReader.MonsterSpeeds(catalog); var count = 0;
+        foreach (var weapon in new[] { "bible", "jawbone", "sling" })
+        {
+            var state = GameSnapshot.New(); var session = new AdamSession(state, CatalogReader.Round(catalog, 1), weapon);
+            state.Run!.RunId = "schema-compat-" + weapon;
+            foreach (var round in new[] { 1, 2 })
+            {
+                var world = new BattleWorld(session, speeds, 7);
+                for (var tick = 0; tick <= 300; tick++)
+                {
+                    Resolve(session);
+                    if (tick > 0) world.Advance(BattleWorld.FixedStep, new Vector2((float)Math.Cos(tick / 60.0), (float)Math.Sin(tick / 60.0)));
+                    if (tick == 0 || tick == 60 || tick == 120 || tick == 300)
+                    {
+                        session.Capture(); state.Run!.World = world.Capture();
+                        Record(state, $"{weapon}-r{round}-t{tick:D3}", output); count++;
+                    }
+                }
+                Resolve(session); session.Advance(180); session.Capture(); state.Run!.World = null;
+                Record(state, $"{weapon}-r{round}-complete", output); count++;
+                Resolve(session);
+                if (round == 1) session = session.StartNextRound(CatalogReader.Round(catalog, 2));
+            }
+        }
+        Console.WriteLine("GENERATED " + count);
+    }
+    private static void Record(GameSnapshot state, string name, string output)
+    {
+        var work = Path.Combine(Path.GetTempPath(), "schema-record-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(work);
+        try
+        {
+            var store = new SaveStore(Path.Combine(work, "save.json")); store.Commit(state, 0, name);
+            File.Copy(store.Path, Path.Combine(output, name + ".json"));
+        }
+        finally { Directory.Delete(work, true); }
+    }
+    private static void Migrate(string fixtures)
+    {
+        var count = 0;
+        foreach (var file in Directory.GetFiles(fixtures, "*.json").OrderBy(x => x))
+        {
+            var work = Path.Combine(Path.GetTempPath(), "schema-migrate-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(work);
+            try
+            {
+                var original = File.ReadAllBytes(file); var store = new SaveStore(Path.Combine(work, "save.json")); File.WriteAllBytes(store.Path, original);
+                var loaded = store.Load()!;
+                Require(loaded.SchemaVersion == 2, "memory version"); Require(File.ReadAllBytes(store.Path).SequenceEqual(original), "Load wrote original");
+                var expected = JsonNode.Parse(original)!; expected["SchemaVersion"] = 2;
+                using var stream = new MemoryStream(); new DataContractJsonSerializer(typeof(GameSnapshot)).WriteObject(stream, loaded);
+                Require(JsonNode.DeepEquals(expected, JsonNode.Parse(stream.ToArray())), "R1/R2 state or fingerprint changed");
+                Require(store.Commit(loaded, 1, "migrate") == 2, "migration revision");
+                Require(store.Commit(loaded, 1, "migrate") == 2, "migration retry");
+                Require(File.ReadAllBytes(store.Path + ".pre-v2/primary.json").SequenceEqual(original), "archive differs");
+                Require(store.Load()!.SchemaVersion == 2, "writer version"); count++;
+            }
+            finally { Directory.Delete(work, true); }
+        }
+        Require(count == 30, "fixture count"); Console.WriteLine("MIGRATED " + count);
+    }
+    private static void OldReject(string newFixtures, string oldFixtures)
+    {
+        var count = 0;
+        foreach (var file in Directory.GetFiles(newFixtures, "*.json").OrderBy(x => x))
+        {
+            var work = Path.Combine(Path.GetTempPath(), "schema-old-reader-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(work);
+            try
+            {
+                var bytes = File.ReadAllBytes(file); var backup = File.ReadAllBytes(Path.Combine(oldFixtures, Path.GetFileName(file)));
+                var path = Path.Combine(work, "save.json"); File.WriteAllBytes(path, bytes); File.WriteAllBytes(path + ".bak", backup);
+                var refused = false;
+                try { _ = new SaveStore(path).Load(); } catch (UnsupportedSaveVersionException) { refused = true; }
+                Require(refused, "historical reader accepted new writer or recovered old backup");
+                Require(File.ReadAllBytes(path).SequenceEqual(bytes), "historical reader modified original"); count++;
+            }
+            finally { Directory.Delete(work, true); }
+        }
+        Require(count == 30, "fixture count"); Console.WriteLine("OLD_REJECTED " + count);
+    }
+    private static void Resolve(AdamSession session)
+    { while (session.PendingChoices.Count > 0) Require(session.Choose(session.PendingChoices[0]), "growth choice"); }
+    private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
+}

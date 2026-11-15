@@ -1,0 +1,23 @@
+{
+  "src/contract_r02.json": "615418cec6060785e289b4db5f41f34a6dbb03f86c4dd2e8fd6963d6a2471fcc",
+  "src/palette_r02_ext.json": "2b06b8bf7a3bae94dd684a2b3b29ada14aef3572b50cef22ea99119085a3db94",
+  "src/palette_v03.json": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3",
+  "scripts/build_r02.py": "5648a573bfe196a2ce84791503084d2e189d818fd207e177e0e45cb71172d5b7",
+  "scripts/check_r02.py": "0ecd12c4a7cd502f1f8fda87534bb8d06a32a09d78124845d7cfdc3d077f425a",
+  "scripts/convert_source.py": "2fb8367a921c5c75ecd3edb9f8a7ad87564951cd729cd5254ef95f4ac372755c",
+  "scripts/enemies_r02.py": "65bb39b787ef0c5ce61564c63b84fe5cf0c2d6c4d633f8d54f8ce9c2a45c7c35",
+  "scripts/make_manifest.py": "0ae5c37dfb2838d8bba7279d7c8e8dc6f8a15cbd998a94e9026bf6ea904bd8f3",
+  "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780",
+  "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+  "scripts/review_r02.py": "0463e02c278dd93dedc8d6542b6e90b03065d42f95fa0e35c8afba5eb9b162b2",
+  "scripts/verify_all.py": "f524bacd71cc1a9ef64fb9da908b6a08ed10c8c0d89881a0c2fd03ac51a25362",
+  "tests/mutate_checker_r02_01.py": "84568ee0e88eb92d9f47bf48df73361457790f7f85a7375d2e5689b857c044df",
+  "tests/replay_qa_r02_01.py": "8e8917d54f8af74f658079cb631a35c0413cdb37bbf8d192d2bb0db2ee6090a3",
+  "tests/selftest_r02.py": "fa4bb44cde6403d3d5ec777828ddd7a1a426c01106578c8bb3b31e43270975a6",
+  "tests/source_identity_r02_04.py": "ed8385b8477556da2a0c9d0b64a19522a2f67464be314d5b0289e4e66a880744",
+  "export/png/enm_b1-envy-eye_move_32.png": "060c78299d9501e44b01130dd079d6c767381c730b283b767f003f3d49bbfd6b",
+  "export/png/enm_b2-rage-hound_run_32.png": "c2fb37d65ead991ab6e0b5adbe139fd3e9556069096c44804c834b2c5eaa5fbd",
+  "export/png/enm_b3-cracked-mask_move_32.png": "32a6294b9c4e1c85718eaf60ad2dc28f95719f661b0e82413d560c5c5de359a7",
+  "export/source/pixel-source_r02.json": "1e7365c0974b2ce7d7cd8e0c5aa1a3efa1ead40fa0b2bba7cda2e2ddea008cf3",
+  "export/manifest_r02.json": "e3a69af3c0734e5d37848b5780d020d09bbb054538e4173bf8aacafc0db1be89"
+}

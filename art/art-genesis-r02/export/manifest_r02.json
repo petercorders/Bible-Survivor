@@ -1,0 +1,401 @@
+{
+ "schema": "bible-survivors.art-manifest-r02",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R02 enemy sidecar draft: root independent art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the enemy's parent transform (or its single renderer); the art always faces right"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r02_ext.json",
+   "name": "r02-ext-v1",
+   "sha256": "2b06b8bf7a3bae94dd684a2b3b29ada14aef3572b50cef22ea99119085a3db94"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r02.json",
+   "sha256": "615418cec6060785e289b4db5f41f34a6dbb03f86c4dd2e8fd6963d6a2471fcc"
+  },
+  "generator": {
+   "file": "scripts/enemies_r02.py",
+   "sha256": "65bb39b787ef0c5ce61564c63b84fe5cf0c2d6c4d633f8d54f8ce9c2a45c7c35"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r02.json",
+   "sha256": "1e7365c0974b2ce7d7cd8e0c5aa1a3efa1ead40fa0b2bba7cda2e2ddea008cf3"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "b1": "시기의 눈",
+    "b2": "분노의 사냥개",
+    "b3": "갈라진 가면"
+   }
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751",
+   "contract": "src/contract_v3.json",
+   "contractSha256": "80444372c948b1bb60cb03422c3eeab169e134f7acc50c21c4e317aac51c8b98"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r02.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/enemies_r02.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used to present the sheets and comparisons for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r02_ext.json. No third-party images, traces or reference art.",
+  "reviewFonts": "review boards only: Galmuri 2.40.4 (SIL OFL 1.1) from the art-unity-font-01 sidecar; no font is inside a sprite"
+ },
+ "assets": [
+  {
+   "id": "enm_b1-envy-eye_move_32",
+   "file": "export/png/enm_b1-envy-eye_move_32.png",
+   "sha256": "060c78299d9501e44b01130dd079d6c767381c730b283b767f003f3d49bbfd6b",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:b1",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 12,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     10,
+     25,
+     30
+    ],
+    [
+     3,
+     9,
+     25,
+     30
+    ],
+    [
+     3,
+     9,
+     25,
+     29
+    ],
+    [
+     3,
+     9,
+     25,
+     30
+    ]
+   ],
+   "source": {
+    "authoring": "scripts/enemies_r02.py:envy_eye",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r02.json#enm_b1-envy-eye_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_b2-rage-hound_run_32",
+   "file": "export/png/enm_b2-rage-hound_run_32.png",
+   "sha256": "c2fb37d65ead991ab6e0b5adbe139fd3e9556069096c44804c834b2c5eaa5fbd",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:b2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     9,
+     30,
+     30
+    ],
+    [
+     2,
+     9,
+     30,
+     30
+    ],
+    [
+     2,
+     8,
+     30,
+     30
+    ],
+    [
+     2,
+     9,
+     30,
+     30
+    ]
+   ],
+   "source": {
+    "authoring": "scripts/enemies_r02.py:rage_hound",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r02.json#enm_b2-rage-hound_run_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_b3-cracked-mask_move_32",
+   "file": "export/png/enm_b3-cracked-mask_move_32.png",
+   "sha256": "32a6294b9c4e1c85718eaf60ad2dc28f95719f661b0e82413d560c5c5de359a7",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "quality": "core",
+   "ref": "monster:b3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 12,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     3,
+     26,
+     30
+    ],
+    [
+     4,
+     4,
+     27,
+     30
+    ],
+    [
+     5,
+     3,
+     28,
+     30
+    ],
+    [
+     4,
+     4,
+     27,
+     30
+    ]
+   ],
+   "source": {
+    "authoring": "scripts/enemies_r02.py:cracked_mask",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r02.json#enm_b3-cracked-mask_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

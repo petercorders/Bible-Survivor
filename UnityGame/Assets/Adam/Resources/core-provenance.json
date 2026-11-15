@@ -24,6 +24,14 @@
           "metadata": {}
         },
         {
+          "path": "repo/src/BibleSurvivor.Core/SaveFormat.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs",
+          "metadata": {}
+        },
+        {
           "path": "repo/src/BibleSurvivor.Core/SaveState.cs",
           "metadata": {}
         },
@@ -82,7 +90,9 @@
       "repo/src/BibleSurvivor.Core/BattleWorld.cs": "9cf67e63f2e72ef9270fdbf0347ce585ffaa939d3fd8aa7628b85870ffc81858",
       "repo/src/BibleSurvivor.Core/Combat.cs": "f15e4bca8835cae87aea82000a1a2392ae83a8f3442b695a5b26af1bbf87e35a",
       "repo/src/BibleSurvivor.Core/Growth.cs": "2c9c6478b63941936b255ceb9a0965600e6b298881d49b4c65057dae93bddf91",
-      "repo/src/BibleSurvivor.Core/SaveState.cs": "0bdbec1f56db16ea7f3cb008646fd56aa6f67aff17b326a2ee41391e75aaecd6",
+      "repo/src/BibleSurvivor.Core/SaveFormat.cs": "eed452b24911e46c09b1f5bc351ddc35d66aa97a2af5e44506f2996462ff3ccd",
+      "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
+      "repo/src/BibleSurvivor.Core/SaveState.cs": "b77b1df2b814d22a2c8e6cfe6052abfabef98dc41b973ced278bdc1f8f6bbb8b",
       "repo/src/BibleSurvivor.Core/Waves.cs": "8c0a1ec9d574da1ffc3eb14deff9c88afc68cda3610d2e05b196f8543eaeebe7"
     },
     "properties": {
@@ -245,6 +255,14 @@
         },
         {
           "path": "repo/src/BibleSurvivor.Core/Growth.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/SaveFormat.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs",
           "metadata": {}
         },
         {
@@ -1900,15 +1918,17 @@
       "repo/src/BibleSurvivor.Core/BattleWorld.cs": "9cf67e63f2e72ef9270fdbf0347ce585ffaa939d3fd8aa7628b85870ffc81858",
       "repo/src/BibleSurvivor.Core/Combat.cs": "f15e4bca8835cae87aea82000a1a2392ae83a8f3442b695a5b26af1bbf87e35a",
       "repo/src/BibleSurvivor.Core/Growth.cs": "2c9c6478b63941936b255ceb9a0965600e6b298881d49b4c65057dae93bddf91",
-      "repo/src/BibleSurvivor.Core/SaveState.cs": "0bdbec1f56db16ea7f3cb008646fd56aa6f67aff17b326a2ee41391e75aaecd6",
+      "repo/src/BibleSurvivor.Core/SaveFormat.cs": "eed452b24911e46c09b1f5bc351ddc35d66aa97a2af5e44506f2996462ff3ccd",
+      "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
+      "repo/src/BibleSurvivor.Core/SaveState.cs": "b77b1df2b814d22a2c8e6cfe6052abfabef98dc41b973ced278bdc1f8f6bbb8b",
       "repo/src/BibleSurvivor.Core/Waves.cs": "8c0a1ec9d574da1ffc3eb14deff9c88afc68cda3610d2e05b196f8543eaeebe7",
       "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/.NETStandard,Version=v2.1.AssemblyAttributes.cs": "df351ab8cda38d16370d8aa74d934a81faf0e44ecc9a079bb1c5cc7a1f1575af",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "d425db8b8a5264b54ccd4b1df08c5437f221a17f463f0514dbed072278006437",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "c8d89620eca2ada96a5fd73f0f184d7f8a020bb8ed017129443040b61439343a",
       "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "beec47193358edbf74af3fbb9c7284860c124b00051af63e4cab4e951b22814f",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "d0457ae0ccf0d998bebeb79f125c583199fbf1c7bba5b6a3fd39e045fda3b6e5"
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "57b7aba6589763992cd70d525e6d254e629487e0deb9943a1193758c8c0810e6"
     }
   },
-  "dll_sha256": "198baeeb60a1443c48e2cc01a3efbaf84f23674352dba0cc50efea472b6bf6e0",
+  "dll_sha256": "bece4324eb8d722205fecc0870f23320f99c07ccba0799fe6b7ec29beab5f54c",
   "catalog_sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
   "method": "Release Rebuild; evaluated item/import/property set + post-build compiler/reference/generated inputs"
 }

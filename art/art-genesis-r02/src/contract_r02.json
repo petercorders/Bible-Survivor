@@ -1,0 +1,37 @@
+{
+  "schema": "bible-survivors.art-r02-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written expectations for the R02 (Cain) enemy sidecar. The checker compares the generated manifest, pixel source and PNGs against THIS file, never against the manifest's own claims. Values follow docs/art/r02-design-task.md and docs/harness/unity-r02-plan.md, resolved against the reviewed art 03 contract (pivot [16,1] like every 03 enemy instead of the task's candidate [16,4]; see README).",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the enemy's parent transform (or its single renderer); the art always faces right"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"},
+  "sortingLayers": ["Ground", "GroundDecal", "Pickups", "Actors", "WeaponFX", "FX", "UI"],
+  "frameChange": {"rule": "an animated strip (fps > 0, frames > 1) must not repeat the previous frame; a looping strip also compares its last frame with its first. Reusing a non-adjacent frame is allowed."},
+  "colourLimit": 16,
+  "edgeMargin": {"px": 1, "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites still stand on the foot row = cell.h - 1 - pivot.y"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3", "groups": ["actor", "ui", "terrain"]},
+    "ext": {"file": "src/palette_r02_ext.json", "name": "r02-ext-v1", "groups": ["actor"], "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246", "monsters": {"b1": "시기의 눈", "b2": "분노의 사냥개", "b3": "갈라진 가면"}},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751", "contract": "src/contract_v3.json", "contractSha256": "80444372c948b1bb60cb03422c3eeab169e134f7acc50c21c4e317aac51c8b98"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "reviewFonts": {
+    "note": "Fonts used only to label review boards (never inside a sprite). Package = the sibling outline font sidecar; the checker resolves it with --font-root.",
+    "package": "art-unity-font-01",
+    "files": {"fonts/galmuri-outline/Galmuri11.ttf": "e24256f42e43713d2ea086a1e1669d78b968f5b3cc547e5c157f0606ffa5def1"}
+  },
+  "assets": [
+    {"id": "enm_b1-envy-eye_move_32", "ref": "monster:b1", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": false, "alpha": "binary", "sorting": "Actors", "quality": "core", "shadow": "fx_shadow-small_static_12x4", "facing": "right"},
+    {"id": "enm_b2-rage-hound_run_32", "ref": "monster:b2", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "quality": "core", "shadow": "fx_shadow-wide_static_24x6", "facing": "right"},
+    {"id": "enm_b3-cracked-mask_move_32", "ref": "monster:b3", "cell": [32, 32], "frames": 4, "fps": 6, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "quality": "core", "shadow": "fx_shadow-wide_static_24x6", "facing": "right"}
+  ]
+}

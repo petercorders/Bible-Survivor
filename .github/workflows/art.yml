@@ -18,3 +18,5 @@ jobs:
         run: python3 tools/check_art.py
       - name: Font regeneration and invalid inputs (offline, no Unity or remote archive)
         run: python3 tools/check_fonts.py
+      - name: Reviewed R02 inputs and Unity resource consistency (no Editor execution)
+        run: python3 -I -S -B tools/unity_prepare_r02_art.py

@@ -6,8 +6,33 @@ using UnityEngine;
 namespace BibleSurvivor.Unity
 {
     // Read-only projection of BattleWorld. No collisions, damage callbacks, timers or random calls enter the core.
-    public sealed class AdamArtWorld
+    public sealed class AdamArtWorld : IDisposable
     {
+        AdamR02Art r02;
+        public readonly struct EnemySprite
+        {
+            public readonly BattleEntityState Enemy;
+            public readonly Vector2 Feet;
+            public EnemySprite(BattleEntityState enemy,Vector2 feet){Enemy=enemy;Feet=feet;}
+        }
+        sealed class EnemySpriteComparer : IComparer<EnemySprite>
+        {
+            public static readonly EnemySpriteComparer Instance=new EnemySpriteComparer();
+            public int Compare(EnemySprite a,EnemySprite b)
+            {var depth=a.Feet.y.CompareTo(b.Feet.y);return depth!=0?depth:a.Enemy.Id.CompareTo(b.Enemy.Id);}
+        }
+        readonly List<EnemySprite> enemySprites=new List<EnemySprite>(128);
+        // Presentation-only reusable buffer: compare the actual rounded screen feet, then stable Core ID.
+        public IReadOnlyList<EnemySprite> PrepareEnemySprites(IReadOnlyList<BattleEntityState> enemies,AdamWorldProjection projection)
+        {
+            enemySprites.Clear();
+            for(var i=0;i<enemies.Count;i++){var enemy=enemies[i];enemySprites.Add(new EnemySprite(enemy,projection.Point(enemy.X,enemy.Y)));}
+            // Small bounded actor batches; insertion sort avoids framework/delegate allocations after warmup.
+            var comparer=EnemySpriteComparer.Instance;
+            for(var i=1;i<enemySprites.Count;i++)
+            {var value=enemySprites[i];var j=i-1;while(j>=0 && comparer.Compare(enemySprites[j],value)>0){enemySprites[j+1]=enemySprites[j];j--;}enemySprites[j+1]=value;}
+            return enemySprites;
+        }
         public const int EffectCapacity = 64;
         public sealed class Effect
         {
@@ -56,6 +81,9 @@ namespace BibleSurvivor.Unity
         public double PlayerHitUntil {get;private set;}
         long impactCursor;
         public bool EnemyReacting(int id) => reactions.TryGetValue(id,out var until) && Clock<until;
+        public const double HitFlashSeconds=.04;
+        public float EnemyFlashOpacity(int id) => FeedbackEnabled && reactions.TryGetValue(id,out var until) &&
+            Clock<until && until-Clock>.09-HitFlashSeconds+1e-9 ? .65f : 0;
         public static Matrix4x4 ReactionMatrix(Vector2 feet,float strength) => Matrix4x4.Translate(feet)*
             Matrix4x4.Scale(new Vector3(1+.12f*strength,1-.15f*strength,1))*Matrix4x4.Translate(-feet);
         BattleWorld source;
@@ -115,11 +143,13 @@ namespace BibleSurvivor.Unity
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
-            effectPool.Clear();
+            effectPool.Clear();enemySprites.Clear();
         }
+        public void Dispose(){Clear();r02?.Dispose();r02=null;}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
+                case "b1":case "b2":case "b3":return AdamRoundPresentation.R02ClipId(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -179,15 +209,26 @@ namespace BibleSurvivor.Unity
                 foreach(var drop in snap.Drops)
                     if(experience.TryGetValue(drop.Id,out var xp))
                         art.Draw(xp>1?"pkp_xp-gem-bonus_idle_8":"pkp_xp-gem-base_idle_8",Point(drop.X,drop.Y),scale,Clock);
-                foreach(var enemy in snap.Enemies)
+                var orderedSprites=PrepareEnemySprites(snap.Enemies,projection);
+                for(var spriteIndex=0;spriteIndex<orderedSprites.Count;spriteIndex++)
+                {
+                    var sprite=orderedSprites[spriteIndex];var enemy=sprite.Enemy;
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
-                        var anchor=Point(enemy.X,enemy.Y);var before=GUI.matrix;var tint=GUI.color;
-                        if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.DevelopmentEnemy(monster.MonsterId))AdamRoundPresentation.DrawDevelopmentEnemy(monster.MonsterId,anchor,scale);
+                        var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
+                        // GUI.matrix transforms window coordinates even inside the arena group.
+                        if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
+                        if(AdamRoundPresentation.R02Enemy(monster.MonsterId))
+                        {
+                            if(r02==null){r02=new AdamR02Art();r02.PrepareHitMasks();}
+                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
+                            r02.Draw(clip,anchor,scale,Clock,left);
+                            r02.DrawHit(clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));
+                        }
                         else art.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
                         GUI.matrix=before;GUI.color=tint;
                     }
+                }
             }
             // Transparent particles sit above terrain/enemies but below actor/weapons and every HUD/modal control.
             particles?.Draw(projection);

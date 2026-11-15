@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "e3a69af3c0734e5d37848b5780d020d09bbb054538e4173bf8aacafc0db1be89",
+  "assets": [
+    {
+      "monster": "b1",
+      "ground": false,
+      "shadow": "fx_shadow-small_static_12x4",
+      "pixelSha256": "e218bfc7c9f5d6c32d94bbce0bb468f29a8cb600c6466d9722598aed657be226",
+      "clip": {
+        "id": "enm_b1-envy-eye_move_32",
+        "source": "art/art-genesis-r02/export/png/enm_b1-envy-eye_move_32.png",
+        "sha256": "060c78299d9501e44b01130dd079d6c767381c730b283b767f003f3d49bbfd6b",
+        "sorting": "Actors",
+        "quality": "core",
+        "alpha": "binary",
+        "width": 32,
+        "height": 32,
+        "frames": 4,
+        "pivotX": 16,
+        "pivotY": 1,
+        "fps": 8,
+        "loop": true,
+        "borders": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "monster": "b2",
+      "ground": true,
+      "shadow": "fx_shadow-wide_static_24x6",
+      "pixelSha256": "b2b556587d01aa827325f4771ed52e4021fe6bfabfc8d6ac790479c8f810d6aa",
+      "clip": {
+        "id": "enm_b2-rage-hound_run_32",
+        "source": "art/art-genesis-r02/export/png/enm_b2-rage-hound_run_32.png",
+        "sha256": "c2fb37d65ead991ab6e0b5adbe139fd3e9556069096c44804c834b2c5eaa5fbd",
+        "sorting": "Actors",
+        "quality": "core",
+        "alpha": "binary",
+        "width": 32,
+        "height": 32,
+        "frames": 4,
+        "pivotX": 16,
+        "pivotY": 1,
+        "fps": 8,
+        "loop": true,
+        "borders": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "monster": "b3",
+      "ground": true,
+      "shadow": "fx_shadow-wide_static_24x6",
+      "pixelSha256": "0acb1498ab6242b6720ac216ff5311f9af3e091b7a52e4a1369d3f2579a5c2c8",
+      "clip": {
+        "id": "enm_b3-cracked-mask_move_32",
+        "source": "art/art-genesis-r02/export/png/enm_b3-cracked-mask_move_32.png",
+        "sha256": "32a6294b9c4e1c85718eaf60ad2dc28f95719f661b0e82413d560c5c5de359a7",
+        "sorting": "Actors",
+        "quality": "core",
+        "alpha": "binary",
+        "width": 32,
+        "height": 32,
+        "frames": 4,
+        "pivotX": 16,
+        "pivotY": 1,
+        "fps": 6,
+        "loop": true,
+        "borders": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ]
+}

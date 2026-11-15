@@ -10,3 +10,6 @@ fi
 if [ -f art/art-unity-font-01/export/font_manifest_v1.json ]; then
     python3 tools/check_fonts.py || exit $?
 fi
+if [ -f art/art-genesis-r02/export/manifest_r02.json ]; then
+    python3 -I -S -B tools/unity_prepare_r02_art.py || exit $?
+fi

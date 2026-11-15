@@ -157,7 +157,7 @@ internal static class RoundTransitionTests
             store.Commit(state,0,"legacy-mid");var loaded=store.Load()!;var resumed=AdamSession.Resume(loaded,Adam());
             resumed.Advance(180);loaded.Run!.RoundFingerprint=null;store.Commit(loaded,1,"legacy-end");
             loaded=store.Load()!;resumed=AdamSession.Resume(loaded,Adam());var second=resumed.StartNextRound(Cain());
-            Check.Equal(1,loaded.SchemaVersion);Check.Equal(25L,loaded.Profile.Gold);Check.True(loaded.Run!.RoundFingerprint!=null);
+            Check.Equal(SaveFormat.CurrentVersion,loaded.SchemaVersion);Check.Equal(25L,loaded.Profile.Gold);Check.True(loaded.Run!.RoundFingerprint!=null);
             store.Commit(loaded,2,"upgraded");Check.True(AdamSession.Resume(store.Load()!,Cain()).IsActive);
             loaded.Run.RoundFingerprint=null;Check.Throws<InvalidDataException>(()=>loaded.Validate());
         }));
