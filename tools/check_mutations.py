@@ -24,7 +24,7 @@ CASES = [
     ('wave_null_entry_saved', 'SaveState.cs', '(Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null))', '(Run.Wave.Active==null)'),
     ('round_entry_ignores_pending_choices', 'AdamSession.cs', 'run.PendingLevels!=0 ||', 'false ||'),
     ('round_entry_keeps_old_iframe', 'AdamSession.cs', 'run.LastHitTime=-1;', '/* old round hit clock retained */'),
-    ('round_completion_uses_r01_unlock', 'AdamSession.cs', 'state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);', 'state.Profile.UnlockedWeapons.Add("wilderness_voice");'),
+    ('round_completion_uses_r01_unlock', 'AdamSession.cs', '                state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);', '                state.Profile.UnlockedWeapons.Add("wilderness_voice");'),
     ('round_completion_uses_r01_gold', 'AdamSession.cs', 'checked(state.Profile.Gold + definition.CompletionGold)', 'checked(state.Profile.Gold + 25)'),
     ('round_catalog_change_accepted', 'AdamSession.cs', 'run.RoundFingerprint != definition.Fingerprint', 'false'),
     ('round_entry_stale_session_active', 'AdamSession.cs', 'run.RoundNumber == definition.Number + (run.Stage=="between_rounds" ? 1 : 0)', 'true'),

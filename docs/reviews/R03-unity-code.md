@@ -30,3 +30,9 @@
 `path-probe.json`·`restoration.json`의 새 QA identity/무저장 probe·정확한 자기 자식 종료·자기 파일만 원복한 근거를 읽었으며, 실제 사용자 저장·금지 identity/프로세스는 조회하거나 조작하지 않았다. 이 리뷰는 제품/시험/아트/DLL/provenance를 편집하지 않았고 본 문서만 소유한다. usage는 `r03-unity-code-review` start/end 세션 구간으로 기록하며 독립 worker 청구 귀속·절감률은 추정하지 않는다.
 
 이 Unity 통합의 독립 코드 리뷰 게이트는 PASS다. 별도 UI 판정과 coordinator의 종료 게이트/선별 커밋·CI는 이 문서가 대신하지 않는다.
+
+## CI 변이 anchor 수정 재검토 — PASS
+
+`fb8a2b1` Core CI의 `round_completion_uses_r01_unlock`은 새 R03 정산에도 동일 문자열이 존재해 고유 anchor guard에서 중단됐다. `tools/check_mutations.py`의 해당 case 한 줄만 독립 확인했다. 앞뒤 치환에 normal `Finish`의16칸 들여쓰기를 포함하여 그 위치만 선택한다. R02의 정상 `lightning` 해금을 R01의 `wilderness_voice`로 잘못 지급하는 원회귀 의미와 고유 위치 guard는 그대로다. R03 정산·제품 코드·Unity·DLL/provenance는 바꾸지 않는다.
+
+`evidence/r03-ci-mutation-anchor/summary.json`과 단독 R01/R02 예산·해금 assertion 로그에서 정확한 mutant **exit1(0/1)**→복원 **exit0(1/1)**을 확인했다. 구현자가 한 번 실행한 기존18 driver의 `evidence/r02-mutations-20261115T154219506734Z/summary.json`은 baseline PASS·18/18 실제 시험 실패 검출이며 구현자 완료 보고의 driver exit0과 일치한다. 리뷰어는 기존 evidence/해당 diff만 읽었고 시험·CI·Editor·빌드를 재실행하지 않았다. 신규 HIGH/MEDIUM 없음. 수정된 SHA의 CI 최종 판정은 coordinator 소유다.

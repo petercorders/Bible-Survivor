@@ -27,3 +27,9 @@
 실제 공격 검증은 R04가 없는 현재 경계를 지켜 각 진화의 R03 좌표 fixture와 정식 reward→between4 흐름을 구분했다. 보상/진화·저장·정산 관련11개 시험과 최종 Core138/138, 대표 sling1seed 연속 CLI, 최소3원래 구조 변이만 새로 검증했다. 기존18/10/30과 전무기/phase/seed 행렬은 반복하지 않았다. 신규 strongest-target 시험의 설정 단계에서 injected kill의 drop을 좌표 snapshot 없이 남겨 Restore가 거절한 fixture 실패1개를 수정했다. 제품 Restore 검증을 완화하지 않고 주입된 설정 drop만 명시적으로 제거한 뒤 실제 aim/shot/retarget을 검사했다.
 
 사용자의 다음 플레이 가능 통합본 우선·속도 피드백에 따라 작동하는 checkpoint에서 추가 개선을 멈추고 독립 리뷰로 인계한다. 검사기 확장은 세 실제 위험의 좁은 mutation driver와 기존 check_all의 대표 CLI 교체뿐이다. 전역 GC/Unity/DLL/아트/사용자 저장/GUI/CI hooks/commit/push는 실행하지 않았다. final binding은 `evidence/r03-reward-evolution-02/final-binding.json`이다. 모델은 Sol이며 usage start/end phase `r03-reward-evolution-02`를 기록한다. 비용/절감률은 미측정·미계산이며 독립 리뷰와 Unity 통합은 coordinator의 다음 단계다.
+
+## CI 수정 — 기존 R02 해금 변이 anchor
+
+원격 Core CI43731139114(`fb8a2b1`)는 첫13변이 PASS 뒤 `round_completion_uses_r01_unlock`의 고유 위치 검사에서 중단했다. R03 완료 정산을 추가하면서 `state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);`가 일반 Finish와 R03 정산 두 곳에 존재하게 된 것이 원인이다. 제품 결함으로 대체하거나 다른 회귀를 시험하지 않고 `tools/check_mutations.py`의 해당 anchor에 일반 Finish의 기존 들여쓰기를 포함해 그 위치만 고유하게 지정했다. R02가 R01 해금 wilderness_voice를 잘못 지급하는 원래 회귀 의미는 같다.
+
+격리 사본에서 기존 `R01 R02 injected budgets preserve total kills XP gold and unlocks through R03 waiting` assertion 하나만 등록해 이 정확한 변이의 실제 실패(exit1)→복원1/1 PASS(exit0)를 확인했다. 근거는 `evidence/r03-ci-mutation-anchor/summary.json`과 mutant/restored 로그다. 제품 Core/Unity/DLL/provenance·새 도구는 변경하지 않았으며 `python3 tools/check_mutations.py` exit0·기존18/18 실제 assertion 실패 검출로 나머지 anchor도 확인했다. 전체 근거는 `evidence/r02-mutations-20261115T154219506734Z/summary.json`다. commit/push는 coordinator가 수행한다.
