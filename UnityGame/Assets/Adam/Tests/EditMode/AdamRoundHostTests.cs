@@ -26,10 +26,10 @@ public sealed class AdamRoundHostTests
         if(!pending)while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]),host.Error);
         Assert.IsTrue(host.Checkpoint(),host.Error);return host;
     }
-    [Test] public void CanonicalR01R02CatalogAndDevelopmentMarkersAreExplicitAndR03IsNotExposed()
+    [Test] public void CanonicalR01R02R03CatalogAndMarkersAreExplicit()
     {
         Assert.AreEqual(40,catalog.Definition.ConcurrencyCap);var r=catalog.ForRound(2);Assert.AreEqual("genesis_02",r.Id);Assert.AreEqual(50,r.ConcurrencyCap);Assert.AreEqual(600,r.RawExperience);Assert.AreEqual(35,r.CompletionGold);Assert.AreEqual(360,r.Waves.Sum(w=>w.Groups.Sum(g=>g.Count)));Assert.AreEqual("lightning",r.UnlockWeaponId);Assert.AreNotEqual(catalog.Definition.Fingerprint,r.Fingerprint);
-        Assert.AreEqual(.55,catalog.Speeds["b1"],1e-9);Assert.AreEqual(.90,catalog.Speeds["b2"],1e-9);Assert.AreEqual(.45,catalog.Speeds["b3"],1e-9);Assert.Throws<InvalidDataException>(()=>catalog.ForRound(3));
+        Assert.AreEqual(.55,catalog.Speeds["b1"],1e-9);Assert.AreEqual(.90,catalog.Speeds["b2"],1e-9);Assert.AreEqual(.45,catalog.Speeds["b3"],1e-9);Assert.AreEqual("genesis_03",catalog.ForRound(3).Id);Assert.Throws<InvalidDataException>(()=>catalog.ForRound(4));
         Assert.AreEqual("enm_b1-envy-eye_move_32",AdamRoundPresentation.R02ClipId("b1"));Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("b1"));Assert.AreEqual(AdamRoundPresentation.R02ClipId("b1"),AdamArtWorld.EnemyClip("b1"));Assert.Throws<InvalidOperationException>(()=>AdamArtWorld.EnemyClip("b4"),"unknown enemies must never reuse a-monster art");
         var root=JsonUtility.FromJson<AdamCatalog.Root>(Resources.Load<TextAsset>("genesis-catalog").text);root.rounds.Single(x=>x.number==2).spawn_budget++;Assert.Throws<InvalidDataException>(()=>new AdamCatalog(JsonUtility.ToJson(root)));
     }
@@ -92,8 +92,8 @@ public sealed class AdamRoundHostTests
     }
     [Test] public void R02CompletionPersistsR03WaitingAndDeathOrExplicitNewChallengeStartsOnlyR01()
     {
-        var host=Completed(path);host.SetPaused(false);Assert.AreEqual(2,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.ContentComplete);Assert.AreEqual(3,host.State.Run.RoundNumber);var gold=host.State.Profile.Gold;Assert.IsTrue(host.State.Profile.UnlockedWeapons.Contains("lightning"));
-        var restored=new AdamHost(catalog,new SaveStore(path));Assert.IsNull(restored.Error);Assert.IsTrue(restored.ContentComplete);Assert.AreEqual(2,restored.Session.RoundNumber);restored.SetPaused(false);restored.Tick(180);Assert.IsNull(restored.World);Assert.AreEqual(gold,restored.State.Profile.Gold);restored.Start("lightning");Assert.IsTrue(restored.ContentComplete);restored.Start("bible");Assert.AreEqual(1,restored.Session.RoundNumber);Assert.AreEqual(1,restored.Session.Growth.Level);Assert.AreEqual(gold,restored.State.Profile.Gold);
+        var host=Completed(path);host.SetPaused(false);Assert.AreEqual(2,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.AwaitingR03);Assert.IsFalse(host.ContentComplete);Assert.AreEqual(3,host.State.Run.RoundNumber);var gold=host.State.Profile.Gold;Assert.IsTrue(host.State.Profile.UnlockedWeapons.Contains("lightning"));
+        var restored=new AdamHost(catalog,new SaveStore(path));Assert.IsNull(restored.Error);Assert.IsTrue(restored.AwaitingR03);Assert.AreEqual(2,restored.Session.RoundNumber);restored.SetPaused(false);Assert.AreEqual(3,restored.Session.RoundNumber);Assert.NotNull(restored.World);Assert.AreEqual(gold,restored.State.Profile.Gold);restored.Start("bible");Assert.AreEqual(3,restored.Session.RoundNumber,"a live R03 challenge cannot be overwritten");
         var second=Completed(Path.Combine(directory,"death.json"));second.SetPaused(false);var balance=second.State.Profile.Gold;second.Session.Damage(100000);Assert.IsTrue(second.Checkpoint());second.Start("jawbone");Assert.AreEqual(1,second.Session.RoundNumber);Assert.AreEqual(balance,second.State.Profile.Gold);
     }
     [TestCase("bible")] [TestCase("jawbone")] [TestCase("sling")] public void ThreeWeaponsHitInjuredR02EnemiesAndCollectedExperienceCanBeChosen(string weapon)

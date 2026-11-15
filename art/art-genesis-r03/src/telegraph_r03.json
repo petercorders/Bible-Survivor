@@ -1,0 +1,35 @@
+{
+  "schema": "bible-survivors.art-r03-telegraph",
+  "schemaVersion": 1,
+  "note": "Separate overlay contract for the Nephilim tyrant's club slam warning. It is independent of the 64 px boss cell. The hit area belongs to Core; this file only says how the warning looks and where it must be placed.",
+  "core": {
+    "owner": "Core (single writer). Values quoted from docs/harness/r03-implementation-01.md as technical tuning, not balance-final",
+    "shape": "circle, fixed target locked at warning start, one hit at impact",
+    "radiusWorldUnits": 1.2,
+    "warningSeconds": 1.2,
+    "note": "if Core changes the radius, the runtime ring follows it; nothing here is re-tuned by hand"
+  },
+  "placement": {
+    "rule": "at runtime the boundary is drawn procedurally from the Core target and radius through the shared world projection (the same one actors use). The art never decides where the edge is.",
+    "boundary": "the OUTER edge of the black line is the hit boundary. Nothing is drawn outside it, so the picture never makes the area look larger than the hit; the white line sits just inside the black one",
+    "nominalRadiusPx": {"value": 38.4, "meaning": "1.2 world units x PPU 32 at SOURCE asset density only. It is not a Unity screen-pixel radius; the screen radius is whatever the shared projection gives for 1.2 world units"},
+    "mustNot": ["scale or pad the ring so the visible edge differs from the projected radius", "fit the ring into the 64 px boss cell", "add a fill or glow outside the boundary"]
+  },
+  "style": {
+    "lines": [
+      {"name": "outer", "colour": "outline.0 (#1b1424)", "widthSourcePx": 2, "from": "boundary inward"},
+      {"name": "inner", "colour": "white.0 (#ffffff)", "widthSourcePx": 2, "from": "2 source px inside the boundary, inward"}
+    ],
+    "widthRule": "widths scale with the actor pixel scale (source px x scale) and never drop below 1 screen px each",
+    "fill": "none. The ground stays visible inside the circle",
+    "motion": "static for the whole 1.2 s: no blinking, no pulsing, no full-screen flash. Progress is shown by the boss pose (windup frames), not by the ring",
+    "lowFx": "always shown: the ring is gameplay information, not an optional effect; same in low-effects, muted and small-window modes",
+    "readability": "black outer + white inner reads on dark grass, light path and in greyscale"
+  },
+  "assets": [
+    {"id": "fx_boss-slam-warning_static_78", "kind": "reference", "cell": [78, 78], "frames": 1, "fps": 0, "loop": false, "pivot": [39, 39], "alpha": "binary", "sorting": "GroundDecal",
+     "use": "reference rendering of the style at nominal source density (radius 38.4 source px about the cell centre) for review boards and as a sanity picture for the runtime ring. A texture fallback is allowed only if it is placed and scaled so its black outer edge equals the projected radius"},
+    {"id": "fx_boss-slam-impact_hit_72", "kind": "decal", "cell": [72, 72], "frames": 2, "fps": 10, "loop": false, "pivot": [36, 36], "alpha": "binary", "sorting": "GroundDecal", "contentMaxRadiusPx": 34,
+     "use": "cracks and dust at the locked target on the impact tick (the boss may be far from the target). Drawn centred on the target at actor pixel scale; all content stays inside 34 of 38.4 nominal px, so it never reaches past the boundary. Silent-safe: it is the visual 'it hit here' after the ring disappears"}
+  ]
+}

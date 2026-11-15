@@ -25,9 +25,11 @@ namespace BibleSurvivor.Unity
         public Vector2 Movement { get; private set; }
         public bool CanPlay => Error == null && !Paused && !Suspended && Session != null && Session.IsActive && Session.PendingChoices.Count == 0;
         public bool AwaitingR02 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==2 && Session?.RoundNumber==1;
-        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==3 && Session?.RoundNumber==2;
+        public bool AwaitingR03 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==3 && Session?.RoundNumber==2;
+        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03;
+        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==4 && Session?.RoundNumber==3;
         public bool CanStartNew => State!=null && (State.Run==null || (ContentComplete && Session.PendingChoices.Count==0));
-        bool RoundEntryReady => AwaitingR02 && Session.PendingChoices.Count==0 && completedCheckpoint;
+        bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
         public bool Reload()
         {
@@ -38,7 +40,7 @@ namespace BibleSurvivor.Unity
                 var world = session == null || !session.IsActive ? null : loaded.Run.World == null
                     ? new BattleWorld(session, catalog.Speeds, 7) : BattleWorld.Restore(session, catalog.Speeds, loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
-                operation = null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingR02;
+                operation = null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
                 return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
@@ -55,20 +57,41 @@ namespace BibleSurvivor.Unity
         public void SetMovement(Vector2 value) { Movement = CanPlay ? Vector2.ClampMagnitude(value, 1) : Vector2.zero; }
         public void Tick(double delta)
         {
-            if(Error==null && !Paused && !Suspended && RoundEntryReady){EnterR02();return;}
+            if(Error==null && !Paused && !Suspended)
+            {
+                if(RoundEntryReady){EnterNextRound();return;}
+                if(Session?.Stage=="boss_settlement" && Session.PendingChoices.Count==0){CompleteBossSettlement();return;}
+            }
             if (!CanPlay) { Movement = Vector2.zero; return; }
             // Never accumulate wall-clock downtime. A long frame advances at most 0.1 simulation seconds.
             var seconds = Math.Min(Math.Max(delta, 0), .1);
             World.Advance(seconds, new NVector(Movement.x, Movement.y)); sinceSave += seconds;
             if (!Session.IsActive || Session.PendingChoices.Count > 0 || sinceSave >= 5)
-            { Movement=Vector2.zero;if(Checkpoint() && !Paused && !Suspended && RoundEntryReady)EnterR02(); }
+            { Movement=Vector2.zero;if(Checkpoint() && !Paused && !Suspended && RoundEntryReady)EnterNextRound(); }
         }
         public bool Choose(string id)
         {
             if (Error != null || Suspended || Session == null || !Session.PendingChoices.ContainsId(id)) return false;
             var accepted = Session.Choose(id);
-            if (accepted) { completedCheckpoint=false;Movement=Vector2.zero;if(Checkpoint() && !Paused && !Suspended && RoundEntryReady)EnterR02(); }
+            if (accepted) { completedCheckpoint=false;Movement=Vector2.zero;if(Checkpoint() && !Paused && !Suspended && RoundEntryReady)EnterNextRound(); }
             return accepted;
+        }
+        public bool ChooseBossReward(string rewardId,string candidateId)
+        {
+            if(Error!=null || Suspended || Session==null)return false;
+            var accepted=Session.ChooseBossReward(rewardId,candidateId);
+            if(accepted){Movement=Vector2.zero;Checkpoint();}
+            return accepted;
+        }
+        public bool PromoteBossReward()
+        {
+            if(Error!=null || Suspended || Session==null || !Session.PromoteBossReward())return false;
+            return Checkpoint();
+        }
+        public bool CompleteBossSettlement()
+        {
+            if(Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
+            Movement=Vector2.zero;return Checkpoint();
         }
         public void SetPaused(bool value)
         {
@@ -77,15 +100,15 @@ namespace BibleSurvivor.Unity
             // Host gating preserves world clock; core pause flag is deliberately not used as a second pause owner.
             if (Session != null && Session.IsActive) Session.Pause(false);
             if (value) Checkpoint();
-            else if(!Suspended && RoundEntryReady)EnterR02();
+            else if(!Suspended && RoundEntryReady)EnterNextRound();
         }
-        void EnterR02()
+        void EnterNextRound()
         {
             if(Error!=null || Paused || Suspended || !RoundEntryReady)return;
             completedCheckpoint=false;Movement=Vector2.zero;
             try
             {
-                var next=Session.StartNextRound(catalog.ForRound(2));
+                var next=Session.StartNextRound(catalog.ForRound(State.Run.RoundNumber));
                 var arena=new BattleWorld(next,catalog.Speeds,7);
                 Session=next;World=arena;sinceSave=0;
                 // Publish exactly once, then freeze this same new arena/payload if its entry commit fails.
@@ -123,7 +146,7 @@ namespace BibleSurvivor.Unity
             {
                 revision = store.Commit(State, revision, operation);
                 State.Revision = revision; State.LastOperationId = operation;
-                operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0;completedCheckpoint=AwaitingR02;return true;
+                operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0;completedCheckpoint=AwaitingNextRound;return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
         }

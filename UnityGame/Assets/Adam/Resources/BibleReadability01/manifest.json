@@ -1,0 +1,204 @@
+{
+ "schema": "bible-survivors.art-manifest-bible-r01",
+ "schemaVersion": 1,
+ "status": "candidate-1",
+ "statusNote": "visual sidecar candidate after play feedback: independent art review pending; not imported into Unity, not checked on devices",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": "none: Unity draws both without flip (AdamArtWorld: glow first, then the book, at the same point)",
+ "palette": {
+  "file": "src/palette_v03.json",
+  "name": "master-v0.3",
+  "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_bible_r01.json",
+   "sha256": "361ef4fcf22c0998621540250b75fe01419ab928030785a6b49632f60fc3bed8"
+  },
+  "art": {
+   "file": "scripts/bible_r01.py",
+   "sha256": "690fecb89f519815885a0e7141e5d7cf4377b964b8f8874a9916ee411adedafe"
+  },
+  "helpers": {
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_bible_r01.json",
+   "sha256": "ad694efeaca6543deb448b3ae4aa14ca34f5809ca83ce49dece3560ffcd91656"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751",
+   "assets": 79
+  },
+  "current": {
+   "fx_bible-glow_static_20": "3457bdaf28c5878edb8c11a29cc2bcfa726a9552d27f92ed4c32add4f499cf5f",
+   "wpn_bible-book_spin_16": "dfbffbb9f952c0df9b61f17f1c4c515a3a95eed6a73d119650fad771138a556f"
+  }
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_bible_r01.py",
+  "testedWith": {
+   "python": "3.11.6"
+  }
+ },
+ "provenance": {
+  "pixels": "scripts/bible_r01.py written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas used only to present the boards for review; see RESULT.md"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "made for Bible Survivors from the art 03 master palette (unchanged) by this folder's script; the book grid is a redraw of the art 03 book's idea (cover, spine, pages, ribbon). No third-party images, traces or reference art; no lettering."
+ },
+ "assets": [
+  {
+   "id": "fx_bible-glow_static_20",
+   "file": "export/png/fx_bible-glow_static_20.png",
+   "sha256": "d92d0e9d698a9e744c9d56a74a22b21bc2b5ac6e434f19872258b83138f764d5",
+   "size": [
+    20,
+    20
+   ],
+   "cell": [
+    20,
+    20
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     20,
+     20
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     10,
+     10
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     96,
+     176,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "optional-fx",
+   "ref": "weapon:bible",
+   "colours": 3,
+   "frameBBoxTopLeft": [
+    [
+     0,
+     0,
+     19,
+     9
+    ]
+   ],
+   "replaces": {
+    "art03": "fx_bible-glow_static_20",
+    "currentSha256": "3457bdaf28c5878edb8c11a29cc2bcfa726a9552d27f92ed4c32add4f499cf5f"
+   },
+   "source": {
+    "authoring": "scripts/bible_r01.py:glow",
+    "pixelSource": "export/source/pixel-source_bible_r01.json#fx_bible-glow_static_20",
+    "method": "written by Claude in this session (hand grid for the book, procedural for the glow), art 03 palette only"
+   },
+   "status": "candidate-1"
+  },
+  {
+   "id": "wpn_bible-book_spin_16",
+   "file": "export/png/wpn_bible-book_spin_16.png",
+   "sha256": "6a985c8dec83532dcc041f63d9a1273abd790722814ef5e47c06c36ea63c632e",
+   "size": [
+    32,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "WeaponFX",
+   "quality": "core",
+   "ref": "weapon:bible",
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     0,
+     15,
+     15
+    ],
+    [
+     3,
+     0,
+     14,
+     15
+    ]
+   ],
+   "replaces": {
+    "art03": "wpn_bible-book_spin_16",
+    "currentSha256": "dfbffbb9f952c0df9b61f17f1c4c515a3a95eed6a73d119650fad771138a556f"
+   },
+   "source": {
+    "authoring": "scripts/bible_r01.py:BOOK",
+    "pixelSource": "export/source/pixel-source_bible_r01.json#wpn_bible-book_spin_16",
+    "method": "written by Claude in this session (hand grid for the book, procedural for the glow), art 03 palette only"
+   },
+   "status": "candidate-1"
+  }
+ ]
+}

@@ -26,7 +26,7 @@ internal static class RoundTransitionTests
             Check.Equal(360,round.Waves.Sum(w=>w.Groups.Sum(g=>g.Count)));Check.Equal(600,round.RawExperience);
             Check.True(round.Waves.SelectMany(w=>w.Groups).Select(g=>g.MonsterId).Distinct().OrderBy(x=>x)
                 .SequenceEqual(new[]{"b1","b2","b3"}));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,3));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,4));
         });
         test("R01 R02 injected budgets preserve total kills XP gold and unlocks through R03 waiting",()=>{
             var state=GameSnapshot.New();var game=new AdamSession(state,Adam(),"sling");var kills=0;var raw=0;
@@ -47,7 +47,7 @@ internal static class RoundTransitionTests
             Check.True(state.Profile.UnlockedWeapons.Contains("wilderness_voice"));Check.True(state.Profile.UnlockedWeapons.Contains("lightning"));
             var gold=state.Profile.Gold;game.Advance(180);Check.Equal(gold,state.Profile.Gold);
             var resumed=AdamSession.Resume(state,Cain());Check.True(!resumed.IsActive);
-            Check.Throws<InvalidOperationException>(()=>resumed.StartNextRound(new RoundDefinition(3,60,1100,50,Cain().Waves)));
+            Check.Throws<InvalidOperationException>(()=>resumed.StartNextRound(new RoundDefinition(4,60,1100,50,Cain().Waves)));
         });
         test("R02 concurrency cutoff and 180s timeout never award unspawned XP or kill gold",()=>{
             var state=GameSnapshot.New();var game=Completed(state).StartNextRound(Cain());
@@ -173,7 +173,7 @@ internal static class RoundTransitionTests
             game.Advance(180);Check.Throws<ArgumentException>(()=>AdamSession.Resume(state,new RoundDefinition(2,50,600,36,round.Waves)));
         });
         test("R02 save rejects bad stage round iframe numeric and world identity states",()=>{
-            foreach(var alter in new Action<RunState>[] {r=>r.RoundNumber=3,r=>r.RoundNumber=0,r=>r.LastHitTime=1,
+            foreach(var alter in new Action<RunState>[] {r=>r.RoundNumber=4,r=>r.RoundNumber=0,r=>r.LastHitTime=1,
                 r=>r.Experience=double.NaN,r=>r.Health=double.PositiveInfinity,r=>r.KillRemainder=5,r=>r.RoundFingerprint=""})
             {var state=GameSnapshot.New();Completed(state).StartNextRound(Cain());alter(state.Run!);Check.Throws<InvalidDataException>(()=>state.Validate());}
             var data=GameSnapshot.New();var game=Completed(data).StartNextRound(Cain());var world=new BattleWorld(game,CatalogReader.MonsterSpeeds(Catalog),7);

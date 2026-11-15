@@ -1,0 +1,28 @@
+{
+ "schema": "bible-survivors.art-bible-readability-contract",
+ "schemaVersion": 1,
+ "note": "Candidate 1 replacement pixels for two art 03 stable IDs, after the 2026-11-15 play feedback (docs/art/bible-readability-task.md): the thin gold rounded-rectangle glow read as a debug hitbox, and the book lacked detail. Every value below is the CURRENT art 03 contract (export/manifest_v3.json); only the pixels change. Art 03, its 79-PNG manifest, Unity, the product and saves are untouched.",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per animation; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": "none: Unity draws both without flip (AdamArtWorld: glow first, then the book, at the same point)",
+ "palette": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3", "rule": "art 03 master palette only, unchanged; no new colours"},
+ "references": {
+  "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751", "assets": 79},
+  "current": {
+   "fx_bible-glow_static_20": "3457bdaf28c5878edb8c11a29cc2bcfa726a9552d27f92ed4c32add4f499cf5f",
+   "wpn_bible-book_spin_16": "dfbffbb9f952c0df9b61f17f1c4c515a3a95eed6a73d119650fad771138a556f"
+  }
+ },
+ "assets": [
+  {"id": "fx_bible-glow_static_20", "ref": "weapon:bible", "cell": [20, 20], "frames": 1, "fps": 0, "loop": false, "pivot": [10, 10],
+   "alpha": "blend", "alphaValues": [0, 96, 176, 255], "sorting": "WeaponFX", "quality": "optional-fx",
+   "design": "no closed outline and no corners: irregular warm light off the book's upper edge, fading down the sides by mid-height, none under the book, within 3 px of the book and a radius 10.8 circle; two single-pixel motes beside the book, none at a corner. Static, no blinking. Off in lowFX (Unity skips optional-fx when optional effects are off)."},
+  {"id": "wpn_bible-book_spin_16", "ref": "weapon:bible", "cell": [16, 16], "frames": 2, "fps": 6, "loop": true, "pivot": [8, 8],
+   "alpha": "binary", "alphaValues": [0, 255], "sorting": "WeaponFX", "quality": "core",
+   "footprint": {"rule": "each frame's opaque bounding box stays inside the current frame's box, so the shown size does not grow", "currentTopLeftBBox": [[1, 0, 15, 15], [3, 0, 15, 15]]},
+   "design": "frame 0: front cover lit from the upper left with a gold cross and corner caps, dark spine strip with studs on the left, striped page edges right and bottom, red ribbon. Frame 1: turned, rounded spine with three raised gold bands, striped page edges to the right, ribbon. No lettering."}
+ ],
+ "unchanged": "cell sizes, frame counts, fps, centre pivots, PPU, sorting, quality flags, draw order; orbit radius, rotation speed, book count, hit radius and every combat value (Core)",
+ "proposalsOnly": "none needed for candidate 1: two frames are kept and the display size is unchanged"
+}

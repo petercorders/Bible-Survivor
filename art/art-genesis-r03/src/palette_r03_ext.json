@@ -1,0 +1,21 @@
+{
+  "name": "r03-ext-v1",
+  "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+  "note": "Extra actor ramps for the R03 (Noah) actors, light to dark, added on top of the unchanged art 03 master palette (byte copy in src/palette_v03.json). Ramp names must not collide with the base. Reused base ramps: bark (club), stone (iron), gold (bronze), leather, bone (grub body, teeth), tunic (rope), smoke (death ash), white, outline, spark.",
+  "actor": {
+    "shade": ["#8a7a9c", "#5c4c70", "#3c3050", "#271e36"],
+    "ember": ["#ffd27a", "#ff8a3c", "#c8402a"],
+    "chitin": ["#e09a52", "#b0662e", "#743e22", "#44241a"],
+    "drift": ["#c8baa0", "#9a8a72", "#6a5c4c", "#403630"],
+    "pitch": ["#3a3036", "#241c22"],
+    "giant": ["#c4aca2", "#947a74", "#665054", "#40303a"]
+  },
+  "why": {
+    "shade": "C1 smoke body: dark violet mass that reads darker than grass and lighter than outline; a C1 swarm is the dark field the lighter C2/C3 stand out against",
+    "ember": "C1 eyes and knuckles, C3 and boss eyes: the small hot accent of violence; never a large area",
+    "chitin": "C2 head and mandibles: rust orange, apart from the path tan and from the pale grub body",
+    "drift": "C3 weathered planks: grey-tan, cooler than the dirt path so a C3 on the path keeps its edge",
+    "pitch": "tar on the ark-timber wreckage (C3 seams and drips)",
+    "giant": "boss skin: ashen mauve flesh, apart from grass, from the C1 violet and from the club's warm bark"
+  }
+}

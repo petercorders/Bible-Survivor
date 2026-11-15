@@ -17,6 +17,8 @@ internal static class Program
             try { action(); results.Add((name, null)); }
             catch (Exception error) { results.Add((name, error)); Console.Error.WriteLine($"FAIL {name}: {error}"); }
         }
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))
+        {
         WaveTests.Register(Test);
         GrowthTests.Register(Test);
         CombatTests.Register(Test);
@@ -26,6 +28,9 @@ internal static class Program
         ImpactTests.Register(Test);
         BattleSaveTests.Register(Test);
         RoundTransitionTests.Register(Test);
+        }
+        if(!args.Contains("--reward-only"))BossTests.Register(Test);
+        if(!args.Contains("--boss-only"))RewardEvolutionTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

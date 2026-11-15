@@ -53,6 +53,7 @@ namespace BibleSurvivor.Core
         public string Id { get; }
         public string? UnlockWeaponId { get; }
         public string Fingerprint { get; }
+        public string? PreviousBossFingerprint {get;}
         public IReadOnlyList<WaveDefinition> Waves { get; }
         public RoundDefinition(int number, int concurrencyCap, int rawExperience, int completionGold, IEnumerable<WaveDefinition> waves,
             string? id = null, string? unlockWeaponId = null)
@@ -76,6 +77,12 @@ namespace BibleSurvivor.Core
                 foreach(var group in wave.Groups)
                     parts.Add(string.Join(",",group.MonsterId,group.Count.ToString(CultureInfo.InvariantCulture),
                         group.Health.ToString(CultureInfo.InvariantCulture),group.ContactDamage.ToString(CultureInfo.InvariantCulture)));
+            }
+            if(number==3)
+            {
+                using var previousHash=SHA256.Create();
+                PreviousBossFingerprint=Convert.ToBase64String(previousHash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts.Concat(new[]{BossDefinition.LegacyContract})))));
+                parts.Add(BossDefinition.Contract);
             }
             using var hash=SHA256.Create();
             Fingerprint=Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts))));

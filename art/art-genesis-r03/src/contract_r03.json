@@ -1,0 +1,51 @@
+{
+  "schema": "bible-survivors.art-r03-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R03 (Noah) actors: three normal enemies and the first boss. The checker compares the generated manifest, pixel source and PNGs against THIS file. Gameplay numbers (HP, speed, radius, timings) belong to Core and the catalog; they are quoted only where a clip's timing depends on them. The slam warning is a separate overlay contract (src/telegraph_r03.json).",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0", "blend": "alpha may take only the alpha values of the palette entries this sprite uses; RGB is 0 wherever alpha is 0"},
+  "edgeMargin": {"px": 1, "why": "no opaque (alpha 255) pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y. Blend shadows are translucent and fill their cell like the art 03 shadows (12x4 and 24x6 reach every edge at alpha 51 / 89)."},
+  "colourLimit": {"32": 16, "64": 24, "fx": 24, "note": "distinct RGBA values per PNG; 'fx' covers the 40x8 shadow and the telegraph overlay PNGs"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+    "ext": {"file": "src/palette_r03_ext.json", "name": "r03-ext-v1", "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246", "monsters": {"c1": "폭력의 그림자", "c2": "목재 포식자", "c3": "잔해 거인"}, "boss": "nephilim_tyrant"},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "assets": [
+    {"id": "enm_c1-violence-shadow_move_32", "ref": "monster:c1", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": false, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-small_static_12x4", "facing": "right"},
+    {"id": "enm_c2-timber-devourer_move_32", "ref": "monster:c2", "cell": [32, 32], "frames": 4, "fps": 8, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right"},
+    {"id": "enm_c3-wreckage-giant_move_32", "ref": "monster:c3", "cell": [32, 32], "frames": 4, "fps": 6, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right"},
+    {"id": "bos_nephilim-tyrant_move_64", "ref": "boss:nephilim_tyrant", "cell": [64, 64], "frames": 4, "fps": 6, "loop": true, "pivot": [32, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-boss_static_40x8", "facing": "right",
+     "use": "slow chase; also the 2 s intro, holding frame 0 (the boss does not move in the intro)"},
+    {"id": "bos_nephilim-tyrant_windup_64", "ref": "boss:nephilim_tyrant", "cell": [64, 64], "frames": 3, "fps": 0, "loop": false, "pivot": [32, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-boss_static_40x8", "facing": "right",
+     "use": "the 1.2 s slam warning. Driven by the Core telegraph clock, not by fps: frame k from telegraph elapsed k*0.4 s; frame 2 is held until impact. Boss faces the locked target."},
+    {"id": "bos_nephilim-tyrant_impact_64", "ref": "boss:nephilim_tyrant", "cell": [64, 64], "frames": 2, "fps": 10, "loop": false, "pivot": [32, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-boss_static_40x8", "facing": "right",
+     "use": "starts on the Core impact tick, plays once (0.2 s), then back to move"},
+    {"id": "bos_nephilim-tyrant_death_64", "ref": "boss:nephilim_tyrant", "cell": [64, 64], "frames": 4, "fps": 6, "loop": false, "pivot": [32, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-boss_static_40x8", "facing": "right",
+     "use": "plays once on the boss kill; the last frame (ash heap) may be held or faded by Unity"},
+    {"id": "fx_shadow-boss_static_40x8", "ref": "boss:nephilim_tyrant", "cell": [40, 8], "frames": 1, "fps": 0, "loop": false, "pivot": [20, 4], "ground": false, "alpha": "blend", "sorting": "GroundDecal", "shadow": null, "facing": "none",
+     "use": "boss ground shadow, drawn with the art 03 shadow method (fx03.py:shadow, key shadow.0); art 03 has no shadow wide enough for a 64 px body"}
+  ],
+  "notProduced": {
+    "bos_nephilim-tyrant_idle_64": "not needed by the first slice: the boss chases from the end of the intro and the intro holds move frame 0. Make it only if the Unity screen review asks for it."
+  },
+  "motifs": {
+    "source": "Genesis 6:4 (Nephilim) and 6:11-14 (the earth filled with violence; the ark of gopher wood and pitch). Creative adaptation for the game.",
+    "c1": "violence as a hunched smoke figure with a raised fist (no weapon, no blood, no human victim)",
+    "c2": "a wood-eating grub with big mandibles: the ark's timber being devoured",
+    "c3": "a slow giant made of broken, pitch-stained planks bound with rope and nails",
+    "boss": "a created humanoid monster (not a person from the text) with a broken timber club",
+    "excluded": "Noah, his family, God, the ark itself and the flood are never enemies or boss abilities"
+  }
+}

@@ -53,14 +53,14 @@ internal static class SaveSchemaTests
             }
             Check.True(!Directory.Exists(store.Path + ".pre-v2"));
         }));
-        test("Schema2 preparatory reader preserves unsupported boss content instead of recovering older normal backup", () => WithStore(store => {
+        test("Schema2 reader preserves future boss content instead of recovering older normal backup", () => WithStore(store => {
             File.WriteAllText(store.Path + ".bak", Legacy(GameSnapshot.New()));
             var state = GameSnapshot.New(); _ = new AdamSession(state, WaveTests.Adam(), "bible");
             foreach (var change in new Action<JsonNode>[] {
-                n => n["Run"]!["Boss"] = new JsonObject(),
-                n => n["Run"]!["Stage"] = "boss_intro",
-                n => n["Run"]!["RoundNumber"] = 3,
-                n => { n["Run"]!["RoundNumber"] = 4; n["Run"]!["Stage"] = "between_rounds"; },
+                n => n["Run"]!["Boss"] = new JsonObject { ["FutureBoss"] = true },
+                n => n["Run"]!["Stage"] = "future_boss_stage",
+                n => n["Run"]!["RoundNumber"] = 4,
+                n => { n["Run"]!["RoundNumber"] = 5; n["Run"]!["Stage"] = "between_rounds"; },
                 n => n["NewBossEnvelope"] = new JsonObject()
             }) {
                 var node = JsonNode.Parse(Encode(state))!; change(node); var original = node.ToJsonString(); File.WriteAllText(store.Path, original);
@@ -80,13 +80,13 @@ internal static class SaveSchemaTests
                 var old = CombatState(); old.Profile.Gold = 0;
                 var backup = Legacy(old); File.WriteAllText(store.Path + ".bak", backup);
                 var future = JsonNode.Parse(Encode(old))!; future["SchemaVersion"] = schema;
-                future["Profile"]!["Gold"] = 19; future["Run"]!["World"]!["SchemaVersion"] = 2;
+                future["Profile"]!["Gold"] = 19; future["Run"]!["World"]!["SchemaVersion"] = 3;
                 var original = future.ToJsonString(); File.WriteAllText(store.Path, original);
                 AssertFutureOriginals(store, original, backup);
             });
         });
         test("Future World version and overflow precede incompatible typed bodies and protect future backups", () => {
-            foreach (var schema in new[] { 1, 2 }) foreach (var version in new[] { "2", "999999999999999999999999999999" }) WithStore(store => {
+            foreach (var schema in new[] { 1, 2 }) foreach (var version in new[] { "3", "999999999999999999999999999999" }) WithStore(store => {
                 var future = JsonNode.Parse(Encode(CombatState()))!; future["SchemaVersion"] = schema;
                 future["Run"]!["World"]!["Tuning"] = "future tuning shape";
                 future["Run"]!["Wave"] = "future wave shape";

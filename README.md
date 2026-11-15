@@ -4,13 +4,13 @@
 
 ## 현재 상태
 
-아담 R01과 가인 R02의 Unity 독립 C# 코어·연속 진행·자동 검증을 개발하고 있습니다. R02 완료 후 R03 보스 라운드는 진입 대기로 보존합니다. 이 코어 검증은 Unity 화면·입력·기기 플레이 검증과 별개입니다. 문서의 전투 수치와 경제 수치는 초기 설계이며 플레이 검증 결과가 아닙니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
+아담 R01·가인 R02부터 노아 R03 보스전·보상 선택·첫 3종 무기 진화·완료 정산까지 C# 코어와 Unity PC 시제품을 연결했습니다. R03 완료 후 R04는 미구현 대기로 보존합니다. 기술 검증과 자연 플레이 밸런스 검증은 별개이며, 문서의 전투·경제 수치는 초기 설계입니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
 
 [R01 구현·검증 상태](docs/progress/R01.md) · [R02 구현·검증 상태](docs/progress/R02.md) · [개발 계획](docs/genesis-development-plan.md) · [모바일 고려 사항](docs/mobile-platform-plan.md)
 
 `UnityGame/`은 Unity 6000.6.9f1용 아담 시제품입니다. 프로젝트에서 `Assets/Scenes/Adam.unity`를 열어 실행합니다. 검수된 픽셀 아트03·6레이어 캐릭터·적3종·세 무기 표현·외곽선 한국어 폰트를 연결했습니다. [아트 연결·실제 시험·한계](docs/progress/unity-art.md)와 [기반 시제품 기록](docs/progress/unity-adam.md)을 구분합니다. 현재 외형 편집·후속 보스·모바일 실기기·성능은 미완료입니다. Core를 변경하면 `python3 tools/unity_sync_core.py`로 동기화한 뒤 Unity 컴파일과 관련 시험을 다시 실행해야 합니다.
 
-[가인 R02 기술 연결](docs/progress/unity-r02.md)은 아담 완료 후 성장/장비 유지·새 라운드 저장/복원·가인 완료 뒤 R03 대기를 지원합니다. [R02 실제 적 시트 연결](docs/progress/unity-r02-art.md)에 세 적의 애니메이션·발 깊이 정렬·짧은 피격 실루엣과 실제 화면의 발 pivot 정정을 기록했습니다. 최신 schema2 Core를 연결한 macOS 개발 빌드의 컴파일·Edit90/Play31·저장 재실행을 확인했으며 최종 독립 코드·PC 시각 리뷰를 한정 범위에서 통과했습니다. native 연속 조작/자연 밸런스·모바일 실물/성능과 R03 보스는 아직 미검증 또는 미구현입니다.
+[가인 R02 기술 연결](docs/progress/unity-r02.md)과 [R02 실제 적 시트 연결](docs/progress/unity-r02-art.md)에 연속 성장·세 적의 애니메이션·깊이 정렬·피격 실루엣·발 pivot 정정을 기록했습니다. [R03 PC 통합](docs/progress/R03-unity.md)은 보스전·보상/진화·남은 성장·정산·저장 재개를 연결했으며 컴파일·Edit97/Play31·macOS 빌드와 대표 기술 전투를 확인했습니다. [성경 가독성 개선](docs/progress/bible-readability-unity.md)은 기존 아트 원본을 보존하면서 책 디테일과 후광을 개선했습니다. native 연속 조작·자연 밸런스·최신 R03 모바일/IL2CPP·실물/성능은 미검증입니다.
 
 [schema2 저장 준비](docs/progress/r03-schema.md)는 기존 R01/R02 저장의 무쓰기 읽기·최초 갱신 전 원문 보존·미래 저장/전투 버전의 덮어쓰기 방지를 지원합니다. 순수 Core와 macOS Player 검증 범위를 분리하며 새 저장 코드의 IL2CPP/모바일 검증은 아직 하지 않았습니다.
 

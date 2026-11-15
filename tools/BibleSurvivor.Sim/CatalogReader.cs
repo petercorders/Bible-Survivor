@@ -18,7 +18,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number<1 || number>2) throw new ArgumentOutOfRangeException(nameof(number),"Only R01/R02 core is implemented");
+        if(number<1 || number>3) throw new ArgumentOutOfRangeException(nameof(number),"Only R01/R02/R03 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
         if(root.GetProperty("schema_version").GetInt32()!=1 || root.GetProperty("chapter_id").GetString()!="genesis")
@@ -28,8 +28,22 @@ public static class CatalogReader
             throw new InvalidDataException("Incompatible wave clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
         var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
-        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null)
+        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || (number==3 ? round.GetProperty("boss_id").GetString()!="nephilim_tyrant" : round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null))
             throw new InvalidDataException("Incompatible round identity");
+        if(number==3)
+        {
+            var boss=root.GetProperty("bosses").EnumerateArray().Single(x=>x.GetProperty("id").GetString()=="nephilim_tyrant");
+            var attack=boss.GetProperty("attack");var support=boss.GetProperty("support_summons").EnumerateArray().Single();
+            if(boss.GetProperty("max_health").GetInt32()!=1800||boss.GetProperty("contact_damage").GetInt32()!=12||boss.GetProperty("gold").GetInt32()!=100||
+                attack.GetProperty("cooldown_seconds").GetDouble()!=6||attack.GetProperty("telegraph_seconds").GetDouble()!=1.2||
+                attack.GetProperty("damage").GetInt32()!=15||attack.GetProperty("projectile_count").GetInt32()!=0||
+                attack.GetProperty("pattern_id").GetString()!="telegraphed_club_slam"||support.GetProperty("health_ratio").GetDouble()!=.5||
+                support.GetProperty("monster_id").GetString()!="c1"||support.GetProperty("count").GetInt32()!=6||
+                rules.GetProperty("boss_intro_seconds").GetInt32()!=2||rules.GetProperty("boss_support_cap").GetInt32()!=12||
+                monsters["c1"].GetProperty("max_health").GetInt32()!=30||monsters["c1"].GetProperty("contact_damage").GetInt32()!=6||
+                monsters["c1"].GetProperty("speed_ratio").GetDouble()!=.55)
+                throw new InvalidDataException("Unsupported first boss contract");
+        }
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(
             w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=> {

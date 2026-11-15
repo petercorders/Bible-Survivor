@@ -178,6 +178,8 @@ namespace BibleSurvivor.Core
         };
         private readonly Dictionary<string, int> weapons;
         private readonly Dictionary<string, int> passives;
+        private readonly Dictionary<string,string> forms=new Dictionary<string,string>(StringComparer.Ordinal);
+        public IReadOnlyDictionary<string,string> Forms {get;}
         public IReadOnlyDictionary<string, int> Weapons { get; }
         public IReadOnlyDictionary<string, int> Passives { get; }
 
@@ -205,16 +207,32 @@ namespace BibleSurvivor.Core
                     throw new ArgumentException("Invalid passive in inventory.", nameof(passiveLevels));
                 passives.Add(pair.Key, pair.Value);
             }
+            Forms = new ReadOnlyDictionary<string,string>(forms);
             Weapons = new ReadOnlyDictionary<string, int>(weapons);
             Passives = new ReadOnlyDictionary<string, int>(passives);
         }
 
-        public static EquipmentInventory Restore(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives)
-            => new EquipmentInventory(weapons, passives);
+        public static EquipmentInventory Restore(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives,IReadOnlyDictionary<string,string>? forms=null)
+        {
+            var inventory=new EquipmentInventory(weapons,passives);
+            if(forms!=null)foreach(var pair in forms)
+            {
+                if(EvolutionRules.Base(pair.Value)!=pair.Key||!EvolutionRules.Eligible(pair.Key,weapons,passives,null))throw new ArgumentException("Invalid evolution lineage");
+                inventory.forms.Add(pair.Key,pair.Value);
+            }
+            return inventory;
+        }
+        public bool TryEvolve(string form)
+        {
+            string weapon;
+            try{weapon=EvolutionRules.Base(form);}catch(ArgumentException){return false;}
+            if(!EvolutionRules.Eligible(weapon,weapons,passives,forms))return false;
+            forms.Add(weapon,form);return true;
+        }
 
         public bool TryChoose(string id, bool passive)
         {
-            if (id == null || !(passive ? KnownPassives : ImplementedWeapons).Contains(id)) return false;
+            if (id == null || !(passive ? KnownPassives : ImplementedWeapons).Contains(id) || (!passive&&forms.ContainsKey(id))) return false;
             var items = passive ? passives : weapons;
             var maximum = passive ? PassiveMaximum(id) : 8;
             if (items.TryGetValue(id, out var current))
@@ -235,7 +253,7 @@ namespace BibleSurvivor.Core
             if (count < 0 || count > 3) throw new ArgumentOutOfRangeException(nameof(count));
             var choices = new HashSet<string>(StringComparer.Ordinal);
             foreach (var id in unlockedWeapons)
-                if (id != null && ImplementedWeapons.Contains(id) && IsEligible(weapons, id, 8)) choices.Add(id);
+                if (id != null && ImplementedWeapons.Contains(id) && !forms.ContainsKey(id) && IsEligible(weapons, id, 8)) choices.Add(id);
             foreach (var id in availablePassives)
                 if (id != null && KnownPassives.Contains(id) && IsEligible(passives, id, PassiveMaximum(id))) choices.Add(id);
             // Sorting makes enumeration order irrelevant; xorshift32 is stable across

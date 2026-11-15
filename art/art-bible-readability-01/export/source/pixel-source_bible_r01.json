@@ -1,0 +1,125 @@
+{
+ "schema": "bible-survivors.pixel-source",
+ "schemaVersion": 3,
+ "status": "candidate-1",
+ "palette": {
+  "base": "src/palette_v03.json (master-v0.3)"
+ },
+ "rules": {
+  "transparent": ".",
+  "rows": "every row has exactly cell.w characters",
+  "keys": "per sprite: character -> art 03 palette entry 'ramp.index'",
+  "edit": "hand edits go here, then build_bible_r01.py --from-source; a plain build regenerates this file from scripts/bible_r01.py"
+ },
+ "sprites": [
+  {
+   "name": "fx_bible-glow_static_20",
+   "authoring": "scripts/bible_r01.py:glow",
+   "cell": [
+    20,
+    20
+   ],
+   "pivot_px": [
+    10,
+    10
+   ],
+   "fps": 0,
+   "loop": false,
+   "alpha": "blend",
+   "keys": {
+    "*": "spark.0",
+    "O": "fxa.0",
+    "o": "fxa.2"
+   },
+   "frames": [
+    [
+     ".....oooo...........",
+     "...Oo...oO.O.O......",
+     "..OO...........o....",
+     "..o.................",
+     ".o................*.",
+     ".o.................o",
+     "....................",
+     "o.O.................",
+     "..O.................",
+     ".*..................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "....................",
+     "...................."
+    ]
+   ]
+  },
+  {
+   "name": "wpn_bible-book_spin_16",
+   "authoring": "scripts/bible_r01.py:BOOK",
+   "cell": [
+    16,
+    16
+   ],
+   "pivot_px": [
+    8,
+    8
+   ],
+   "fps": 6,
+   "loop": true,
+   "alpha": "binary",
+   "keys": {
+    "B": "book.0",
+    "P": "page.1",
+    "Y": "gold.1",
+    "b": "book.1",
+    "d": "book.2",
+    "g": "gold.2",
+    "k": "outline.0",
+    "p": "page.0",
+    "r": "ribbon.0",
+    "y": "gold.0"
+   },
+   "frames": [
+    [
+     "..kkkkkkkkkkk...",
+     ".kdBBBBBBBBYkk..",
+     ".kgBbbbbbbbbkpk.",
+     ".kdBbbbybbbdkPPk",
+     ".kdBbbbybbbdkppk",
+     ".kgBbyyyyybdkPPk",
+     ".kdBbbbybbbdkppk",
+     ".kdBbbbybbbdkPPk",
+     ".kgBbbbYbbbdkppk",
+     ".kdbbbbbbbbdkPPk",
+     ".kdbbbbbbbbdkppk",
+     ".kdYbbbbbbddkPPk",
+     ".kkkkkkkkkkkkppk",
+     "..kpppppprppPPPk",
+     "...kkkkkkrkkkkkk",
+     ".........r......"
+    ],
+    [
+     "....kkkkkkk.....",
+     "...kdBBBBBdkk...",
+     "...kgyyyyygkpk..",
+     "...kdBbbbbdkPPk.",
+     "...kdBbbbbdkppk.",
+     "...kgyyyyygkPPk.",
+     "...kdBbbbbdkppk.",
+     "...kdBbYbbdkPPk.",
+     "...kdBbbbbdkppk.",
+     "...kgyyyyygkPPk.",
+     "...kdbbbbbdkppk.",
+     "...kdbbbbbdkPPk.",
+     "...kkkkkkkkkppk.",
+     "....kpprpppPPPk.",
+     ".....kkrkkkkkkk.",
+     ".......r........"
+    ]
+   ]
+  }
+ ]
+}

@@ -24,6 +24,15 @@ namespace BibleSurvivor.Core
         public double AreaMultiplier {get; private set;}
         public bool IsOrbit {get; private set;}
         public double ProjectileSpeedMultiplier {get; private set;}
+        internal CombatStats Evolved(string form)
+        {
+            var copy=(CombatStats)MemberwiseClone();
+            if(form==EvolutionRules.Bible)copy.Cycle=copy.Duration;
+            else if(form==EvolutionRules.Jawbone)copy.AreaMultiplier+=EvolutionRules.JawboneArea;
+            else if(form==EvolutionRules.Sling)copy.Amount=Math.Max(EvolutionRules.SlingMinimum,copy.Amount);
+            else throw new ArgumentException("Unknown weapon form");
+            return copy;
+        }
         public static CombatStats For(string id,int level,CombatBonuses bonuses)
         {
             Guard.NonNegative(bonuses.DamageBonus,nameof(bonuses.DamageBonus));

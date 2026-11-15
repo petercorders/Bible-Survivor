@@ -35,7 +35,7 @@ CASES = [
     ('unsupported_schema2_content_recovers_older_backup', [
         ('SaveFormat.cs', 'if (version == CurrentVersion) throw new UnsupportedSaveVersionException();', 'if (version == CurrentVersion) throw new InvalidDataException("unsupported treated as corrupt");'),
         ('SaveFormat.cs', 'if (version == CurrentVersion)\n                {', 'if (version < 0)\n                {'),
-    ], 'Schema2 preparatory reader preserves unsupported boss content'),
+    ], 'Schema2 reader preserves future boss content'),
     ('old_shallow_schema2_content_guard', [
         ('SaveFormat.cs', 'if (version == CurrentVersion) CheckSupportedContent(root, SupportedContent);', '/* Original preparatory reader only checked envelope and direct Run fields. */'),
     ], ['Schema2 nested Profile unknown content', 'Schema2 nested World unknown content']),

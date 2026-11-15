@@ -1,0 +1,997 @@
+{
+ "schema": "bible-survivors.art-manifest-r03",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R03 (Noah) actor + boss sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r03_ext.json",
+   "name": "r03-ext-v1",
+   "sha256": "ee654ca96bd4dabf984e0bbdff3054281978320b1434c7dba2b8fe8190d215e3"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r03.json",
+   "sha256": "9779c15fa026fe3c4043d0476f4779baa8ac7af1012a62b6a297e4bd3c99d6e1"
+  },
+  "telegraph": {
+   "file": "src/telegraph_r03.json",
+   "sha256": "f52bf979815c50d364206d25306edc10e79e37992fecd3ea5f3b9c285c8c0eff"
+  },
+  "generator": {
+   "file": "scripts/actors_r03.py",
+   "sha256": "2b2011daab72570f1be0b053615355d6c6a9459151b480ba9e7b2413495e7b4c"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r03.json",
+   "sha256": "ef4f5a279e28cd8a4c4054903cd2d31fdb30436770056f17c1e5253da101bd7b"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "c1": "폭력의 그림자",
+    "c2": "목재 포식자",
+    "c3": "잔해 거인"
+   },
+   "boss": "nephilim_tyrant"
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "notProduced": {
+  "bos_nephilim-tyrant_idle_64": "not needed by the first slice: the boss chases from the end of the intro and the intro holds move frame 0. Make it only if the Unity screen review asks for it."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r03.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r03.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r03_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 6:4 (Nephilim) and 6:11-14 (the earth filled with violence; the ark of gopher wood and pitch). Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_c1-violence-shadow_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/enm_c1-violence-shadow_move_32.png",
+   "sha256": "2a431bf98ccbbdaf85cc5f2f335b0731cfe65e4e13d58f4ad069a6107ffc7d54",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:c1",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     4,
+     25,
+     29
+    ],
+    [
+     4,
+     2,
+     25,
+     30
+    ],
+    [
+     3,
+     2,
+     25,
+     30
+    ],
+    [
+     4,
+     4,
+     25,
+     30
+    ]
+   ],
+   "use": "",
+   "source": {
+    "authoring": "scripts/actors_r03.py:violence_shadow",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#enm_c1-violence-shadow_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_c2-timber-devourer_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/enm_c2-timber-devourer_move_32.png",
+   "sha256": "f52e1a7785f84e443f4048615479395d7f69fad341dda651079eec3ed08e5b77",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:c2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     14,
+     29,
+     30
+    ],
+    [
+     1,
+     15,
+     29,
+     30
+    ],
+    [
+     1,
+     16,
+     30,
+     30
+    ],
+    [
+     1,
+     15,
+     29,
+     30
+    ]
+   ],
+   "use": "",
+   "source": {
+    "authoring": "scripts/actors_r03.py:timber_devourer",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#enm_c2-timber-devourer_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_c3-wreckage-giant_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/enm_c3-wreckage-giant_move_32.png",
+   "sha256": "5c93ee20e6ca0cf2f1e467468b6d6f6bd6db82ecd9249aa90e226651c626052c",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:c3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 14,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     1,
+     29,
+     30
+    ],
+    [
+     3,
+     1,
+     29,
+     30
+    ],
+    [
+     3,
+     1,
+     29,
+     30
+    ],
+    [
+     3,
+     1,
+     28,
+     30
+    ]
+   ],
+   "use": "",
+   "source": {
+    "authoring": "scripts/actors_r03.py:wreckage_giant",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#enm_c3-wreckage-giant_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_nephilim-tyrant_move_64",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/bos_nephilim-tyrant_move_64.png",
+   "sha256": "ddbcdde4521dec618fdd6881483c66e808c7ebcdfd953cafe97f42a944930108",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "this package (art 03 shadow method)",
+    "file": "export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 22,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     3,
+     51,
+     62
+    ],
+    [
+     6,
+     2,
+     51,
+     62
+    ],
+    [
+     6,
+     3,
+     51,
+     62
+    ],
+    [
+     6,
+     2,
+     51,
+     62
+    ]
+   ],
+   "use": "slow chase; also the 2 s intro, holding frame 0 (the boss does not move in the intro)",
+   "source": {
+    "authoring": "scripts/actors_r03.py:tyrant_move",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#bos_nephilim-tyrant_move_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_nephilim-tyrant_windup_64",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/bos_nephilim-tyrant_windup_64.png",
+   "sha256": "f0a9239ae4219e5d54f10469e365ff423d9ae78d2d6560356e87f8e7601a8b3b",
+   "size": [
+    192,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "this package (art 03 shadow method)",
+    "file": "export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 22,
+   "frameBBoxTopLeft": [
+    [
+     19,
+     3,
+     54,
+     62
+    ],
+    [
+     3,
+     3,
+     48,
+     62
+    ],
+    [
+     5,
+     1,
+     46,
+     62
+    ]
+   ],
+   "use": "the 1.2 s slam warning. Driven by the Core telegraph clock, not by fps: frame k from telegraph elapsed k*0.4 s; frame 2 is held until impact. Boss faces the locked target.",
+   "source": {
+    "authoring": "scripts/actors_r03.py:tyrant_windup",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#bos_nephilim-tyrant_windup_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_nephilim-tyrant_impact_64",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/bos_nephilim-tyrant_impact_64.png",
+   "sha256": "6dae237aecca499c24938bd6dadae36f341c24fed9e9f708e22f79e911ce641b",
+   "size": [
+    128,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 10,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "this package (art 03 shadow method)",
+    "file": "export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 21,
+   "frameBBoxTopLeft": [
+    [
+     15,
+     15,
+     62,
+     62
+    ],
+    [
+     15,
+     13,
+     62,
+     62
+    ]
+   ],
+   "use": "starts on the Core impact tick, plays once (0.2 s), then back to move",
+   "source": {
+    "authoring": "scripts/actors_r03.py:tyrant_impact",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#bos_nephilim-tyrant_impact_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_nephilim-tyrant_death_64",
+   "kind": "actor",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/bos_nephilim-tyrant_death_64.png",
+   "sha256": "0cad3db04e1dff1e8a401faa38d9fafb5bdcb39309b79e330bae3682c80ae446",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "this package (art 03 shadow method)",
+    "file": "export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 24,
+   "frameBBoxTopLeft": [
+    [
+     9,
+     6,
+     60,
+     62
+    ],
+    [
+     9,
+     14,
+     59,
+     62
+    ],
+    [
+     3,
+     47,
+     61,
+     62
+    ],
+    [
+     3,
+     42,
+     59,
+     62
+    ]
+   ],
+   "use": "plays once on the boss kill; the last frame (ash heap) may be held or faded by Unity",
+   "source": {
+    "authoring": "scripts/actors_r03.py:tyrant_death",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#bos_nephilim-tyrant_death_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_shadow-boss_static_40x8",
+   "kind": "shadow",
+   "contract": "src/contract_r03.json",
+   "file": "export/png/fx_shadow-boss_static_40x8.png",
+   "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+   "size": [
+    40,
+    8
+   ],
+   "cell": [
+    40,
+    8
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     40,
+     8
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     20,
+     4
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "facing": "none",
+   "alpha": {
+    "policy": "blend",
+    "values": [
+     0,
+     89
+    ]
+   },
+   "sorting": "GroundDecal",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": null,
+   "colours": 1,
+   "frameBBoxTopLeft": [
+    [
+     0,
+     0,
+     39,
+     7
+    ]
+   ],
+   "use": "boss ground shadow, drawn with the art 03 shadow method (fx03.py:shadow, key shadow.0); art 03 has no shadow wide enough for a 64 px body",
+   "source": {
+    "authoring": "scripts/actors_r03.py:boss_shadow",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#fx_shadow-boss_static_40x8"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_boss-slam-warning_static_78",
+   "kind": "reference",
+   "contract": "src/telegraph_r03.json",
+   "file": "export/png/fx_boss-slam-warning_static_78.png",
+   "sha256": "a85ec80a6f137182bb9f2ac5f8f43a010bdee245d54073b60f114e30ee3e3595",
+   "size": [
+    78,
+    78
+   ],
+   "cell": [
+    78,
+    78
+   ],
+   "frames": 1,
+   "frameRects": [
+    [
+     0,
+     0,
+     78,
+     78
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     39,
+     39
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "facing": "none",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": null,
+   "colours": 2,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     1,
+     76,
+     76
+    ]
+   ],
+   "use": "reference rendering of the style at nominal source density (radius 38.4 source px about the cell centre) for review boards and as a sanity picture for the runtime ring. A texture fallback is allowed only if it is placed and scaled so its black outer edge equals the projected radius",
+   "source": {
+    "authoring": "scripts/actors_r03.py:slam_warning",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#fx_boss-slam-warning_static_78"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "fx_boss-slam-impact_hit_72",
+   "kind": "decal",
+   "contract": "src/telegraph_r03.json",
+   "file": "export/png/fx_boss-slam-impact_hit_72.png",
+   "sha256": "7cee107435990179682396f1309c38bb999b26533e31e653fcab484b0ccfe58d",
+   "size": [
+    144,
+    72
+   ],
+   "cell": [
+    72,
+    72
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     72,
+     72
+    ],
+    [
+     72,
+     0,
+     72,
+     72
+    ]
+   ],
+   "fps": 10,
+   "loop": false,
+   "pivot": {
+    "px": [
+     36,
+     36
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "facing": "none",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "GroundDecal",
+   "ref": "boss:nephilim_tyrant",
+   "shadow": null,
+   "colours": 7,
+   "frameBBoxTopLeft": [
+    [
+     11,
+     17,
+     63,
+     58
+    ],
+    [
+     6,
+     13,
+     68,
+     58
+    ]
+   ],
+   "use": "cracks and dust at the locked target on the impact tick (the boss may be far from the target). Drawn centred on the target at actor pixel scale; all content stays inside 34 of 38.4 nominal px, so it never reaches past the boundary. Silent-safe: it is the visual 'it hit here' after the ring disappears",
+   "source": {
+    "authoring": "scripts/actors_r03.py:slam_impact",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r03.json#fx_boss-slam-impact_hit_72"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "b7eab4f4454f62bfda140a761dd30f557c64b410107964a5788c3ddd0270668e",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_c1-violence-shadow_move_32",
+      "source": "art/art-genesis-r03/export/png/enm_c1-violence-shadow_move_32.png",
+      "sha256": "2a431bf98ccbbdaf85cc5f2f335b0731cfe65e4e13d58f4ad069a6107ffc7d54",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_c2-timber-devourer_move_32",
+      "source": "art/art-genesis-r03/export/png/enm_c2-timber-devourer_move_32.png",
+      "sha256": "f52e1a7785f84e443f4048615479395d7f69fad341dda651079eec3ed08e5b77",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_c3-wreckage-giant_move_32",
+      "source": "art/art-genesis-r03/export/png/enm_c3-wreckage-giant_move_32.png",
+      "sha256": "5c93ee20e6ca0cf2f1e467468b6d6f6bd6db82ecd9249aa90e226651c626052c",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_nephilim-tyrant_move_64",
+      "source": "art/art-genesis-r03/export/png/bos_nephilim-tyrant_move_64.png",
+      "sha256": "ddbcdde4521dec618fdd6881483c66e808c7ebcdfd953cafe97f42a944930108",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_nephilim-tyrant_windup_64",
+      "source": "art/art-genesis-r03/export/png/bos_nephilim-tyrant_windup_64.png",
+      "sha256": "f0a9239ae4219e5d54f10469e365ff423d9ae78d2d6560356e87f8e7601a8b3b",
+      "width": 64,
+      "height": 64,
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_nephilim-tyrant_impact_64",
+      "source": "art/art-genesis-r03/export/png/bos_nephilim-tyrant_impact_64.png",
+      "sha256": "6dae237aecca499c24938bd6dadae36f341c24fed9e9f708e22f79e911ce641b",
+      "width": 64,
+      "height": 64,
+      "frames": 2,
+      "fps": 10,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_nephilim-tyrant_death_64",
+      "source": "art/art-genesis-r03/export/png/bos_nephilim-tyrant_death_64.png",
+      "sha256": "0cad3db04e1dff1e8a401faa38d9fafb5bdcb39309b79e330bae3682c80ae446",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "fx_shadow-boss_static_40x8",
+      "source": "art/art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png",
+      "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+      "width": 40,
+      "height": 8,
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 20,
+      "pivotY": 4,
+      "alpha": "blend",
+      "alphaValues": [
+        0,
+        89
+      ],
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

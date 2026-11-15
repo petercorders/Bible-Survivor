@@ -39,6 +39,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public BattleSnapshot? World {get;set;}
         // Optional additive schema-1 extension. Missing only on legacy R01 checkpoints.
         [DataMember(EmitDefaultValue=false)] public string? RoundFingerprint {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? Boss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public Dictionary<string,string>? Forms {get;set;}
     }
 
     [DataContract]
@@ -59,11 +61,11 @@ namespace BibleSurvivor.Core
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 3 ||
-                (Run.Stage=="normal" && Run.RoundNumber>2) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 4 ||
+                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:3)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
-                (Run.Stage != "normal" && Run.Stage != "between_rounds") || Run.Level < 1 || Run.Level > 10000 ||
+                (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement") || Run.Level < 1 || Run.Level > 10000 ||
                 Run.KillRemainder < 0 || Run.KillRemainder > 4 || Run.Health <= 0 || Run.MaxHealth <= 0 || Run.Health > Run.MaxHealth ||
                 !Finite(Run.Health) || !Finite(Run.MaxHealth) || !Finite(Run.Experience) || Run.Experience < 0 ||
                 !Finite(Run.LastHitTime) || Run.LastHitTime < -1 || Run.Weapons == null || Run.Passives == null || Run.PermanentSnapshot == null)
@@ -74,9 +76,32 @@ namespace BibleSurvivor.Core
             PermanentRules.Validate(Run.PermanentSnapshot);
             if(Run.Wave!=null && (Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null)))
                 throw new InvalidDataException("Invalid active enemy collection");
+            var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&Run.RoundNumber==4);
+            if(bossStage!=(Run.Boss!=null)||bossStage&&(SchemaVersion!=2||(Run.Stage=="between_rounds"?Run.RoundNumber!=4:Run.RoundNumber!=3)))throw new InvalidDataException("Invalid boss lifecycle");
+            if(Run.Forms!=null&&(SchemaVersion!=2||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
+            Run.Boss?.Validate(Run);
             Run.World?.Validate();
             if(Run.World!=null)
             {
+                if(Run.Boss!=null && (Run.World.SchemaVersion!=2||Math.Abs(Run.World.Time-Run.Boss.CombatTime)>1e-7||
+                    !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Boss.Health==0?Array.Empty<int>():
+                        Run.Boss.Supports.Select(x=>x.Id).Append(BossDefinition.ActorId)).OrderBy(x=>x))||
+                    (Run.Boss.Health==0&&(Run.World.Projectiles.Count!=0||Run.World.Weapons.Count!=0))||
+                    (Run.Stage=="boss_intro"&&(Run.World.Projectiles.Count!=0||Run.World.Weapons.Count!=0))||
+                    Run.World.BossKills!=(Run.Boss.Health==0?1:0)))
+                    throw new InvalidDataException("World checkpoint does not match boss lifecycle");
+                if(Run.Boss!=null && (Run.World.Projectiles.Any(p=>p.HitIds.Any(id=>id<481||id>=Run.Boss.NextActorId))||
+                    Run.World.Weapons.Any(w=>w.OrbitHits.Any(hit=>hit.Id<481||hit.Id>=Run.Boss.NextActorId))||
+                    !Run.World.MonsterSpeeds.Any(x=>x.MonsterId=="c1"&&x.Ratio==BossDefinition.SupportSpeed)))
+                    throw new InvalidDataException("Invalid boss target ledger or support speed");
+                var lastActor=Run.Boss!=null?Run.Boss.NextActorId-1:Run.Wave?.Cursor??int.MaxValue;
+                var firstActor=Run.Boss!=null?481:1;
+                if(Run.World.Weapons.Any(w=>(w.FocusTargetId!=0&&(w.FocusTargetId<firstActor||w.FocusTargetId>lastActor))||
+                    (w.PulseHitIds?.Any(id=>id<firstActor||id>lastActor)??false)||(w.FormHits?.Any(h=>h.Id<firstActor||h.Id>lastActor)??false)))
+                    throw new InvalidDataException("Evolution ledger target outside issued actors");
+                if(Run.World.Weapons.Any(w=>w.WeaponForm!=(Run.Forms!=null&&Run.Forms.TryGetValue(w.WeaponId,out var form)?form:null)))
+                    throw new InvalidDataException("World weapon form does not match inventory");
+                if(Run.Boss==null && (Run.World.SchemaVersion!=(Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if(Run.Wave!=null && (Run.Wave.Active==null || Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7 ||
                     !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(Run.Wave.Active.Select(x=>x.Id).OrderBy(x=>x))))
                     throw new InvalidDataException("World checkpoint does not match round clock or enemies");
@@ -84,7 +109,7 @@ namespace BibleSurvivor.Core
                     (Run.Stage=="between_rounds" && (Run.World.Enemies.Count!=0 || Run.World.Projectiles.Count!=0)))
                     throw new InvalidDataException("World checkpoint does not match round lifecycle");
             }
-            try { EquipmentInventory.Restore(Run.Weapons, Run.Passives); _ = new GrowthLedger(Run.Level, Run.Experience); }
+            try { EquipmentInventory.Restore(Run.Weapons, Run.Passives,Run.Forms); _ = new GrowthLedger(Run.Level, Run.Experience); }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid progression", error); }
             if ((Run.Stage == "normal") != (Run.Wave != null)) throw new InvalidDataException("Invalid wave lifecycle");
             if(Run.Stage=="between_rounds" && (Run.Drops.Count!=0 || Run.Health!=Run.MaxHealth))

@@ -9,6 +9,12 @@ namespace BibleSurvivor.Unity
     public sealed class AdamArtWorld : IDisposable
     {
         AdamR02Art r02;
+        AdamR03Art r03;
+        readonly AdamDangerRing danger=new AdamDangerRing();
+        BossEncounterState bossVisual;
+        Vector2 bossFeet;
+        bool bossLeft;
+        double bossImpactAt=-1,bossDeathAt=-1;
         public readonly struct EnemySprite
         {
             public readonly BattleEntityState Enemy;
@@ -96,6 +102,14 @@ namespace BibleSurvivor.Unity
             DroppedImpacts+=source.ReadImpacts(impactCursor,frameImpacts);
             impactCursor=source.ImpactSequence;reportedKills.Clear();
             var next=source.Capture();var active=host.Session.IsActive;var monsters=host.Session.Wave?.Active;
+            var nextBoss=host.Session.Boss;
+            if(bossVisual!=null && nextBoss!=null)
+            {
+                if(nextBoss.NextAttackAt>bossVisual.NextAttackAt)bossImpactAt=next.Time;
+                if(bossVisual.Health>0 && nextBoss.Health<=0)bossDeathAt=next.Time;
+            }
+            foreach(var e in next.Enemies)if(e.Id==BossDefinition.ActorId){bossFeet=new Vector2(e.X,e.Y);bossLeft=nextBoss!=null&&nextBoss.Telegraphing?nextBoss.TargetX<e.X:next.PlayerX<e.X;}
+            bossVisual=nextBoss;
             // A fatal contact (or retaliation opening a choice) can change the arena without advancing Core time.
             if(Snapshot == null || next.Time != Snapshot.Time || active != wasActive || next.Hits != Snapshot.Hits ||
                 next.Kills != Snapshot.Kills || next.Collected != Snapshot.Collected || next.DamageTaken != Snapshot.DamageTaken ||
@@ -133,6 +147,8 @@ namespace BibleSurvivor.Unity
                 // Terminal clip is presentation-only; Core time remains fixed. Lifecycle suspension freezes it too.
                 if(!host.Paused && !host.Suspended) Clock+=Math.Max(0,Math.Min(delta,.1f));
             }
+            if(bossDeathAt>=0 && !host.Session.IsActive && !host.Paused && !host.Suspended && Clock<bossDeathAt+4d/6)
+                Clock=Math.Min(bossDeathAt+4d/6,Clock+Math.Max(0,Math.Min(delta,.1f)));
             foreach(var effect in Effects) if(effect.Active && Clock-effect.Started>=1) effect.Active=false;
         }
         void Emit(string clip, Vector2 pos)
@@ -144,12 +160,14 @@ namespace BibleSurvivor.Unity
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
             effectPool.Clear();enemySprites.Clear();
+            bossVisual=null;bossDeathAt=-1;bossImpactAt=-1;
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;danger.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
                 case "b1":case "b2":case "b3":return AdamRoundPresentation.R02ClipId(id);
+                case "c1":case "c2":case "c3":case "nephilim_tyrant":return AdamR03Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -199,12 +217,13 @@ namespace BibleSurvivor.Unity
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
             if(host.Session.IsActive)
             {
-                var monsters=host.Session.Wave?.Active;var experience=host.Session.DroppedExperience;
+                var monsters=host.Session.Targets;var experience=host.Session.DroppedExperience;
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
                         var id=monster.MonsterId;
-                        art.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);
+                        if(id=="nephilim_tyrant"){if(r03==null)r03=new AdamR03Art();r03.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);}
+                        else art.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);
                     }
                 foreach(var drop in snap.Drops)
                     if(experience.TryGetValue(drop.Id,out var xp))
@@ -218,7 +237,17 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.R02Enemy(monster.MonsterId))
+                        if(AdamRoundPresentation.R03Enemy(monster.MonsterId))
+                        {
+                            if(r03==null)r03=new AdamR03Art();var id=monster.MonsterId;
+                            if(id=="nephilim_tyrant")
+                            {
+                                var clip=BossClip(host.Session.Stage,bossVisual,bossImpactAt,Clock,out var frame);
+                                r03.Draw(clip,anchor,scale,Clock,bossLeft,frame);
+                            }
+                            else r03.Draw(EnemyClip(id),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        }
+                        else if(AdamRoundPresentation.R02Enemy(monster.MonsterId))
                         {
                             if(r02==null){r02=new AdamR02Art();r02.PrepareHitMasks();}
                             var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
@@ -229,6 +258,11 @@ namespace BibleSurvivor.Unity
                         GUI.matrix=before;GUI.color=tint;
                     }
                 }
+            }
+            if(bossDeathAt>=0)
+            {
+                if(r03==null)r03=new AdamR03Art();
+                r03.Draw(AdamR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);
             }
             // Transparent particles sit above terrain/enemies but below actor/weapons and every HUD/modal control.
             particles?.Draw(projection);
@@ -281,7 +315,18 @@ namespace BibleSurvivor.Unity
             foreach(var effect in Effects)
                 if(effect.Active && Clock-effect.Started<art.Clip(effect.Clip).frames/(double)art.Clip(effect.Clip).fps)
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
+            if(bossVisual?.Telegraphing==true && host.Session.Stage=="boss")
+                danger.Draw(projection,new Vector2(bossVisual.TargetX,bossVisual.TargetY),(float)BossDefinition.SlamRadius);
             GUI.EndGroup();
+        }
+        public static string BossClip(string stage,BossEncounterState boss,double impactAt,double clock,out int frame)
+        {
+            frame=-1;
+            if(stage=="boss_intro"){frame=0;return AdamR03Art.BossMove;}
+            if(boss?.Telegraphing==true)
+            {frame=Mathf.Clamp((int)Math.Floor((boss.BossElapsed-(boss.NextAttackAt-BossDefinition.TelegraphSeconds))/.4+1e-8),0,2);return AdamR03Art.BossWindup;}
+            if(impactAt>=0 && clock-impactAt<.2){frame=Mathf.Clamp((int)((clock-impactAt)*10),0,1);return AdamR03Art.BossImpact;}
+            return AdamR03Art.BossMove;
         }
     }
 }

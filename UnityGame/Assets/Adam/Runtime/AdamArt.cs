@@ -61,6 +61,7 @@ namespace BibleSurvivor.Unity
                         throw new InvalidOperationException("Invalid imported registration: "+clip.id);
                 sprites.Add(clip.id, frames);
             }
+            AdamBibleArtSidecar.Apply(clips, sprites);
         }
         public AdamArtClip Clip(string id) => clips[id];
         public Sprite Sprite(string id, int frame) => sprites[id][Mathf.Clamp(frame, 0, clips[id].frames - 1)];
