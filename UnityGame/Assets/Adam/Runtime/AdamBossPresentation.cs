@@ -16,6 +16,8 @@ namespace BibleSurvivor.Unity
             if(candidate.Kind=="item")return AdamChoiceText.Describe(candidate.ItemId,session.Inventory,session.DamageMultiplier).Card(slot);
             throw new ArgumentException("Unsupported reward candidate");
         }
-        public static string Phase(AdamSession session)=>session.Stage=="boss_intro"?"등장 · 피해 보호":session.Boss?.Telegraphing==true?"내려치기 예고":session.Boss?.ThresholdUsed==true?"분노 · 지원군":"추격";
+        public static string Name(AdamSession session)=>session.BossRules.Id=="sitnah_keeper"?"싯나의 우물지기":"네피림 폭군";
+        public static double HealthFraction(AdamSession session)=>session.Boss.Health/session.BossRules.MaxHealth;
+        public static string Phase(AdamSession session)=>session.Stage=="boss_intro"?"등장 · 피해 보호":session.Boss?.Telegraphing==true?(session.BossRules.Number==6?"흙더미 낙하 예고":"내려치기 예고"):session.Boss?.ThresholdUsed==true?"분노 · 지원군":"추격";
     }
 }

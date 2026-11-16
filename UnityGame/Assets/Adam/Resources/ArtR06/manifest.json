@@ -1,0 +1,834 @@
+{
+ "schema": "bible-survivors.art-manifest-r06",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R06 (Isaac) F1-F3 enemy and Sitnah well-keeper boss sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r06_ext.json",
+   "name": "r06-ext-v1",
+   "sha256": "75f0ab21a05600f231783b0c9fecbdf730794cf7da1bd7b343560939af32b300"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r06.json",
+   "sha256": "20e9ae03593ab028b7ef0bc7695b489a6c17162afcc8802e4dc3f63be8070dab"
+  },
+  "telegraph": {
+   "file": "src/telegraph_r06.json",
+   "sha256": "c83776c64ec2ad9041b21912d9419146fd4d75854d77448a05970ab85750f813",
+   "assets": "none (ring drawn from Core)"
+  },
+  "generator": {
+   "file": "scripts/actors_r06.py",
+   "sha256": "a27c5b661a7df919ffa535ee52896810944efbc8bb2dc4ef457ac560b375b68b"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r06.json",
+   "sha256": "a3724d6e339b9e4f56e2181b35d3c6bd35a6a8b4b7684495c8751678f2949439"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "f1": "물 약탈자",
+    "f2": "우물 메움마",
+    "f3": "다툼의 갑주"
+   },
+   "boss": "sitnah_keeper",
+   "bossAttack": "telegraphed_dirt_throw: cooldown 7 s, telegraph 1.2 s, damage 18, projectile_count 0"
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "r03": {
+   "package": "art-genesis-r03",
+   "why": "the boss keeps the R03 slow-boss display radius 1.20, so the R03 boss shadow is reused unchanged instead of drawing a new one",
+   "shadows": {
+    "fx_shadow-boss_static_40x8": {
+     "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+     "cell": [
+      40,
+      8
+     ],
+     "pivot": [
+      20,
+      4
+     ],
+     "alpha": "blend",
+     "sorting": "GroundDecal"
+    }
+   }
+  }
+ },
+ "notProduced": {
+  "warning ring PNG": "none on purpose: the ring is drawn procedurally from the Core target and radius (src/telegraph_r06.json)",
+  "dirt clod in flight / fallen dirt decal": "not made in this round. The arc and the fallen dirt are a Unity visual only, decoration, never path-blocking or lasting-damage terrain. If root wants a sprite later, a separate small fx proposal (a 16 px binary clod plus a short scatter that fades) would need its own contract",
+  "summon effect for the F1 support waves": "the 70% / 35% F1 summons use the F1 move clip and the shared enemy spawn handling; no extra summon art",
+  "F1-F3 hit / death clips": "not in the R06 brief; the existing shared enemy hit/death handling applies",
+  "new boss shadow": "the R03 40x8 boss shadow is reused unchanged (same display radius 1.20)"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r06.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r06.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r06_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 26:15-22 (the wells filled with dirt, the quarrels over water at Esek and Sitnah, then Rehoboth). Sitnah is the name of a well, not a person. Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_f1-water-raider_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/enm_f1-water-raider_move_32.png",
+   "sha256": "791fb18e4750194edd4d81d7ca9a5445c139a0b7d923e177bc08357fe4add536",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 10,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:f1",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 14,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     6,
+     28,
+     30
+    ],
+    [
+     2,
+     5,
+     28,
+     30
+    ],
+    [
+     2,
+     6,
+     28,
+     30
+    ],
+    [
+     2,
+     5,
+     28,
+     30
+    ]
+   ],
+   "use": "fast chase loop: a lean jackal-like raider sprinting with a stolen water skin on its back. Swarm enemy (also the boss's support summon); the water skin is look only",
+   "source": {
+    "authoring": "scripts/actors_r06.py:water_raider",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#enm_f1-water-raider_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_f2-well-filler_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/enm_f2-well-filler_move_32.png",
+   "sha256": "55c65570da93c5e5bf0d60778820ca8c419d8462611920c8f96975edc9048e85",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 7,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:f2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 16,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     5,
+     29,
+     30
+    ],
+    [
+     5,
+     4,
+     29,
+     30
+    ],
+    [
+     5,
+     5,
+     29,
+     30
+    ],
+    [
+     5,
+     4,
+     29,
+     30
+    ]
+   ],
+   "use": "heavy chase loop: a squat burrowing beast hauling a heaped basket of dirt, shovel claws in front. The dirt stays on its back: it drops nothing and leaves no ground decal",
+   "source": {
+    "authoring": "scripts/actors_r06.py:well_filler",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#enm_f2-well-filler_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_f3-strife-armour_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/enm_f3-strife-armour_move_32.png",
+   "sha256": "6b10cccffc7014bc30d13bb42d5e7fec9bf5b6e97ece80595921bf71e4aa4290",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 5,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:f3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 12,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     1,
+     24,
+     30
+    ],
+    [
+     6,
+     1,
+     25,
+     30
+    ],
+    [
+     5,
+     1,
+     26,
+     30
+    ],
+    [
+     6,
+     1,
+     25,
+     30
+    ]
+   ],
+   "use": "slow chase loop: a hollow horned suit of plates stomping forward with an angry glow in the empty helm. It looks hard but has no shield and no closed front: F3 has no frontal invulnerability",
+   "source": {
+    "authoring": "scripts/actors_r06.py:strife_armour",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#enm_f3-strife-armour_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_sitnah-keeper_move_64",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/bos_sitnah-keeper_move_64.png",
+   "sha256": "5bc8e5cba0a3da2c6b3fd9f5c6f1444faa51f0ea544c906efaa3474de1d8a7b7",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:sitnah_keeper",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 16,
+   "frameBBoxTopLeft": [
+    [
+     8,
+     15,
+     59,
+     62
+    ],
+    [
+     10,
+     14,
+     57,
+     62
+    ],
+    [
+     10,
+     15,
+     54,
+     62
+    ],
+    [
+     10,
+     14,
+     57,
+     62
+    ]
+   ],
+   "use": "slow chase; also the boss intro, holding frame 0. A living stone well whose mouth is choked with dirt, a bucket hanging on a chain from the rim",
+   "source": {
+    "authoring": "scripts/actors_r06.py:keeper_move",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#bos_sitnah-keeper_move_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_sitnah-keeper_windup_64",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/bos_sitnah-keeper_windup_64.png",
+   "sha256": "3cb49c9f974f455b64e3515313b01927fa90f8d4f04413a714db8e7299b8bb0c",
+   "size": [
+    192,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:sitnah_keeper",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 16,
+   "frameBBoxTopLeft": [
+    [
+     13,
+     16,
+     54,
+     62
+    ],
+    [
+     12,
+     6,
+     53,
+     62
+    ],
+    [
+     11,
+     3,
+     51,
+     62
+    ]
+   ],
+   "use": "the 1.2 s dirt-throw warning (Core: warning from boss elapsed 5.8 s in each 7 s cycle, the boss stops and the player position is locked). Driven by the Core telegraph clock, not by fps: frame k from telegraph elapsed k*0.4 s; frame 2 (heap held overhead) is held until impact. The danger ring is drawn separately from Core, see src/telegraph_r06.json",
+   "source": {
+    "authoring": "scripts/actors_r06.py:keeper_windup",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#bos_sitnah-keeper_windup_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_sitnah-keeper_impact_64",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/bos_sitnah-keeper_impact_64.png",
+   "sha256": "626d1848874b32e1e0e7eeb66ef8b38c63afcc65927ef4e556c9142dbd7dd122",
+   "size": [
+    128,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 10,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:sitnah_keeper",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 16,
+   "frameBBoxTopLeft": [
+    [
+     14,
+     5,
+     59,
+     62
+    ],
+    [
+     14,
+     3,
+     60,
+     62
+    ]
+   ],
+   "use": "starts on the Core impact tick (warning end), plays once (0.2 s), then back to move. The heap leaves the hands; the flight arc and any fallen dirt are Unity visuals only and are not in this clip",
+   "source": {
+    "authoring": "scripts/actors_r06.py:keeper_impact",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#bos_sitnah-keeper_impact_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_sitnah-keeper_death_64",
+   "kind": "actor",
+   "contract": "src/contract_r06.json",
+   "file": "export/png/bos_sitnah-keeper_death_64.png",
+   "sha256": "962ccab5a02c61a375a06d426a57098a4d70f87be4895cd92ebbe3032ed493f6",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:sitnah_keeper",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 15,
+   "frameBBoxTopLeft": [
+    [
+     8,
+     16,
+     52,
+     62
+    ],
+    [
+     8,
+     10,
+     54,
+     62
+    ],
+    [
+     6,
+     31,
+     57,
+     62
+    ],
+    [
+     5,
+     38,
+     58,
+     62
+    ]
+   ],
+   "use": "plays once on the boss kill: the keeper breaks apart and the filled well flows again; the last frame (an open stone well with clear water) may be held or faded by Unity. It is not terrain and does not block movement",
+   "source": {
+    "authoring": "scripts/actors_r06.py:keeper_death",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r06.json#bos_sitnah-keeper_death_64"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

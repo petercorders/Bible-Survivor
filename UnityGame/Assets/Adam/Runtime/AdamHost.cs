@@ -28,8 +28,9 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR03 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==3 && Session?.RoundNumber==2;
         public bool AwaitingR04 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==4 && Session?.RoundNumber==3;
         public bool AwaitingR05 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==5 && Session?.RoundNumber==4;
-        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05;
-        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==6 && Session?.RoundNumber==5;
+        public bool AwaitingR06 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==6 && Session?.RoundNumber==5;
+        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06;
+        public bool ContentComplete => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==7 && Session?.RoundNumber==6;
         public bool CanStartNew => State!=null && (State.Run==null || (ContentComplete && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }

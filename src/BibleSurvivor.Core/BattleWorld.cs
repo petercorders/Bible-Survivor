@@ -272,7 +272,7 @@ namespace BibleSurvivor.Core
             this.tuning=(tuning??new BattleTuning()).Copy();this.tuning.Validate();
             if(monsterSpeeds==null||monsterSpeeds.Count==0||monsterSpeeds.Any(x=>string.IsNullOrWhiteSpace(x.Key)||
                 !BattleSnapshot.Finite(x.Value)||x.Value<=0||x.Value>10))throw new ArgumentException("Invalid monster speeds");
-            if(session.RoundNumber==3&&(!monsterSpeeds.TryGetValue("c1",out var supportSpeed)||supportSpeed!=BossDefinition.SupportSpeed))
+            if(session.BossRules!=null&&(!monsterSpeeds.TryGetValue(session.BossRules.SupportMonster,out var supportSpeed)||supportSpeed!=session.BossRules.SupportRatio))
                 throw new ArgumentException("Unsupported boss support speed");
             if(session.RoundNumber==4&&(!monsterSpeeds.TryGetValue("d1",out var d1)||d1!=.65||!monsterSpeeds.TryGetValue("d2",out var d2)||d2!=.5||!monsterSpeeds.TryGetValue("d3",out var d3)||d3!=.6))throw new ArgumentException("Unsupported R04 monster speed");
             if(session.RoundNumber==5&&(!monsterSpeeds.TryGetValue("e1",out var e1)||e1!=E1Speed||!monsterSpeeds.TryGetValue("e2",out var e2)||e2!=E2Speed||!monsterSpeeds.TryGetValue("e3",out var e3)||e3!=E3Speed))throw new ArgumentException("Unsupported R05 monster speed");
@@ -364,11 +364,11 @@ namespace BibleSurvivor.Core
             {
                 if(Session.Encounter!=null)
                 {
-                    if(enemy.Id==BossDefinition.ActorId)enemies.Add(enemy.Id,PlayerPosition+new Vector2(0,(float)BossDefinition.IntroOffset));
+                    if(enemy.Id==Session.BossRules!.BossActorId)enemies.Add(enemy.Id,PlayerPosition+new Vector2(0,(float)BossDefinition.IntroOffset));
                     else
                     {
-                        var angle=(enemy.Id-482)*2*Math.PI/6;
-                        enemies.Add(enemy.Id,enemies[BossDefinition.ActorId]+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)BossDefinition.SupportRadius);
+                        var angle=(enemy.Id-Session.BossRules!.BossActorId-1)*2*Math.PI/BossDefinition.SupportCount;
+                        enemies.Add(enemy.Id,enemies[Session.BossRules!.BossActorId]+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)BossDefinition.SupportRadius);
                     }
                     continue;
                 }
@@ -416,7 +416,7 @@ namespace BibleSurvivor.Core
             if(!BattleSnapshot.Position(position.X,position.Y))throw new InvalidOperationException("World coordinate limit exceeded");
             return position;
         }
-        private double TargetRadius(int id)=>Session.Encounter!=null&&id==BossDefinition.ActorId?BossDefinition.Radius:tuning.EnemyRadius;
+        private double TargetRadius(int id)=>Session.Encounter!=null&&id==Session.BossRules!.BossActorId?BossDefinition.Radius:tuning.EnemyRadius;
         private void EnterBossGeometry()
         {
             impactFloor=ImpactSequence+1;
@@ -438,8 +438,8 @@ namespace BibleSurvivor.Core
             Synchronize();var previous=new Dictionary<int,Vector2>(enemies);
             foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
             {
-                if(pair.Key==BossDefinition.ActorId&&boss.Telegraphing)continue;
-                var ratio=pair.Key==BossDefinition.ActorId?BossDefinition.Speed:speeds["c1"];
+                if(pair.Key==Session.BossRules!.BossActorId&&boss.Telegraphing)continue;
+                var ratio=pair.Key==Session.BossRules!.BossActorId?BossDefinition.Speed:speeds[Session.BossRules!.SupportMonster];
                 var offset=PlayerPosition-pair.Value;var distance=offset.Length();
                 if(distance>1e-6)enemies[pair.Key]=pair.Value+offset/distance*(float)Math.Min(distance,tuning.PlayerSpeed*ratio*FixedStep);
             }
@@ -453,10 +453,10 @@ namespace BibleSurvivor.Core
             }
             if(boss.BossElapsed+1e-9>=boss.NextAttackAt)
             {
-                boss.Telegraphing=false;boss.NextAttackAt+=BossDefinition.Period;
+                boss.Telegraphing=false;boss.NextAttackAt+=Session.BossRules!.AttackPeriod;
                 if(Vector2.DistanceSquared(PlayerPosition,new Vector2(boss.TargetX,boss.TargetY))<=Math.Pow(BossDefinition.SlamRadius+tuning.PlayerRadius,2))
                 {
-                    ApplyPlayerDamage(BossDefinition.SlamDamage,"slam");
+                    ApplyPlayerDamage(Session.BossRules!.AttackDamage,"slam");
                     if(!Session.IsActive){ClearEnded();return;}
                     if(Session.LastRetaliationDamage>0)retaliations++;
                 }
@@ -473,7 +473,8 @@ namespace BibleSurvivor.Core
                 if(Running)MoveProjectiles(previous);
                 if(Running)CollectNearby();
             }
-            if(!Session.IsActive){ClearEnded();weapons.Clear();}
+            if(Session.IsActive)Synchronize();
+            else {ClearEnded();weapons.Clear();}
             Session.Capture();
         }
         private void ApplyPlayerDamage(int amount,string cause)
@@ -620,7 +621,7 @@ namespace BibleSurvivor.Core
         {
             if(!Session.CanAttack||!enemies.TryGetValue(id,out var position)||!Session.Targets.ContainsKey(id))return;
             var before=Session.Targets[id].Health;Session.Hit(id,damage);
-            if(!Session.Targets.TryGetValue(id,out var after)){Hits++;if(id==BossDefinition.ActorId&&Session.Encounter!=null)BossKills++;else Kills++;enemies.Remove(id);charges.Remove(id);
+            if(!Session.Targets.TryGetValue(id,out var after)){Hits++;if(Session.Encounter!=null&&id==Session.BossRules!.BossActorId)BossKills++;else Kills++;enemies.Remove(id);charges.Remove(id);
                 if(Session.DroppedExperience.ContainsKey(id))drops[id]=position;
                 if(Session.Stage=="boss_reward"||Session.Stage=="boss_settlement")impactFloor=ImpactSequence+1;
                 Impact(cause,id,contact,before,true);

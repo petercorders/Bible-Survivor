@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    // Adapter reads the unchanged canonical catalog for the five implemented rounds.
+    // Adapter reads the unchanged canonical catalog for the six implemented rounds.
     public sealed class AdamCatalog
     {
         [Serializable] public class Root { public int schema_version; public string chapter_id; public Rules rules; public Monster[] monsters; public Round[] rounds; public Boss[] bosses; }
@@ -24,14 +24,14 @@ namespace BibleSurvivor.Unity
         public IReadOnlyDictionary<string, double> Speeds { get; }
         public RoundDefinition ForRound(int number)
         {
-            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only R01/R02/R03/R04/R05 are implemented; R06 is pending");
+            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only R01/R02/R03/R04/R05/R06 are implemented; R07 is pending");
             return value;
         }
         public RoundDefinition ForCheckpoint(RunState run)
         {
             var boss=run.Stage=="boss_intro"||run.Stage=="boss"||run.Stage=="boss_reward"||run.Stage=="boss_settlement";
             var number=run.Stage=="normal"||run.Stage=="round_settlement"||boss?run.RoundNumber:run.Stage=="between_rounds"?run.RoundNumber-1:0;
-            if((boss&&number!=3)||number<1||number>5 || (run.Stage=="round_settlement"&&number!=4&&number!=5))throw new InvalidDataException("Checkpoint is outside implemented content");
+            if((boss&&number!=3&&number!=6)||number<1||number>6 || (run.Stage=="round_settlement"&&number!=4&&number!=5))throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(number);
         }
         public AdamCatalog(string json)
@@ -40,16 +40,19 @@ namespace BibleSurvivor.Unity
             if(root?.rules==null || root.monsters==null || root.rounds==null || root.schema_version!=1 || root.chapter_id!="genesis" || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170)
                 throw new InvalidDataException("Unsupported Genesis catalog");
             var monsters=root.monsters.ToDictionary(x=>x.id);Speeds=root.monsters.ToDictionary(x=>x.id,x=>x.speed_ratio);
-            var boss=root.bosses?.SingleOrDefault(x=>x.id=="nephilim_tyrant");var attack=boss?.attack;var support=boss?.support_summons?.SingleOrDefault();
-            if(boss==null||attack==null||support==null||boss.max_health!=BossDefinition.Health||boss.contact_damage!=BossDefinition.ContactDamage||boss.gold!=BossDefinition.Gold||
-                attack.cooldown_seconds!=BossDefinition.Period||attack.telegraph_seconds!=BossDefinition.TelegraphSeconds||attack.damage!=BossDefinition.SlamDamage||attack.projectile_count!=0||attack.pattern_id!="telegraphed_club_slam"||
-                support.health_ratio!=BossDefinition.ThresholdRatio||support.monster_id!="c1"||support.count!=BossDefinition.SupportCount||root.rules.boss_intro_seconds!=BossDefinition.IntroSeconds||root.rules.boss_support_cap!=12||
-                monsters["c1"].max_health!=BossDefinition.SupportHealth||monsters["c1"].contact_damage!=BossDefinition.SupportDamage||monsters["c1"].speed_ratio!=BossDefinition.SupportSpeed)
-                throw new InvalidDataException("Unsupported first boss catalog contract");
-            foreach(var number in new[]{1,2,3,4,5})
+            foreach(var bossRound in new[]{3,6})
+            {
+                var rules=BossDefinition.ForRound(bossRound);var boss=root.bosses?.SingleOrDefault(x=>x.id==rules.Id);var attack=boss?.attack;var support=boss?.support_summons;
+                if(boss==null||attack==null||support==null||boss.max_health!=rules.MaxHealth||boss.contact_damage!=rules.Contact||boss.gold!=rules.KillGold||
+                    attack.cooldown_seconds!=rules.AttackPeriod||attack.telegraph_seconds!=BossDefinition.TelegraphSeconds||attack.damage!=rules.AttackDamage||attack.projectile_count!=0||attack.pattern_id!=(bossRound==3?"telegraphed_club_slam":"telegraphed_dirt_throw")||
+                    support.Length!=rules.Thresholds.Count||support.Where((x,i)=>x.health_ratio!=rules.Thresholds[i]||x.monster_id!=rules.SupportMonster||x.count!=BossDefinition.SupportCount).Any()||root.rules.boss_intro_seconds!=BossDefinition.IntroSeconds||root.rules.boss_support_cap!=12||
+                    monsters[rules.SupportMonster].max_health!=rules.SupportHitPoints||monsters[rules.SupportMonster].contact_damage!=rules.SupportContact||monsters[rules.SupportMonster].speed_ratio!=rules.SupportRatio)
+                    throw new InvalidDataException("Unsupported boss catalog contract: "+rules.Id);
+            }
+            foreach(var number in new[]{1,2,3,4,5,6})
             {
                 var round=root.rounds.Single(x=>x.number==number);
-                if(round.id!="genesis_0"+number || (number==3?round.boss_id!="nephilim_tyrant":!string.IsNullOrEmpty(round.boss_id)) || round.waves==null)throw new InvalidDataException("Invalid implemented round identity");
+                if(round.id!="genesis_0"+number || ((number==3||number==6)?round.boss_id!=BossDefinition.ForRound(number).Id:!string.IsNullOrEmpty(round.boss_id)) || round.waves==null)throw new InvalidDataException("Invalid implemented round identity");
                 var waves=round.waves.Select(w=>new WaveDefinition(w.start_seconds,w.end_seconds,w.composition.Select(g=>
                 {
                     if(!monsters.TryGetValue(g.monster_id,out var monster))throw new InvalidDataException("Unknown round monster "+g.monster_id);

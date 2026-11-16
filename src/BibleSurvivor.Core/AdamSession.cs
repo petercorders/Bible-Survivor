@@ -20,12 +20,13 @@ namespace BibleSurvivor.Core
         public string Stage => run.Stage;
         public BossEncounterState? Boss => run.Boss?.Copy();
         internal BossEncounterState? Encounter => run.Boss;
+        public BossDefinition? BossRules=>definition.Number==3||definition.Number==6?BossDefinition.ForRound(definition.Number):null;
         public bool NeedsRewardImplementation => IsCurrent && run.Stage=="boss_reward" && run.Boss?.Reward?.PolicyId==BossDefinition.LegacyPolicy;
         public IReadOnlyList<BossRewardCandidate> BossChoices=>run.Boss?.Reward?.Candidates?.Select(x=>x.Copy()).ToList().AsReadOnly() ?? (IReadOnlyList<BossRewardCandidate>)Array.Empty<BossRewardCandidate>();
         public string WeaponForm(string weapon)=>Inventory.Forms.TryGetValue(weapon,out var form)?form:weapon;
         internal double TargetMaxHealth(int id)
         {
-            if(run.Boss!=null)return id==BossDefinition.ActorId?BossDefinition.Health:BossDefinition.SupportHealth;
+            if(run.Boss!=null)return id==BossRules!.BossActorId?BossRules.MaxHealth:BossRules.SupportHitPoints;
             if(!Targets.TryGetValue(id,out var target))throw new ArgumentException("Target gone");
             return definition.Waves.SelectMany(x=>x.Groups).First(x=>x.MonsterId==target.MonsterId).Health;
         }
@@ -38,7 +39,7 @@ namespace BibleSurvivor.Core
         {
             if(run.Stage=="boss_reward"||run.Stage=="boss_settlement"||run.Stage=="between_rounds")return new Dictionary<int,SpawnedEnemy>();
             var result=run.Boss!.Supports.ToDictionary(x=>x.Id,x=>x.Copy());
-            if(run.Boss.Health>0)result.Add(BossDefinition.ActorId,new SpawnedEnemy{Id=BossDefinition.ActorId,MonsterId="nephilim_tyrant",Health=run.Boss.Health,ContactDamage=BossDefinition.ContactDamage});
+            if(run.Boss.Health>0)result.Add(BossRules!.BossActorId,new SpawnedEnemy{Id=BossRules.BossActorId,MonsterId=BossRules.Id,Health=run.Boss.Health,ContactDamage=BossRules.Contact});
             return result;
         }
         public int RoundNumber => definition.Number;
@@ -76,7 +77,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > 5 ||
+            if (definition.Number < 1 || definition.Number > 6 ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -95,7 +96,7 @@ namespace BibleSurvivor.Core
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number>5 || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number>6 || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             state.Validate(); Capture();
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
@@ -142,14 +143,22 @@ namespace BibleSurvivor.Core
             if(run.Boss!=null)
             {
                 if(!CanAttack)return;
-                if(id==BossDefinition.ActorId)
+                if(id==BossRules!.BossActorId)
                 {
                     run.Boss.Health=Math.Max(0,run.Boss.Health-damage);
                     if(run.Boss.Health==0) BossDefeated();
-                    else if(run.Boss.Health<=BossDefinition.Health*BossDefinition.ThresholdRatio && !run.Boss.ThresholdUsed)
+                    else
                     {
-                        run.Boss.ThresholdUsed=true;run.Boss.Summoned=6;
-                        for(var i=0;i<6;i++)run.Boss.Supports.Add(new SpawnedEnemy{Id=run.Boss.NextActorId++,MonsterId="c1",Health=BossDefinition.SupportHealth,ContactDamage=BossDefinition.SupportDamage,RawExperience=0});
+                        var rules=BossRules!;
+                        for(var threshold=0;threshold<rules.Thresholds.Count;threshold++)
+                        {
+                            var used=rules.Number==3?run.Boss.ThresholdUsed:(run.Boss.SummonMask&(1<<threshold))!=0;
+                            if(used||run.Boss.Health>rules.MaxHealth*rules.Thresholds[threshold])continue;
+                            run.Boss.ThresholdUsed=true;
+                            if(rules.Number==6)run.Boss.SummonMask|=1<<threshold;
+                            run.Boss.Summoned+=BossDefinition.SupportCount;
+                            for(var i=0;i<BossDefinition.SupportCount;i++)run.Boss.Supports.Add(new SpawnedEnemy{Id=run.Boss.NextActorId++,MonsterId=rules.SupportMonster,Health=rules.SupportHitPoints,ContactDamage=rules.SupportContact,RawExperience=0});
+                        }
                     }
                 }
                 else
@@ -213,12 +222,12 @@ namespace BibleSurvivor.Core
         private void Finish()
         {
             if (!IsActive) return;
-            if(definition.Number==3)
+            if(definition.Number==3||definition.Number==6)
             {
                 var ended=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
                 run.Drops.Clear();run.World=null;Wave=null;run.Stage="boss_intro";
-                run.Boss=new BossEncounterState{EncounterId=BossDefinition.EncounterId(run.RunId),NormalEndedAt=ended};
+                run.Boss=new BossEncounterState{EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
             if(definition.Number==4||definition.Number==5)
@@ -258,7 +267,7 @@ namespace BibleSurvivor.Core
         {
             if(!IsCurrent||run.Stage!="boss_reward"||run.Boss?.Reward==null)return false;
             var reward=run.Boss.Reward;
-            if(reward.PolicyId!=BossDefinition.Policy||reward.RewardId!=rewardId||reward.Applied||
+            if(reward.PolicyId!=BossRules!.RewardPolicy||reward.RewardId!=rewardId||reward.Applied||
                 !BossRewards.Same(reward.Weapons,Inventory.Weapons)||!BossRewards.Same(reward.Passives,Inventory.Passives)||!BossRewards.Same(reward.Forms,Inventory.Forms))return false;
             var candidate=reward.Candidates?.SingleOrDefault(x=>x.Id==candidateId);if(candidate==null)return false;
             // Refuse a stale/capped grant before changing inventory, money or the receipt.
@@ -283,17 +292,17 @@ namespace BibleSurvivor.Core
             if(!IsCurrent||run.Stage!="boss_settlement"||run.PendingLevels!=0||run.Boss?.Reward?.Applied!=true||run.Boss.CompletionApplied)return false;
             state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
             if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
-            run.Health=run.MaxHealth;run.Boss.CompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=4;run.World=null;Capture();return true;
+            run.Health=run.MaxHealth;run.Boss.CompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=definition.Number+1;run.World=null;Capture();return true;
         }
         private void CreditKill()
         { if (++run.KillRemainder == 5) { state.Profile.Gold = checked(state.Profile.Gold + 1); run.KillRemainder = 0; } }
         private void BossDefeated()
         {
             var boss=run.Boss!;
-            if(!boss.BossGoldApplied){state.Profile.Gold=checked(state.Profile.Gold+BossDefinition.Gold);boss.BossGoldApplied=true;}
+            if(!boss.BossGoldApplied){state.Profile.Gold=checked(state.Profile.Gold+BossRules!.KillGold);boss.BossGoldApplied=true;}
             foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
             run.Drops.Clear();boss.Supports.Clear();boss.Telegraphing=false;run.World=null;run.Stage="boss_reward";
-            boss.Reward=new BossRewardState{RewardId=boss.EncounterId+":reward",Weapons=Inventory.Weapons.ToDictionary(x=>x.Key,x=>x.Value),
+            boss.Reward=new BossRewardState{PolicyId=BossRules!.RewardPolicy,RewardId=boss.EncounterId+":reward",Weapons=Inventory.Weapons.ToDictionary(x=>x.Key,x=>x.Value),
                 Passives=Inventory.Passives.ToDictionary(x=>x.Key,x=>x.Value),Forms=Inventory.Forms.Count==0?null:Inventory.Forms.ToDictionary(x=>x.Key,x=>x.Value),
                 UnlockedWeapons=state.Profile.UnlockedWeapons.OrderBy(x=>x,StringComparer.Ordinal).ToList(),EligibleEvolutions=EvolutionRules.Eligibility(Inventory.Weapons,Inventory.Passives,Inventory.Forms)};
             boss.Reward.Candidates=BossRewards.Generate(boss.Reward);

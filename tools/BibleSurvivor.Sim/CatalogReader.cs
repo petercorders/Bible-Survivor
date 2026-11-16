@@ -18,7 +18,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number<1 || number>5) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R05 core is implemented");
+        if(number<1 || number>6) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R06 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
         if(root.GetProperty("schema_version").GetInt32()!=1 || root.GetProperty("chapter_id").GetString()!="genesis")
@@ -28,7 +28,7 @@ public static class CatalogReader
             throw new InvalidDataException("Incompatible wave clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
         var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
-        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || (number==3 ? round.GetProperty("boss_id").GetString()!="nephilim_tyrant" : round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null))
+        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || ((number==3||number==6) ? round.GetProperty("boss_id").GetString()!=(number==3?"nephilim_tyrant":"sitnah_keeper") : round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null))
             throw new InvalidDataException("Incompatible round identity");
         if(number==3)
         {
@@ -55,6 +55,16 @@ public static class CatalogReader
         }
         if(number==5&&(monsters["e1"].GetProperty("behavior_id").GetString()!="chase"||monsters["e2"].GetProperty("behavior_id").GetString()!="slow_chase"||monsters["e3"].GetProperty("behavior_id").GetString()!="fast_chase"||
             monsters["e1"].GetProperty("speed_ratio").GetDouble()!=.6||monsters["e2"].GetProperty("speed_ratio").GetDouble()!=.45||monsters["e3"].GetProperty("speed_ratio").GetDouble()!=.95))throw new InvalidDataException("Unsupported R05 chase contract");
+        if(number==6)
+        {
+            var boss=root.GetProperty("bosses").EnumerateArray().Single(x=>x.GetProperty("id").GetString()=="sitnah_keeper");var attack=boss.GetProperty("attack");
+            var summons=boss.GetProperty("support_summons").EnumerateArray().ToArray();
+            if(boss.GetProperty("max_health").GetInt32()!=6500||boss.GetProperty("contact_damage").GetInt32()!=16||boss.GetProperty("gold").GetInt32()!=200||
+                attack.GetProperty("pattern_id").GetString()!="telegraphed_dirt_throw"||attack.GetProperty("cooldown_seconds").GetDouble()!=7||attack.GetProperty("telegraph_seconds").GetDouble()!=1.2||attack.GetProperty("damage").GetInt32()!=18||attack.GetProperty("projectile_count").GetInt32()!=0||
+                summons.Length!=2||summons[0].GetProperty("health_ratio").GetDouble()!=.7||summons[1].GetProperty("health_ratio").GetDouble()!=.35||summons.Any(x=>x.GetProperty("monster_id").GetString()!="f1"||x.GetProperty("count").GetInt32()!=6)||
+                monsters["f1"].GetProperty("max_health").GetInt32()!=80||monsters["f1"].GetProperty("contact_damage").GetInt32()!=8||monsters["f1"].GetProperty("speed_ratio").GetDouble()!=.7||monsters["f2"].GetProperty("speed_ratio").GetDouble()!=.5||monsters["f3"].GetProperty("speed_ratio").GetDouble()!=.35)
+                throw new InvalidDataException("Unsupported R06 boss contract");
+        }
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(
             w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=> {

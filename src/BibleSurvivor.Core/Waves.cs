@@ -86,6 +86,7 @@ namespace BibleSurvivor.Core
             }
             if(number==4)parts.Add(BattleWorld.ChargeContract);
             if(number==5)parts.Add(BattleWorld.RoundFiveContract);
+            if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();
             Fingerprint=Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts))));
         }

@@ -1,0 +1,250 @@
+{
+  "schema": "bible-survivors.art-r06-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R06 (Isaac) actors: normal enemies F1-F3 (32 px move loops) and the Sitnah well-keeper boss (64 px clips). Same rules as art 03 / R02-R05 for 32 px and as the R03 boss for 64 px (PPU 32, pivot (16,1) / (32,1), art faces right, flipX once on the parent, binary alpha). F1-F3 only chase and touch: no frontal invulnerability, shield, projectile or debuff art. The throw warning ring is NOT a PNG: see src/telegraph_r06.json. Gameplay numbers belong to Core and the catalog; they are quoted only where a clip's timing depends on them.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y (30 for 32 px, 62 for 64 px)"
+  },
+  "colourLimit": {
+    "32": 16,
+    "64": 24,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG"
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_r06_ext.json",
+      "name": "r06-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "catalog": {
+      "repoFile": "content/genesis/catalog.json",
+      "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+      "monsters": {
+        "f1": "물 약탈자",
+        "f2": "우물 메움마",
+        "f3": "다툼의 갑주"
+      },
+      "boss": "sitnah_keeper",
+      "bossAttack": "telegraphed_dirt_throw: cooldown 7 s, telegraph 1.2 s, damage 18, projectile_count 0"
+    },
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+    },
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "r03": {
+      "package": "art-genesis-r03",
+      "why": "the boss keeps the R03 slow-boss display radius 1.20, so the R03 boss shadow is reused unchanged instead of drawing a new one",
+      "shadows": {
+        "fx_shadow-boss_static_40x8": {
+          "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+          "cell": [
+            40,
+            8
+          ],
+          "pivot": [
+            20,
+            4
+          ],
+          "alpha": "blend",
+          "sorting": "GroundDecal"
+        }
+      }
+    }
+  },
+  "assets": [
+    {
+      "id": "enm_f1-water-raider_move_32",
+      "ref": "monster:f1",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "fast chase loop: a lean jackal-like raider sprinting with a stolen water skin on its back. Swarm enemy (also the boss's support summon); the water skin is look only"
+    },
+    {
+      "id": "enm_f2-well-filler_move_32",
+      "ref": "monster:f2",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 7,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "heavy chase loop: a squat burrowing beast hauling a heaped basket of dirt, shovel claws in front. The dirt stays on its back: it drops nothing and leaves no ground decal"
+    },
+    {
+      "id": "enm_f3-strife-armour_move_32",
+      "ref": "monster:f3",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "slow chase loop: a hollow horned suit of plates stomping forward with an angry glow in the empty helm. It looks hard but has no shield and no closed front: F3 has no frontal invulnerability"
+    },
+    {
+      "id": "bos_sitnah-keeper_move_64",
+      "ref": "boss:sitnah_keeper",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "slow chase; also the boss intro, holding frame 0. A living stone well whose mouth is choked with dirt, a bucket hanging on a chain from the rim"
+    },
+    {
+      "id": "bos_sitnah-keeper_windup_64",
+      "ref": "boss:sitnah_keeper",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "the 1.2 s dirt-throw warning (Core: warning from boss elapsed 5.8 s in each 7 s cycle, the boss stops and the player position is locked). Driven by the Core telegraph clock, not by fps: frame k from telegraph elapsed k*0.4 s; frame 2 (heap held overhead) is held until impact. The danger ring is drawn separately from Core, see src/telegraph_r06.json"
+    },
+    {
+      "id": "bos_sitnah-keeper_impact_64",
+      "ref": "boss:sitnah_keeper",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 2,
+      "fps": 10,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "starts on the Core impact tick (warning end), plays once (0.2 s), then back to move. The heap leaves the hands; the flight arc and any fallen dirt are Unity visuals only and are not in this clip"
+    },
+    {
+      "id": "bos_sitnah-keeper_death_64",
+      "ref": "boss:sitnah_keeper",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "plays once on the boss kill: the keeper breaks apart and the filled well flows again; the last frame (an open stone well with clear water) may be held or faded by Unity. It is not terrain and does not block movement"
+    }
+  ],
+  "notProduced": {
+    "warning ring PNG": "none on purpose: the ring is drawn procedurally from the Core target and radius (src/telegraph_r06.json)",
+    "dirt clod in flight / fallen dirt decal": "not made in this round. The arc and the fallen dirt are a Unity visual only, decoration, never path-blocking or lasting-damage terrain. If root wants a sprite later, a separate small fx proposal (a 16 px binary clod plus a short scatter that fades) would need its own contract",
+    "summon effect for the F1 support waves": "the 70% / 35% F1 summons use the F1 move clip and the shared enemy spawn handling; no extra summon art",
+    "F1-F3 hit / death clips": "not in the R06 brief; the existing shared enemy hit/death handling applies",
+    "new boss shadow": "the R03 40x8 boss shadow is reused unchanged (same display radius 1.20)"
+  },
+  "motifs": {
+    "source": "Genesis 26:15-22 (the wells filled with dirt, the quarrels over water at Esek and Sitnah, then Rehoboth). Sitnah is the name of a well, not a person. Creative adaptation for the game.",
+    "f1": "the stolen water of the well quarrels as a lean jackal-like raider carrying a water skin (a created monster; not the herdsmen of Gerar or any people)",
+    "f2": "the filling of the wells as a burrowing beast hauling dirt (a created monster; not the Philistines)",
+    "f3": "the quarrel itself as a hollow suit of horned armour, empty inside (a created monster; not a soldier or any person)",
+    "boss": "the Sitnah well-keeper: a created monster built from well stones, the dirt that chokes the well and a bucket chain. On defeat the well flows again",
+    "excluded": "Isaac, Rebekah, Abraham, Abimelech, Phicol, the Philistines, the herdsmen, Isaac's servants and God are never enemies or enemy effects, and no biblical person is drawn as a demon. No human figures are drawn"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "2823430a05bbd0e1fbd0fc48ed9431790dc2e701b65012d0ac37888f2178d283",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_f1-water-raider_move_32",
+      "source": "art/art-genesis-r06/export/png/enm_f1-water-raider_move_32.png",
+      "sha256": "791fb18e4750194edd4d81d7ca9a5445c139a0b7d923e177bc08357fe4add536",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_f2-well-filler_move_32",
+      "source": "art/art-genesis-r06/export/png/enm_f2-well-filler_move_32.png",
+      "sha256": "55c65570da93c5e5bf0d60778820ca8c419d8462611920c8f96975edc9048e85",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 7,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_f3-strife-armour_move_32",
+      "source": "art/art-genesis-r06/export/png/enm_f3-strife-armour_move_32.png",
+      "sha256": "6b10cccffc7014bc30d13bb42d5e7fec9bf5b6e97ece80595921bf71e4aa4290",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_sitnah-keeper_move_64",
+      "source": "art/art-genesis-r06/export/png/bos_sitnah-keeper_move_64.png",
+      "sha256": "5bc8e5cba0a3da2c6b3fd9f5c6f1444faa51f0ea544c906efaa3474de1d8a7b7",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_sitnah-keeper_windup_64",
+      "source": "art/art-genesis-r06/export/png/bos_sitnah-keeper_windup_64.png",
+      "sha256": "3cb49c9f974f455b64e3515313b01927fa90f8d4f04413a714db8e7299b8bb0c",
+      "width": 64,
+      "height": 64,
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_sitnah-keeper_impact_64",
+      "source": "art/art-genesis-r06/export/png/bos_sitnah-keeper_impact_64.png",
+      "sha256": "626d1848874b32e1e0e7eeb66ef8b38c63afcc65927ef4e556c9142dbd7dd122",
+      "width": 64,
+      "height": 64,
+      "frames": 2,
+      "fps": 10,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_sitnah-keeper_death_64",
+      "source": "art/art-genesis-r06/export/png/bos_sitnah-keeper_death_64.png",
+      "sha256": "962ccab5a02c61a375a06d426a57098a4d70f87be4895cd92ebbe3032ed493f6",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

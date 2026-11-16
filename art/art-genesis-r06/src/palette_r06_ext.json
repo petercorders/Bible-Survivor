@@ -1,0 +1,13 @@
+{
+  "name": "r06-ext-v1",
+  "note": "Extra actor ramps for the R06 (Isaac) enemies F1-F3 and the Sitnah well-keeper boss. Ramp names must not collide with the art 03 master palette (src/palette_v03.json, unchanged); the generator refuses a collision. Light to dark, opaque.",
+  "actor": {
+    "raid": ["#dc8c5c", "#ae5e3c", "#783a2c", "#46221e"],
+    "water": ["#d6f2f6", "#7cc8e0", "#3c86b4", "#24507a"],
+    "mole": ["#a8909a", "#78626e", "#50404c", "#30242e"],
+    "dirt": ["#c8945a", "#9a6a3a", "#6c4628", "#42281a"],
+    "plate": ["#c8c4b8", "#929088", "#62626a", "#3a3a46"],
+    "strife": ["#ffb070", "#e0503c"],
+    "wellstone": ["#e2d6c0", "#b4a690", "#827664", "#52483e"]
+  }
+}

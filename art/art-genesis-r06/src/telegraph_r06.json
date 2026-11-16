@@ -1,0 +1,55 @@
+{
+  "schema": "bible-survivors.art-r06-telegraph",
+  "schemaVersion": 1,
+  "note": "Style contract for the Sitnah well-keeper's dirt-throw warning ring. There is deliberately NO PNG in this file: where the danger is and how big it is come only from Core, through the shared world projection Unity already uses for actors. The art never decides the edge.",
+  "core": {
+    "owner": "Core (single writer). Rules quoted from docs/harness/r06-implementation-01.md and the catalog sitnah_keeper attack as technical tuning, not balance-final",
+    "rule": "pattern telegraphed_dirt_throw: 7 s cycle; first damage at boss elapsed 7 s; the warning starts 1.2 s earlier (5.8 s), the boss stops and the player position is locked as the target; at warning end one dirt-fall hit of 18 inside the circle; projectile_count 0 (no projectile engine, the fall is a fixed-point hit)",
+    "projectionNeeded": "for drawing, Unity reads the locked target point and the hit radius from Core and projects them with the shared world projection. Unity must not recompute them from art numbers, the throw arc or the boss sprite",
+    "nominalForBoardsOnly": {
+      "radiusWu": 1.2,
+      "radiusWhy": "the dispatch's r1.2 ring and the implementation doc's reused slow-boss display radius 1.20 (same as the R03 slam ring). Technical assumption for the review board only",
+      "sourcePx": {
+        "radius": 38.4,
+        "meaning": "1.2 world units x PPU 32 at SOURCE asset density, for the review board only; not Unity screen pixels"
+      },
+      "warning": "if Core changes the radius or the target rule, the runtime ring follows Core; nothing here is re-tuned by hand"
+    }
+  },
+  "placement": {
+    "shape": "circle centred on the Core-locked target point, radius = the Core hit radius",
+    "boundary": "the OUTER edge of the black line is the danger boundary. Nothing is drawn outside it, so the picture never makes the danger look larger than Core's",
+    "mustNot": [
+      "use a sprite or texture whose drawn edge decides the hit area",
+      "fit the ring into the 64 px boss cell",
+      "add a fill or glow outside the boundary",
+      "move or resize the ring during the warning (the target is locked)",
+      "let the thrown dirt, its arc or the fallen dirt stand in for the ring",
+      "draw fallen dirt like damage ground or a wall: it is decoration only and blocks nothing"
+    ]
+  },
+  "style": {
+    "reuse": "same ring as the R03 slam warning (art-genesis-r03 src/telegraph_r03.json): black outer + white inner, no fill",
+    "lines": [
+      {
+        "name": "outer",
+        "colour": "outline.0 (#1b1424)",
+        "widthSourcePx": 2,
+        "from": "boundary inward"
+      },
+      {
+        "name": "inner",
+        "colour": "white.0 (#ffffff)",
+        "widthSourcePx": 2,
+        "from": "2 source px inside the boundary, inward"
+      }
+    ],
+    "widthRule": "widths scale with the actor pixel scale (source px x scale) and never drop below 1 screen px each",
+    "fill": "none. The ground stays visible inside the circle",
+    "timing": "appears at warning start, static for the whole 1.2 s (no blinking, pulsing or full-screen flash), removed on the impact tick. Progress is shown by the boss windup pose (frames 0 -> 1 -> 2 at 0.4 s steps), not by the ring",
+    "lowFx": "always shown: the ring is gameplay information, not an optional effect; same in low-effects, muted and small-window modes. In lowFX the dirt arc / fallen dirt visuals may be dropped, the ring may not",
+    "sorting": "GroundDecal, under actors",
+    "readability": "black outer + white inner reads on dark grass, the light path and in greyscale"
+  },
+  "assets": []
+}

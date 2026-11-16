@@ -196,8 +196,8 @@ namespace BibleSurvivor.Unity
             if(session?.Boss!=null && session.IsActive)
             {
                 var boss=session.Boss;var bar=new Rect(30,118,width-60,18);
-                GUI.Box(bar,"");var color=GUI.color;GUI.color=new Color(.8f,.2f,.15f);GUI.DrawTexture(new Rect(bar.x+2,bar.y+2,(bar.width-4)*(float)(boss.Health/BossDefinition.Health),bar.height-4),Texture2D.whiteTexture);GUI.color=color;
-                GUI.Label(new Rect(30,136,width-60,30),$"네피림 폭군 {boss.Health:0}/{BossDefinition.Health:0} · {AdamBossPresentation.Phase(session)}",label);
+                GUI.Box(bar,"");var color=GUI.color;GUI.color=new Color(.8f,.2f,.15f);GUI.DrawTexture(new Rect(bar.x+2,bar.y+2,(bar.width-4)*(float)AdamBossPresentation.HealthFraction(session),bar.height-4),Texture2D.whiteTexture);GUI.color=color;
+                GUI.Label(new Rect(30,136,width-60,30),$"{AdamBossPresentation.Name(session)} {boss.Health:0}/{session.BossRules.MaxHealth:0} · {AdamBossPresentation.Phase(session)}",label);
             }
             if(session!=null && session.Inventory.Forms.Count>0 && !modalOpen)
                 GUI.Label(new Rect(30,167,width-60,28),AdamBossPresentation.Forms(session),instruction);
@@ -219,8 +219,8 @@ namespace BibleSurvivor.Unity
             else if(session?.Stage=="boss_reward")
             {
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);art.Panel(panel);
-                GUI.Label(new Rect(panel.x+12,panel.y+10,panel.width-24,36),"노아 보스 보상 · 하나를 선택하세요",title);
-                GUI.Label(new Rect(panel.x+12,panel.y+48,panel.width-24,36),"네피림은 게임 각색 보스 · 선택 즉시 저장",instruction);
+                GUI.Label(new Rect(panel.x+12,panel.y+10,panel.width-24,36),AdamRoundPresentation.Name(session.RoundNumber)+" 보스 보상 · 하나를 선택하세요",title);
+                GUI.Label(new Rect(panel.x+12,panel.y+48,panel.width-24,36),AdamBossPresentation.Name(session)+" · 게임 각색 · 선택 즉시 저장",instruction);
                 if(session.NeedsRewardImplementation)
                 {if(ArtButton(new Rect(panel.x+24,panel.y+130,panel.width-48,56),"이전 보상 후보 준비",button))Host.PromoteBossReward();}
                 else
@@ -251,7 +251,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":"롯";
+                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":"이삭";
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}
@@ -264,8 +264,8 @@ namespace BibleSurvivor.Unity
             }
             else if (session == null || !session.IsActive)
             {
-                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"롯 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
-                Modal(width,height,heading,Host.ContentComplete?"R06 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                var heading=session==null?"시작 무기를 선택하세요":Host.ContentComplete?"이삭 완료 · 진행 저장됨":"사망 · 이번 도전 종료";
+                Modal(width,height,heading,Host.ContentComplete?"R07 미구현 · 다음 콘텐츠 대기\n"+AdamBossPresentation.Forms(session):session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
                 for (var i = 0; i < 3; i++)
                     if (ArtButton(mobile ? AdamMobileLayout.StartButton(width, height, i) : new Rect(width / 2 - 240, height / 2 - 15 + i * 58, 480, 50), $"{i + 1}. {AdamChoiceText.ItemName(Weapons[i])}", button)) SelectSlot(i);
             }

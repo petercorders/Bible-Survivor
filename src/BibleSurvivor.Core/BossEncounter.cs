@@ -20,6 +20,30 @@ namespace BibleSurvivor.Core
         public const double Health = 1800, Speed = .30, Radius = .60, IntroSeconds = 2, Period = 6, TelegraphSeconds = 1.2, SlamRadius = 1.20;
         public const int ContactDamage = 12, SlamDamage = 15, Gold = 100, SupportCount = 6, SupportHealth = 30, SupportDamage = 6;
         public const double SupportSpeed = .55, SupportRadius = 1.5, IntroOffset = 3, ThresholdRatio = .5;
+        public const string SitnahPolicy="r06-production-v1";
+        public int Number {get;}
+        public string Id {get;}
+        public double MaxHealth {get;}
+        public int Contact {get;}
+        public int KillGold {get;}
+        public double AttackPeriod {get;}
+        public int AttackDamage {get;}
+        public int BossActorId {get;}
+        public string SupportMonster {get;}
+        public int SupportHitPoints {get;}
+        public int SupportContact {get;}
+        public double SupportRatio {get;}
+        public string RewardPolicy {get;}
+        public IReadOnlyList<double> Thresholds {get;}
+        private BossDefinition(int number,string id,double hp,int contact,int gold,double period,int damage,int actor,string support,int supportHp,int supportDamage,double speed,string policy,params double[] thresholds)
+        {Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(thresholds);}
+        private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,ThresholdRatio);
+        private static readonly BossDefinition IsaacBoss=new BossDefinition(6,"sitnah_keeper",6500,16,200,7,18,781,"f1",80,8,.70,SitnahPolicy,.70,.35);
+        public static BossDefinition ForRound(int number)=>number==3?AdamBoss:number==6?IsaacBoss:throw new ArgumentException("No implemented boss for round");
+        public string EncounterKey(string runId)=>runId+":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":"+Id;
+        public string FingerprintContract=>Number==3?Contract:Id+":point-impact-v1:"+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
+            string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
+                Speed,Radius,IntroSeconds,IntroOffset,TelegraphSeconds,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
         public static string EncounterId(string runId) => runId + ":genesis_03:nephilim_tyrant";
     }
 
@@ -52,6 +76,10 @@ namespace BibleSurvivor.Core
     {
         [DataMember] public int Version {get;set;}=2;
         [DataMember] public string EncounterId {get;set;}="";
+        [DataMember(EmitDefaultValue=false)] public int RoundNumber {get;set;}
+        [DataMember(EmitDefaultValue=false)] public int SummonMask {get;set;}
+        public int EncounterRound=>RoundNumber==0?3:RoundNumber;
+        public BossDefinition Rules=>BossDefinition.ForRound(EncounterRound);
         [DataMember] public double NormalEndedAt {get;set;}
         [DataMember] public double IntroElapsed {get;set;}
         [DataMember] public double BossElapsed {get;set;}
@@ -74,26 +102,28 @@ namespace BibleSurvivor.Core
         internal void Validate(RunState run)
         {
             bool Finite(double n)=>BattleSnapshot.Finite(n);
-            if(Version>2)throw new UnsupportedSaveVersionException();
-            if((Version!=1&&Version!=2)||EncounterId!=BossDefinition.EncounterId(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
+            if(Version>2||EncounterRound!=3&&EncounterRound!=6)throw new UnsupportedSaveVersionException();
+            var rules=Rules;var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
+            var used=(mask&1)+((mask>>1)&1);var maxMask=(1<<rules.Thresholds.Count)-1;
+            if((Version!=1&&Version!=2)||(rules.Number==6&&Version!=2)||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
                 !Finite(IntroElapsed)||IntroElapsed<0||IntroElapsed>2||!Finite(BossElapsed)||BossElapsed<0||
-                !Finite(CombatTime)||!Finite(Health)||Health<0||Health>1800||!Finite(NextAttackAt)||NextAttackAt<6||
-                Math.Abs(NextAttackAt/6-Math.Round(NextAttackAt/6))>1e-7||NextAttackAt<=BossElapsed||NextAttackAt>BossElapsed+6+1e-7||
-                !BattleSnapshot.Position(TargetX,TargetY)||Supports==null||Supports.Any(x=>x==null)||
-                (Summoned!=0&&Summoned!=6)||ThresholdUsed!=(Summoned==6)||NextActorId!=482+Summoned||Supports.Count>Summoned||
-                Supports.Select(x=>x.Id).Distinct().Count()!=Supports.Count||Supports.Any(x=>x.Id<482||x.Id>=NextActorId||x.MonsterId!="c1"||
-                    !Finite(x.Health)||x.Health<=0||x.Health>30||x.ContactDamage!=6||x.RawExperience!=0)||run.LastHitTime>CombatTime)
+                !Finite(CombatTime)||!Finite(Health)||Health<0||Health>rules.MaxHealth||!Finite(NextAttackAt)||NextAttackAt<rules.AttackPeriod||
+                Math.Abs(NextAttackAt/rules.AttackPeriod-Math.Round(NextAttackAt/rules.AttackPeriod))>1e-7||NextAttackAt<=BossElapsed||NextAttackAt>BossElapsed+rules.AttackPeriod+1e-7||
+                !BattleSnapshot.Position(TargetX,TargetY)||Supports==null||Supports.Any(x=>x==null)||mask<0||mask>maxMask||(mask==2)||
+                (rules.Number==3&&SummonMask!=0)||(rules.Number==6&&ThresholdUsed!=(mask!=0))||Summoned!=used*BossDefinition.SupportCount||NextActorId!=rules.BossActorId+1+Summoned||Supports.Count>Summoned||
+                Supports.Select(x=>x.Id).Distinct().Count()!=Supports.Count||Supports.Any(x=>x.Id<=rules.BossActorId||x.Id>=NextActorId||x.MonsterId!=rules.SupportMonster||
+                    !Finite(x.Health)||x.Health<=0||x.Health>rules.SupportHitPoints||x.ContactDamage!=rules.SupportContact||x.RawExperience!=0)||run.LastHitTime>CombatTime)
                 throw new InvalidDataException("Invalid boss encounter");
             if(run.Stage=="boss_intro")
             {
-                if(TargetX!=0||TargetY!=0||IntroElapsed>=2||BossElapsed!=0||Health!=1800||Summoned!=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing||NextAttackAt!=6||run.Drops.Count!=0)
+                if(run.RoundNumber!=rules.Number||TargetX!=0||TargetY!=0||IntroElapsed>=2||BossElapsed!=0||Health!=rules.MaxHealth||Summoned!=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing||NextAttackAt!=rules.AttackPeriod||run.Drops.Count!=0)
                     throw new InvalidDataException("Invalid protected intro");
             }
             else if(run.Stage=="boss")
             {
-                if(IntroElapsed!=2||Health<=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing!=(BossElapsed+1e-9>=NextAttackAt-1.2)||
-                    (!ThresholdUsed&&Health<=900)||(ThresholdUsed&&Health>900)||run.Drops.Any(x=>x.Key<482||x.Key>=NextActorId||x.Value!=0||Supports.Any(s=>s.Id==x.Key)))
-                    throw new InvalidDataException("Invalid boss combat lifecycle");
+                if(run.RoundNumber!=rules.Number||IntroElapsed!=2||Health<=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing!=(BossElapsed+1e-9>=NextAttackAt-BossDefinition.TelegraphSeconds)||
+                    rules.Thresholds.Where((ratio,index)=>((mask>>index)&1)!=(Health<=rules.MaxHealth*ratio?1:0)).Any()||
+                    run.Drops.Any(x=>x.Key<=rules.BossActorId||x.Key>=NextActorId||x.Value!=0||Supports.Any(s=>s.Id==x.Key)))throw new InvalidDataException("Invalid boss combat lifecycle");
             }
             else if(run.Stage=="boss_reward"||run.Stage=="boss_settlement"||run.Stage=="between_rounds")
             {
@@ -101,8 +131,9 @@ namespace BibleSurvivor.Core
                     Reward.RewardId!=EncounterId+":reward"||Reward.Weapons==null||Reward.Passives==null||Reward.EligibleEvolutions==null||
                     !Reward.EligibleEvolutions.SequenceEqual(EvolutionRules.Eligibility(Reward.Weapons,Reward.Passives,Reward.Forms))||
                     (run.Stage=="boss_reward")==Reward.Applied||CompletionApplied!=(run.Stage=="between_rounds")||
-                    (run.Stage=="between_rounds"&&(run.RoundNumber!=4||run.PendingLevels!=0||run.Health!=run.MaxHealth))||
-                    (Reward.PolicyId==BossDefinition.LegacyPolicy?Version!=1:Version!=2))
+                    run.RoundNumber!=(run.Stage=="between_rounds"?rules.Number+1:rules.Number)||
+                    (run.Stage=="between_rounds"&&(run.PendingLevels!=0||run.Health!=run.MaxHealth))||
+                    (Reward.PolicyId==BossDefinition.LegacyPolicy?(rules.Number!=3||Version!=1):(Version!=2||Reward.PolicyId!=rules.RewardPolicy)))
                     throw new InvalidDataException("Invalid boss reward/settlement receipt");
                 BossRewards.Validate(Reward,run,CompletionApplied);
             }
