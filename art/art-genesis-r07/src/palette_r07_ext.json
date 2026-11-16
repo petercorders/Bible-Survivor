@@ -1,0 +1,11 @@
+{
+  "name": "r07-ext-v1",
+  "note": "Extra actor ramps for the R07 (Jacob) enemies G1-G3. Ramp names must not collide with the art 03 master palette (src/palette_v03.json, unchanged); the generator refuses a collision. Light to dark, opaque.",
+  "actor": {
+    "veil": ["#b07a9a", "#86546e", "#5c344c", "#3a1e30"],
+    "hide": ["#eee4cc", "#c8b490", "#927e5e"],
+    "spot": ["#7a5a44", "#5a3c2c", "#3a2620", "#24161a"],
+    "shade": ["#9aa4c6", "#66709a", "#434b70", "#2a3050"],
+    "discord": ["#ff7a5a", "#c43040"]
+  }
+}

@@ -1,0 +1,417 @@
+{
+ "schema": "bible-survivors.art-manifest-r07",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R07 (Jacob) G1-G3 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R06"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r07_ext.json",
+   "name": "r07-ext-v1",
+   "sha256": "ac516db3df2a1f5b129d4a7d1ded1639304b6d5014ad3f451bedd9bfbc400f09"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r07.json",
+   "sha256": "af109109b7e80dde4ccf63349aaf1adf3580d3df2ef64faf0078e771888a2bd7"
+  },
+  "generator": {
+   "file": "scripts/actors_r07.py",
+   "sha256": "9afe455613c5e7e9665c73ae24a8d441ce7a5a07a86b9a7ded77a166e4094820"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r07.json",
+   "sha256": "4d1d14e9114819f3b65e083ffec84a3d811118ac414c1670b0c226a27348eefa"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "g1": "속임의 가면",
+    "g2": "얼룩 모피마",
+    "g3": "불화의 쌍영"
+   },
+   "behaviours": {
+    "g1": "chase",
+    "g2": "chase",
+    "g3": "two_sided_chase"
+   }
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "notProduced": {
+  "shared-health / pair link art": "not made on purpose: G3 actors have independent health, damage and kills (Core); no tether, joined outline or pair health bar",
+  "left/right group marker or spawn effect": "the left/right placement is Core's real spawn batch; no art marks the groups and no spawn effect is added",
+  "invulnerability / disguise effect for G1": "none: the mask changes expression only, and G1 is hit normally in every frame",
+  "projectile, dash, debuff, boss or new pattern art": "R07 adds none",
+  "death / hit clips": "not in the R07 brief; the existing shared enemy hit/death handling applies"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r07.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r07.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r07_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 25:22-34 and 27 (the rivalry between Esau and Jacob, the blessing taken in disguise with goat skins, 27:16), 29:25 (Laban's deceit) and 30:32-43 (the speckled and spotted flocks). Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_g1-deceiving-mask_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r07.json",
+   "file": "export/png/enm_g1-deceiving-mask_move_32.png",
+   "sha256": "b01c97e4167dba6b90de9b901c28c7bf7b70a6aefa76839fa2aea2f1668254aa",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 9,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:g1",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 12,
+   "frameBBoxTopLeft": [
+    [
+     7,
+     5,
+     26,
+     30
+    ],
+    [
+     7,
+     4,
+     26,
+     30
+    ],
+    [
+     7,
+     5,
+     26,
+     30
+    ],
+    [
+     7,
+     4,
+     26,
+     30
+    ]
+   ],
+   "use": "chase loop: a veiled scuttler on small clawed feet wearing one ivory mask. The expression changes inside the 4 move frames only (frames 0-1 smile, frames 2-3 scowl); the body and mask stay solid and opaque in every frame: no fade, ghosting, shimmer or other look that suggests it cannot be hit",
+   "source": {
+    "authoring": "scripts/actors_r07.py:deceiving_mask",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r07.json#enm_g1-deceiving-mask_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_g2-spotted-hide_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r07.json",
+   "file": "export/png/enm_g2-spotted-hide_move_32.png",
+   "sha256": "680c86da377eebcc19d2adcb46112d2abefbafe8dfc556dc44c086e18de17115",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 7,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:g2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 13,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     9,
+     30,
+     30
+    ],
+    [
+     1,
+     9,
+     30,
+     30
+    ],
+    [
+     1,
+     9,
+     30,
+     30
+    ],
+    [
+     1,
+     9,
+     30,
+     30
+    ]
+   ],
+   "use": "heavy chase loop: a low, crouching predator (dark clawed legs, open fanged jaw) wearing a speckled hide over its back and head like a fleece, with a fake curled horn on the hood. The hide only mimics a flock; the creature is not drawn as a goat, sheep or other livestock",
+   "source": {
+    "authoring": "scripts/actors_r07.py:spotted_hide",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r07.json#enm_g2-spotted-hide_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_g3-discord-shade_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r07.json",
+   "file": "export/png/enm_g3-discord-shade_move_32.png",
+   "sha256": "d5dee17cee45622208246e10b7d06bf1972194a64ffa1c5e47fa8291739ea90a",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 9,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:g3",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 7,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     4,
+     28,
+     30
+    ],
+    [
+     2,
+     3,
+     28,
+     30
+    ],
+    [
+     2,
+     4,
+     28,
+     30
+    ],
+    [
+     2,
+     3,
+     28,
+     30
+    ]
+   ],
+   "use": "chase loop for ONE G3 actor: a single lean shadow runner with one swept horn on one side, one red eye and torn shadow cloth trailing. Each G3 actor is drawn alone with its own health; it is never drawn as a joined pair, twin bodies, a tether or a shared health bar. The 'two shades' are the two groups Core spawns on the left and right; Unity faces each actor toward its target with the parent flipX, so the two groups mirror each other (the single horn swaps side)",
+   "source": {
+    "authoring": "scripts/actors_r07.py:discord_shade",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r07.json#enm_g3-discord-shade_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

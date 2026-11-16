@@ -42,6 +42,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? Boss {get;set;}
         [DataMember(EmitDefaultValue=false)] public Dictionary<string,string>? Forms {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedBoss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedSecondBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
         [DataMember(EmitDefaultValue=false)] public int PreviousNormalRound {get;set;}
@@ -65,8 +66,8 @@ namespace BibleSurvivor.Core
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 7 ||
-                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:6)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 8 ||
+                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:7)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -84,12 +85,12 @@ namespace BibleSurvivor.Core
             if(bossStage!=(Run.Boss!=null)||bossStage&&(SchemaVersion!=2||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
             if(Run.Forms!=null&&(SchemaVersion!=2||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
             Run.Boss?.Validate(Run);
-            var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7;
+            var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7&&Run.Stage=="between_rounds";
             var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
-            var lateNormal=normalRound==4||normalRound==5;
+            var lateNormal=normalRound==4||normalRound==5||normalRound==7;
             if(lateNormal)
             {
-                if(SchemaVersion!=2||Run.CompletedBoss==null||Run.PreviousNormalRound!=(normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if(SchemaVersion!=2||Run.CompletedBoss==null||Run.PreviousNormalRound!=(normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
@@ -109,6 +110,12 @@ namespace BibleSurvivor.Core
                 Run.CompletedBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=4,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,
                     Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
+            if(normalRound==7)
+            {
+                if(Run.CompletedSecondBoss==null||Run.CompletedSecondBoss.EncounterRound!=6||!Run.CompletedSecondBoss.CompletionApplied)throw new InvalidDataException("Missing R06 completed history");
+                Run.CompletedSecondBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=7,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
+            }
+            else if(Run.CompletedSecondBoss!=null)throw new InvalidDataException("Second boss history outside R07");
             Run.World?.Validate();
             if(Run.World!=null)
             {
@@ -132,7 +139,7 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World weapon form does not match inventory");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(lateNormal||r06?3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if(r06&&(Run.World.Charges==null||Run.World.Charges.Count!=0))throw new InvalidDataException("R06 cannot inherit D3 charges");
-                if(normalRound==5&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
+                if((normalRound==5||normalRound==7)&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
                 if(lateNormal && (Run.World.Charges==null||!Run.World.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Wave?.Active??new List<SpawnedEnemy>()).Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))||
                     (Run.NormalEndedAt.HasValue&&Math.Abs(Run.World.Time-Run.NormalEndedAt.Value)>1e-7)))throw new InvalidDataException("R04 charge world does not match round");
                 if(Run.Wave!=null && (Run.Wave.Active==null || Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7 ||

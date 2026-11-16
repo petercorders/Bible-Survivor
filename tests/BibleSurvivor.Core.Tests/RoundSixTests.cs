@@ -12,7 +12,7 @@ internal static class RoundSixTests
 {
     private const string Catalog="content/genesis/catalog.json";
     private static readonly IReadOnlyDictionary<string,double> Speeds=CatalogReader.MonsterSpeeds(Catalog);
-    private static (GameSnapshot State,AdamSession Game) Start()
+    internal static (GameSnapshot State,AdamSession Game) Start()
     {var (state,game)=RoundFiveTests.Start();game.Advance(180);return(state,game.StartNextRound(CatalogReader.Round(Catalog,6)));}
     private static (GameSnapshot State,AdamSession Game,BattleWorld World) Boss()
     {var (state,game)=Start();game.Advance(180);var world=new BattleWorld(game,Speeds);world.Advance(2,Vector2.Zero);return(state,game,world);}
@@ -69,7 +69,7 @@ internal static class RoundSixTests
             Check.True(game.ChooseBossReward(game.Boss!.Reward!.RewardId,candidate.Id));Check.True(!game.ChooseBossReward(game.Boss!.Reward!.RewardId,candidate.Id));Check.True(!game.CompleteBossSettlement());RoundTransitionTests.Resolve(game);Check.True(game.CompleteBossSettlement());
             Check.Equal(gold+300,loaded.Profile.Gold);Check.Equal(7,loaded.Run.RoundNumber);Check.Near(loaded.Run.MaxHealth,game.CurrentHealth);Check.True(loaded.Profile.UnlockedWeapons.Contains("cross"));Check.True(!game.Inventory.TryChoose("cross",false));Check.True(!game.CompleteBossSettlement());
             Check.Equal(old,JsonSerializer.Serialize(loaded.Run.CompletedBoss));Check.Equal(6,loaded.Run.Boss!.EncounterRound);Check.True(loaded.Run.Boss.CompletionApplied);Check.Equal(EvolutionRules.Sling,game.Inventory.Forms["sling"]);Check.Equal(EvolutionRules.Bible,game.Inventory.Forms["bible"]);
-            store.Commit(loaded,1,"completed");store.Commit(loaded,1,"completed");loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,6));Check.True(!game.CompleteBossSettlement());Check.Equal(old,JsonSerializer.Serialize(loaded.Run!.CompletedBoss));Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,7));
+            store.Commit(loaded,1,"completed");store.Commit(loaded,1,"completed");loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,6));Check.True(!game.CompleteBossSettlement());Check.Equal(old,JsonSerializer.Serialize(loaded.Run!.CompletedBoss));Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,8));
         }));
         test("R06 regen pause shared iframe and lethal player damage precede boss credit",()=>{
             var (state,game)=Start();state.Run!.PermanentSnapshot["health"]=2;state.Run.PermanentSnapshot["armor"]=1;state.Run.PermanentSnapshot["regen"]=1;game.Advance(180);game.Advance(2);

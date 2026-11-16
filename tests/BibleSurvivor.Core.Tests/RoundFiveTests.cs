@@ -58,11 +58,11 @@ internal static class RoundFiveTests
             Check.True(loaded.Profile.UnlockedWeapons.Contains("fire_pillar"));Check.True(loaded.Profile.UnlockedWeapons.Contains("daniel_lion"));Check.True(!game.Inventory.TryChoose("daniel_lion",false));Check.True(!game.CompleteNormalSettlement());
             var broken=new SaveStore(store.Path,()=>throw new IOException("replace fault"));Check.Throws<IOException>(()=>broken.Commit(loaded,1,"finish"));Check.Equal("round_settlement",store.Load()!.Run!.Stage);
             store.Commit(loaded,1,"finish");store.Commit(loaded,1,"finish");loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,5));Check.True(!game.CompleteNormalSettlement());Check.Equal(gold+80,loaded.Profile.Gold);
-            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,7));Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(7,80,1900,80,CatalogReader.Round(Catalog,5).Waves)));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,8));Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(7,80,1900,80,CatalogReader.Round(Catalog,5).Waves)));
         }));
         test("R05 charge leakage invalid receipt and future content preserve prior checkpoint",()=>Store(store=>{
             var (state,game)=Start();var world=new BattleWorld(game,Speeds);game.Capture();state.Run!.World=world.Capture();store.Commit(state,0,"r05");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=7,n=>n["Run"]!["UnknownFuture"]=1,n=>n["Run"]!["World"]!["SchemaVersion"]=4})
+            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=8,n=>n["Run"]!["UnknownFuture"]=1,n=>n["Run"]!["World"]!["SchemaVersion"]=4})
             {
                 var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);
                 Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));

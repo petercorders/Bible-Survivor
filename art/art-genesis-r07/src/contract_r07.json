@@ -1,0 +1,49 @@
+{
+  "schema": "bible-survivors.art-r07-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R07 (Jacob) normal enemies G1-G3. Same 32 px rules as art 03 / R02-R06 (PPU 32, pivot (16,1), art faces right, flipX once on the parent, binary alpha). All three chase and touch only: no new boss, pattern, projectile, forced movement, debuff, invulnerability disguise or shared-health art. Gameplay numbers and the G3 left/right spawn placement belong to Core and the catalog.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R06"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"},
+  "edgeMargin": {"px": 1, "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y"},
+  "colourLimit": {"32": 16, "fx": 24, "note": "distinct RGBA values per PNG"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+    "ext": {"file": "src/palette_r07_ext.json", "name": "r07-ext-v1", "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+                "monsters": {"g1": "속임의 가면", "g2": "얼룩 모피마", "g3": "불화의 쌍영"},
+                "behaviours": {"g1": "chase", "g2": "chase", "g3": "two_sided_chase"}},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "assets": [
+    {"id": "enm_g1-deceiving-mask_move_32", "ref": "monster:g1", "cell": [32, 32], "frames": 4, "fps": 9, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "chase loop: a veiled scuttler on small clawed feet wearing one ivory mask. The expression changes inside the 4 move frames only (frames 0-1 smile, frames 2-3 scowl); the body and mask stay solid and opaque in every frame: no fade, ghosting, shimmer or other look that suggests it cannot be hit"},
+    {"id": "enm_g2-spotted-hide_move_32", "ref": "monster:g2", "cell": [32, 32], "frames": 4, "fps": 7, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "heavy chase loop: a low, crouching predator (dark clawed legs, open fanged jaw) wearing a speckled hide over its back and head like a fleece, with a fake curled horn on the hood. The hide only mimics a flock; the creature is not drawn as a goat, sheep or other livestock"},
+    {"id": "enm_g3-discord-shade_move_32", "ref": "monster:g3", "cell": [32, 32], "frames": 4, "fps": 9, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-small_static_12x4", "facing": "right",
+     "use": "chase loop for ONE G3 actor: a single lean shadow runner with one swept horn on one side, one red eye and torn shadow cloth trailing. Each G3 actor is drawn alone with its own health; it is never drawn as a joined pair, twin bodies, a tether or a shared health bar. The 'two shades' are the two groups Core spawns on the left and right; Unity faces each actor toward its target with the parent flipX, so the two groups mirror each other (the single horn swaps side)"}
+  ],
+  "notProduced": {
+    "shared-health / pair link art": "not made on purpose: G3 actors have independent health, damage and kills (Core); no tether, joined outline or pair health bar",
+    "left/right group marker or spawn effect": "the left/right placement is Core's real spawn batch; no art marks the groups and no spawn effect is added",
+    "invulnerability / disguise effect for G1": "none: the mask changes expression only, and G1 is hit normally in every frame",
+    "projectile, dash, debuff, boss or new pattern art": "R07 adds none",
+    "death / hit clips": "not in the R07 brief; the existing shared enemy hit/death handling applies"
+  },
+  "motifs": {
+    "source": "Genesis 25:22-34 and 27 (the rivalry between Esau and Jacob, the blessing taken in disguise with goat skins, 27:16), 29:25 (Laban's deceit) and 30:32-43 (the speckled and spotted flocks). Creative adaptation for the game.",
+    "g1": "deception as a veiled creature whose one mask flips between a smile and a scowl (a created monster; not Jacob, Laban, Rebekah or any person)",
+    "g2": "the disguise of skins and the spotted flocks as a predator hiding under a speckled hide (a created monster; livestock themselves are not made demons)",
+    "g3": "the discord between brothers as single shadow runners that come from both sides (a created monster; not Jacob or Esau, and not twin persons)",
+    "excluded": "Jacob, Esau, Isaac, Rebekah, Laban, Rachel, Leah, the flocks and herds, the one who wrestled with Jacob, the angels of Bethel and God are never enemies or enemy effects. No human figures are drawn"
+  }
+}

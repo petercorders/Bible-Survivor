@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "74ed70b78b202094661afeaba8e5ed0ec147ddf66fc5669c280506201b66ecd1",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_g1-deceiving-mask_move_32",
+      "source": "art/art-genesis-r07/export/png/enm_g1-deceiving-mask_move_32.png",
+      "sha256": "b01c97e4167dba6b90de9b901c28c7bf7b70a6aefa76839fa2aea2f1668254aa",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 9,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_g2-spotted-hide_move_32",
+      "source": "art/art-genesis-r07/export/png/enm_g2-spotted-hide_move_32.png",
+      "sha256": "680c86da377eebcc19d2adcb46112d2abefbafe8dfc556dc44c086e18de17115",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 7,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_g3-discord-shade_move_32",
+      "source": "art/art-genesis-r07/export/png/enm_g3-discord-shade_move_32.png",
+      "sha256": "d5dee17cee45622208246e10b7d06bf1972194a64ffa1c5e47fa8291739ea90a",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 9,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

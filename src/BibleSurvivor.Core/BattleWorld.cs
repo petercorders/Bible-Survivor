@@ -276,6 +276,7 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Unsupported boss support speed");
             if(session.RoundNumber==4&&(!monsterSpeeds.TryGetValue("d1",out var d1)||d1!=.65||!monsterSpeeds.TryGetValue("d2",out var d2)||d2!=.5||!monsterSpeeds.TryGetValue("d3",out var d3)||d3!=.6))throw new ArgumentException("Unsupported R04 monster speed");
             if(session.RoundNumber==5&&(!monsterSpeeds.TryGetValue("e1",out var e1)||e1!=E1Speed||!monsterSpeeds.TryGetValue("e2",out var e2)||e2!=E2Speed||!monsterSpeeds.TryGetValue("e3",out var e3)||e3!=E3Speed))throw new ArgumentException("Unsupported R05 monster speed");
+            if(session.RoundNumber==7&&(!monsterSpeeds.TryGetValue("g1",out var g1)||g1!=.65||!monsterSpeeds.TryGetValue("g2",out var g2)||g2!=.55||!monsterSpeeds.TryGetValue("g3",out var g3)||g3!=.65))throw new ArgumentException("Unsupported R07 monster speed");
             speeds=monsterSpeeds.ToDictionary(x=>x.Key,x=>x.Value,StringComparer.Ordinal);
             random=unchecked((uint)seed);if(random==0)random=0x9e3779b9;
             SimulationTime=session.CombatTime;
@@ -374,6 +375,7 @@ namespace BibleSurvivor.Core
                 }
                 if(!speeds.ContainsKey(enemy.MonsterId))throw new InvalidOperationException("Missing monster speed");
                 var edge=Next(4);var value=NextUnit()*2-1;
+                if(Session.RoundNumber==7&&enemy.MonsterId=="g3")edge=(Session.SpeciesOrdinal(enemy.Id)-1)%2;
                 var x=edge<2?(edge==0?-1:1)*(tuning.CameraHalfWidth+tuning.SpawnMargin):value*tuning.CameraHalfWidth;
                 var y=edge>=2?(edge==2?-1:1)*(tuning.CameraHalfHeight+tuning.SpawnMargin):value*tuning.CameraHalfHeight;
                 enemies.Add(enemy.Id,PlayerPosition+new Vector2((float)x,(float)y));

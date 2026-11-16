@@ -86,6 +86,7 @@ namespace BibleSurvivor.Core
             }
             if(number==4)parts.Add(BattleWorld.ChargeContract);
             if(number==5)parts.Add(BattleWorld.RoundFiveContract);
+            if(number==7)parts.Add("g1-speed0.65:g2-speed0.55:g3-speed0.65:stable-species-ordinal-odd-left-even-right:independent-hp");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();
             Fingerprint=Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(string.Join("|",parts))));
@@ -138,6 +139,7 @@ namespace BibleSurvivor.Core
         public double Elapsed { get; private set; }
         public bool Paused { get; set; }
         public int SpawnedCount => cursor;
+        internal int SpeciesOrdinal(int id) => schedule.Take(id).Count(x=>x.Enemy.MonsterId==schedule[id-1].Enemy.MonsterId);
         // Defensive copies: an adapter cannot mutate health or bypass kill accounting.
         public IReadOnlyDictionary<int, SpawnedEnemy> Active => new ReadOnlyDictionary<int, SpawnedEnemy>(active.ToDictionary(x => x.Key, x => x.Value.Copy()));
         public bool IsNormalComplete => Elapsed >= 180 || (cursor == schedule.Count && active.Count == 0);

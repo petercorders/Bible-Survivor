@@ -59,8 +59,8 @@ internal static class SaveSchemaTests
             foreach (var change in new Action<JsonNode>[] {
                 n => n["Run"]!["Boss"] = new JsonObject { ["FutureBoss"] = true },
                 n => n["Run"]!["Stage"] = "future_boss_stage",
-                n => n["Run"]!["RoundNumber"] = 7,
-                n => { n["Run"]!["RoundNumber"] = 8; n["Run"]!["Stage"] = "between_rounds"; },
+                n => n["Run"]!["RoundNumber"] = 8,
+                n => { n["Run"]!["RoundNumber"] = 9; n["Run"]!["Stage"] = "between_rounds"; },
                 n => n["NewBossEnvelope"] = new JsonObject()
             }) {
                 var node = JsonNode.Parse(Encode(state))!; change(node); var original = node.ToJsonString(); File.WriteAllText(store.Path, original);

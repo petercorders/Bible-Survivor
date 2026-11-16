@@ -13,6 +13,7 @@ namespace BibleSurvivor.Unity
         AdamR04Art r04;
         AdamR05Art r05;
         AdamR06Art r06;
+        AdamR07Art r07;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
@@ -177,6 +178,7 @@ namespace BibleSurvivor.Unity
                 case "d1":case "d2":case "d3":return AdamR04Art.EnemyClip(id);
                 case "e1":case "e2":case "e3":return AdamR05Art.EnemyClip(id);
                 case "f1":case "f2":case "f3":case "sitnah_keeper":return AdamR06Art.EnemyClip(id);
+                case "g1":case "g2":case "g3":return AdamR07Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -246,7 +248,11 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.R06Enemy(monster.MonsterId))
+                        if(AdamRoundPresentation.R07Enemy(monster.MonsterId))
+                        {
+                            if(r07==null)r07=new AdamR07Art();r07.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        }
+                        else if(AdamRoundPresentation.R06Enemy(monster.MonsterId))
                         {
                             if(r06==null)r06=new AdamR06Art();var id=monster.MonsterId;
                             if(id=="sitnah_keeper"){var clip=BossClip(host.Session.Stage,bossVisual,bossImpactAt,Clock,out var frame);r06.Draw(clip,anchor,scale,Clock,bossLeft,frame);}

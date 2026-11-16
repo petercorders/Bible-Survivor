@@ -18,7 +18,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number<1 || number>6) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R06 core is implemented");
+        if(number<1 || number>7) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R07 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
         if(root.GetProperty("schema_version").GetInt32()!=1 || root.GetProperty("chapter_id").GetString()!="genesis")
@@ -65,6 +65,7 @@ public static class CatalogReader
                 monsters["f1"].GetProperty("max_health").GetInt32()!=80||monsters["f1"].GetProperty("contact_damage").GetInt32()!=8||monsters["f1"].GetProperty("speed_ratio").GetDouble()!=.7||monsters["f2"].GetProperty("speed_ratio").GetDouble()!=.5||monsters["f3"].GetProperty("speed_ratio").GetDouble()!=.35)
                 throw new InvalidDataException("Unsupported R06 boss contract");
         }
+        if(number==7&&(monsters["g1"].GetProperty("behavior_id").GetString()!="chase"||monsters["g2"].GetProperty("behavior_id").GetString()!="chase"||monsters["g3"].GetProperty("behavior_id").GetString()!="two_sided_chase"||monsters["g1"].GetProperty("speed_ratio").GetDouble()!=.65||monsters["g2"].GetProperty("speed_ratio").GetDouble()!=.55||monsters["g3"].GetProperty("speed_ratio").GetDouble()!=.65))throw new InvalidDataException("Unsupported R07 chase contract");
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(
             w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=> {
