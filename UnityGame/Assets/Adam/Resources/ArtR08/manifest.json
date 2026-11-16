@@ -1,0 +1,416 @@
+{
+ "schema": "bible-survivors.art-manifest-r08",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R08 (Joseph) H1-H3 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r08_ext.json",
+   "name": "r08-ext-v1",
+   "sha256": "ee935057c45db0282bcaf1f0719bdc13127664bc2868e21a8719c7ec62347f72"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r08.json",
+   "sha256": "95bc3812c0eb04357c412013424697ad19670a43be38a9ae83d3be50bf304d18"
+  },
+  "generator": {
+   "file": "scripts/actors_r08.py",
+   "sha256": "0d5c2f85305b5e8302b95c3e26af65bdc5e1c12e392ba8a922c91a06d261d488"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r08.json",
+   "sha256": "df086243139cdf5ef1b0e41350f198fe617e8efe817b86734a56847b440c648f"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "h1": "시기의 그림자",
+    "h2": "감옥 사슬령",
+    "h3": "기근의 마수"
+   },
+   "behaviours": {
+    "h1": "chase",
+    "h2": "slow_chase",
+    "h3": "chase"
+   }
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  }
+ },
+ "notProduced": {
+  "chain reach / binding effect": "not made on purpose: H2 has no binding debuff; the chain swing is look only and stays in the clip",
+  "grain on the ground / growth stages": "not made on purpose: no grain piles, crop decals or bigger H3 variants, so nothing reads as damage ground or an eat-and-grow mechanic",
+  "projectile, dash, debuff or new pattern art": "R08 adds none",
+  "death / hit clips": "not in the R08 brief; the existing shared enemy hit/death handling applies"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r08.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r08.py, a procedural generator written by Claude (Anthropic model) in this session; not exported from the Claude Design product",
+  "designCanvas": "Claude Design canvas (Artifact Design type) used only to present the sheets and boards for review; see README/RESULT"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r08_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 37:3-11 (the brothers' envy of Joseph), 39:20-40:23 (the prison) and 41:27-57 (the years of famine). Creative adaptation for the game."
+ },
+ "assets": [
+  {
+   "id": "enm_h1-envy-shadow_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r08.json",
+   "file": "export/png/enm_h1-envy-shadow_move_32.png",
+   "sha256": "d8f04cf3d109fa1270b96928128ad4874ef6f6ce2dac442fd67177bbeec7e711",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 9,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:h1",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 7,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     3,
+     25,
+     30
+    ],
+    [
+     2,
+     2,
+     25,
+     30
+    ],
+    [
+     3,
+     3,
+     25,
+     30
+    ],
+    [
+     2,
+     2,
+     25,
+     30
+    ]
+   ],
+   "use": "chase loop: a crouching shadow imp with jagged shadow spikes on its head, two huge staring green eyes and a green grin, clawed hands clutched to its chest, wisps trailing behind. Look only: no debuff or ranged attack",
+   "source": {
+    "authoring": "scripts/actors_r08.py:envy_shadow",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r08.json#enm_h1-envy-shadow_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_h2-chain-wraith_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r08.json",
+   "file": "export/png/enm_h2-chain-wraith_move_32.png",
+   "sha256": "6bcba5e7bf89cb46f352bf95d46458a1e2bc8dcc133a8b06a6464e5156731a32",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 5,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:h2",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     9,
+     3,
+     28,
+     30
+    ],
+    [
+     9,
+     3,
+     21,
+     30
+    ],
+    [
+     3,
+     3,
+     21,
+     30
+    ],
+    [
+     9,
+     3,
+     21,
+     30
+    ]
+   ],
+   "use": "slow chase loop: a hooded spirit whose chest is a small iron cage, swinging one chain with an iron weight round itself, 90 degrees per frame (right, front, left, behind). The chain is look only: it stays inside the 32 px clip with a margin, never reaches toward the player and has no reach, hook or binding effect",
+   "source": {
+    "authoring": "scripts/actors_r08.py:chain_wraith",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r08.json#enm_h2-chain-wraith_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_h3-famine-beast_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r08.json",
+   "file": "export/png/enm_h3-famine-beast_move_32.png",
+   "sha256": "cd9909747b5c58ea2be070841a3aa02df84c03c5793cdb069983b1557edfc121",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 7,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:h3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     8,
+     30,
+     30
+    ],
+    [
+     2,
+     7,
+     30,
+     30
+    ],
+    [
+     2,
+     8,
+     30,
+     30
+    ],
+    [
+     2,
+     7,
+     30,
+     30
+    ]
+   ],
+   "use": "chase loop: a gaunt beast with ribs and spine showing and a long bony neck, chewing a sheaf of grain held in its jaws. It stays the same thin size in every frame (no growth), and the grain is only in its mouth: nothing is dropped or left on the ground",
+   "source": {
+    "authoring": "scripts/actors_r08.py:famine_beast",
+    "method": "procedural generator written by Claude in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_r08.json#enm_h3-famine-beast_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

@@ -1,0 +1,349 @@
+{
+  "name": "master-v0.3",
+  "note": "Named ramps, light to dark. Actor/FX/UI and terrain are separate groups so the terrain can stay low-contrast. v0.3 = v0.2 + 'beast' (darker plum bark for A3 so it separates from grass and the dirt path) + 'smoke' (opaque enemy-death puffs) + 'path' (dirt-path tile ramp). Legacy v1 (01) used one 48-colour list with single-char keys; see docs in art-production-readiness.md.",
+  "actor": {
+    "outline": [
+      "#1b1424",
+      "#3b2838"
+    ],
+    "white": [
+      "#ffffff",
+      "#f4efe1"
+    ],
+    "skin": [
+      "#e6b48a",
+      "#c98d5e",
+      "#9a6440",
+      "#6a4128"
+    ],
+    "hair": [
+      "#8a5e3c",
+      "#6e4a32",
+      "#4e3424",
+      "#33221a"
+    ],
+    "tunic": [
+      "#f4ead0",
+      "#dccaa0",
+      "#b39f74",
+      "#84714e"
+    ],
+    "cloak": [
+      "#8aa6d6",
+      "#5c7abc",
+      "#405896",
+      "#2a3a6a"
+    ],
+    "lining": [
+      "#b04e40",
+      "#76302c"
+    ],
+    "leather": [
+      "#b47c4a",
+      "#8a5a32",
+      "#5a3820"
+    ],
+    "gold": [
+      "#ffe8a0",
+      "#d8a840",
+      "#9a7028"
+    ],
+    "snake": [
+      "#c690d8",
+      "#9458b0",
+      "#643884",
+      "#3e2050"
+    ],
+    "belly": [
+      "#ecdca8",
+      "#bca274"
+    ],
+    "eye": [
+      "#ffe066",
+      "#f2f27a"
+    ],
+    "tongue": [
+      "#e04050"
+    ],
+    "fruit": [
+      "#f4a0a0",
+      "#d84858",
+      "#a02c44",
+      "#641a30"
+    ],
+    "leaf": [
+      "#b8d060",
+      "#7a9a34",
+      "#4e6a26"
+    ],
+    "wing": [
+      "#f2c8c0",
+      "#d48e96",
+      "#9c5a72",
+      "#5e3450"
+    ],
+    "bark": [
+      "#b08a62",
+      "#84624a",
+      "#5a4236",
+      "#3a2a2c"
+    ],
+    "moss": [
+      "#9ab454",
+      "#62803a"
+    ],
+    "thorn": [
+      "#f2e6c4",
+      "#c8b48a"
+    ],
+    "book": [
+      "#a85a40",
+      "#7a3a2a",
+      "#4e2020"
+    ],
+    "page": [
+      "#f4efe1",
+      "#cfc3a0"
+    ],
+    "ribbon": [
+      "#d84858"
+    ],
+    "bone": [
+      "#f8f0da",
+      "#dccca4",
+      "#ac9870",
+      "#6e5c44"
+    ],
+    "stone": [
+      "#d0d0d8",
+      "#a0a0ac",
+      "#70707e",
+      "#4a4a58"
+    ],
+    "gem": [
+      "#d8fffa",
+      "#4fe8e0",
+      "#1a9aa8",
+      "#0e5a6e"
+    ],
+    "gem2": [
+      "#d4e2ff",
+      "#8ab4ff",
+      "#3a5ad0",
+      "#22307a"
+    ],
+    "spark": [
+      "#fff4c0",
+      "#ffd060"
+    ],
+    "shadow": [
+      "#1b142459",
+      "#1b142433"
+    ],
+    "fxa": [
+      "#fff8e0b0",
+      "#f4e6c070",
+      "#ffe8a060",
+      "#f4efe188"
+    ],
+    "beast": [
+      "#a88690",
+      "#74505e",
+      "#4a3042",
+      "#2c1a2c"
+    ],
+    "smoke": [
+      "#b8a8c4",
+      "#7a6690",
+      "#4a3a5c"
+    ]
+  },
+  "ui": {
+    "panel": [
+      "#1b1424",
+      "#2c2236",
+      "#4a3c56",
+      "#8a7a9a"
+    ],
+    "hp": [
+      "#ff8a8a",
+      "#d04a5a",
+      "#5a1a2a"
+    ],
+    "xp": [
+      "#d8fffa",
+      "#4fe8e0",
+      "#1a9aa8",
+      "#123844"
+    ],
+    "text": [
+      "#f4efe1",
+      "#ffe8a0",
+      "#a89cb4"
+    ],
+    "dim": [
+      "#1b1424b0",
+      "#1b142480"
+    ]
+  },
+  "terrain": {
+    "grass": [
+      "#6e8e4a",
+      "#5c7e40",
+      "#4f7039",
+      "#436232",
+      "#38542c"
+    ],
+    "meadow": [
+      "#7a8a4c",
+      "#68783f"
+    ],
+    "soil": [
+      "#927c58",
+      "#7e6a4c",
+      "#66543e",
+      "#54453a"
+    ],
+    "rock": [
+      "#9a978a",
+      "#807e72",
+      "#64625a",
+      "#4c4a44"
+    ],
+    "flower": [
+      "#c4b872",
+      "#c49aa4",
+      "#b0bccb"
+    ],
+    "vine": [
+      "#5a4a3c",
+      "#46392f"
+    ],
+    "canopy": [
+      "#1b142438"
+    ],
+    "path": [
+      "#a48c66",
+      "#927c58",
+      "#7e6a4c",
+      "#66543e",
+      "#54453a"
+    ]
+  },
+  "recolor": {
+    "skin": {
+      "s1": [
+        "#f8dcc0",
+        "#ecbc96",
+        "#c9906a",
+        "#96624a"
+      ],
+      "s2": [
+        "#f0c8a0",
+        "#dca577",
+        "#b07550",
+        "#7e4e36"
+      ],
+      "s3": [
+        "#e6b48a",
+        "#c98d5e",
+        "#9a6440",
+        "#6a4128"
+      ],
+      "s4": [
+        "#c48c62",
+        "#a06a44",
+        "#78482c",
+        "#52301e"
+      ],
+      "s5": [
+        "#a0704a",
+        "#7e5234",
+        "#5a3822",
+        "#3c2416"
+      ],
+      "s6": [
+        "#845a3e",
+        "#66402a",
+        "#4a2c1c",
+        "#301c12"
+      ]
+    },
+    "hair": {
+      "black": [
+        "#5c5468",
+        "#3a3442",
+        "#28232f",
+        "#1b1424"
+      ],
+      "darkbrown": [
+        "#6e4a34",
+        "#523626",
+        "#3a261c",
+        "#261812"
+      ],
+      "brown": [
+        "#8a5e3c",
+        "#6e4a32",
+        "#4e3424",
+        "#33221a"
+      ],
+      "auburn": [
+        "#c06a40",
+        "#94482a",
+        "#68301e",
+        "#421c10"
+      ],
+      "gray": [
+        "#c4c0b8",
+        "#9a968e",
+        "#726e68",
+        "#4c4846"
+      ],
+      "white": [
+        "#f4f0e4",
+        "#d8d2c4",
+        "#ada798",
+        "#7c7668"
+      ]
+    },
+    "dye": {
+      "linen": [
+        "#f4ead0",
+        "#dccaa0",
+        "#b39f74",
+        "#84714e"
+      ],
+      "madder": [
+        "#eca48e",
+        "#c8644e",
+        "#963e34",
+        "#62261f"
+      ],
+      "indigo": [
+        "#a2bce6",
+        "#6c8ac6",
+        "#48609c",
+        "#2e3e6a"
+      ],
+      "ochre": [
+        "#f4d686",
+        "#d8aa4c",
+        "#a87c30",
+        "#74521c"
+      ],
+      "olive": [
+        "#cccf92",
+        "#9fa25e",
+        "#72763e",
+        "#4a4e26"
+      ],
+      "purple": [
+        "#d0aade",
+        "#a070b8",
+        "#70468a",
+        "#46285a"
+      ]
+    }
+  }
+}

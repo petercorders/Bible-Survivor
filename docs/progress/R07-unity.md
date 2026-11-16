@@ -8,7 +8,7 @@ Host/catalog는 R07 normal/round_settlement/between8를 연결하고120gold/elij
 
 앱 seed는 이전 실제 R06 앱 완료 evidence JSON으로, between7/6보조 슬롯과 유효 phase를 먼저 읽었으며 장비·보조를 새로 주입하지 않았다. HP10000/기존 장비·sling/bible 진화를 유지하고, 앞121초 예정 actor 직접 처치/XP drop 폐기·3초 Session Advance 후 새 World(seed7)를 구성하는 기술 준비를 썼다. 무기는1000초까지 억제했고 G3 좌표는 수정하지 않았다. 초기 G3 6명의 x는 Core가 생성한[-11,+11]이다. 실제 Core 추적3초 뒤 화면은 여전히 좌우 x 약[-5.58,+5.62]로 분리되어 있고, full sprite가 양쪽 화면 안에 들어오는 좌표·pause/중간 disk 동등을 확인했다. 중앙에 겹친 뒤 배치 PASS를 주장하지 않는다.
 
-대표 화면 뒤 직접 Core Hit7/Kill로 한 G3의233HP/제거와 다른 actor240HP 불변을 assert했다. 이는 기술 피해/처치 주입이다. 이후 나머지 직접 처치·normal timeout으로 pending 성장3회를 만들고 Host.Choose로 해결했다. 정산 직전976→완료1096의120gold/해금/최대HP회복/between8, 두 receipt·form·PreviousNormalRound5 보존 및 새 process Run/Profile 정확Load를 확인했다. 앞 준비/직접 처치에서 생긴 골드는 완료120과 분리했다. 앱 자연 완주/899실킬·모바일·native 입력·성능 PASS로 확대하지 않는다.
+대표 화면 뒤 직접 Core Hit7/Kill로 한 G3의233HP/제거와 다른 actor240HP 불변을 assert했다. 이는 기술 피해/처치 주입이다. 이후 나머지 직접 처치·normal timeout 뒤 후보3개 중 Host.Choose로 성장1회를 해결했다(level15→16). 기존 보고의 “성장3회”는 PendingChoices.Count를 횟수로 오독한 오류이며 원래 trace는 보존한다. 정산 직전976→완료1096의120gold/해금/최대HP회복/between8, 두 receipt·form·PreviousNormalRound5 보존 및 새 process Run/Profile 정확Load를 확인했다. 앞 준비/직접 처치에서 생긴 골드는 완료120과 분리했다. 앱 자연 완주/899실킬·모바일·native 입력·성능 PASS로 확대하지 않는다.
 
 첫 macbuild/실행 exit0 후 실제 view_image에서 pause 모달이 전투 화면을 가리는 UI fixture 실패를 발견했다. 지속 승인에 따라 제품 소스/DLL/provenance를 고정하고 QA driver에서 캡처 직전 SetPaused(false) 두 곳만 추가했다. game.enabled=false여서 추가 simulation tick은 없고 동일 좌표를 유지한다. 새 출력 정상 build1회로 대표3장을 교체했으며 총 macbuild2회 exit0다. 실패 이미지/trace/PID/복구와 교정 근거는 별도 보존하고 최종 근거로 섞지 않았다. 새 단위시험/전체검사를 반복하지 않았다.
 

@@ -161,7 +161,7 @@ namespace BibleSurvivor.Core
                     if (stage != null && round != null && round.GetAttribute("type") == "number" &&
                         round.InnerText.Length > 0 && round.InnerText.All(c => c >= '0' && c <= '9') &&
                         (!int.TryParse(round.InnerText, NumberStyles.None, CultureInfo.InvariantCulture, out var numberValue) ||
-                         (stage.InnerText == "normal" && numberValue > 7) || (stage.InnerText == "between_rounds" && numberValue > 8) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>6) || (stage.InnerText=="round_settlement"&&numberValue>7)))
+                         (stage.InnerText == "normal" && numberValue > 8) || (stage.InnerText == "between_rounds" && numberValue > 9) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>6) || (stage.InnerText=="round_settlement"&&numberValue>8)))
                         throw new UnsupportedSaveVersionException();
                 }
             }
@@ -185,6 +185,9 @@ namespace BibleSurvivor.Core
                 var policy=reward?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="PolicyId");
                 if(policy?.GetAttribute("type")=="string"&&policy.InnerText!=BossDefinition.Policy&&policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy)throw new UnsupportedSaveVersionException();
             }
+            if(element.Name=="Choices"&&element.GetAttribute("type")=="array")
+                foreach(var choice in element.ChildNodes.OfType<XmlElement>())
+                    if(choice.GetAttribute("type")=="string"&&!AdamSession.KnownGrowthChoice(choice.InnerText))throw new UnsupportedSaveVersionException();
             if(element.Name=="Forms" && element.GetAttribute("type")=="array")
                 foreach(var entry in element.ChildNodes.OfType<XmlElement>())
                 {

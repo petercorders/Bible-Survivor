@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    // Adapter reads the unchanged canonical catalog for the seven implemented rounds.
+    // Adapter reads the unchanged canonical catalog for the eight implemented rounds.
     public sealed class AdamCatalog
     {
         [Serializable] public class Root { public int schema_version; public string chapter_id; public Rules rules; public Monster[] monsters; public Round[] rounds; public Boss[] bosses; }
@@ -24,14 +24,14 @@ namespace BibleSurvivor.Unity
         public IReadOnlyDictionary<string, double> Speeds { get; }
         public RoundDefinition ForRound(int number)
         {
-            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only R01/R02/R03/R04/R05/R06/R07 are implemented; R08 is pending");
+            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only R01/R02/R03/R04/R05/R06/R07/R08 are implemented; R09 is pending");
             return value;
         }
         public RoundDefinition ForCheckpoint(RunState run)
         {
             var boss=run.Stage=="boss_intro"||run.Stage=="boss"||run.Stage=="boss_reward"||run.Stage=="boss_settlement";
             var number=run.Stage=="normal"||run.Stage=="round_settlement"||boss?run.RoundNumber:run.Stage=="between_rounds"?run.RoundNumber-1:0;
-            if((boss&&number!=3&&number!=6)||number<1||number>7 || (run.Stage=="round_settlement"&&number!=4&&number!=5&&number!=7))throw new InvalidDataException("Checkpoint is outside implemented content");
+            if((boss&&number!=3&&number!=6)||number<1||number>8 || (run.Stage=="round_settlement"&&number!=4&&number!=5&&number!=7&&number!=8))throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(number);
         }
         public AdamCatalog(string json)
@@ -49,7 +49,7 @@ namespace BibleSurvivor.Unity
                     monsters[rules.SupportMonster].max_health!=rules.SupportHitPoints||monsters[rules.SupportMonster].contact_damage!=rules.SupportContact||monsters[rules.SupportMonster].speed_ratio!=rules.SupportRatio)
                     throw new InvalidDataException("Unsupported boss catalog contract: "+rules.Id);
             }
-            foreach(var number in new[]{1,2,3,4,5,6,7})
+            foreach(var number in new[]{1,2,3,4,5,6,7,8})
             {
                 var round=root.rounds.Single(x=>x.number==number);
                 if(round.id!="genesis_0"+number || ((number==3||number==6)?round.boss_id!=BossDefinition.ForRound(number).Id:!string.IsNullOrEmpty(round.boss_id)) || round.waves==null)throw new InvalidDataException("Invalid implemented round identity");
@@ -59,7 +59,7 @@ namespace BibleSurvivor.Unity
                     return new SpawnGroup(g.monster_id,g.count,monster.max_health,monster.contact_damage);
                 }))).ToArray();
                 if(waves.SelectMany(w=>w.Groups).Sum(g=>g.Count)!=round.spawn_budget)throw new InvalidDataException("Budget mismatch");
-                definitions.Add(number,new RoundDefinition(number,round.concurrency_cap,round.raw_xp_budget,round.completion_gold,waves,round.id,round.unlock_weapon_id));
+                definitions.Add(number,new RoundDefinition(number,round.concurrency_cap,round.raw_xp_budget,round.completion_gold,waves,round.id,string.IsNullOrEmpty(round.unlock_weapon_id)?null:round.unlock_weapon_id));
             }
         }
         public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text);

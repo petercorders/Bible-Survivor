@@ -8,6 +8,14 @@ namespace BibleSurvivor.Core
     public sealed class AdamSession
     {
         private static readonly string[] Passives = { "scroll","hair","stones","east_wind","seal","cloud","thunder","crown","underwear","whirlwind" };
+        public const string GrowthGoldChoicePrefix="growth_gold_25:";
+        internal static IReadOnlyList<string> GrowthChoices(EquipmentInventory inventory,IEnumerable<string> unlocked,int serial)
+        {
+            var choices=inventory.Choices(unlocked,Passives,3,serial);
+            return choices.Count==0?new[]{GrowthGoldChoicePrefix+serial.ToString(System.Globalization.CultureInfo.InvariantCulture)}:choices;
+        }
+        internal static bool KnownGrowthChoice(string id)=>Passives.Contains(id)||id=="bible"||id=="jawbone"||id=="sling"||
+            id.StartsWith(GrowthGoldChoicePrefix,StringComparison.Ordinal)&&int.TryParse(id.Substring(GrowthGoldChoicePrefix.Length),System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out var serial)&&serial>=0;
         private readonly GameSnapshot state;
         private readonly RoundDefinition definition;
         private RunState run;
@@ -78,7 +86,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > 7 ||
+            if (definition.Number < 1 || definition.Number > 8 ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -89,7 +97,7 @@ namespace BibleSurvivor.Core
             this.state = state; this.definition = definition;
             Inventory = EquipmentInventory.Restore(run.Weapons, run.Passives,run.Forms);
             Growth = new GrowthLedger(run.Level, run.Experience); Wave = run.Wave == null ? null : WaveDirector.Restore(definition, run.Wave);
-            var eligible = Inventory.Choices(state.Profile.UnlockedWeapons, Passives, 3, run.ChoiceSerial);
+            var eligible = GrowthChoices(Inventory,state.Profile.UnlockedWeapons,run.ChoiceSerial);
             if (run.Choices.Any(x => !eligible.Contains(x))) throw new ArgumentException("Invalid saved level-up choices");
         }
         public static AdamSession Resume(GameSnapshot state, RoundDefinition definition) => new AdamSession(state, definition);
@@ -97,7 +105,7 @@ namespace BibleSurvivor.Core
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number>7 || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number>8 || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             state.Validate(); Capture();
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
@@ -198,13 +206,17 @@ namespace BibleSurvivor.Core
         private void EnsureChoices()
         {
             if (run.PendingLevels == 0 || run.Choices.Count > 0) return;
-            run.Choices = Inventory.Choices(state.Profile.UnlockedWeapons,Passives,3,run.ChoiceSerial).ToList();
-            if (run.Choices.Count == 0) throw new InvalidOperationException("No valid level-up choice: fallback is not implemented");
+            run.Choices = GrowthChoices(Inventory,state.Profile.UnlockedWeapons,run.ChoiceSerial).ToList();
         }
         public bool Choose(string id)
         {
             if (!IsCurrent || run.Stage=="boss_reward" || run.PendingLevels <= 0 || !run.Choices.Contains(id)) return false;
-            if (!Inventory.TryChoose(id, Passives.Contains(id))) return false;
+            if(id==GrowthGoldChoicePrefix+run.ChoiceSerial.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            {
+                if(Inventory.Choices(state.Profile.UnlockedWeapons,Passives,3,run.ChoiceSerial).Count!=0)return false;
+                state.Profile.Gold=checked(state.Profile.Gold+25);
+            }
+            else if (!Inventory.TryChoose(id, Passives.Contains(id))) return false;
             run.PendingLevels--; run.ChoiceSerial++; run.Choices.Clear(); EnsureChoices();
             if(run.Stage=="round_settlement"&&run.PendingLevels==0)CompleteNormalSettlement();
             Capture(); return true;
@@ -231,7 +243,7 @@ namespace BibleSurvivor.Core
                 run.Boss=new BossEncounterState{EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
-            if(definition.Number==4||definition.Number==5||definition.Number==7)
+            if(definition.Number==4||definition.Number==5||definition.Number==7||definition.Number==8)
             {
                 run.NormalEndedAt=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
@@ -249,7 +261,7 @@ namespace BibleSurvivor.Core
         }
         public bool CompleteNormalSettlement()
         {
-            if(!IsCurrent||(definition.Number!=4&&definition.Number!=5&&definition.Number!=7)||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
+            if(!IsCurrent||(definition.Number!=4&&definition.Number!=5&&definition.Number!=7&&definition.Number!=8)||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
             state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
             if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
             run.Health=run.MaxHealth;run.RoundCompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=definition.Number+1;run.World=null;Capture();return true;
@@ -274,7 +286,6 @@ namespace BibleSurvivor.Core
             // Refuse a stale/capped grant before changing inventory, money or the receipt.
             var preview=EquipmentInventory.Restore(Inventory.Weapons,Inventory.Passives,Inventory.Forms);
             if(candidate.Kind=="evolution"&&!preview.TryEvolve(candidate.ItemId)||candidate.Kind=="item"&&!preview.TryChoose(candidate.ItemId,Passives.Contains(candidate.ItemId)))return false;
-            if(run.PendingLevels>0&&preview.Choices(state.Profile.UnlockedWeapons,Passives,3,run.ChoiceSerial).Count==0)return false;
             if(candidate.Kind=="evolution") { if(!Inventory.TryEvolve(candidate.ItemId))return false; }
             else if(candidate.Kind=="item") { if(!Inventory.TryChoose(candidate.ItemId,Passives.Contains(candidate.ItemId)))return false; }
             else if(candidate.Kind=="gold") { state.Profile.Gold=checked(state.Profile.Gold+candidate.Gold);reward.GoldApplied=true; }

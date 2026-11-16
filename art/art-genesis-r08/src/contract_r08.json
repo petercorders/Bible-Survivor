@@ -1,0 +1,48 @@
+{
+  "schema": "bible-survivors.art-r08-contract",
+  "schemaVersion": 1,
+  "note": "Hand-written file contract for the R08 (Joseph) normal enemies H1-H3. Same 32 px rules as art 03 / R02-R07 (PPU 32, pivot (16,1), art faces right, flipX once on the parent, binary alpha). All three chase and touch only: no new projectile, dash, binding debuff, growth, shared health or damage-ground art. Gameplay numbers belong to Core and the catalog.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {"artFaces": "right", "faceLeft": "flipX", "applyOn": "parent", "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"},
+  "importer": {"filterMode": "Point", "mipmaps": false, "compression": "none", "spriteMode": "multiple, one rect per frame", "ppu": 32},
+  "alphaPolicies": {"binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"},
+  "edgeMargin": {"px": 1, "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y. The H2 chain is part of this rule: its whole swing stays inside the clip"},
+  "colourLimit": {"32": 16, "fx": 24, "note": "distinct RGBA values per PNG"},
+  "palette": {
+    "base": {"file": "src/palette_v03.json", "name": "master-v0.3", "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"},
+    "ext": {"file": "src/palette_r08_ext.json", "name": "r08-ext-v1", "rampsMustNotCollide": true}
+  },
+  "references": {
+    "catalog": {"repoFile": "content/genesis/catalog.json", "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+                "monsters": {"h1": "시기의 그림자", "h2": "감옥 사슬령", "h3": "기근의 마수"},
+                "behaviours": {"h1": "chase", "h2": "slow_chase", "h3": "chase"}},
+    "art03": {"manifest": "export/manifest_v3.json", "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"},
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    }
+  },
+  "assets": [
+    {"id": "enm_h1-envy-shadow_move_32", "ref": "monster:h1", "cell": [32, 32], "frames": 4, "fps": 9, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-small_static_12x4", "facing": "right",
+     "use": "chase loop: a crouching shadow imp with jagged shadow spikes on its head, two huge staring green eyes and a green grin, clawed hands clutched to its chest, wisps trailing behind. Look only: no debuff or ranged attack"},
+    {"id": "enm_h2-chain-wraith_move_32", "ref": "monster:h2", "cell": [32, 32], "frames": 4, "fps": 5, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "slow chase loop: a hooded spirit whose chest is a small iron cage, swinging one chain with an iron weight round itself, 90 degrees per frame (right, front, left, behind). The chain is look only: it stays inside the 32 px clip with a margin, never reaches toward the player and has no reach, hook or binding effect"},
+    {"id": "enm_h3-famine-beast_move_32", "ref": "monster:h3", "cell": [32, 32], "frames": 4, "fps": 7, "loop": true, "pivot": [16, 1], "ground": true, "alpha": "binary", "sorting": "Actors", "shadow": "fx_shadow-wide_static_24x6", "facing": "right",
+     "use": "chase loop: a gaunt beast with ribs and spine showing and a long bony neck, chewing a sheaf of grain held in its jaws. It stays the same thin size in every frame (no growth), and the grain is only in its mouth: nothing is dropped or left on the ground"}
+  ],
+  "notProduced": {
+    "chain reach / binding effect": "not made on purpose: H2 has no binding debuff; the chain swing is look only and stays in the clip",
+    "grain on the ground / growth stages": "not made on purpose: no grain piles, crop decals or bigger H3 variants, so nothing reads as damage ground or an eat-and-grow mechanic",
+    "projectile, dash, debuff or new pattern art": "R08 adds none",
+    "death / hit clips": "not in the R08 brief; the existing shared enemy hit/death handling applies"
+  },
+  "motifs": {
+    "source": "Genesis 37:3-11 (the brothers' envy of Joseph), 39:20-40:23 (the prison) and 41:27-57 (the years of famine). Creative adaptation for the game.",
+    "h1": "envy as a crouching shadow imp with staring green eyes (a created monster; not Joseph's brothers or any person)",
+    "h2": "the prison as a hooded spirit whose chest is an iron cage, swinging a chain (a created monster; not Joseph, a prisoner, a jailer or any person)",
+    "h3": "the famine as a gaunt beast devouring grain (a created monster; not a starving person, and not the thin cows of Pharaoh's dream)",
+    "excluded": "Joseph, his brothers, Jacob, Potiphar and his wife, the cupbearer, the baker, Pharaoh, prisoners, hungry people, livestock and God are never enemies or enemy effects. No human figures are drawn"
+  }
+}

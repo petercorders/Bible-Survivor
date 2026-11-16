@@ -18,7 +18,8 @@ namespace BibleSurvivor.Unity
         // Passive contribution values allow tests to compare the card with actual Core behavior.
         public double BeforeValue { get; private set; }
         public double AfterValue { get; private set; }
-        public string Card(int slot) => $"{slot + 1}. {Name}  |  {Kind} · {(CurrentLevel == 0 ? "신규" : "강화")} {CurrentLevel} → {NextLevel}/{Maximum}\n{Effect}";
+        public bool IsCurrency => Id!=null && Id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal);
+        public string Card(int slot) => IsCurrency ? $"{slot + 1}. {Name}  |  {Kind}\n{Effect}" : $"{slot + 1}. {Name}  |  {Kind} · {(CurrentLevel == 0 ? "신규" : "강화")} {CurrentLevel} → {NextLevel}/{Maximum}\n{Effect}";
         public static string ItemName(string id)
         {
             switch (id)
@@ -42,6 +43,8 @@ namespace BibleSurvivor.Unity
         static string N(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
         public static AdamChoiceText Describe(string id, EquipmentInventory inventory, double damageMultiplier = 1)
         {
+            if(id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal))
+                return new AdamChoiceText{Id=id,Name="골드 주머니",Kind="재화",Effect="영구 골드 +25"};
             var weapon = id == "bible" || id == "jawbone" || id == "sling";
             var levels = weapon ? inventory.Weapons : inventory.Passives;
             var current = levels.TryGetValue(id, out var level) ? level : 0;

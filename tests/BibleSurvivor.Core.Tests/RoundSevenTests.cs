@@ -10,7 +10,7 @@ namespace BibleSurvivor.Core.Tests;
 internal static class RoundSevenTests
 {
     private const string Catalog="content/genesis/catalog.json";
-    private static (GameSnapshot State,AdamSession Game) CompletedSix()
+    internal static (GameSnapshot State,AdamSession Game) CompletedSix()
     {
         var (state,game)=RoundSixTests.Start();game.Advance(180);game.Advance(2);game.Hit(781,6500);
         var choice=game.BossChoices.First();Check.True(game.ChooseBossReward(game.Boss!.Reward!.RewardId,choice.Id));RoundTransitionTests.Resolve(game);Check.True(game.CompleteBossSettlement());return(state,game);
@@ -41,9 +41,9 @@ internal static class RoundSevenTests
             var (state,game)=CompletedSix();game=game.StartNextRound(CatalogReader.Round(Catalog,7));var first=JsonSerializer.Serialize(state.Run!.CompletedBoss);var second=JsonSerializer.Serialize(state.Run.CompletedSecondBoss);var gold=state.Profile.Gold;game.Advance(10);game.Damage(20);
             game.Advance(50);foreach(var id in game.Targets.Keys.ToArray())game.Kill(id);gold=state.Profile.Gold;game.Advance(180);Check.Equal("round_settlement",game.Stage);Check.Equal(gold,state.Profile.Gold);Check.True(game.CurrentHealth<state.Run.MaxHealth);Check.True(!game.CompleteNormalSettlement());RoundTransitionTests.Resolve(game);
             Check.Equal("between_rounds",game.Stage);Check.Equal(8,state.Run.RoundNumber);Check.Equal(gold+120,state.Profile.Gold);Check.Near(state.Run.MaxHealth,game.CurrentHealth);Check.True(state.Profile.UnlockedWeapons.Contains("elijah_chariot"));Check.True(!game.Inventory.TryChoose("elijah_chariot",false));Check.True(!game.CompleteNormalSettlement());
-            Check.Equal(first,JsonSerializer.Serialize(state.Run.CompletedBoss));Check.Equal(second,JsonSerializer.Serialize(state.Run.CompletedSecondBoss));store.Commit(state,0,"done");store.Commit(state,0,"done");var loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,7));Check.True(!game.CompleteNormalSettlement());Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,8));
+            Check.Equal(first,JsonSerializer.Serialize(state.Run.CompletedBoss));Check.Equal(second,JsonSerializer.Serialize(state.Run.CompletedSecondBoss));store.Commit(state,0,"done");store.Commit(state,0,"done");var loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,7));Check.True(!game.CompleteNormalSettlement());Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,9));
             var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["Stage"]="normal",n=>n["Run"]!["CompletedSecondBoss"]!["FutureReceipt"]=1,n=>n["Run"]!["CompletedSecondBoss"]!["Reward"]!["PolicyId"]="future"})
+            foreach(var change in new Action<JsonNode>[] {n=>{n["Run"]!["Stage"]="normal";n["Run"]!["RoundNumber"]=9;},n=>n["Run"]!["CompletedSecondBoss"]!["FutureReceipt"]=1,n=>n["Run"]!["CompletedSecondBoss"]!["Reward"]!["PolicyId"]="future"})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
             loaded.Run!.CompletedSecondBoss=loaded.Run.CompletedBoss;Check.Throws<InvalidDataException>(()=>loaded.Validate());
         }));

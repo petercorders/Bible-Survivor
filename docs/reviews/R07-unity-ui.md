@@ -16,6 +16,6 @@
 
 최종 앱은 `build-review/R07Review.app`이며, 앞 pause-overlay FAIL은 대표에서 제외·별도 보존되었다. 고정 제품 후 QA driver의 두 unpause만 교정하고 총2번 정상 빌드했다는 이력을 유지한다. 관련22/Edit116/Play31은 재사용이고 이 교정 뒤 전체시험을 다시 실행한 것으로 세지 않는다. 현재 대표 전투 화면에는 앞 pause 모달 문제가 보이지 않는다.
 
-기술 directkill/drop폐기/Hit7·HP10000/weapon clock/timeout과 실제 Host.Choose 성장3회·완료120gold·새 process Load는 인계된 **개발자 실행 근거**이며 본인시험 수에 합산하지 않는다. 후자는 실제 Host 경로를 거쳤더라도 준비·처치 주입이 있는 fixture이므로 앱899/900실킬·자연완주·밸런스 PASS가 아니다.
+기술 directkill/drop폐기/Hit7·HP10000/weapon clock/timeout과 실제 Host.Choose 성장1회(후보3개)·완료120gold·새 process Load는 인계된 **개발자 실행 근거**이며 본인시험 수에 합산하지 않는다. 2026-11-16 coordinator 정정: 이전 성장3회 표기는 후보 수 오독이며 게임 재실행 없이 원 driver와 개발자 level15→16 근거로 바로잡았다. 후자는 실제 Host 경로를 거쳤더라도 준비·처치 주입이 있는 fixture이므로 앱899/900실킬·자연완주·밸런스 PASS가 아니다.
 
 **NOT_RUN:** native 입력/focus, 모바일·기기, 성능, 자연 플레이/밸런스, 모든 애니메이션 프레임/표정·조합·전군집 가독성, 원격 Design 렌더 확증. G1 실배율 표정은 오프라인 QA의 미세한 장식이라는 한계를 유지한다. 새 캡처·앱/GUI·사용자저장/보호identity 조회조작·빌드·픽셀/hash 행렬·시험은 수행하지 않았다. 자체usage 미계측, 타 담당 수치 합산·비용 추정 없음. 수정 필수 ID 없음; root 독립 코드 리뷰·최종 통합 게이트는 별도다.

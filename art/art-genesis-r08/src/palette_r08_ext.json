@@ -1,0 +1,11 @@
+{
+  "name": "r08-ext-v1",
+  "note": "Extra actor ramps for the R08 (Joseph) enemies H1-H3. Ramp names must not collide with the art 03 master palette (src/palette_v03.json, unchanged); the generator refuses a collision. Light to dark, opaque.",
+  "actor": {
+    "gloom": ["#8e7ea8", "#605280", "#40365a", "#28203c"],
+    "envy": ["#d6ff7a", "#7ad040"],
+    "gaol": ["#8c94a6", "#5e6676", "#3e4452", "#272b36"],
+    "iron": ["#dadde4", "#a0a4b0", "#62666e"],
+    "gaunt": ["#d2c6c8", "#a2949a", "#72646c", "#463c44"]
+  }
+}

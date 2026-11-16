@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "66e34fa4a12990436fad671f38a3143de5cdf76a8bea67a6737d41d81c576147",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_h1-envy-shadow_move_32",
+      "source": "art/art-genesis-r08/export/png/enm_h1-envy-shadow_move_32.png",
+      "sha256": "d8f04cf3d109fa1270b96928128ad4874ef6f6ce2dac442fd67177bbeec7e711",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 9,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_h2-chain-wraith_move_32",
+      "source": "art/art-genesis-r08/export/png/enm_h2-chain-wraith_move_32.png",
+      "sha256": "6bcba5e7bf89cb46f352bf95d46458a1e2bc8dcc133a8b06a6464e5156731a32",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_h3-famine-beast_move_32",
+      "source": "art/art-genesis-r08/export/png/enm_h3-famine-beast_move_32.png",
+      "sha256": "cd9909747b5c58ea2be070841a3aa02df84c03c5793cdb069983b1557edfc121",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 7,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

@@ -26,7 +26,7 @@ internal static class RoundTransitionTests
             Check.Equal(360,round.Waves.Sum(w=>w.Groups.Sum(g=>g.Count)));Check.Equal(600,round.RawExperience);
             Check.True(round.Waves.SelectMany(w=>w.Groups).Select(g=>g.MonsterId).Distinct().OrderBy(x=>x)
                 .SequenceEqual(new[]{"b1","b2","b3"}));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,8));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,9));
         });
         test("R01 R02 injected budgets preserve total kills XP gold and unlocks through R03 waiting",()=>{
             var state=GameSnapshot.New();var game=new AdamSession(state,Adam(),"sling");var kills=0;var raw=0;

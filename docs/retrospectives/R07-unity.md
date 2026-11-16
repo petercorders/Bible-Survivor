@@ -3,7 +3,7 @@
 2026-11-16. root 독립 리뷰/최종GC 전 작성자 회고이며 전역 학습 상태는 수정하지 않았다.
 
 - Core27/2원구조변이/899actualkill timeout CLI와 아트QA를 재사용하고 관련22/고정소스Edit116·Play31·대표3화면으로 좁혔다. 이전 seed의6보조 슬롯·between7 phase를 먼저 읽어 새 장비/보조 주입 없이 진행했다. 실제 G3 생성 x±11과 추적3초 뒤 좌우가 남는 화면을 별도 기록했다.
-- 직접 Session.Kill fixture는 World drop 위치를 만들지 않는다. 초기 관련시험에서 이 불일치로 저장이 거절되어 기술 drop을 폐기하도록 고쳤고, Core 검증은 그대로 뒀다. 실제 Core spawn/독립HP와 기술 처치/timeout·성장3회 및120gold를 구분했다.
+- 직접 Session.Kill fixture는 World drop 위치를 만들지 않는다. 초기 관련시험에서 이 불일치로 저장이 거절되어 기술 drop을 폐기하도록 고쳤고, Core 검증은 그대로 뒀다. 실제 Core spawn/독립HP와 기술 처치/timeout·후보3개에서 성장1회 및120gold를 구분했다. R08 준비 중 PendingChoices.Count를 성장 횟수로 잘못 읽은 이전 보고를 정정했다. 다음 보고는 Run.PendingLevels와 실제 Choose loop 횟수를 따로 기록한다. 원래 로그/앱은 보존하고 문서 교정으로 게임을 재검사하지 않는다.
 - 첫 앱은 좌표/저장/정산 assert가 통과해도 pause 모달이 대표 화면을 가렸다. view_image로 확인한 뒤 QA의 두 unpause만 고쳤다. 수동 game driver는 비활성 상태라 시뮬레이션 tick을 더할 필요가 없었다. 실제 결함 최소 교정의 지속 승인으로 대기 없이 QA 정상 build1회/같은3화면을 교체했고 제품검사는 재사용했다. 단일 빌드 목표 초과(총2회)와 UI FAIL 근거를 보존했다.
 - 두 역사 receipt·진화·동적 보스/짧은 death/이삭·싯나 문구를 유지하고, 자기 exact PID/저장 absent 복구·보호 identity 불조회·기존842파일/원본/폰트/Core 보존 뒤 소유를 반환한다. helper/새 검사기·전행렬·모바일·유료 작업은 추가하지 않았다.
 - Sol 기본과 자기 usage만 기록했다. 시작 event 시차와 캐시 포함 누적값을 정확 작업 비용/절감률로 해석하지 않으며 자연밸런스/native/mobile/performance를 추정하지 않는다. 새 전역 학습/도구화는 하지 않았다.

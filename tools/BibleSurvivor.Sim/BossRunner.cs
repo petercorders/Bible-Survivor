@@ -8,7 +8,7 @@ using BibleSurvivor.Core;
 namespace BibleSurvivor.Sim;
 internal static class BossRunner
 {
-    internal static int Run(string[] args,bool settle=false,bool fourth=false,bool fifth=false,bool sixth=false,bool seventh=false)
+    internal static int Run(string[] args,bool settle=false,bool fourth=false,bool fifth=false,bool sixth=false,bool seventh=false,bool eighth=false)
     {
         var weapon=args.Length>0?args[0]:"sling";var seed=args.Length>1?int.Parse(args[1]):7;
         const string catalog="content/genesis/catalog.json";var speeds=CatalogReader.MonsterSpeeds(catalog);
@@ -144,10 +144,28 @@ internal static class BossRunner
             preservedBoth=first==JsonSerializer.Serialize(state.Run!.CompletedBoss)&&second==JsonSerializer.Serialize(state.Run.CompletedSecondBoss);
             passed&=r07Restore&&r07Sides&&preservedBoth&&world.Kills>0&&world.Hits>0&&state.Run.RoundNumber==8&&state.Run.RoundCompletionApplied&&state.Profile.UnlockedWeapons.Contains("elijah_chariot")&&!game.CompleteNormalSettlement();
         }
-        Console.WriteLine(JsonSerializer.Serialize(new{status=passed?"PASS":"FAIL",kind=seventh?"R03 to R07 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":sixth?"R03 to R06 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fifth?"R03 to R05 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fourth?"R03 to R04 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":"R03 coordinate combat; isolated R1/R2 timeout + equipment8 HP10000 fixture; no injected R03 damage",
+        var r08Restore=false;var r08History=false;var r08Mixture=false;
+        if(eighth&&passed)
+        {
+            var first=JsonSerializer.Serialize(state.Run!.CompletedBoss);var second=JsonSerializer.Serialize(state.Run.CompletedSecondBoss);var unlocks=string.Join(",",state.Profile.UnlockedWeapons);
+            game=game.StartNextRound(CatalogReader.Round(catalog,8));world=new BattleWorld(game,speeds,seed);
+            for(var tick=0;tick<10860&&game.IsActive;tick++)
+            {
+                BattleRunner.Resolve(game,weapon);world.Advance(BattleWorld.FixedStep,BattleRunner.Movement(world));BattleRunner.Resolve(game,weapon);passed&=world.ChargeStates.Count==0;
+                if(!r08Restore&&game.Targets.Values.Any(x=>x.MonsterId=="h3"))
+                {
+                    r08Mixture=true;game.Capture();state.Run!.World=world.Capture();revision=store.Commit(state,revision,"r08-h3");state=store.Load()!;
+                    game=AdamSession.Resume(state,CatalogReader.Round(catalog,8));world=BattleWorld.Restore(game,speeds,state.Run!.World!);r08Restore=true;
+                }
+            }
+            BattleRunner.Resolve(game,weapon);game.Capture();state.Run!.World=world.Capture();revision=store.Commit(state,revision,"r08-completed");state=store.Load()!;game=AdamSession.Resume(state,CatalogReader.Round(catalog,8));
+            r08History=first==JsonSerializer.Serialize(state.Run!.CompletedBoss)&&second==JsonSerializer.Serialize(state.Run.CompletedSecondBoss)&&unlocks==string.Join(",",state.Profile.UnlockedWeapons);
+            passed&=r08Restore&&r08Mixture&&r08History&&world.Kills>0&&world.Hits>0&&state.Run.RoundNumber==9&&state.Run.PreviousNormalRound==7&&state.Run.RoundCompletionApplied&&!game.CompleteNormalSettlement();
+        }
+        Console.WriteLine(JsonSerializer.Serialize(new{status=passed?"PASS":"FAIL",kind=eighth?"R03 to R08 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":seventh?"R03 to R07 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":sixth?"R03 to R06 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fifth?"R03 to R05 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fourth?"R03 to R04 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":"R03 coordinate combat; isolated R1/R2 timeout + equipment8 HP10000 fixture; no injected R03 damage",
             weapon,seed,normal_hits=normalHits,hits=world.Hits,boss_kills=world.BossKills,normal_and_support_kills=world.Kills,seconds=world.SimulationTime,
             phase=game.Stage,boss_seconds=game.Boss?.BossElapsed,summoned=game.Boss?.Summoned,health=game.CurrentHealth,gold=state.Profile.Gold,
-            r07_midpoint_restore=r07Restore,r07_g3_observed=r07Sides,both_boss_receipts_preserved=preservedBoth,r06_threshold_restore=r06Restore,r06_reward_restore=r06RewardRestore,r03_receipt_preserved=preservedR03,summon_mask=game.Boss?.SummonMask,r05_midpoint_restore=r05Restore,r05_kills=r05Kills,previous_normal_completion=state.Run?.PreviousNormalRound,r04_charge_state_restore=r04Restore,restored_charge_phase=restoredChargePhase,observed_charge=observedCharge,r04_kills=r04Kills,next_round=state.Run?.RoundNumber,midpoint_disk_restore=mid,reward_reload=rewardReload,reward=game.Boss?.Reward?.PolicyId,forms=game.Inventory.Forms,completion_receipt=game.Boss?.CompletionApplied??state.Run?.CompletedBoss?.CompletionApplied,save=store.Path,
+            r08_midpoint_restore=r08Restore,r08_h3_observed=r08Mixture,r08_history_and_null_unlock=r08History,r07_midpoint_restore=r07Restore,r07_g3_observed=r07Sides,both_boss_receipts_preserved=preservedBoth,r06_threshold_restore=r06Restore,r06_reward_restore=r06RewardRestore,r03_receipt_preserved=preservedR03,summon_mask=game.Boss?.SummonMask,r05_midpoint_restore=r05Restore,r05_kills=r05Kills,previous_normal_completion=state.Run?.PreviousNormalRound,r04_charge_state_restore=r04Restore,restored_charge_phase=restoredChargePhase,observed_charge=observedCharge,r04_kills=r04Kills,next_round=state.Run?.RoundNumber,midpoint_disk_restore=mid,reward_reload=rewardReload,reward=game.Boss?.Reward?.PolicyId,forms=game.Inventory.Forms,completion_receipt=game.Boss?.CompletionApplied??state.Run?.CompletedBoss?.CompletionApplied,save=store.Path,
             unity="NOT_RUN",mobile="NOT_RUN",balance="UNVALIDATED"},new JsonSerializerOptions{WriteIndented=true}));
         return passed?0:1;
     }
