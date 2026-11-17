@@ -11,7 +11,7 @@ public sealed class AdamR10UiTests
         Assert.AreEqual("십브라·부아",AdamRoundPresentation.Name(10));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
         Assert.AreEqual("창세기 / 아담 · 3분 시제품",AdamRoundPresentation.Title(1));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(12));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(13));
         Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(0));
         Assert.Throws<ArgumentException>(()=>AdamBossPresentation.Name(10));
     }
@@ -27,10 +27,10 @@ public sealed class AdamR10UiTests
         Assert.AreEqual("3. 새 도전 · 다윗의 물맷돌",AdamChoiceText.StartCard("sling",2,true));
     }
 
-    [Test] public void InstalledRoundEndWaitsForR12WithoutClaimingChapterCompletion()
+    [Test] public void InstalledRoundEndWaitsForR13WithoutClaimingChapterCompletion()
     {
-        Assert.AreEqual("출애굽기 2 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
-        StringAssert.Contains("R12 대기",AdamRoundPresentation.ContentDetail);
+        Assert.AreEqual("출애굽기 3 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
+        StringAssert.Contains("R13 미리암",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("진행 유지",AdamRoundPresentation.ContentDetail);
         StringAssert.DoesNotContain("출애굽기 완료",AdamRoundPresentation.ContentHeading);
         StringAssert.DoesNotContain("레위기",AdamRoundPresentation.ContentDetail);

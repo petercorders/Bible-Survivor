@@ -1,0 +1,326 @@
+{
+  "schema": "bible-survivors.art-exodus-r03-contract",
+  "schemaVersion": 1,
+  "note": "R12 oppression/pursuit fictional nonhuman constructs; Codex native script pixels, independent QA pending. Silhouettes and unmandated move/death playback are candidates.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "1px clear ring; ex4/ex6 grounded foot row30; floating ex5 fixed ground-anchor pivot with body bob."
+  },
+  "colourLimit": {
+    "32": 16,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG",
+    "64": 16
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_exodus_r03_ext.json",
+      "name": "exodus-r03-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+    },
+    "shadows": {
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "brief": "Bible-Survivor/docs/harness/r12-implementation-01.md",
+    "bossShadow": {
+      "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png",
+      "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+      "status": "reuse unchanged reviewed R03",
+      "id": "fx_shadow-boss_static_40x8",
+      "purpose": "Provenance only for the existing stable ID; not a runtime path or additional public-copy target."
+    }
+  },
+  "assets": [
+    {
+      "id": "enm_ex7-labor-chain_move_32",
+      "ref": "monster:ex7",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "노역사슬령: empty interlinked chain construct; no captive or human body.",
+      "clip": "move",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules"
+    },
+    {
+      "id": "enm_ex8-crown-mask_move_32",
+      "ref": "monster:ex8",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "왕관가면: hollow angular mask construct, no pharaoh headdress or ethnic costume.",
+      "clip": "move",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules"
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_move_32",
+      "ref": "monster:ex9",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+      "clip": "move",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules"
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_windup_32",
+      "ref": "monster:ex9",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+      "clip": "windup",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+      "clock": {
+        "source": "Core phase elapsed seconds; freezes on pause/selection; restore on load",
+        "durationSeconds": 1.2,
+        "frameStartSeconds": [
+          0,
+          0.6
+        ],
+        "selection": "greatest frameStartSeconds <= phaseElapsed; clamp to final frame until dash"
+      }
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_dash_32",
+      "ref": "monster:ex9",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+      "clip": "dash",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+      "clock": {
+        "source": "Core dash elapsed seconds",
+        "durationSeconds": 0.6,
+        "fps": 12,
+        "animationOnly": true
+      }
+    },
+    {
+      "id": "bos_oppression-chariot_move_64",
+      "ref": "boss:oppression_chariot",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+      "clip": "move",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules"
+    },
+    {
+      "id": "bos_oppression-chariot_windup_64",
+      "ref": "boss:oppression_chariot",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+      "clip": "windup",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+      "clock": {
+        "source": "Core phase elapsed seconds; freezes on pause/selection; restore on load",
+        "durationSeconds": 1.2,
+        "frameStartSeconds": [
+          0,
+          0.4,
+          0.8
+        ],
+        "selection": "greatest frameStartSeconds <= phaseElapsed; clamp to final frame until dash"
+      }
+    },
+    {
+      "id": "bos_oppression-chariot_dash_64",
+      "ref": "boss:oppression_chariot",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+      "clip": "dash",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+      "clock": {
+        "source": "Core dash elapsed seconds",
+        "durationSeconds": 0.6,
+        "fps": 12,
+        "animationOnly": true
+      }
+    },
+    {
+      "id": "bos_oppression-chariot_death_64",
+      "ref": "boss:oppression_chariot",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+      "clip": "death",
+      "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules"
+    }
+  ],
+  "notProduced": {
+    "lane": "No judgment lane PNG. Core projects current origin, stored direction, remaining dash distance and actual Tuning radii; sheet dimensions never set hit area.",
+    "shadow": "Reuse art03 wide24x6 and reviewed R03 boss40x8 unchanged.",
+    "extra": "No plague, water wall, drowning, escort HP, arrival explosion or extra attack packet."
+  },
+  "motifs": {
+    "source": "Exodus oppression and pursuit represented as fictional nonhuman constructs, never biblical persons or divine acts.",
+    "excluded": "Do not demonize Moses, Aaron, Pharaoh, Egyptian people, God's plagues or the Red Sea itself. No royal ethnic costume; no bound victims.",
+    "status": "Candidate native-grid silhouettes pending independent review."
+  },
+  "telegraph": {
+    "source": "Core projection only; this sidecar does not implement it",
+    "windupSeconds": 1.2,
+    "dashSeconds": 0.6,
+    "technicalDefaults": {
+      "lengthWu": 2.34,
+      "normalDangerHalfWidthWu": 0.45,
+      "bossDangerHalfWidthWu": 0.85
+    },
+    "tuning": "These are default-Tuning illustrations only: actual length uses remaining dash distance, half width uses actual body + player radii; never derive collision from sheet size.",
+    "lowFX": "non-blinking double line and directional marks above actors/weapons/selection FX and below HUD; Host implementation pending",
+    "bossClock": "intro-relative warning4.8, dash6; next warning10.8/dash12; independent of ex9 end-of-dash cooldown6"
+  }
+}

@@ -34,7 +34,8 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR08 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==8 && Session?.RoundNumber==7;
         public bool AwaitingR09 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==9 && Session?.RoundNumber==8;
         public bool AwaitingR11 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==11 && Session?.RoundNumber==10;
-        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09 || AwaitingR11;
+        public bool AwaitingR12 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==12 && Session?.RoundNumber==11;
+        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09 || AwaitingR11 || AwaitingR12;
         public bool CanEnterExodus => Error==null && !Suspended && operation==null && exodusCandidate==null && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
         public bool ContentComplete => Session?.ContentComplete == true;
         public bool CanStartNew => Error==null && exodusCandidate==null && State!=null && (State.Run==null || ((Session?.ChapterComplete==true || ContentComplete) && Session.PendingChoices.Count==0));

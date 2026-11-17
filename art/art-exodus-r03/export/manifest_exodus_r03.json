@@ -1,0 +1,1019 @@
+{
+ "schema": "bible-survivors.art-manifest-exodus_r03",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R12 (Exodus) ex7-ex9 and oppression_chariot sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_exodus_r03_ext.json",
+   "name": "exodus-r03-ext-v1",
+   "sha256": "e0dacc9e3616ed02b176cb5f21cf5f0a3253a9227a4d97cc28f12476dc39c788"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_exodus_r03.json",
+   "sha256": "72afdf87e6e29a9c35ab307da5c13fe4277fcb755b29622beac3ffc4de55b999"
+  },
+  "generator": {
+   "file": "scripts/actors_exodus_r03.py",
+   "sha256": "cf93751b33650f95ec49746148d555301335087a38f4f380a602526f3a026448"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_exodus_r03.json",
+   "sha256": "69f685226a74d2a5d53001453fd5d89347abbaf142a0e7731752028ed08def46"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "brief": "Bible-Survivor/docs/harness/r12-implementation-01.md",
+  "bossShadow": {
+   "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png",
+   "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+   "status": "reuse unchanged reviewed R03",
+   "id": "fx_shadow-boss_static_40x8",
+   "purpose": "Provenance only for the existing stable ID; not a runtime path or additional public-copy target."
+  }
+ },
+ "telegraph": {
+  "source": "Core projection only; this sidecar does not implement it",
+  "windupSeconds": 1.2,
+  "dashSeconds": 0.6,
+  "technicalDefaults": {
+   "lengthWu": 2.34,
+   "normalDangerHalfWidthWu": 0.45,
+   "bossDangerHalfWidthWu": 0.85
+  },
+  "tuning": "These are default-Tuning illustrations only: actual length uses remaining dash distance, half width uses actual body + player radii; never derive collision from sheet size.",
+  "lowFX": "non-blinking double line and directional marks above actors/weapons/selection FX and below HUD; Host implementation pending",
+  "bossClock": "intro-relative warning4.8, dash6; next warning10.8/dash12; independent of ex9 end-of-dash cooldown6"
+ },
+ "notProduced": {
+  "lane": "No judgment lane PNG. Core projects current origin, stored direction, remaining dash distance and actual Tuning radii; sheet dimensions never set hit area.",
+  "shadow": "Reuse art03 wide24x6 and reviewed R03 boss40x8 unchanged.",
+  "extra": "No plague, water wall, drowning, escort HP, arrival explosion or extra attack packet."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_exodus_r03.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_exodus_r03.py, a procedural generator written by Codex (OpenAI model) in this session; not exported from the Claude Design product",
+  "designCanvas": "None; no Claude Design, canvas or image model used"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_exodus_r03_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Exodus oppression and pursuit represented as fictional nonhuman constructs, never biblical persons or divine acts."
+ },
+ "assets": [
+  {
+   "id": "enm_ex7-labor-chain_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/enm_ex7-labor-chain_move_32.png",
+   "sha256": "a109e368d5f7244d968dfaa561d556d8a0d907e0ddf7546eb1199d872024aa87",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "clock": null,
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex7",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     4,
+     26,
+     30
+    ],
+    [
+     2,
+     3,
+     26,
+     30
+    ],
+    [
+     3,
+     4,
+     26,
+     30
+    ],
+    [
+     2,
+     5,
+     26,
+     30
+    ]
+   ],
+   "use": "노역사슬령: empty interlinked chain construct; no captive or human body.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:labor_chain",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#enm_ex7-labor-chain_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex8-crown-mask_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/enm_ex8-crown-mask_move_32.png",
+   "sha256": "41735028881cbac282d84573c299d98eabecb2e3bfb47ac2dd76297d8dcceeba",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "clock": null,
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex8",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 7,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     4,
+     26,
+     30
+    ],
+    [
+     7,
+     3,
+     26,
+     30
+    ],
+    [
+     7,
+     3,
+     26,
+     30
+    ],
+    [
+     7,
+     4,
+     26,
+     30
+    ]
+   ],
+   "use": "왕관가면: hollow angular mask construct, no pharaoh headdress or ethnic costume.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:crown_mask",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#enm_ex8-crown-mask_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex9-chariot-afterimage_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/enm_ex9-chariot-afterimage_move_32.png",
+   "sha256": "6ff97839f024d2f0a6666138df1392c710bf776e6893ec4f4ecee2a640b965a3",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "clock": null,
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex9",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     6,
+     29,
+     30
+    ],
+    [
+     6,
+     5,
+     29,
+     30
+    ],
+    [
+     6,
+     6,
+     29,
+     30
+    ],
+    [
+     6,
+     7,
+     29,
+     30
+    ]
+   ],
+   "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#enm_ex9-chariot-afterimage_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex9-chariot-afterimage_windup_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/enm_ex9-chariot-afterimage_windup_32.png",
+   "sha256": "e400f8128fd9a21dec14a67f3ef82a982b1515e9cb3f6fe7e9362031e02dfaab",
+   "size": [
+    64,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "clock": {
+    "source": "Core phase elapsed seconds; freezes on pause/selection; restore on load",
+    "durationSeconds": 1.2,
+    "frameStartSeconds": [
+     0,
+     0.6
+    ],
+    "selection": "greatest frameStartSeconds <= phaseElapsed; clamp to final frame until dash"
+   },
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex9",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     6,
+     29,
+     30
+    ],
+    [
+     5,
+     7,
+     29,
+     30
+    ]
+   ],
+   "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#enm_ex9-chariot-afterimage_windup_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex9-chariot-afterimage_dash_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/enm_ex9-chariot-afterimage_dash_32.png",
+   "sha256": "bd01379fb499ace1d2ced53627e1503c696829d6ea43883a8582f762b98dd191",
+   "size": [
+    64,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "clock": {
+    "source": "Core dash elapsed seconds",
+    "durationSeconds": 0.6,
+    "fps": 12,
+    "animationOnly": true
+   },
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex9",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     6,
+     29,
+     30
+    ],
+    [
+     2,
+     6,
+     29,
+     30
+    ]
+   ],
+   "use": "전차잔영: empty wheeled pursuit construct; no horse, rider or supernatural plague.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#enm_ex9-chariot-afterimage_dash_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_oppression-chariot_move_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/bos_oppression-chariot_move_64.png",
+   "sha256": "f2602cca1dcc4c1a7e3817722a976ccff655690f181850fabfb4208211940d5b",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "clock": null,
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:oppression_chariot",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "reviewed R03 unchanged",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     10,
+     59,
+     62
+    ],
+    [
+     10,
+     9,
+     59,
+     62
+    ],
+    [
+     10,
+     10,
+     59,
+     62
+    ],
+    [
+     10,
+     11,
+     59,
+     62
+    ]
+   ],
+   "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#bos_oppression-chariot_move_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_oppression-chariot_windup_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/bos_oppression-chariot_windup_64.png",
+   "sha256": "ff5de1e648ac1c468a5419027a8834f1d9c37cee20a075efa655da1ce8b524ba",
+   "size": [
+    192,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "clock": {
+    "source": "Core phase elapsed seconds; freezes on pause/selection; restore on load",
+    "durationSeconds": 1.2,
+    "frameStartSeconds": [
+     0,
+     0.4,
+     0.8
+    ],
+    "selection": "greatest frameStartSeconds <= phaseElapsed; clamp to final frame until dash"
+   },
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:oppression_chariot",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "reviewed R03 unchanged",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     10,
+     59,
+     62
+    ],
+    [
+     10,
+     11,
+     59,
+     62
+    ],
+    [
+     10,
+     12,
+     59,
+     62
+    ]
+   ],
+   "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#bos_oppression-chariot_windup_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_oppression-chariot_dash_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/bos_oppression-chariot_dash_64.png",
+   "sha256": "2162daadd172c9b0ce4216ea94046520cbe187d3e52c58f36e9ad33d2fd876c0",
+   "size": [
+    128,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 12,
+   "loop": true,
+   "clock": {
+    "source": "Core dash elapsed seconds",
+    "durationSeconds": 0.6,
+    "fps": 12,
+    "animationOnly": true
+   },
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:oppression_chariot",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "reviewed R03 unchanged",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     10,
+     59,
+     62
+    ],
+    [
+     5,
+     10,
+     59,
+     62
+    ]
+   ],
+   "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#bos_oppression-chariot_dash_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_oppression-chariot_death_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r03.json",
+   "file": "export/png/bos_oppression-chariot_death_64.png",
+   "sha256": "79754cd6a826190c124f07284e1e322855cc99d8ffead75b10f7acc857bce4ca",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": false,
+   "clock": null,
+   "artDecisionStatus": "candidate silhouette; boss move6/death6 and dash repeat are playback candidates, not new Core rules",
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:oppression_chariot",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "reviewed R03 unchanged",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     10,
+     59,
+     62
+    ],
+    [
+     10,
+     14,
+     59,
+     62
+    ],
+    [
+     5,
+     24,
+     58,
+     62
+    ],
+    [
+     5,
+     28,
+     58,
+     62
+    ]
+   ],
+   "use": "압제의 전차장: empty armored pursuit engine; no Pharaoh or biblical person.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r03.py:<lambda>",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r03.json#bos_oppression-chariot_death_64"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

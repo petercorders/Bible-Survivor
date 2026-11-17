@@ -8,7 +8,7 @@ using BibleSurvivor.Core;
 namespace BibleSurvivor.Sim;
 internal static class BossRunner
 {
-    internal static int Run(string[] args,bool settle=false,bool fourth=false,bool fifth=false,bool sixth=false,bool seventh=false,bool eighth=false,bool ninth=false,bool full=false,bool tenth=false,bool eleventh=false)
+    internal static int Run(string[] args,bool settle=false,bool fourth=false,bool fifth=false,bool sixth=false,bool seventh=false,bool eighth=false,bool ninth=false,bool full=false,bool tenth=false,bool eleventh=false,bool twelfth=false)
     {
         var weapon=args.Length>0?args[0]:"sling";var seed=args.Length>1?int.Parse(args[1]):7;
         const string catalog="content/genesis/catalog.json";var speeds=CatalogReader.MonsterSpeeds(catalog);
@@ -205,7 +205,7 @@ internal static class BossRunner
             }
         }
         passed&=!full||earlyKills.All(x=>x>0)&&earlyHits.All(x=>x>0);
-        if(tenth&&passed)return ExodusRunner.Run(state,game,store,revision,weapon,seed,eleventh);
+        if(tenth&&passed)return ExodusRunner.Run(state,game,store,revision,weapon,seed,eleventh,twelfth);
         Console.WriteLine(JsonSerializer.Serialize(new{status=passed?"PASS":"FAIL",kind=full?"R01 to R09 actual coordinate combat; equipment8/passive1 HP10000 technical fixture before R01; no injected hits or kills":ninth?"R03 to R09 coordinate combat; R1/R2 timeout equipment8 HP10000 fixture":eighth?"R03 to R08 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":seventh?"R03 to R07 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":sixth?"R03 to R06 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fifth?"R03 to R05 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":fourth?"R03 to R04 coordinate combat; R1/R2 timeout + equipment8 HP10000 fixture":"R03 coordinate combat; isolated R1/R2 timeout + equipment8 HP10000 fixture; no injected R03 damage",
             weapon,seed,r01_kills=earlyKills[0],r02_kills=earlyKills[1],r01_hits=earlyHits[0],r02_hits=earlyHits[1],r09_telegraph_restore=r09Telegraph,r09_live_restore=r09Live,r09_reward_restore=r09Reward,r09_history_preserved=r09History,chain_shots=chainShotsObserved,chapter_complete=game.ChapterComplete,normal_hits=normalHits,hits=world.Hits,boss_kills=world.BossKills,normal_and_support_kills=world.Kills,seconds=world.SimulationTime,
             phase=game.Stage,boss_seconds=game.Boss?.BossElapsed,summoned=game.Boss?.Summoned,health=game.CurrentHealth,gold=state.Profile.Gold,

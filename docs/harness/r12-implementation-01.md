@@ -50,4 +50,6 @@ Core 관련 시험은 ex9/보스 실제 이동·고정방향/swept·예고/돌�
 
 ## 선행 결과
 
+Core 구현은191개 검사와 실좌표 시리즈·중간저장·원구조변이2개 검증 후 반환됐다(`docs/progress/R12-core.md`). 현재 독립 Core 리뷰 `ctx_87431bd40dc0`, UI `ctx_aa1c95fe721a`, 월드 `ctx_414ba15e9b65`, Host·최종통합 `ctx_7b91243e7038`에 같은 Run에서 배정했다. 세 Unity 작성자의 실제 시작 보고를 각각 접수했다. UI는 기존4표시파일·새R12UiTests, 월드는 AdamArtWorld/새R03 loader·importer·경고뷰/새R12WorldTests·승인20파일, Host는 AdamHost/AdamCatalog/새R12HostTests·필요한기존경계시험·sync/QA/progressretro를 단독 소유한다. Core 독립 PASS와 UI/월드 반환 전 Editor를 실행하지 않으며 통합자 한 명만 실행한다. Root는 회귀 도구의 Resume상한 anchor11→12만 이미 갱신했다. R13 아트는 별도 정적 독립 PASS 상태이며 R13 제품 Core는 아직 시작하지 않았다.
+
 계획 독립 검토 PASS(기존D3/보스시계·contact/swept·저장/receipt·본문/창작·9PNG29frames 계약에 중요한 모순 없음). 외부 `art-exodus-r03` 정적 독립 QA도 PASS이며 막는 HIGH/MEDIUM 없음. 그림 QA 뒤 shadow provenance의 개인 절대경로만 상대화했고 coordinator가 공개20파일 개인경로0·기존shadow stableID/해시해석·원9PNG/격자/3보드 불변을 좁게 확인했다. 앱/재생성 전체검사는 반복하지 않았다. 새 contract SHA256 `72afdf87e6e29a9c35ab307da5c13fe4277fcb755b29622beac3ffc4de55b999`, manifest `40b92f5efbdf1470a6847b9446a352fc45a3fa05d02da4a40fc1c26a90d27404`; 근거는 외부 `evidence/coordinator-path-review.json`이다. 공개 복사는 정확20 whitelist만, shadow provenance는 runtime경로나 추가 복사 대상으로 소비하지 않는다. Core/Unity 검증은 아직 NOT_RUN이다.

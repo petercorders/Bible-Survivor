@@ -189,7 +189,7 @@ namespace BibleSurvivor.Unity
             var instruction = new GUIStyle(label) { font = mobile ? fonts.Body : fonts.Small, fontSize = mobile ? 20 : 16, wordWrap = true };
             if (!modalOpen)
             {
-                GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : AdamRoundPresentation.ControlHint(Host?.Session?.RoundNumber??1), instruction);
+                GUI.Label(new Rect(20, height - 64, width - 40, 28), mobile ? "왼쪽 아래 드래그 이동 · 자동 공격" : Host?.Session?.Boss!=null&&Host.Session.BossRules.IsChariot&&Host.Session.IsActive ? AdamBossPresentation.Forms(Host.Session) : AdamRoundPresentation.ControlHint(Host?.Session?.RoundNumber??1), instruction);
                 GUI.Label(new Rect(20, height - 36, width - 40, 28), mobile ? "빛나는 보석 수집 · 5초 자동 저장" :  $"1–3 선택 · F6 효과 {(ArtWorld.FeedbackEnabled ? "기본" : "낮음")} · F7 소리 {(ImpactAudio?.Muted == true ? "끔" : "켬")} · F8 음량 {ImpactAudio?.Volume*100:0}% · F9 입자 {(ImpactParticles?.Enabled == true ? "켬" : "끔")}", instruction);
             }
             if (Host == null)
@@ -207,9 +207,14 @@ namespace BibleSurvivor.Unity
             {
                 var boss=session.Boss;var bar=new Rect(30,118,width-60,18);
                 GUI.Box(bar,"");var color=GUI.color;GUI.color=new Color(.8f,.2f,.15f);GUI.DrawTexture(new Rect(bar.x+2,bar.y+2,(bar.width-4)*(float)AdamBossPresentation.HealthFraction(session),bar.height-4),Texture2D.whiteTexture);GUI.color=color;
-                GUI.Label(new Rect(30,136,width-60,30),$"{AdamBossPresentation.Name(session)} {boss.Health:0}/{session.BossRules.MaxHealth:0} · {AdamBossPresentation.Phase(session)}",label);
+                if(session.BossRules.IsChariot)
+                {
+                    GUI.Label(new Rect(30,136,width-60,22),$"{AdamBossPresentation.Name(session)} {boss.Health:0}/{session.BossRules.MaxHealth:0}",instruction);
+                    GUI.Label(new Rect(30,158,width-60,22),AdamBossPresentation.Phase(session),instruction);
+                }
+                else GUI.Label(new Rect(30,136,width-60,30),$"{AdamBossPresentation.Name(session)} {boss.Health:0}/{session.BossRules.MaxHealth:0} · {AdamBossPresentation.Phase(session)}",label);
             }
-            if(session!=null && session.Inventory.Forms.Count>0 && !modalOpen)
+            if(session!=null && session.Inventory.Forms.Count>0 && !modalOpen && !(session.Boss!=null&&session.BossRules.IsChariot&&session.IsActive))
                 GUI.Label(new Rect(30,167,width-60,28),AdamBossPresentation.Forms(session),instruction);
             if(session?.RoundNumber==4 && ArtWorld.Snapshot?.Charges!=null && !modalOpen)
             {
@@ -230,7 +235,7 @@ namespace BibleSurvivor.Unity
             {
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);art.Panel(panel);
                 GUI.Label(new Rect(panel.x+12,panel.y+10,panel.width-24,36),AdamRoundPresentation.Name(session.RoundNumber)+" 보스 보상 · 하나를 선택하세요",title);
-                GUI.Label(new Rect(panel.x+12,panel.y+48,panel.width-24,36),AdamBossPresentation.Name(session)+" · 게임 각색 · 선택 즉시 저장",instruction);
+                GUI.Label(new Rect(panel.x+12,panel.y+48,panel.width-24,44),AdamBossPresentation.RewardDetail(session),instruction);
                 if(session.NeedsRewardImplementation)
                 {if(ArtButton(new Rect(panel.x+24,panel.y+130,panel.width-48,56),"이전 보상 후보 준비",button))Host.PromoteBossReward();}
                 else
@@ -261,7 +266,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":Host.AwaitingR06?"이삭":Host.AwaitingR07?"야곱":Host.AwaitingR08?"요셉":Host.AwaitingR09?"유다":Host.AwaitingR11?"요게벳":throw new InvalidOperationException("Unsupported next round");
+                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":Host.AwaitingR06?"이삭":Host.AwaitingR07?"야곱":Host.AwaitingR08?"요셉":Host.AwaitingR09?"유다":Host.AwaitingR11?"요게벳":Host.AwaitingR12?"모세":throw new InvalidOperationException("Unsupported next round");
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}

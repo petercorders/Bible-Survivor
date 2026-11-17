@@ -90,6 +90,7 @@ namespace BibleSurvivor.Core
             if(number==8)parts.Add("h1-speed0.65:h2-speed0.40:h3-speed0.55:chase-contact:no-status-effects");
             if(number==10)parts.Add(ExodusContent.SpeedContract);
             if(number==11)parts.Add(ExodusContent.RoundElevenSpeedContract);
+            if(number==12)parts.Add(ExodusContent.RoundTwelveContract);
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();
@@ -181,7 +182,7 @@ namespace BibleSurvivor.Core
             {
                 if (expired) break;
                 var spawn = schedule[cursor++]; var enemy=spawn.Enemy.Copy();
-                if(definition.Number==4&&enemy.MonsterId=="d3")enemy.SpawnedAt=Elapsed;
+                if(BattleWorld.UsesNormalCharge(definition.Number,enemy.MonsterId))enemy.SpawnedAt=Elapsed;
                 active.Add(enemy.Id,enemy);
             }
             if (Elapsed > 170) expired = true;
@@ -221,7 +222,7 @@ namespace BibleSurvivor.Core
                 if (double.IsNaN(enemy.Health) || double.IsInfinity(enemy.Health) || enemy.Health <= 0 || enemy.Health > planned.Health || enemy.MonsterId != planned.MonsterId ||
                     enemy.RawExperience != planned.RawExperience || enemy.ContactDamage != planned.ContactDamage)
                     throw new ArgumentException("Invalid active enemy");
-                if(definition.Number==4&&enemy.MonsterId=="d3")
+                if(BattleWorld.UsesNormalCharge(definition.Number,enemy.MonsterId))
                 {
                     if(!enemy.SpawnedAt.HasValue||!BattleSnapshot.Finite(enemy.SpawnedAt.Value)||enemy.SpawnedAt<0||enemy.SpawnedAt>state.Elapsed)throw new ArgumentException("Invalid charge birth clock");
                 }

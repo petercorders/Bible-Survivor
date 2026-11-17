@@ -22,6 +22,11 @@ namespace BibleSurvivor.Core
         public const double SupportSpeed = .55, SupportRadius = 1.5, IntroOffset = 3, ThresholdRatio = .5;
         public const string SitnahPolicy="r06-production-v1";
         public const string JudahPolicy="r09-production-v1";
+        public const string ChariotPolicy="r12-production-v1";
+        public const double ChariotDashDuration=.6, ChariotDashSpeed=1.3;
+        public bool IsChariot=>Number==12;
+        public double DashDuration=>IsChariot?ChariotDashDuration:0;
+        public double DashSpeedRatio=>IsChariot?ChariotDashSpeed:0;
         public const double ChainSpeed=1.35,ChainRadius=.16,ChainLifetime=6,ChainAngleDegrees=20;
         public const int ChainCap=12;
         public static string ChainContract=>"three-chain-v1:"+string.Join(":",new[]{ChainSpeed,ChainRadius,ChainLifetime,ChainAngleDegrees,(double)ChainCap}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+":";
@@ -45,12 +50,34 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,ThresholdRatio);
         private static readonly BossDefinition IsaacBoss=new BossDefinition(6,"sitnah_keeper",6500,16,200,7,18,781,"f1",80,8,.70,SitnahPolicy,.70,.35);
         private static readonly BossDefinition JudahBoss=new BossDefinition(9,"silver_cup_accuser",16000,20,350,5,15,1141,"i2",260,11,.60,JudahPolicy,.60,.30);
-        public static BossDefinition ForRound(int number)=>number==3?AdamBoss:number==6?IsaacBoss:number==9?JudahBoss:throw new ArgumentException("No implemented boss for round");
-        public string EncounterKey(string runId)=>runId+":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":"+Id;
-        public string FingerprintContract=>Number==3?Contract:Id+(Number==9?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
+        private static readonly BossDefinition MosesBoss=new BossDefinition(12,"oppression_chariot",20000,20,400,6,0,1021,"ex8",360,14,.45,ChariotPolicy,.60,.30);
+        public static BossDefinition ForRound(int number)=>number==3?AdamBoss:number==6?IsaacBoss:number==9?JudahBoss:number==12?MosesBoss:throw new ArgumentException("No implemented boss for round");
+        public string EncounterKey(string runId)=>runId+(IsChariot?":exodus_03:":":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":")+Id;
+        public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":Number==9?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
                 Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
         public static string EncounterId(string runId) => runId + ":genesis_03:nephilim_tyrant";
+    }
+
+    [DataContract]
+    public sealed class ChariotChargeState
+    {
+        [DataMember] public string Phase {get;set;}="chase";
+        [DataMember] public float DirectionX {get;set;}=1;
+        [DataMember] public float DirectionY {get;set;}
+        // Deadline is in the encounter's absolute BossElapsed clock, not world time.
+        [DataMember] public double Until {get;set;}
+        internal ChariotChargeState Copy()=>(ChariotChargeState)MemberwiseClone();
+        internal void Validate(BossEncounterState boss,bool combat)
+        {
+            if(Phase!="chase"&&Phase!="telegraph"&&Phase!="dash")throw new UnsupportedSaveVersionException();
+            if(!BattleSnapshot.Position(DirectionX,DirectionY)||Math.Abs((double)DirectionX*DirectionX+(double)DirectionY*DirectionY-1)>.0001||!BattleSnapshot.Finite(Until))throw new InvalidDataException("Invalid chariot direction/deadline");
+            var last=boss.NextAttackAt-boss.Rules.AttackPeriod;
+            var expected=combat&&last>=6&&boss.BossElapsed<last+BossDefinition.ChariotDashDuration-1e-9?"dash":
+                combat&&boss.BossElapsed+1e-9>=boss.NextAttackAt-boss.Rules.TelegraphDuration?"telegraph":"chase";
+            var deadline=expected=="dash"?last+BossDefinition.ChariotDashDuration:expected=="telegraph"?boss.NextAttackAt:0;
+            if(Phase!=expected||Math.Abs(Until-deadline)>1e-7||boss.Telegraphing!=(Phase=="telegraph"))throw new InvalidDataException("Invalid absolute chariot clock");
+        }
     }
 
     [DataContract]
@@ -96,6 +123,7 @@ namespace BibleSurvivor.Core
         [DataMember] public float TargetX {get;set;}
         [DataMember] public float TargetY {get;set;}
         [DataMember(EmitDefaultValue=false)] public List<ChainDirectionState>? ChainDirections {get;set;}
+        [DataMember(EmitDefaultValue=false)] public ChariotChargeState? ChariotCharge {get;set;}
         [DataMember] public bool ThresholdUsed {get;set;}
         [DataMember] public int Summoned {get;set;}
         [DataMember] public int NextActorId {get;set;}=482;
@@ -105,14 +133,14 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public bool CompletionApplied {get;set;}
         public double CombatTime=>NormalEndedAt+IntroElapsed+BossElapsed;
         internal BossEncounterState Copy()
-        {var copy=(BossEncounterState)MemberwiseClone();copy.ChainDirections=ChainDirections?.Select(x=>x.Copy()).ToList();copy.Supports=Supports.Select(x=>x.Copy()).ToList();copy.Reward=Reward?.Copy();return copy;}
+        {var copy=(BossEncounterState)MemberwiseClone();copy.ChariotCharge=ChariotCharge?.Copy();copy.ChainDirections=ChainDirections?.Select(x=>x.Copy()).ToList();copy.Supports=Supports.Select(x=>x.Copy()).ToList();copy.Reward=Reward?.Copy();return copy;}
         internal void Validate(RunState run)
         {
             bool Finite(double n)=>BattleSnapshot.Finite(n);
-            if(Version>3||EncounterRound!=3&&EncounterRound!=6&&EncounterRound!=9)throw new UnsupportedSaveVersionException();
+            if(Version>4||EncounterRound!=3&&EncounterRound!=6&&EncounterRound!=9&&EncounterRound!=12)throw new UnsupportedSaveVersionException();
             var rules=Rules;var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
             var used=(mask&1)+((mask>>1)&1);var maxMask=(1<<rules.Thresholds.Count)-1;
-            if((Version!=1&&Version!=2&&Version!=3)||(rules.Number==6&&Version!=2)||(rules.Number==9&&Version!=3)||(rules.Number!=9&&Version==3)||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
+            if((rules.IsChariot?Version!=4:Version!=1&&Version!=2&&Version!=3)||(rules.Number==6&&Version!=2)||(rules.Number==9&&Version!=3)||(rules.Number!=9&&Version==3)||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
                 !Finite(IntroElapsed)||IntroElapsed<0||IntroElapsed>2||!Finite(BossElapsed)||BossElapsed<0||
                 !Finite(CombatTime)||!Finite(Health)||Health<0||Health>rules.MaxHealth||!Finite(NextAttackAt)||NextAttackAt<rules.AttackPeriod||
                 Math.Abs(NextAttackAt/rules.AttackPeriod-Math.Round(NextAttackAt/rules.AttackPeriod))>1e-7||NextAttackAt<=BossElapsed||NextAttackAt>BossElapsed+rules.AttackPeriod+1e-7||
@@ -121,6 +149,8 @@ namespace BibleSurvivor.Core
                 Supports.Select(x=>x.Id).Distinct().Count()!=Supports.Count||Supports.Any(x=>x.Id<=rules.BossActorId||x.Id>=NextActorId||x.MonsterId!=rules.SupportMonster||
                     !Finite(x.Health)||x.Health<=0||x.Health>rules.SupportHitPoints||x.ContactDamage!=rules.SupportContact||x.RawExperience!=0)||run.LastHitTime>CombatTime)
                 throw new InvalidDataException("Invalid boss encounter");
+            if(rules.IsChariot){if(ChariotCharge==null)throw new InvalidDataException("Missing chariot clock");ChariotCharge.Validate(this,run.Stage=="boss");}
+            else if(ChariotCharge!=null||Version==4)throw new UnsupportedSaveVersionException();
             if(rules.Number==9)
             {
                 if(ChainDirections==null||ChainDirections.Count!=0&&ChainDirections.Count!=3||ChainDirections.Any(x=>x==null))throw new InvalidDataException("Invalid chain telegraph directions");
@@ -153,7 +183,7 @@ namespace BibleSurvivor.Core
                     (run.Stage=="boss_reward")==Reward.Applied||CompletionApplied!=(run.Stage=="between_rounds")||
                     run.RoundNumber!=(run.Stage=="between_rounds"?rules.Number+1:rules.Number)||
                     (run.Stage=="between_rounds"&&(run.PendingLevels!=0||run.Health!=run.MaxHealth))||
-                    (Reward.PolicyId==BossDefinition.LegacyPolicy?(rules.Number!=3||Version!=1):(Version!=(rules.Number==9?3:2)||Reward.PolicyId!=rules.RewardPolicy)))
+                    (Reward.PolicyId==BossDefinition.LegacyPolicy?(rules.Number!=3||Version!=1):(Version!=(rules.IsChariot?4:rules.Number==9?3:2)||Reward.PolicyId!=rules.RewardPolicy)))
                     throw new InvalidDataException("Invalid boss reward/settlement receipt");
                 BossRewards.Validate(Reward,run,CompletionApplied);
             }

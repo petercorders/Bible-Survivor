@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "40b92f5efbdf1470a6847b9446a352fc45a3fa05d02da4a40fc1c26a90d27404",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex7-labor-chain_move_32",
+      "source": "art/art-exodus-r03/export/png/enm_ex7-labor-chain_move_32.png",
+      "sha256": "a109e368d5f7244d968dfaa561d556d8a0d907e0ddf7546eb1199d872024aa87",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex8-crown-mask_move_32",
+      "source": "art/art-exodus-r03/export/png/enm_ex8-crown-mask_move_32.png",
+      "sha256": "41735028881cbac282d84573c299d98eabecb2e3bfb47ac2dd76297d8dcceeba",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_move_32",
+      "source": "art/art-exodus-r03/export/png/enm_ex9-chariot-afterimage_move_32.png",
+      "sha256": "6ff97839f024d2f0a6666138df1392c710bf776e6893ec4f4ecee2a640b965a3",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_windup_32",
+      "source": "art/art-exodus-r03/export/png/enm_ex9-chariot-afterimage_windup_32.png",
+      "sha256": "e400f8128fd9a21dec14a67f3ef82a982b1515e9cb3f6fe7e9362031e02dfaab",
+      "width": 32,
+      "height": 32,
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex9-chariot-afterimage_dash_32",
+      "source": "art/art-exodus-r03/export/png/enm_ex9-chariot-afterimage_dash_32.png",
+      "sha256": "bd01379fb499ace1d2ced53627e1503c696829d6ea43883a8582f762b98dd191",
+      "width": 32,
+      "height": 32,
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_oppression-chariot_move_64",
+      "source": "art/art-exodus-r03/export/png/bos_oppression-chariot_move_64.png",
+      "sha256": "f2602cca1dcc4c1a7e3817722a976ccff655690f181850fabfb4208211940d5b",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_oppression-chariot_windup_64",
+      "source": "art/art-exodus-r03/export/png/bos_oppression-chariot_windup_64.png",
+      "sha256": "ff5de1e648ac1c468a5419027a8834f1d9c37cee20a075efa655da1ce8b524ba",
+      "width": 64,
+      "height": 64,
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_oppression-chariot_dash_64",
+      "source": "art/art-exodus-r03/export/png/bos_oppression-chariot_dash_64.png",
+      "sha256": "2162daadd172c9b0ce4216ea94046520cbe187d3e52c58f36e9ad33d2fd876c0",
+      "width": 64,
+      "height": 64,
+      "frames": 2,
+      "fps": 12,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_oppression-chariot_death_64",
+      "source": "art/art-exodus-r03/export/png/bos_oppression-chariot_death_64.png",
+      "sha256": "79754cd6a826190c124f07284e1e322855cc99d8ffead75b10f7acc857bce4ca",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

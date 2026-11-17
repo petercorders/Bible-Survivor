@@ -56,7 +56,7 @@ namespace BibleSurvivor.Core
                     !Same(reward.Weapons,run.Weapons)||!Same(reward.Passives,run.Passives)||!Same(reward.Forms,run.Forms))throw new InvalidDataException("Invalid legacy reward boundary");
                 return;
             }
-            if(reward.PolicyId!=BossDefinition.Policy&&reward.PolicyId!=BossDefinition.SitnahPolicy&&reward.PolicyId!=BossDefinition.JudahPolicy)throw new UnsupportedSaveVersionException();
+            if(reward.PolicyId!=BossDefinition.Policy&&reward.PolicyId!=BossDefinition.SitnahPolicy&&reward.PolicyId!=BossDefinition.JudahPolicy&&reward.PolicyId!=BossDefinition.ChariotPolicy)throw new UnsupportedSaveVersionException();
             if(reward.UnlockedWeapons==null||reward.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)||reward.UnlockedWeapons.Distinct().Count()!=reward.UnlockedWeapons.Count||
                 reward.Candidates==null||reward.Candidates.Count<1||reward.Candidates.Count>3||reward.Candidates.Any(x=>x==null)||
                 reward.Candidates.Select(x=>x.Id).Distinct().Count()!=reward.Candidates.Count||

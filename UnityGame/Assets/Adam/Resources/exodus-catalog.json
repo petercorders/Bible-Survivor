@@ -54,6 +54,30 @@
       "contact_damage": 12,
       "speed_ratio": 0.9,
       "behavior_id": "chase"
+    },
+    {
+      "id": "ex7",
+      "name_ko": "노역사슬령",
+      "max_health": 200,
+      "contact_damage": 12,
+      "speed_ratio": 0.55,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex8",
+      "name_ko": "왕관가면",
+      "max_health": 360,
+      "contact_damage": 14,
+      "speed_ratio": 0.45,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex9",
+      "name_ko": "전차잔영",
+      "max_health": 300,
+      "contact_damage": 13,
+      "speed_ratio": 0.6,
+      "behavior_id": "telegraphed_fixed_dash"
     }
   ],
   "rounds": [
@@ -174,6 +198,107 @@
               "count": 80
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "exodus_03",
+      "number": 12,
+      "local_number": 3,
+      "focus_ko": "모세",
+      "boss_id": "oppression_chariot",
+      "spawn_budget": 1020,
+      "concurrency_cap": 120,
+      "raw_xp_budget": 4500,
+      "completion_gold": 220,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "composition": [
+            {
+              "monster_id": "ex7",
+              "count": 216
+            },
+            {
+              "monster_id": "ex8",
+              "count": 54
+            }
+          ]
+        },
+        {
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "composition": [
+            {
+              "monster_id": "ex7",
+              "count": 238
+            },
+            {
+              "monster_id": "ex8",
+              "count": 68
+            },
+            {
+              "monster_id": "ex9",
+              "count": 34
+            }
+          ]
+        },
+        {
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "composition": [
+            {
+              "monster_id": "ex7",
+              "count": 246
+            },
+            {
+              "monster_id": "ex8",
+              "count": 123
+            },
+            {
+              "monster_id": "ex9",
+              "count": 41
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "bosses": [
+    {
+      "id": "oppression_chariot",
+      "name_ko": "압제의 전차장",
+      "round_number": 12,
+      "max_health": 20000,
+      "contact_damage": 20,
+      "gold": 400,
+      "speed_ratio": 0.3,
+      "radius": 0.6,
+      "intro_seconds": 2,
+      "intro_offset": [
+        0,
+        3
+      ],
+      "attack": {
+        "pattern_id": "absolute_fixed_direction_contact_dash",
+        "period_seconds": 6,
+        "telegraph_seconds": 1.2,
+        "duration_seconds": 0.6,
+        "speed_ratio": 1.3,
+        "damage_packets": 0
+      },
+      "support_summons": [
+        {
+          "health_ratio": 0.6,
+          "monster_id": "ex8",
+          "count": 6
+        },
+        {
+          "health_ratio": 0.3,
+          "monster_id": "ex8",
+          "count": 6
         }
       ]
     }
