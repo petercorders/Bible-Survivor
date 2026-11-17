@@ -23,3 +23,5 @@ sync1회/compile/importer/project·portable는 exit0, DLL SHA256 `759b580f2300fd
 `binding.json`, `verification-index.json`, `fixed-product-source*.json`, `usage.json`이 제품·앱·DLL/provenance/catalog·XML/실명령/29 stable 등록·최종 trace/3화면·모든 실패/보존을 연결한다. requested Sol 기본/observed gpt-6.1-sol, Claude/Astra/helpers 없음. 자기 start/end provider interval은 input12350132/cache12267776/output45625/reasoning18890/total12395757이며 마지막 보고 tail을 제외한다. 시작의 이전 phase delta는 R12로 합산하지 않는다. effort/실청구·단가/절감률은 미측정이다. 제품·Editor·Player 소유를 반환하며 root 독립 최종 code/UI·GC·commitpush/CI 및 R13 인계가 남는다.
 
 Root 마감: 독립 코드·UI 리뷰 모두 PASS이며 막는 HIGH/MEDIUM은 없다. UI R12-UI-01은 원본의 +220/홍해 건넘을 +200으로 오독한 것으로 같은 이미지 재열람 뒤 철회했다. 제품/이미지 수정이나 여섯 번째 빌드는 없었다. root Resume 상한11→12 선택 변이1건은 원거절 의미를 유지하며 실제 검출 exit0으로 확인했다. 필수 커밋 훅과 해당 SHA 원격 CI 결과는 업로드 뒤 기록한다.
+
+첫 업로드9f711bf 원격CI: art44124668750 성공, Core44124668801은 미래World 회복 변이 미검출로 실패했다. 테스트의 미래World값5가 현재지원5와 겹쳐 두 입력만6으로 갱신했고 선택변이1건은 실제 검출 exit0이었다. 게임/Core제품/Unity앱 변경은 없으며 최종복구SHA CI를 별도로 확인한다.

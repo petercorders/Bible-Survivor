@@ -80,13 +80,13 @@ internal static class SaveSchemaTests
                 var old = CombatState(); old.Profile.Gold = 0;
                 var backup = Legacy(old); File.WriteAllText(store.Path + ".bak", backup);
                 var future = JsonNode.Parse(Encode(old))!; future["SchemaVersion"] = schema;
-                future["Profile"]!["Gold"] = 19; future["Run"]!["World"]!["SchemaVersion"] = 5;
+                future["Profile"]!["Gold"] = 19; future["Run"]!["World"]!["SchemaVersion"] = 6;
                 var original = future.ToJsonString(); File.WriteAllText(store.Path, original);
                 AssertFutureOriginals(store, original, backup);
             });
         });
         test("Future World version and overflow precede incompatible typed bodies and protect future backups", () => {
-            foreach (var schema in new[] { 1, 2 }) foreach (var version in new[] { "5", "999999999999999999999999999999" }) WithStore(store => {
+            foreach (var schema in new[] { 1, 2 }) foreach (var version in new[] { "6", "999999999999999999999999999999" }) WithStore(store => {
                 var future = JsonNode.Parse(Encode(CombatState()))!; future["SchemaVersion"] = schema;
                 future["Run"]!["World"]!["Tuning"] = "future tuning shape";
                 future["Run"]!["Wave"] = "future wave shape";
