@@ -51,3 +51,7 @@ root3과 R10~R14·창세기의 기존fingerprint/shape는 보존한다. R15 norm
 관련 Core 검사는 실제3방향·피해18/소멸/무적·정지/수명·예고/실탄Load·지원6/12·playerdeath우선/killclear·네history·고정500/100/25/280·완료Load/NewRun·future원문보호를 묶는다. 원래구조 최소변이·한무기한seed 실제좌표 연속 CLI를 기존시리즈로 확인하고 최종게이트1회만 실행한다. 마지막 시리즈는 R09→R15를 포함하되 기존 R01 prefix를 재사용할 수 있고 기술HP/장비를 자연밸런스로 주장하지 않는다.
 
 UI/월드/Host 파일별 소유·Editor1명·관련검사/한정상PC앱/한trace·대표3화면/새processLoad→독립code/UI→프로젝트GC→commitpush/해당SHA CI 후 이 승인범위를 종료한다. 실앱 기술 직접hit/timeout과 실제좌표 CLI·자연완주/native/mobile/performance 미검증을 구분한다. 보호 사용자앱/저장 불조회, 전역 GC 자동승격·새무기·스킬·다음책·모바일 작업은 없다.
+
+## Unity 최종 소유 배정
+
+Core 반환 후 Host/catalog·Host/Play 기대·최종Editor/빌드는 ctx_29961211b111 단독소유다. UI 표시네파일·새R15UiTests·과거UI시험의현재설치끝 기대는 UI담당, AdamArtWorld/AdamChainWarning의Rules연결·새ExodusR06Art/Importer·WorldTests·승인20복사는월드담당 단독소유다. Host.ExodusComplete는Session.ExodusComplete를읽는공개계약으로정하고 R09 ChapterComplete/CanEnterExodus 의미를유지한다. Core독립PASS와 UI/월드 고정반환 뒤 통합자만 sync/import/관련묶음·정상앱1개/3화면/새processLoad를실행한다. root는Resume15 선택변이와최종리뷰/GC/업로드를맡는다. R15완료후다음책/무기/모바일자동착수없음.

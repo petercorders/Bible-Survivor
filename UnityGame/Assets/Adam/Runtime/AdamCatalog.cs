@@ -13,7 +13,7 @@ namespace BibleSurvivor.Unity
         [Serializable] public class Root { public int schema_version; public string chapter_id; public Rules rules; public Monster[] monsters; public Round[] rounds; public Boss[] bosses; }
         [Serializable] public class Rules { public int normal_duration_seconds; public int spawn_cutoff_seconds; public int boss_intro_seconds,boss_support_cap; }
         [Serializable] public class Boss { public string id; public int round_number,max_health,contact_damage,gold; public double speed_ratio,radius,intro_seconds; public double[] intro_offset; public Attack attack; public Support[] support_summons; }
-        [Serializable] public class Attack { public string pattern_id; public double cooldown_seconds,telegraph_seconds; public double period_seconds,duration_seconds,speed_ratio; public int damage,projectile_count,damage_packets; }
+        [Serializable] public class Attack { public string pattern_id; public double cooldown_seconds,telegraph_seconds; public double period_seconds,duration_seconds,speed_ratio; public int damage,projectile_count,damage_packets,projectile_cap; public double projectile_speed,projectile_radius,projectile_lifetime,spread_degrees; }
         [Serializable] public class Support { public double health_ratio; public string monster_id; public int count; }
         [Serializable] public class Monster { public string id; public int max_health; public int contact_damage; public double speed_ratio; public string behavior_id; }
         [Serializable] public class Round { public int number; public int local_number; public string id; public string boss_id; public int concurrency_cap; public int raw_xp_budget; public int completion_gold; public int spawn_budget; public string unlock_weapon_id; public Wave[] waves; }
@@ -38,7 +38,7 @@ namespace BibleSurvivor.Unity
             if(run.Stage=="between_rounds" && run.RoundNumber>=11 && run.RoundNumber<=LastInstalledRound+1)
                 return ForRound(run.RoundNumber-1);
             var boss=run.Stage=="boss_intro"||run.Stage=="boss"||run.Stage=="boss_reward"||run.Stage=="boss_settlement";
-            if(boss && run.RoundNumber==12 && LastInstalledRound>=12)return ForRound(12);
+            if(boss && (run.RoundNumber==12 || run.RoundNumber==15) && LastInstalledRound>=run.RoundNumber)return ForRound(run.RoundNumber);
             var number=run.Stage=="normal"||run.Stage=="round_settlement"||boss?run.RoundNumber:run.Stage=="between_rounds"?run.RoundNumber-1:0;
             if((boss&&number!=3&&number!=6&&number!=9)||number<1||number>9 || (run.Stage=="round_settlement"&&number!=4&&number!=5&&number!=7&&number!=8))throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(number);
@@ -81,14 +81,16 @@ namespace BibleSurvivor.Unity
             var rounds=root.rounds.OrderBy(x=>x.number).ToArray();
             if(!rounds.Select(x=>x.number).SequenceEqual(Enumerable.Range(10,rounds.Length)) || root.monsters.Length!=rounds.Sum(x=>ExodusContent.SpeedsFor(x.number).Count))
                 throw new InvalidDataException("Noncontiguous Exodus catalog or unexpected monsters");
-            var installedBoss=rounds.Any(x=>x.number==12);
-            if((root.bosses?.Length??0)!=(installedBoss?1:0))throw new InvalidDataException("Unexpected Exodus boss count");
-            if(installedBoss)
+            var installedBosses=rounds.Where(x=>x.number==12||x.number==15).Select(x=>x.number).ToArray();
+            if((root.bosses?.Length??0)!=installedBosses.Length || root.bosses!=null&&!root.bosses.Select(x=>x.round_number).OrderBy(x=>x).SequenceEqual(installedBosses))throw new InvalidDataException("Unexpected Exodus boss set");
+            foreach(var bossRound in installedBosses)
             {
-                var rules=BossDefinition.ForRound(12);var boss=root.bosses.Single();var attack=boss.attack;var support=boss.support_summons;
-                if(boss.id!=rules.Id || boss.round_number!=rules.Number || boss.max_health!=rules.MaxHealth || boss.contact_damage!=rules.Contact || boss.gold!=rules.KillGold ||
+                var rules=BossDefinition.ForRound(bossRound);var boss=root.bosses.Single(x=>x.round_number==bossRound);var attack=boss.attack;var support=boss.support_summons;
+                if(boss.id!=rules.Id || boss.max_health!=rules.MaxHealth || boss.contact_damage!=rules.Contact || boss.gold!=rules.KillGold ||
                     boss.speed_ratio!=BossDefinition.Speed || boss.radius!=BossDefinition.Radius || boss.intro_seconds!=BossDefinition.IntroSeconds || boss.intro_offset==null || !boss.intro_offset.SequenceEqual(new[]{0d,BossDefinition.IntroOffset}) ||
-                    attack==null || attack.pattern_id!="absolute_fixed_direction_contact_dash" || attack.period_seconds!=rules.AttackPeriod || attack.telegraph_seconds!=rules.TelegraphDuration || attack.duration_seconds!=rules.DashDuration || attack.speed_ratio!=rules.DashSpeedRatio || attack.damage_packets!=0 ||
+                    attack==null || attack.period_seconds!=rules.AttackPeriod || attack.telegraph_seconds!=rules.TelegraphDuration ||
+                    (rules.IsChariot?(attack.pattern_id!="absolute_fixed_direction_contact_dash" || attack.duration_seconds!=rules.DashDuration || attack.speed_ratio!=rules.DashSpeedRatio || attack.damage_packets!=0):
+                    (attack.pattern_id!="three_fixed_direction_projectiles" || !rules.UsesChainProjectiles || attack.damage!=rules.AttackDamage || attack.projectile_speed!=rules.ProjectileSpeed || attack.projectile_radius!=rules.ProjectileRadius || attack.projectile_lifetime!=rules.ProjectileLifetime || attack.projectile_cap!=rules.ProjectileCap || attack.spread_degrees!=rules.ProjectileSpreadDegrees)) ||
                     support==null || support.Length!=rules.Thresholds.Count || support.Where((x,i)=>x.health_ratio!=rules.Thresholds[i] || x.monster_id!=rules.SupportMonster || x.count!=BossDefinition.SupportCount).Any() ||
                     !monsters.TryGetValue(rules.SupportMonster,out var helper) || helper.max_health!=rules.SupportHitPoints || helper.contact_damage!=rules.SupportContact || helper.speed_ratio!=rules.SupportRatio)
                     throw new InvalidDataException("Unsupported Exodus boss contract");
@@ -99,7 +101,7 @@ namespace BibleSurvivor.Unity
                 foreach(var expected in expectedSpeeds)
                     if(!monsters.TryGetValue(expected.Key,out var monster) || monster.speed_ratio!=expected.Value || monster.behavior_id!=(BattleWorld.UsesNormalCharge(round.number,expected.Key)?"telegraphed_fixed_dash":"chase"))
                         throw new InvalidDataException("Unsupported Exodus monster speed/behavior");
-                if(round.id!=ExodusContent.Round(round.number).Id || round.local_number!=round.number-9 || (round.number==12?round.boss_id!=BossDefinition.ForRound(12).Id:!string.IsNullOrEmpty(round.boss_id)) || !string.IsNullOrEmpty(round.unlock_weapon_id) || round.waves==null)
+                if(round.id!=ExodusContent.Round(round.number).Id || round.local_number!=round.number-9 || (round.number==12||round.number==15?round.boss_id!=BossDefinition.ForRound(round.number).Id:!string.IsNullOrEmpty(round.boss_id)) || !string.IsNullOrEmpty(round.unlock_weapon_id) || round.waves==null)
                     throw new InvalidDataException("Unsupported Exodus round identity");
                 var waves=round.waves.Select(w=>new WaveDefinition(w.start_seconds,w.end_seconds,w.composition.Select(g=>
                 {

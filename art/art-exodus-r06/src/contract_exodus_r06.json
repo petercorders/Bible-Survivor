@@ -1,0 +1,315 @@
+{
+  "schema": "bible-survivors.art-exodus-r06-contract",
+  "schemaVersion": 1,
+  "note": "R15 Exodus 31,35-40: invented greed/distortion/defilement constructs obstruct cooperation; not biblical people, tabernacle, ark, furnishings or divine presence. Codex native script pixel candidates; no Claude Design. Core owns all movement and damage.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y (30 for 32 px, 62 for 64 px)"
+  },
+  "colourLimit": {
+    "32": 16,
+    "64": 24,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG"
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_exodus_r06_ext.json",
+      "name": "exodus-r06-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751",
+      "package": "../art-concept-03"
+    },
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "r03": {
+      "package": "art-genesis-r03",
+      "why": "unchanged existing boss shadow, provenance only; not a runtime path or public-copy target",
+      "shadows": {
+        "fx_shadow-boss_static_40x8": {
+          "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+          "cell": [
+            40,
+            8
+          ],
+          "pivot": [
+            20,
+            4
+          ],
+          "alpha": "blend",
+          "sorting": "GroundDecal",
+          "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+        }
+      }
+    },
+    "brief": {
+      "file": "Bible-Survivor/docs/harness/r15-implementation-01.md",
+      "scope": "binding R15 baseline; no invented catalog fingerprint"
+    }
+  },
+  "assets": [
+    {
+      "id": "enm_ex16-greedy-hook_move_32",
+      "ref": "monster:ex16",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "Greed hook: compact asymmetric hooked metal construct, no coin/loot theft; chase/contact only.",
+      "kind": "actor",
+      "clip": "move",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules."
+    },
+    {
+      "id": "enm_ex17-twisted-weave_move_32",
+      "ref": "monster:ex17",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Twisted weave: open dark thread cluster with short ends; no persistent web, binding or ranged attack.",
+      "kind": "actor",
+      "clip": "move",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules."
+    },
+    {
+      "id": "enm_ex18-ruin-shard_move_32",
+      "ref": "monster:ex18",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Ruin shard: broad broken-metal construct; not a sacred vessel; slow chase/contact only.",
+      "kind": "actor",
+      "clip": "move",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules."
+    },
+    {
+      "id": "bos_defilement-weaver_move_64",
+      "ref": "boss:defilement_weaver",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Black thread and broken metal invented body; no human, tabernacle, ark or divine presence.",
+      "kind": "actor",
+      "clip": "move",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules."
+    },
+    {
+      "id": "bos_defilement-weaver_windup_64",
+      "ref": "boss:defilement_weaver",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Three gathering poses within the real Core 1s warning; no drawing controls warning geometry.",
+      "kind": "actor",
+      "clip": "windup",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+      "clock": {
+        "source": "restored Core boss warning elapsed; pause/selection freezes; no local timer",
+        "durationSeconds": 1,
+        "frameStartSeconds": [
+          0,
+          0.3333333333333333,
+          0.6666666666666666
+        ],
+        "selection": "greatest start <= elapsed; hold final pose until actual emission"
+      }
+    },
+    {
+      "id": "bos_defilement-weaver_attack_64",
+      "ref": "boss:defilement_weaver",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 2,
+      "fps": 12,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Release pose only after actual Core emission; no painted missile, trail or additional attack.",
+      "kind": "actor",
+      "clip": "attack",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+      "clock": {
+        "source": "restored Core boss emission clock; only after actual first emission; pause/selection freezes",
+        "durationSeconds": 0.16666666666666666,
+        "frameStartSeconds": [
+          0,
+          0.08333333333333333
+        ],
+        "selection": "play once after emission then move; never show attack before first shot"
+      }
+    },
+    {
+      "id": "bos_defilement-weaver_death_64",
+      "ref": "boss:defilement_weaver",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Short collapse into inert broken metal; remove actor/shadow after 0.5s, no persistent web or terrain.",
+      "kind": "actor",
+      "clip": "death",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+      "clock": {
+        "source": "Core death elapsed; freeze on pause",
+        "durationSeconds": 0.5,
+        "frameStartSeconds": [
+          0,
+          0.125,
+          0.25,
+          0.375
+        ],
+        "selection": "play once then remove actor and shadow"
+      }
+    },
+    {
+      "id": "prj_defilement-shard_spin_16",
+      "ref": "boss-projectile:defilement_weaver",
+      "cell": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        8,
+        8
+      ],
+      "ground": false,
+      "alpha": "binary",
+      "sorting": "EnemyProjectiles",
+      "shadow": null,
+      "facing": "right",
+      "use": "Two visual spin poses around centre pivot; actual Core position/saved direction unchanged; no shadow, trail, homing, binding or terrain.",
+      "kind": "projectile",
+      "clip": "spin",
+      "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules."
+    }
+  ],
+  "notProduced": {
+    "lane": "No warning/lane PNG. Real Core current origin + saved directions + speed*lifetime projected by actual WorldProjection; PNG does not define collision.",
+    "shadow": "Reuse Art03 small12x4/wide24x6 and existing R03 boss40x8 stable IDs unchanged.",
+    "extra": "No persistent web, binding, loot theft, miracle attack, homing, reflection, slam, dash, additional weapon or terrain."
+  },
+  "motifs": {
+    "source": "Fictional obstacles to willing offerings, making and cooperation in Exodus31,35-40; not a claim that the biblical craftsmen fought monsters.",
+    "excluded": "Do not turn tabernacle, ark, furnishings, priests, biblical people or divine presence into monsters; victory does not cause divine presence.",
+    "status": "Candidate native-grid silhouettes and palette awaiting independent art QA."
+  }
+}

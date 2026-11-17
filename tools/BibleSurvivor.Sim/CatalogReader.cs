@@ -25,19 +25,26 @@ public static class CatalogReader
         if(rules.GetProperty("normal_duration_seconds").GetInt32()!=180||rules.GetProperty("spawn_cutoff_seconds").GetInt32()!=170)
             throw new InvalidDataException("Incompatible Exodus clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
-        if(monsters.Count!=15||ExodusContent.SpeedsFor(number).Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!=(x.Key=="ex9"?"telegraphed_fixed_dash":"chase")))
+        if(monsters.Count!=18||ExodusContent.SpeedsFor(number).Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!=(x.Key=="ex9"?"telegraphed_fixed_dash":"chase")))
             throw new InvalidDataException("Unsupported Exodus monster contract");
         var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
-        if((number!=10&&number!=11&&number!=12&&number!=13&&number!=14)||round.GetProperty("local_number").GetInt32()!=number-9||
-            (number==12?round.GetProperty("boss_id").GetString()!="oppression_chariot":round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null)||round.GetProperty("spawn_budget").GetInt32()!=(number==14?1140:number==13?1080:number==12?1020:number==10?900:960))
+        if((number!=10&&number!=11&&number!=12&&number!=13&&number!=14&&number!=15)||round.GetProperty("local_number").GetInt32()!=number-9||
+            (number==15?round.GetProperty("boss_id").GetString()!="defilement_weaver":number==12?round.GetProperty("boss_id").GetString()!="oppression_chariot":round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null)||round.GetProperty("spawn_budget").GetInt32()!=(number==15?1200:number==14?1140:number==13?1080:number==12?1020:number==10?900:960))
             throw new InvalidDataException("Unsupported Exodus identity");
         if(number==12)
         {
-            var boss=root.GetProperty("bosses").EnumerateArray().Single();var attack=boss.GetProperty("attack");var summons=boss.GetProperty("support_summons").EnumerateArray().ToArray();
+            var boss=root.GetProperty("bosses").EnumerateArray().Single(x=>x.GetProperty("id").GetString()=="oppression_chariot");var attack=boss.GetProperty("attack");var summons=boss.GetProperty("support_summons").EnumerateArray().ToArray();
             if(boss.GetProperty("id").GetString()!="oppression_chariot"||boss.GetProperty("round_number").GetInt32()!=12||boss.GetProperty("max_health").GetInt32()!=20000||boss.GetProperty("contact_damage").GetInt32()!=20||boss.GetProperty("gold").GetInt32()!=400||
                 boss.GetProperty("speed_ratio").GetDouble()!=.3||boss.GetProperty("radius").GetDouble()!=.6||boss.GetProperty("intro_seconds").GetDouble()!=2||!boss.GetProperty("intro_offset").EnumerateArray().Select(x=>x.GetInt32()).SequenceEqual(new[]{0,3})||
                 attack.GetProperty("pattern_id").GetString()!="absolute_fixed_direction_contact_dash"||attack.GetProperty("period_seconds").GetDouble()!=6||attack.GetProperty("telegraph_seconds").GetDouble()!=1.2||attack.GetProperty("duration_seconds").GetDouble()!=.6||attack.GetProperty("speed_ratio").GetDouble()!=1.3||attack.GetProperty("damage_packets").GetInt32()!=0||
                 summons.Length!=2||summons[0].GetProperty("health_ratio").GetDouble()!=.6||summons[1].GetProperty("health_ratio").GetDouble()!=.3||summons.Any(x=>x.GetProperty("monster_id").GetString()!="ex8"||x.GetProperty("count").GetInt32()!=6))throw new InvalidDataException("Unsupported R12 chariot contract");
+        }
+        if(number==15)
+        {
+            var boss=root.GetProperty("bosses").EnumerateArray().Single(x=>x.GetProperty("id").GetString()=="defilement_weaver");var attack=boss.GetProperty("attack");var summons=boss.GetProperty("support_summons").EnumerateArray().ToArray();
+            if(boss.GetProperty("round_number").GetInt32()!=15||boss.GetProperty("max_health").GetInt32()!=26000||boss.GetProperty("contact_damage").GetInt32()!=22||boss.GetProperty("gold").GetInt32()!=500||boss.GetProperty("speed_ratio").GetDouble()!=.3||boss.GetProperty("radius").GetDouble()!=.6||boss.GetProperty("intro_seconds").GetDouble()!=2||!boss.GetProperty("intro_offset").EnumerateArray().Select(x=>x.GetInt32()).SequenceEqual(new[]{0,3})||
+                attack.GetProperty("pattern_id").GetString()!="three_fixed_direction_projectiles"||attack.GetProperty("period_seconds").GetDouble()!=5||attack.GetProperty("telegraph_seconds").GetDouble()!=1||attack.GetProperty("damage").GetInt32()!=18||attack.GetProperty("projectile_speed").GetDouble()!=1.35||attack.GetProperty("projectile_radius").GetDouble()!=.16||attack.GetProperty("projectile_lifetime").GetDouble()!=6||attack.GetProperty("projectile_cap").GetInt32()!=12||attack.GetProperty("spread_degrees").GetDouble()!=20||
+                summons.Length!=2||summons[0].GetProperty("health_ratio").GetDouble()!=.6||summons[1].GetProperty("health_ratio").GetDouble()!=.3||summons.Any(x=>x.GetProperty("monster_id").GetString()!="ex17"||x.GetProperty("count").GetInt32()!=6))throw new InvalidDataException("Unsupported R15 weaver contract");
         }
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=>{var id=g.GetProperty("monster_id").GetString()!;var monster=monsters[id];return new SpawnGroup(id,g.GetProperty("count").GetInt32(),monster.GetProperty("max_health").GetInt32(),monster.GetProperty("contact_damage").GetInt32());}))).ToArray();
@@ -47,7 +54,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number==10||number==11||number==12||number==13||number==14) return Exodus(file,number);
+        if(number==10||number==11||number==12||number==13||number==14||number==15) return Exodus(file,number);
         if(number<1 || number>9) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R09 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;

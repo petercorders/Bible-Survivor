@@ -9,12 +9,12 @@ namespace BibleSurvivor.Unity
         public static bool TryGeometry(BattleSnapshot snapshot,BossEncounterState boss,string stage,int direction,out AdamChargeGeometry geometry)
         {
             geometry=default;
-            if(snapshot==null || boss==null || boss.Rules.Number!=9 || stage!="boss" || !boss.Telegraphing ||
+            if(snapshot==null || boss==null || !boss.Rules.UsesChainProjectiles || stage!="boss" || !boss.Telegraphing ||
                 boss.ChainDirections==null || boss.ChainDirections.Count!=3 || direction<0 || direction>=3)return false;
             foreach(var actor in snapshot.Enemies)if(actor.Id==boss.Rules.BossActorId)
             {
                 var start=new Vector2(actor.X,actor.Y);var saved=boss.ChainDirections[direction];
-                geometry=new AdamChargeGeometry(start,start+new Vector2(saved.X,saved.Y)*(float)(BossDefinition.ChainSpeed*BossDefinition.ChainLifetime),(float)BossDefinition.ChainRadius);
+                geometry=new AdamChargeGeometry(start,start+new Vector2(saved.X,saved.Y)*(float)(boss.Rules.ProjectileSpeed*boss.Rules.ProjectileLifetime),(float)boss.Rules.ProjectileRadius);
                 return true;
             }
             return false;

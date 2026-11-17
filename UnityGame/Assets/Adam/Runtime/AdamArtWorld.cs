@@ -21,6 +21,7 @@ namespace BibleSurvivor.Unity
         AdamExodusR03Art exodusR03;
         AdamExodusR04Art exodusR04;
         AdamExodusR05Art exodusR05;
+        AdamExodusR06Art exodusR06;
         ChariotDashView chariotVisual;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly AdamChargeLane chariotLane=new AdamChargeLane();
@@ -172,8 +173,8 @@ namespace BibleSurvivor.Unity
                 // Terminal clip is presentation-only; Core time remains fixed. Lifecycle suspension freezes it too.
                 if(!host.Paused && !host.Suspended) Clock+=Math.Max(0,Math.Min(delta,.1f));
             }
-            if(bossDeathAt>=0 && !host.Session.IsActive && !host.Paused && !host.Suspended && Clock<bossDeathAt+4d/6)
-                Clock=Math.Min(bossDeathAt+4d/6,Clock+Math.Max(0,Math.Min(delta,.1f)));
+            if(bossDeathAt>=0 && !host.Session.IsActive && !host.Paused && !host.Suspended && Clock<bossDeathAt+BossDeathDuration(bossVisual))
+                Clock=Math.Min(bossDeathAt+BossDeathDuration(bossVisual),Clock+Math.Max(0,Math.Min(delta,.1f)));
             foreach(var effect in Effects) if(effect.Active && Clock-effect.Started>=1) effect.Active=false;
         }
         void Emit(string clip, Vector2 pos)
@@ -188,7 +189,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
@@ -205,6 +206,7 @@ namespace BibleSurvivor.Unity
                 case "ex7":case "ex8":case "ex9":case "oppression_chariot":return AdamExodusR03Art.EnemyClip(id);
                 case "ex10":case "ex11":case "ex12":return AdamExodusR04Art.EnemyClip(id);
                 case "ex13":case "ex14":case "ex15":return AdamExodusR05Art.EnemyClip(id);
+                case "ex16":case "ex17":case "ex18":case "defilement_weaver":return AdamExodusR06Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -259,7 +261,7 @@ namespace BibleSurvivor.Unity
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
                         var id=monster.MonsterId;
-                        if(id=="nephilim_tyrant"||id=="sitnah_keeper"||id=="silver_cup_accuser"||id=="oppression_chariot"){if(r03==null)r03=new AdamR03Art();r03.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);}
+                        if(id=="nephilim_tyrant"||id=="sitnah_keeper"||id=="silver_cup_accuser"||id=="oppression_chariot"||id=="defilement_weaver"){if(r03==null)r03=new AdamR03Art();r03.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);}
                         else art.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);
                     }
                 foreach(var drop in snap.Drops)
@@ -274,7 +276,16 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamExodusR05Art.Enemy(monster.MonsterId))
+                        if(AdamExodusR06Art.Enemy(monster.MonsterId))
+                        {
+                            if(exodusR06==null){exodusR06=new AdamExodusR06Art();exodusR06.PrepareHitMasks();}
+                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;var frame=-1;var seconds=Clock;
+                            if(monster.MonsterId=="defilement_weaver")
+                            {clip=AdamExodusR06Art.BossClip(host.Session.Stage,bossVisual,snap.Time,out frame,out seconds);left=bossLeft;}
+                            exodusR06.Draw(clip,anchor,scale,seconds,left,frame);
+                            exodusR06.DrawHit(clip,anchor,scale,seconds,left,EnemyFlashOpacity(enemy.Id),frame);
+                        }
+                        else if(AdamExodusR05Art.Enemy(monster.MonsterId))
                         {
                             if(exodusR05==null){exodusR05=new AdamExodusR05Art();exodusR05.PrepareHitMasks();}
                             var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
@@ -378,9 +389,10 @@ namespace BibleSurvivor.Unity
                     }
                 }
             }
-            if(BossDeathVisible(bossDeathAt,Clock))
+            if(BossDeathVisible(bossDeathAt,Clock,bossVisual))
             {
-                if(bossVisual.Rules.IsChariot){if(exodusR03==null)exodusR03=new AdamExodusR03Art();exodusR03.Draw(AdamExodusR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
+                if(bossVisual.Rules.Number==15){if(exodusR06==null)exodusR06=new AdamExodusR06Art();exodusR06.Draw(AdamExodusR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
+                else if(bossVisual.Rules.IsChariot){if(exodusR03==null)exodusR03=new AdamExodusR03Art();exodusR03.Draw(AdamExodusR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else if(bossVisual.Rules.Number==9){if(r09==null)r09=new AdamR09Art();r09.Draw(AdamR09Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else if(bossVisual.Rules.Number==6){if(r06==null)r06=new AdamR06Art();r06.Draw(AdamR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else{if(r03==null)r03=new AdamR03Art();r03.Draw(AdamR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
@@ -436,23 +448,25 @@ namespace BibleSurvivor.Unity
             foreach(var effect in Effects)
                 if(effect.Active && Clock-effect.Started<art.Clip(effect.Clip).frames/(double)art.Clip(effect.Clip).fps)
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
-            if(bossVisual?.Telegraphing==true && bossVisual.Rules.Number!=9 && !bossVisual.Rules.IsChariot && host.Session.Stage=="boss")
+            if(bossVisual?.Telegraphing==true && !bossVisual.Rules.UsesChainProjectiles && !bossVisual.Rules.IsChariot && host.Session.Stage=="boss")
                 danger.Draw(projection,new Vector2(bossVisual.TargetX,bossVisual.TargetY),(float)BossDefinition.SlamRadius);
             if(snap.Charges!=null)foreach(var charge in snap.Charges)
             {
                 AdamChargeGeometry geometry;var visible=host.Session.RoundNumber==12?AdamChariotWarning.TryNormalGeometry(snap,charge,out geometry):AdamChargeLane.TryGeometry(snap,charge,out geometry);
                 if(visible)chargeLane.Draw(projection,geometry);
             }
-            // Mandatory R09 information is last in the world group: above actors, weapons and optional particles, below HUD.
+            // Mandatory chain-boss information is above actors, weapons and optional particles, below HUD.
             // Neither feedback nor low-FX options suppress warnings or actual hostile projectiles.
             if(snap.HostileProjectiles!=null)foreach(var projectile in snap.HostileProjectiles)
                 if(AdamChainWarning.ProjectileVisible(projectile,host.Session.Stage))
                 {
-                    if(r09==null)r09=new AdamR09Art();var anchor=AdamChainWarning.ProjectilePoint(projection,projectile);var before=GUI.matrix;
+                    var anchor=AdamChainWarning.ProjectilePoint(projection,projectile);var before=GUI.matrix;
                     try
                     {
                         GUI.matrix=before*AdamChainWarning.ProjectileMatrix(anchor+arena.position,projectile);
-                        r09.Draw(AdamR09Art.Projectile,anchor,scale,AdamChainWarning.ProjectileSeconds(snap,projectile));
+                        var seconds=AdamChainWarning.ProjectileSeconds(snap,projectile);
+                        if(bossVisual?.Rules.Number==15){if(exodusR06==null)exodusR06=new AdamExodusR06Art();exodusR06.Draw(AdamExodusR06Art.Projectile,anchor,scale,seconds);}
+                        else{if(r09==null)r09=new AdamR09Art();r09.Draw(AdamR09Art.Projectile,anchor,scale,seconds);}
                     }
                     finally{GUI.matrix=before;}
                 }
@@ -462,7 +476,8 @@ namespace BibleSurvivor.Unity
             if(AdamChariotWarning.TryBossGeometry(chariotVisual,out var chariotGeometry))chariotLane.Draw(projection,chariotGeometry);
             GUI.EndGroup();
         }
-        public static bool BossDeathVisible(double deathAt,double clock)=>deathAt>=0 && clock<deathAt+4d/6;
+        public static double BossDeathDuration(BossEncounterState boss)=>boss?.Rules.Number==15?AdamExodusR06Art.DeathSeconds:4d/6;
+        public static bool BossDeathVisible(double deathAt,double clock,BossEncounterState boss=null)=>deathAt>=0 && clock<deathAt+BossDeathDuration(boss);
         public static string BossClip(string stage,BossEncounterState boss,double impactAt,double clock,out int frame)
         {
             frame=-1;

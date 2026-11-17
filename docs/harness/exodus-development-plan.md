@@ -26,3 +26,7 @@ Sol은 기획·구현·일반독립리뷰, 좁은 파일조회는 도구 직접 
 창세기 회고를 재사용: QA seed의 유효phase/슬롯/무기별 clock, Reload 뒤 pause, Texture2D 임포트, macOS 실제 저장경로를 실행 전에 확인한다. 한 정상앱을 목표로 하되 실제 결함이면 좁게 고치고 필요한 재빌드만 한다. 문서 수정으로 앱 재빌드·전체 suite 반복·픽셀 전행렬·새 검증 체계 생성 없음.
 
 기존 사용자 iOS·preview `pivot9534f7594886`·unknown `com.biblesurvivor.adam.particlesqa`는 조회/조작하지 않는다. 새 suffix/자체 경로 probe/자기 child PID와 SaveStore main/bak/lock만 관리한다. merge·배포·유료 작업은 이번 범위에 포함하지 않는다.
+
+## R10~R15 최종 구현 checkpoint — 2026-11-18
+
+출애굽기6라운드의Core/Unity PC연결과각독립코드·대표화면검토를마쳤다. 최종 Core211, R15관련Edit고유131(최초130PASS/fixture1건 교정메서드2PASS)·Play14와 정상앱2회/최종성공3화면·새process완료Load를확인했다. R09→R15연속근거는Core실좌표CLI이며기술HP/장비와앱의직접Hit/timeout을자연완주로세지않는다. R15현재Boss+네history·ExodusComplete/between16/명시새도전을보존한다. 프로젝트GC기록은각라운드Core/Unity회고를따른다. 최종커밋·해당SHA Core/art CI가마지막게이트이며레위기/새무기/모바일/성능추가개발은이번범위에포함하지않는다.

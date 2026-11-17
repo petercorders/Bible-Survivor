@@ -1,0 +1,53 @@
+{
+  "schema": "bible-survivors.art-exodus-r06-telegraph",
+  "schemaVersion": 1,
+  "assets": [],
+  "authority": "Actual Core boss current position and saved three directions; actual WorldProjection. Board is an illustrative nominal diagram, NOT real Core output or collision validation.",
+  "core": {
+    "cycleSeconds": 5,
+    "warningSeconds": 1,
+    "directionDegrees": [
+      0,
+      -20,
+      20
+    ],
+    "speedWuPerSecond": 1.35,
+    "radiusWu": 0.16,
+    "lifetimeSeconds": 6,
+    "launch": "current boss position at emission; no homing or direction recomputation",
+    "endpoint": "warning: current boss pos + saved direction * Core speed * Core lifetime; projectile: actual Core position, direction and remaining lifetime",
+    "damage": 18,
+    "activeCap": 12,
+    "firstWarningAtBossSecond": 4,
+    "firstEmissionAtBossSecond": 5,
+    "tick": "spawn at tick end, first movement next tick; swept contact/shared invulnerability/contact consumption/expiry/bosskill cleanup belong to Core"
+  },
+  "style": {
+    "shape": "three separate black outer / white inner continuous direction lines, no fill, no slam ring, optional right facing arrow heads inside endpoint",
+    "warningLineWidth": "2sourcepx outer +1sourcepx inner scaled by actual projection, at least1screenpx; line width is NOT hit radius",
+    "sorting": "above actors, weapons and particles; below HUD",
+    "lowFX": "mandatory, stable, nonblinking; same warning regardless of lowFX",
+    "timing": "visible only during actual Core warning, removed on emission; windup frames are three equal thirds of Core warning clock",
+    "mustNot": [
+      "derive paths from sprite sizes or board scale",
+      "use circular slam ring",
+      "leave stale warning after emission or boss death",
+      "invent binding debuff or blocked passages",
+      "paint projectile travel trails",
+      "invent persistent webs, loot theft or miracle attacks"
+    ]
+  },
+  "projectile": {
+    "asset": "prj_defilement-shard_spin_16",
+    "ppu": 32,
+    "pivot": [
+      8,
+      8
+    ],
+    "fps": 8,
+    "alpha": "binary",
+    "pose": "Right-facing baseline, parent facing flip once for actors; projectile visual rotation sampled at8fps about8,8 never changes Core saved direction or position; no doubleflip.",
+    "collision": "Core radius0.16wu; visible links are not the collider",
+    "cleanup": "remove on Core contact consumption, expiry or boss cleanup"
+  }
+}

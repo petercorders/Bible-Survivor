@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "e765ce7bdf06e0ad717d88915ecec837e788294203b39ced04d5a78b3c8ff141",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex16-greedy-hook_move_32",
+      "source": "art/art-exodus-r06/export/png/enm_ex16-greedy-hook_move_32.png",
+      "sha256": "f0675306f5a77c0eea7542a038ea8ce5c8d35edbca58707a0497dc3e4c4f71e4",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex17-twisted-weave_move_32",
+      "source": "art/art-exodus-r06/export/png/enm_ex17-twisted-weave_move_32.png",
+      "sha256": "0a9ce4ce221e97528dd158a0a945b2949cc5ba143737a0ebc9b84874bb4a579f",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex18-ruin-shard_move_32",
+      "source": "art/art-exodus-r06/export/png/enm_ex18-ruin-shard_move_32.png",
+      "sha256": "05bb65115e5ee47a0d97f174748e004ec275d6dc6cac9744138b7cd644119ef8",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_defilement-weaver_move_64",
+      "source": "art/art-exodus-r06/export/png/bos_defilement-weaver_move_64.png",
+      "sha256": "908d164288f98fd81fe732cd32006e5e21fa26afd0aaef59eb653d5aa35dd43a",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_defilement-weaver_windup_64",
+      "source": "art/art-exodus-r06/export/png/bos_defilement-weaver_windup_64.png",
+      "sha256": "60f4b19252127ed2080e62ed577a5cc33be342cef4ba588be003d5c5bbe2f898",
+      "width": 64,
+      "height": 64,
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_defilement-weaver_attack_64",
+      "source": "art/art-exodus-r06/export/png/bos_defilement-weaver_attack_64.png",
+      "sha256": "d0c44c7c44d9c3275641c8ef49bdddf58d8b31ecbe7c3eebc07d7ed50a097f2b",
+      "width": 64,
+      "height": 64,
+      "frames": 2,
+      "fps": 12,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_defilement-weaver_death_64",
+      "source": "art/art-exodus-r06/export/png/bos_defilement-weaver_death_64.png",
+      "sha256": "9ac2a634a7788833ac90bb5d2de417eab4625421adc858ca65ba8c3f28d51e48",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 8,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "prj_defilement-shard_spin_16",
+      "source": "art/art-exodus-r06/export/png/prj_defilement-shard_spin_16.png",
+      "sha256": "863e5c8866612f24c58e13f844aec47e2f01d614367ddac32e45cd75ee2435c2",
+      "width": 16,
+      "height": 16,
+      "frames": 2,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 8,
+      "pivotY": 8,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "EnemyProjectiles",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

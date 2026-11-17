@@ -6,7 +6,7 @@ public sealed class AdamR09UiTests
 {
     [Test] public void JudahNamesAndExplicitShadowMappingsKeepEarlierRounds()
     {
-        Assert.AreEqual("유다",AdamRoundPresentation.Name(9));Assert.AreEqual("요셉",AdamRoundPresentation.Name(8));Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(15));
+        Assert.AreEqual("유다",AdamRoundPresentation.Name(9));Assert.AreEqual("요셉",AdamRoundPresentation.Name(8));Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(16));
         foreach(var id in new[]{"i1","i2","i3","silver_cup_accuser"})Assert.IsTrue(AdamRoundPresentation.R09Enemy(id));
         Assert.IsFalse(AdamRoundPresentation.R09Enemy("h1"));Assert.IsFalse(AdamRoundPresentation.R09Enemy("unknown"));
         Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("i1"));Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("i2"));Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("i3"));Assert.AreEqual("fx_shadow-boss_static_40x8",AdamRoundPresentation.Shadow("silver_cup_accuser"));
@@ -22,7 +22,7 @@ public sealed class AdamR09UiTests
     }
     [Test] public void ChapterCompletionExplainsPreservedProgressAndExplicitNewChallenge()
     {
-        Assert.IsTrue(AdamRoundPresentation.ChapterHeading.Contains("창세기 완료"));Assert.IsTrue(AdamRoundPresentation.ChapterHeading.Contains("저장"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("출애굽기"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("현재 성장·장비로 계속"));Assert.IsTrue(AdamRoundPresentation.ContentDetail.Contains("R15 브살렐 대기"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("진행 유지"));
+        Assert.IsTrue(AdamRoundPresentation.ChapterHeading.Contains("창세기 완료"));Assert.IsTrue(AdamRoundPresentation.ChapterHeading.Contains("저장"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("출애굽기"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("현재 성장·장비로 계속"));Assert.IsTrue(AdamRoundPresentation.ContentDetail.Contains("레위기 미구현"));Assert.IsTrue(AdamRoundPresentation.ChapterDetail.Contains("진행 유지"));
         Assert.AreEqual("1. 새 도전 · 회전 성경",AdamChoiceText.StartCard("bible",0,true));Assert.AreEqual("2. 삼손의 턱뼈",AdamChoiceText.StartCard("jawbone",1));Assert.AreEqual("3. 새 도전 · 다윗의 물맷돌",AdamChoiceText.StartCard("sling",2,true));
     }
     [Test] public void ExhaustedGrowth25AndBossGold100RemainDistinct()

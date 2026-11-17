@@ -126,6 +126,30 @@
       "contact_damage": 14,
       "speed_ratio": 0.6,
       "behavior_id": "chase"
+    },
+    {
+      "id": "ex16",
+      "name_ko": "탐욕의 갈고리",
+      "max_health": 280,
+      "contact_damage": 13,
+      "speed_ratio": 0.85,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex17",
+      "name_ko": "왜곡의 직조마",
+      "max_health": 400,
+      "contact_damage": 14,
+      "speed_ratio": 0.65,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex18",
+      "name_ko": "훼손의 쇳조각마",
+      "max_health": 850,
+      "contact_damage": 16,
+      "speed_ratio": 0.35,
+      "behavior_id": "chase"
     }
   ],
   "rounds": [
@@ -432,6 +456,66 @@
           ]
         }
       ]
+    },
+    {
+      "id": "exodus_06",
+      "number": 15,
+      "local_number": 6,
+      "focus_ko": "브살렐",
+      "boss_id": "defilement_weaver",
+      "spawn_budget": 1200,
+      "concurrency_cap": 120,
+      "raw_xp_budget": 5600,
+      "completion_gold": 280,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "composition": [
+            {
+              "monster_id": "ex16",
+              "count": 256
+            },
+            {
+              "monster_id": "ex17",
+              "count": 64
+            }
+          ]
+        },
+        {
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "composition": [
+            {
+              "monster_id": "ex16",
+              "count": 280
+            },
+            {
+              "monster_id": "ex17",
+              "count": 120
+            }
+          ]
+        },
+        {
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "composition": [
+            {
+              "monster_id": "ex16",
+              "count": 240
+            },
+            {
+              "monster_id": "ex17",
+              "count": 144
+            },
+            {
+              "monster_id": "ex18",
+              "count": 96
+            }
+          ]
+        }
+      ]
     }
   ],
   "bosses": [
@@ -466,6 +550,44 @@
         {
           "health_ratio": 0.3,
           "monster_id": "ex8",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "defilement_weaver",
+      "name_ko": "훼손의 직조군주",
+      "round_number": 15,
+      "max_health": 26000,
+      "contact_damage": 22,
+      "gold": 500,
+      "speed_ratio": 0.3,
+      "radius": 0.6,
+      "intro_seconds": 2,
+      "intro_offset": [
+        0,
+        3
+      ],
+      "attack": {
+        "pattern_id": "three_fixed_direction_projectiles",
+        "period_seconds": 5,
+        "telegraph_seconds": 1,
+        "damage": 18,
+        "projectile_speed": 1.35,
+        "projectile_radius": 0.16,
+        "projectile_lifetime": 6,
+        "projectile_cap": 12,
+        "spread_degrees": 20
+      },
+      "support_summons": [
+        {
+          "health_ratio": 0.6,
+          "monster_id": "ex17",
+          "count": 6
+        },
+        {
+          "health_ratio": 0.3,
+          "monster_id": "ex17",
           "count": 6
         }
       ]

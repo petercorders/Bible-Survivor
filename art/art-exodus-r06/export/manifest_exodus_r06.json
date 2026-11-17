@@ -1,0 +1,954 @@
+{
+ "schema": "bible-survivors.art-manifest-exodus_r06",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R15 Exodus invented thread and broken-metal constructs; independent art review pending; Unity and device checks NOT_RUN",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_exodus_r06_ext.json",
+   "name": "exodus-r06-ext-v1",
+   "sha256": "c37c62704b8d16cba2604ad05a290eb71c6c5e8a7dad5fbc21f34255ab62f691"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_exodus_r06.json",
+   "sha256": "c0f036ed80b1ccbf255a908fe2a0b84bd32ee4cee87e5d09ea8f92fcb3db59c2"
+  },
+  "telegraph": {
+   "file": "src/telegraph_exodus_r06.json",
+   "sha256": "0a20014236be305534207c5b9c3dd1a52a87e35c3d233bc9ee73afeb77756cc2",
+   "assets": "none (three direction warning from actual Core projection)"
+  },
+  "generator": {
+   "file": "scripts/actors_exodus_r06.py",
+   "sha256": "d7e95d915f4db73d69168378aa0e073f1dc0dd33710eaaa7f0d3115309e0c31d"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_exodus_r06.json",
+   "sha256": "0144ad0f72ac39ac4012b9c7bd8bca560b726a6ecd015b0bf5bc2ac43df9c9b5"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751",
+   "package": "../art-concept-03"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "r03": {
+   "package": "art-genesis-r03",
+   "why": "unchanged existing boss shadow, provenance only; not a runtime path or public-copy target",
+   "shadows": {
+    "fx_shadow-boss_static_40x8": {
+     "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+     "cell": [
+      40,
+      8
+     ],
+     "pivot": [
+      20,
+      4
+     ],
+     "alpha": "blend",
+     "sorting": "GroundDecal",
+     "file": "../art-genesis-r03/export/png/fx_shadow-boss_static_40x8.png"
+    }
+   }
+  },
+  "brief": {
+   "file": "Bible-Survivor/docs/harness/r15-implementation-01.md",
+   "scope": "binding R15 baseline; no invented catalog fingerprint"
+  }
+ },
+ "notProduced": {
+  "lane": "No warning/lane PNG. Real Core current origin + saved directions + speed*lifetime projected by actual WorldProjection; PNG does not define collision.",
+  "shadow": "Reuse Art03 small12x4/wide24x6 and existing R03 boss40x8 stable IDs unchanged.",
+  "extra": "No persistent web, binding, loot theft, miracle attack, homing, reflection, slam, dash, additional weapon or terrain."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_exodus_r06.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_exodus_r06.py: original Codex gpt-6.1-sol procedural pixel source; R09/Art03 helpers reused unchanged; no Claude calls this task",
+  "designCanvas": "NOT_USED: no Claude Design, hidden blob, canvas, or mock provider; review boards are local Pillow PNGs"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_exodus_r06_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Fictional obstacles to willing offerings, making and cooperation in Exodus31,35-40; not a claim that the biblical craftsmen fought monsters."
+ },
+ "assets": [
+  {
+   "id": "enm_ex16-greedy-hook_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/enm_ex16-greedy-hook_move_32.png",
+   "sha256": "f0675306f5a77c0eea7542a038ea8ce5c8d35edbca58707a0497dc3e4c4f71e4",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 10,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex16",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     3,
+     29,
+     30
+    ],
+    [
+     4,
+     2,
+     29,
+     30
+    ],
+    [
+     5,
+     3,
+     29,
+     30
+    ],
+    [
+     4,
+     4,
+     29,
+     30
+    ]
+   ],
+   "use": "Greed hook: compact asymmetric hooked metal construct, no coin/loot theft; chase/contact only.",
+   "clock": null,
+   "clip": "move",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:greedy_hook",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#enm_ex16-greedy-hook_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex17-twisted-weave_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/enm_ex17-twisted-weave_move_32.png",
+   "sha256": "0a9ce4ce221e97528dd158a0a945b2949cc5ba143737a0ebc9b84874bb4a579f",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex17",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 6,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     6,
+     30,
+     30
+    ],
+    [
+     3,
+     5,
+     30,
+     30
+    ],
+    [
+     3,
+     6,
+     30,
+     30
+    ],
+    [
+     3,
+     7,
+     30,
+     30
+    ]
+   ],
+   "use": "Twisted weave: open dark thread cluster with short ends; no persistent web, binding or ranged attack.",
+   "clock": null,
+   "clip": "move",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:twisted_weave",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#enm_ex17-twisted-weave_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex18-ruin-shard_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/enm_ex18-ruin-shard_move_32.png",
+   "sha256": "05bb65115e5ee47a0d97f174748e004ec275d6dc6cac9744138b7cd644119ef8",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex18",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     4,
+     6,
+     29,
+     30
+    ],
+    [
+     4,
+     6,
+     29,
+     30
+    ],
+    [
+     4,
+     5,
+     29,
+     30
+    ],
+    [
+     4,
+     6,
+     29,
+     30
+    ]
+   ],
+   "use": "Ruin shard: broad broken-metal construct; not a sacred vessel; slow chase/contact only.",
+   "clock": null,
+   "clip": "move",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:ruin_shard",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#enm_ex18-ruin-shard_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_defilement-weaver_move_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/bos_defilement-weaver_move_64.png",
+   "sha256": "908d164288f98fd81fe732cd32006e5e21fa26afd0aaef59eb653d5aa35dd43a",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:defilement_weaver",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     9,
+     58,
+     62
+    ],
+    [
+     11,
+     8,
+     58,
+     62
+    ],
+    [
+     11,
+     9,
+     58,
+     62
+    ],
+    [
+     11,
+     10,
+     58,
+     62
+    ]
+   ],
+   "use": "Black thread and broken metal invented body; no human, tabernacle, ark or divine presence.",
+   "clock": null,
+   "clip": "move",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#bos_defilement-weaver_move_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_defilement-weaver_windup_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/bos_defilement-weaver_windup_64.png",
+   "sha256": "60f4b19252127ed2080e62ed577a5cc33be342cef4ba588be003d5c5bbe2f898",
+   "size": [
+    192,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:defilement_weaver",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     9,
+     58,
+     62
+    ],
+    [
+     11,
+     10,
+     57,
+     62
+    ],
+    [
+     11,
+     11,
+     56,
+     62
+    ]
+   ],
+   "use": "Three gathering poses within the real Core 1s warning; no drawing controls warning geometry.",
+   "clock": {
+    "source": "restored Core boss warning elapsed; pause/selection freezes; no local timer",
+    "durationSeconds": 1,
+    "frameStartSeconds": [
+     0,
+     0.3333333333333333,
+     0.6666666666666666
+    ],
+    "selection": "greatest start <= elapsed; hold final pose until actual emission"
+   },
+   "clip": "windup",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#bos_defilement-weaver_windup_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_defilement-weaver_attack_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/bos_defilement-weaver_attack_64.png",
+   "sha256": "d0c44c7c44d9c3275641c8ef49bdddf58d8b31ecbe7c3eebc07d7ed50a097f2b",
+   "size": [
+    128,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 12,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:defilement_weaver",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     10,
+     9,
+     58,
+     62
+    ],
+    [
+     11,
+     9,
+     60,
+     62
+    ]
+   ],
+   "use": "Release pose only after actual Core emission; no painted missile, trail or additional attack.",
+   "clock": {
+    "source": "restored Core boss emission clock; only after actual first emission; pause/selection freezes",
+    "durationSeconds": 0.16666666666666666,
+    "frameStartSeconds": [
+     0,
+     0.08333333333333333
+    ],
+    "selection": "play once after emission then move; never show attack before first shot"
+   },
+   "clip": "attack",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#bos_defilement-weaver_attack_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_defilement-weaver_death_64",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/bos_defilement-weaver_death_64.png",
+   "sha256": "9ac2a634a7788833ac90bb5d2de417eab4625421adc858ca65ba8c3f28d51e48",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 8,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:defilement_weaver",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 5,
+   "frameBBoxTopLeft": [
+    [
+     6,
+     31,
+     56,
+     62
+    ],
+    [
+     5,
+     30,
+     55,
+     62
+    ],
+    [
+     4,
+     35,
+     54,
+     62
+    ],
+    [
+     3,
+     41,
+     53,
+     62
+    ]
+   ],
+   "use": "Short collapse into inert broken metal; remove actor/shadow after 0.5s, no persistent web or terrain.",
+   "clock": {
+    "source": "Core death elapsed; freeze on pause",
+    "durationSeconds": 0.5,
+    "frameStartSeconds": [
+     0,
+     0.125,
+     0.25,
+     0.375
+    ],
+    "selection": "play once then remove actor and shadow"
+   },
+   "clip": "death",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#bos_defilement-weaver_death_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "prj_defilement-shard_spin_16",
+   "kind": "projectile",
+   "contract": "src/contract_exodus_r06.json",
+   "file": "export/png/prj_defilement-shard_spin_16.png",
+   "sha256": "863e5c8866612f24c58e13f844aec47e2f01d614367ddac32e45cd75ee2435c2",
+   "size": [
+    32,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "EnemyProjectiles",
+   "ref": "boss-projectile:defilement_weaver",
+   "shadow": null,
+   "colours": 4,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     3,
+     13,
+     12
+    ],
+    [
+     4,
+     3,
+     13,
+     13
+    ]
+   ],
+   "use": "Two visual spin poses around centre pivot; actual Core position/saved direction unchanged; no shadow, trail, homing, binding or terrain.",
+   "clock": null,
+   "clip": "spin",
+   "artDecisionStatus": "Candidate silhouette/palette; clip sizes and clocks are binding R15 baseline, no added game rules.",
+   "source": {
+    "authoring": "scripts/actors_exodus_r06.py:projectile",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_exodus_r06.json#prj_defilement-shard_spin_16"
+   },
+   "status": "production-draft"
+  }
+ ]
+}
