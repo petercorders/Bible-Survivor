@@ -57,7 +57,12 @@ def main():
             for target in (old, new):
                 probe = target / 'Probe'; probe.mkdir()
                 shutil.copy2(ROOT / 'tools/fixtures/schema_compat_probe.cs.txt', probe / 'Program.cs')
-                shutil.copy2(ROOT / 'tools/BibleSurvivor.Sim/CatalogReader.cs', probe / 'CatalogReader.cs')
+                # The historical Core cannot compile APIs introduced by later catalogs.
+                # Keep each probe adapter paired with its source generation.
+                if target == old:
+                    (probe / 'CatalogReader.cs').write_text(command(['git', 'show', resolved + ':tools/BibleSurvivor.Sim/CatalogReader.cs'], ROOT))
+                else:
+                    shutil.copy2(ROOT / 'tools/BibleSurvivor.Sim/CatalogReader.cs', probe / 'CatalogReader.cs')
                 (probe / 'Probe.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><ProjectReference Include="../src/BibleSurvivor.Core/BibleSurvivor.Core.csproj" /></ItemGroup></Project>')
                 command([sdk, 'build', str(probe)], target)
                 fixtures = output / (target.name + '-fixtures')

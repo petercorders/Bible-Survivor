@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "chapter_id": "exodus",
+  "status": "technical_initial_values_not_playtested",
+  "rules": {
+    "normal_duration_seconds": 180,
+    "spawn_cutoff_seconds": 170
+  },
+  "monsters": [
+    {
+      "id": "ex1",
+      "name_ko": "벽돌 운반마",
+      "max_health": 160,
+      "contact_damage": 10,
+      "speed_ratio": 0.45,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex2",
+      "name_ko": "감시의 눈",
+      "max_health": 100,
+      "contact_damage": 9,
+      "speed_ratio": 0.7,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex3",
+      "name_ko": "명령의 사슬갑주",
+      "max_health": 450,
+      "contact_damage": 13,
+      "speed_ratio": 0.35,
+      "behavior_id": "chase"
+    }
+  ],
+  "rounds": [
+    {
+      "id": "exodus_01",
+      "number": 10,
+      "local_number": 1,
+      "focus_ko": "십브라 (부아 포함)",
+      "boss_id": null,
+      "spawn_budget": 900,
+      "concurrency_cap": 110,
+      "raw_xp_budget": 3600,
+      "completion_gold": 180,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "composition": [
+            {
+              "monster_id": "ex1",
+              "count": 180
+            },
+            {
+              "monster_id": "ex2",
+              "count": 60
+            }
+          ]
+        },
+        {
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "composition": [
+            {
+              "monster_id": "ex1",
+              "count": 180
+            },
+            {
+              "monster_id": "ex2",
+              "count": 120
+            }
+          ]
+        },
+        {
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "composition": [
+            {
+              "monster_id": "ex1",
+              "count": 180
+            },
+            {
+              "monster_id": "ex2",
+              "count": 126
+            },
+            {
+              "monster_id": "ex3",
+              "count": 54
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

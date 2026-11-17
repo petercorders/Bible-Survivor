@@ -12,6 +12,7 @@ namespace BibleSurvivor.Unity
         readonly SaveStore store;
         long revision;
         string operation;
+        GameSnapshot exodusCandidate;
         double sinceSave;
         bool completedCheckpoint;
         public GameSnapshot State { get; private set; }
@@ -33,8 +34,9 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR08 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==8 && Session?.RoundNumber==7;
         public bool AwaitingR09 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==9 && Session?.RoundNumber==8;
         public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09;
-        public bool ContentComplete => Session?.ChapterComplete == true;
-        public bool CanStartNew => State!=null && (State.Run==null || (ContentComplete && Session.PendingChoices.Count==0));
+        public bool CanEnterExodus => Error==null && !Suspended && operation==null && exodusCandidate==null && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
+        public bool ContentComplete => Session?.ContentComplete == true;
+        public bool CanStartNew => Error==null && exodusCandidate==null && State!=null && (State.Run==null || ((Session?.ChapterComplete==true || ContentComplete) && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
         public bool Reload()
@@ -44,9 +46,9 @@ namespace BibleSurvivor.Unity
                 var loaded = store.Load() ?? GameSnapshot.New();
                 var session = loaded.Run == null ? null : AdamSession.Resume(loaded, catalog.ForCheckpoint(loaded.Run));
                 var world = session == null || !session.IsActive ? null : loaded.Run.World == null
-                    ? new BattleWorld(session, catalog.Speeds, 7) : BattleWorld.Restore(session, catalog.Speeds, loaded.Run.World);
+                    ? new BattleWorld(session, catalog.SpeedsFor(session.RoundNumber), 7) : BattleWorld.Restore(session, catalog.SpeedsFor(session.RoundNumber), loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
-                operation = null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
+                operation = null; exodusCandidate=null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
                 return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
@@ -59,6 +61,25 @@ namespace BibleSurvivor.Unity
             Session = new AdamSession(State, catalog.Definition, weapon);
             World = new BattleWorld(Session, catalog.Speeds, 7);
             Paused = false; Movement = Vector2.zero; Checkpoint();
+        }
+        public bool TryEnterExodus()
+        {
+            if(!CanEnterExodus)return false;
+            try
+            {
+                // Independent candidate only: the completed Genesis aggregate/session stays published until durable readback.
+                var definition=catalog.ForRound(ExodusContent.GlobalRoundNumber);
+                var candidate=Session.PrepareExodus(definition);
+                var preview=AdamSession.Resume(candidate,definition);
+                candidate.Run.World=new BattleWorld(preview,catalog.SpeedsFor(definition.Number),7).Capture();
+                candidate.Validate();
+                exodusCandidate=candidate;operation=Guid.NewGuid().ToString("N");
+                Paused=true;Movement=Vector2.zero;
+                var accepted=RetrySave();
+                if(accepted && !Suspended)Paused=false;
+                return accepted;
+            }
+            catch(Exception error){ReportDevelopmentFailure(error);Error=error.Message;RequiresNewerGame=error is UnsupportedSaveVersionException;Paused=true;Movement=Vector2.zero;return false;}
         }
         public void SetMovement(Vector2 value) { Movement = CanPlay ? Vector2.ClampMagnitude(value, 1) : Vector2.zero; }
         public void Tick(double delta)
@@ -156,6 +177,20 @@ namespace BibleSurvivor.Unity
             if (operation == null) return false;
             try
             {
+                if(exodusCandidate!=null)
+                {
+                    // A failed or uncertain attempt retains this exact candidate, old revision and operation for retry.
+                    var committed=store.Commit(exodusCandidate,revision,operation);
+                    var loaded=store.Load() ?? throw new InvalidOperationException("Exodus entry readback is missing");
+                    if(loaded.Revision!=committed || loaded.LastOperationId!=operation)
+                        throw new InvalidOperationException("Exodus entry readback changed; reload before new input");
+                    var session=AdamSession.Resume(loaded,catalog.ForRound(ExodusContent.GlobalRoundNumber));
+                    var world=BattleWorld.Restore(session,catalog.SpeedsFor(session.RoundNumber),loaded.Run.World);
+                    // Publish only after Commit, Load, validation, Resume and World reconstruction all succeed.
+                    State=loaded;Session=session;World=world;revision=committed;
+                    exodusCandidate=null;operation=null;Error=null;RequiresNewerGame=false;
+                    Paused=true;Movement=Vector2.zero;sinceSave=0;completedCheckpoint=false;return true;
+                }
                 revision = store.Commit(State, revision, operation);
                 State.Revision = revision; State.LastOperationId = operation;
                 operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0;completedCheckpoint=AwaitingNextRound;return true;

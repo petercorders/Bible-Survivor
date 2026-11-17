@@ -13,7 +13,8 @@ namespace BibleSurvivor.Core
     // completely different Run representation; that must not be mistaken for recoverable corruption.
     public static class SaveFormat
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
+        public const int GenesisVersion = 2;
         private const int CurrentWorldVersion = 4;
         internal const int MaximumBytes = 4 * 1024 * 1024;
         private static readonly HashSet<string> EnvelopeFields = new HashSet<string> {
@@ -21,7 +22,7 @@ namespace BibleSurvivor.Core
         private static readonly HashSet<string> RunFields = new HashSet<string> {
             "RunId", "RoundNumber", "Stage", "Health", "MaxHealth", "Level", "Experience", "KillRemainder",
             "LastHitTime", "PermanentSnapshot", "Weapons", "Passives", "Wave", "Drops", "PendingLevels",
-            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "CompletedSecondBoss", "NormalEndedAt", "RoundCompletionApplied", "PreviousNormalRound" };
+            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "CompletedSecondBoss", "CompletedThirdBoss", "NormalEndedAt", "RoundCompletionApplied", "PreviousNormalRound" };
         // Explicit serialized shapes avoid reflection/code generation in the Unity/IL2CPP reader.
         // Dictionary keys are data inside Key/Value entries, not names of DTO members.
         private sealed class ContentShape
@@ -58,7 +59,7 @@ namespace BibleSurvivor.Core
             var boss = Object("Version EncounterId NormalEndedAt IntroElapsed BossElapsed Health Paused NextAttackAt Telegraphing TargetX TargetY ThresholdUsed Summoned NextActorId BossGoldApplied CompletionApplied RoundNumber SummonMask",
                 ("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
-                ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("Forms",integerMap));
+                ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("Forms",integerMap));
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run));
         }
 
@@ -152,7 +153,15 @@ namespace BibleSurvivor.Core
                     var policy=rewardFields.SingleOrDefault(x=>x.Name=="PolicyId");
                     if(policy!=null && policy.GetAttribute("type")=="string" && policy.InnerText!=BossDefinition.Policy && policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy&&policy.InnerText!=BossDefinition.JudahPolicy)throw new UnsupportedSaveVersionException();
                 }
-                if (version == CurrentVersion)
+                if(version<3 && members.Any(x=>x.Name=="CompletedThirdBoss"))throw new UnsupportedSaveVersionException();
+                if(version==3)
+                {
+                    var stage3=members.SingleOrDefault(x=>x.Name=="Stage");
+                    var round3=members.SingleOrDefault(x=>x.Name=="RoundNumber");
+                    if(stage3==null||round3==null||!int.TryParse(round3.InnerText,out var rn)||
+                        !((rn==10&&(stage3.InnerText=="normal"||stage3.InnerText=="round_settlement"))||(rn==11&&stage3.InnerText=="between_rounds")))throw new UnsupportedSaveVersionException();
+                }
+                if (version == GenesisVersion)
                 {
                     var stage = members.SingleOrDefault(x => x.Name == "Stage");
                     if (stage != null && stage.GetAttribute("type") == "string" && stage.InnerText != "normal" && stage.InnerText != "between_rounds" && stage.InnerText!="boss_intro" && stage.InnerText!="boss" && stage.InnerText!="boss_reward" && stage.InnerText!="boss_settlement" && stage.InnerText!="round_settlement")
@@ -166,14 +175,14 @@ namespace BibleSurvivor.Core
                 }
             }
             if (fields.Any(x => !EnvelopeFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown save envelope field");
-            if (version == CurrentVersion) CheckSupportedContent(root, SupportedContent);
-            if (version == CurrentVersion) CheckForms(root);
+            if (version >= GenesisVersion) CheckSupportedContent(root, SupportedContent);
+            if (version >= GenesisVersion) CheckForms(root);
             return version;
         }
 
         private static void CheckForms(XmlElement element)
         {
-            if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss")&&element.GetAttribute("type")=="object")
+            if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss"||element.Name=="CompletedThirdBoss")&&element.GetAttribute("type")=="object")
             {
                 var round=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="RoundNumber");
                 if(round?.GetAttribute("type")=="number"&&(!int.TryParse(round.InnerText,out var br)||(br!=0&&br!=3&&br!=6&&br!=9)))throw new UnsupportedSaveVersionException();
@@ -218,7 +227,7 @@ namespace BibleSurvivor.Core
 
         private static void RejectUnsupportedContent(int version, string message)
         {
-            if (version == CurrentVersion) throw new UnsupportedSaveVersionException();
+            if (version >= GenesisVersion) throw new UnsupportedSaveVersionException();
             throw new InvalidDataException(message);
         }
     }

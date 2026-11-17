@@ -1,0 +1,405 @@
+{
+ "schema": "bible-survivors.art-manifest-exodus_r01",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R10 (Exodus) ex1-ex3 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_exodus_r01_ext.json",
+   "name": "exodus-r01-ext-v1",
+   "sha256": "b8e334cbdc3004a8a7334ab76954429228714b6daaafffe2ab170a26169e8ab7"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_exodus_r01.json",
+   "sha256": "9f47807b06c2f5eea36ef834ff4e06d87cc812a496ad5052108d12ab41f4161f"
+  },
+  "generator": {
+   "file": "scripts/actors_exodus_r01.py",
+   "sha256": "bdbbadeded985e4d57e10db00a0855ad926331da4c1a89820163cc558b802f61"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_exodus_r01.json",
+   "sha256": "073da08ee9d744e755cabd90de42ca7da21a05cc1257880b698a279a818e173c"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "brief": "Bible-Survivor/docs/harness/r10-implementation-01.md: initial catalog and art ownership contract"
+ },
+ "notProduced": {
+  "extra mechanics": "No wall creation, detection debuff, binding, projectile, dash or new attack effect.",
+  "hit/death": "Existing shared enemy handling; no extra clips.",
+  "shadow": "Reuse art03 shadows unchanged; no new shadow PNG."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_exodus_r01.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_exodus_r01.py, a procedural generator written by Codex (OpenAI model) in this session; not exported from the Claude Design product",
+  "designCanvas": "None; no Claude Design, canvas or image model used"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_exodus_r01_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Exodus 1:8-22 oppression/labor, creatively adapted as nonhuman constructs, not literal biblical beings."
+ },
+ "assets": [
+  {
+   "id": "enm_ex1-brick-burden_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r01.json",
+   "file": "export/png/enm_ex1-brick-burden_move_32.png",
+   "sha256": "5a7e9bab90e6407b92c2c89db87ad4a1811bc786b980fb48ce8aa981429e702f",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex1",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     8,
+     29,
+     30
+    ],
+    [
+     2,
+     7,
+     29,
+     30
+    ],
+    [
+     2,
+     7,
+     29,
+     30
+    ],
+    [
+     2,
+     8,
+     29,
+     30
+    ]
+   ],
+   "use": "Heavy brick-backed four-legged construct with a low forward head; slow lumbering contact chase. Bricks stay on its back; no wall creation.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r01.py:brick_burden",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r01.json#enm_ex1-brick-burden_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex2-watching-eye_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r01.json",
+   "file": "export/png/enm_ex2-watching-eye_move_32.png",
+   "sha256": "163397128596848a22828ae4c50356433e8e1c71945ca4332d912985496594d3",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex2",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     7,
+     27,
+     26
+    ],
+    [
+     1,
+     5,
+     27,
+     25
+    ],
+    [
+     1,
+     5,
+     27,
+     24
+    ],
+    [
+     1,
+     7,
+     27,
+     26
+    ]
+   ],
+   "use": "Floating singular eye with a dark asymmetric trailing membrane; quick contact chase. Body bobs above its stable pivot/shadow; no detection aura or debuff.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r01.py:watching_eye",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r01.json#enm_ex2-watching-eye_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex3-command-chain-armor_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r01.json",
+   "file": "export/png/enm_ex3-command-chain-armor_move_32.png",
+   "sha256": "6f2c9ec2a9c5d6e82f6659c9454942869cf31a921c3a5ae959d31be02856f370",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     3,
+     29,
+     30
+    ],
+    [
+     5,
+     3,
+     29,
+     30
+    ],
+    [
+     5,
+     2,
+     29,
+     30
+    ],
+    [
+     5,
+     3,
+     29,
+     30
+    ]
+   ],
+   "use": "Broad empty animated armor with short decorative chain links attached to its chest and shoulders; slow high-HP contact chase. No human wearer, pharaonic regalia, reaching chain or binding effect.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r01.py:command_chain_armor",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r01.json#enm_ex3-command-chain-armor_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

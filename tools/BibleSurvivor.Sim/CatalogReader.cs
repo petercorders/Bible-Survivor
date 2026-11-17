@@ -15,9 +15,30 @@ public static class CatalogReader
         return document.RootElement.GetProperty("monsters").EnumerateArray()
             .ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x.GetProperty("speed_ratio").GetDouble());
     }
+    public static RoundDefinition Exodus(string file)
+    {
+        using var document=JsonDocument.Parse(File.ReadAllText(file));
+        var root=document.RootElement;
+        if(root.GetProperty("schema_version").GetInt32()!=1||root.GetProperty("chapter_id").GetString()!=ExodusContent.ChapterId)
+            throw new ArgumentOutOfRangeException(nameof(file),"Unsupported Exodus catalog");
+        var rules=root.GetProperty("rules");
+        if(rules.GetProperty("normal_duration_seconds").GetInt32()!=180||rules.GetProperty("spawn_cutoff_seconds").GetInt32()!=170)
+            throw new InvalidDataException("Incompatible Exodus clock");
+        var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
+        if(monsters.Count!=3||ExodusContent.MonsterSpeeds.Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!="chase"))
+            throw new InvalidDataException("Unsupported Exodus monster contract");
+        var round=root.GetProperty("rounds").EnumerateArray().Single();
+        if(round.GetProperty("number").GetInt32()!=10||round.GetProperty("local_number").GetInt32()!=1||round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null||round.GetProperty("spawn_budget").GetInt32()!=900)
+            throw new InvalidDataException("Unsupported Exodus identity");
+        var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
+            w.GetProperty("composition").EnumerateArray().Select(g=>{var id=g.GetProperty("monster_id").GetString()!;var monster=monsters[id];return new SpawnGroup(id,g.GetProperty("count").GetInt32(),monster.GetProperty("max_health").GetInt32(),monster.GetProperty("contact_damage").GetInt32());}))).ToArray();
+        var result=new RoundDefinition(10,round.GetProperty("concurrency_cap").GetInt32(),round.GetProperty("raw_xp_budget").GetInt32(),round.GetProperty("completion_gold").GetInt32(),waves,round.GetProperty("id").GetString(),round.GetProperty("unlock_weapon_id").GetString());
+        ExodusContent.Validate(result);return result;
+    }
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
+        if(number==10) return Exodus(file);
         if(number<1 || number>9) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R09 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;

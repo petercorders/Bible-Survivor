@@ -123,6 +123,40 @@ public sealed class AdamRoundPlayTests
         }
         yield return null;
     }
+    AdamHost CompletedGenesisForEntry(string suffix)
+    {
+        var catalog=AdamCatalog.Load();var state=GameSnapshot.New();var session=new AdamSession(state,catalog.ForRound(1),"sling");
+        for(var round=1;round<=9;round++)
+        {
+            session.Advance(180);
+            if(session.Stage=="boss_intro")
+            {
+                new BattleWorld(session,catalog.Speeds,7).Advance(2,System.Numerics.Vector2.Zero);
+                session.Hit(session.BossRules.BossActorId,session.BossRules.MaxHealth);
+                if(session.Stage=="boss_reward")Assert.IsTrue(session.ChooseBossReward(session.Boss.Reward.RewardId,session.BossChoices[0].Id));
+                while(session.PendingChoices.Count>0)Assert.IsTrue(session.Choose(session.PendingChoices[0]));
+                Assert.IsTrue(session.CompleteBossSettlement());
+            }
+            while(session.PendingChoices.Count>0)Assert.IsTrue(session.Choose(session.PendingChoices[0]));
+            if(session.Stage=="round_settlement")Assert.IsTrue(session.CompleteNormalSettlement());
+            if(round<9)session=session.StartNextRound(catalog.ForRound(round+1));
+        }
+        session.Capture();state.Run.World=null;var path=Path.Combine(directory,suffix+".json");new SaveStore(path).Commit(state,0,"technical-Genesis-completion");return new AdamHost(catalog,new SaveStore(path));
+    }
+    [UnityTest]public IEnumerator R10EnterKeyHonorsSuspensionThenStartsOnceAndDoesNotRestartAtInstalledEnd()
+    {
+        var host=CompletedGenesisForEntry("enter");var run=host.State.Run.RunId;game.Initialize(host);game.SetLifecycle(true,false);yield return null;Assert.AreEqual(9,host.Session.RoundNumber);Assert.IsTrue(host.Paused);
+        host.SetSuspended(true);var revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(9,host.Session.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
+        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;game.SetLifecycle(true,false);InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;
+        Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(run,host.State.Run.RunId);Assert.AreEqual(revision+1,host.State.Revision);
+        host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.ContentComplete);revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.IsTrue(host.ContentComplete);Assert.AreEqual(11,host.State.Run.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
+    }
+    [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameUseExplicitNewChallengeOnly()
+    {
+        var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(host.State.Profile);game.Initialize(host);game.SetLifecycle(true,false);yield return null;
+        InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
+        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(2,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+    }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}
 }

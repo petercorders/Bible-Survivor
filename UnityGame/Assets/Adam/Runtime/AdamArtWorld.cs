@@ -16,6 +16,7 @@ namespace BibleSurvivor.Unity
         AdamR07Art r07;
         AdamR08Art r08;
         AdamR09Art r09;
+        AdamExodusR01Art exodusR01;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
@@ -177,7 +178,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;danger.Dispose();chargeLane.Dispose();}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;danger.Dispose();chargeLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
@@ -189,6 +190,7 @@ namespace BibleSurvivor.Unity
                 case "g1":case "g2":case "g3":return AdamR07Art.EnemyClip(id);
                 case "h1":case "h2":case "h3":return AdamR08Art.EnemyClip(id);
                 case "i1":case "i2":case "i3":case "silver_cup_accuser":return AdamR09Art.EnemyClip(id);
+                case "ex1":case "ex2":case "ex3":return AdamExodusR01Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -258,7 +260,14 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamRoundPresentation.R09Enemy(monster.MonsterId) || monster.MonsterId=="silver_cup_accuser")
+                        if(AdamExodusR01Art.Enemy(monster.MonsterId))
+                        {
+                            if(exodusR01==null){exodusR01=new AdamExodusR01Art();exodusR01.PrepareHitMasks();}
+                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
+                            exodusR01.Draw(clip,anchor,scale,Clock,left);
+                            exodusR01.DrawHit(clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));
+                        }
+                        else if(AdamRoundPresentation.R09Enemy(monster.MonsterId) || monster.MonsterId=="silver_cup_accuser")
                         {
                             if(r09==null)r09=new AdamR09Art();var id=monster.MonsterId;
                             if(id=="silver_cup_accuser"){var clip=BossClip(host.Session.Stage,bossVisual,bossImpactAt,Clock,out var frame);r09.Draw(clip,anchor,scale,Clock,bossLeft,frame);}

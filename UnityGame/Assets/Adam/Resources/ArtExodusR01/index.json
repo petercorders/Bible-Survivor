@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "dbeb1294b348a614173765ca0e914489be561de96bcf31a9594026efd4edcad5",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex1-brick-burden_move_32",
+      "source": "art/art-exodus-r01/export/png/enm_ex1-brick-burden_move_32.png",
+      "sha256": "5a7e9bab90e6407b92c2c89db87ad4a1811bc786b980fb48ce8aa981429e702f",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex2-watching-eye_move_32",
+      "source": "art/art-exodus-r01/export/png/enm_ex2-watching-eye_move_32.png",
+      "sha256": "163397128596848a22828ae4c50356433e8e1c71945ca4332d912985496594d3",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex3-command-chain-armor_move_32",
+      "source": "art/art-exodus-r01/export/png/enm_ex3-command-chain-armor_move_32.png",
+      "sha256": "6f2c9ec2a9c5d6e82f6659c9454942869cf31a921c3a5ae959d31be02856f370",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

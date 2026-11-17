@@ -4,7 +4,9 @@
 
 ## 현재 상태
 
-창세기 R01~R09의 일반 전투·세 보스·첫 3종 무기 진화·성장/보상·완료 정산을 C# 코어와 Unity PC 시제품에 연결했습니다. 유다 R09 완료 뒤 장비·성장·세 보상 기록을 보존해 다음 책 미구현 대기로 저장하며, 새 도전은 명시적으로 선택할 때만 시작합니다. 기술 검증과 자연 플레이 밸런스 검증은 별개이며, 문서의 전투·경제 수치는 초기 설계입니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
+창세기 R01~R09와 출애굽기 첫 라운드 R10을 C# 코어와 Unity PC 시제품에 연결했습니다. 유다 R09 완료 뒤 장비·성장·세 보상 기록을 보존하고 명시적으로 출애굽기를 시작하며, R10 완료는 R11 대기로 저장합니다. 새 도전은 별도 선택일 때만 시작합니다. 기술 검증과 자연 플레이 밸런스 검증은 별개이며, 문서의 전투·경제 수치는 초기 설계입니다. 전체 스킬 420종은 목표 규모이며, 무기 전용 300종의 효과 개요를 작성했습니다.
+
+[R10 출애굽기 진입과 PC 검증](docs/progress/R10-unity.md)에 저장 성공 후 진입·실패 재시도·첫 라운드 적3종·완료 정산과 기술 fixture의 한계를 기록했습니다. 관련 Edit47/Play22 및 최종 PC 앱을 확인했으며, 출애굽기 전체 R10~R15 구현은 계속 진행합니다. 최신 챕터의 자연 밸런스·native·모바일·성능은 미검증입니다.
 
 [R01 구현·검증 상태](docs/progress/R01.md) · [R02 구현·검증 상태](docs/progress/R02.md) · [개발 계획](docs/genesis-development-plan.md) · [모바일 고려 사항](docs/mobile-platform-plan.md)
 
@@ -58,6 +60,7 @@ bash tools/dotnet.sh run --project tools/BibleSurvivor.Sim -- --series-combat sl
 
 - [전체 게임 기획](docs/game-design.md)
 - [창세기 라운드·전투 설계](docs/genesis-balance.md)
+- [출애굽기 라운드 기획](docs/exodus-balance.md) · [제작 계획](docs/harness/exodus-development-plan.md)
 - [무기·보조 아이템·진화](docs/item-recommendations.md)
 - [영구 스킬트리](docs/skill-tree.md)
 - [무기별 스킬 300종](docs/weapon-skill-trees.md)

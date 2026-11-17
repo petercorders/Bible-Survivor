@@ -46,8 +46,8 @@ public sealed class AdamR09HostTests
     {
         var c=AdamCatalog.Load();var d=c.ForRound(9);Assert.AreEqual(1140,d.Waves.Sum(w=>w.Groups.Sum(g=>g.Count)));Assert.AreEqual(4200,d.RawExperience);Assert.AreEqual(120,d.ConcurrencyCap);Assert.AreEqual(160,d.CompletionGold);Assert.IsNull(d.UnlockWeaponId);
         foreach(var round in new[]{3,6,9}){var rule=BossDefinition.ForRound(round);Assert.AreEqual(round,c.ForRound(round).Number);Assert.Greater(rule.MaxHealth,0);}
-        Assert.AreEqual(1,BossDefinition.ForRound(9).TelegraphDuration);Assert.Throws<InvalidDataException>(()=>c.ForRound(10));
-        Assert.Throws<InvalidDataException>(()=>c.ForCheckpoint(new RunState{RoundNumber=10,Stage="normal"}));
+        Assert.AreEqual(1,BossDefinition.ForRound(9).TelegraphDuration);Assert.Throws<InvalidDataException>(()=>c.ForRound(11));
+        Assert.Throws<InvalidDataException>(()=>c.ForCheckpoint(new RunState{RoundNumber=11,Stage="normal"}));
     }
     [TestCase("clock")][TestCase("count")][TestCase("pattern")]
     public void CatalogRejectsR09SlamContractInsteadOfAcceptingOldBossDefaults(string field)
@@ -92,7 +92,7 @@ public sealed class AdamR09HostTests
         {
             Assert.NotNull(h.Error);var frozen=Bytes(h.State);h.Tick(60);h.Start("bible");Assert.IsFalse(h.CompleteBossSettlement());CollectionAssert.AreEqual(frozen,Bytes(h.State));fail=false;Assert.IsTrue(h.RetrySave(),h.Error);
         }
-        Assert.IsTrue(h.Reload(),h.Error);Assert.IsTrue(h.Paused);Assert.IsTrue(h.Session.ChapterComplete);Assert.IsTrue(h.ContentComplete);Assert.IsFalse(h.AwaitingNextRound);Assert.AreEqual(10,h.State.Run.RoundNumber);Assert.IsNull(h.World);Assert.IsTrue(h.CanStartNew);
+        Assert.IsTrue(h.Reload(),h.Error);Assert.IsTrue(h.Paused);Assert.IsTrue(h.Session.ChapterComplete);Assert.IsFalse(h.ContentComplete);Assert.IsTrue(h.CanEnterExodus);Assert.IsFalse(h.AwaitingNextRound);Assert.AreEqual(10,h.State.Run.RoundNumber);Assert.IsNull(h.World);Assert.IsTrue(h.CanStartNew);
         Assert.AreEqual(gold+350+160+(candidate.Kind=="gold"?candidate.Gold:0),h.State.Profile.Gold);Assert.AreEqual(h.State.Run.MaxHealth,h.Session.CurrentHealth);CollectionAssert.AreEqual(unlocks,h.State.Profile.UnlockedWeapons);
         CollectionAssert.AreEqual(first,Bytes(h.State.Run.CompletedBoss));CollectionAssert.AreEqual(second,Bytes(h.State.Run.CompletedSecondBoss));Assert.AreEqual(9,h.State.Run.Boss.EncounterRound);Assert.IsTrue(h.State.Run.Boss.CompletionApplied);Assert.AreEqual(EvolutionRules.Sling,h.Session.WeaponForm("sling"));Assert.AreEqual(EvolutionRules.Bible,h.Session.WeaponForm("bible"));
         Assert.IsFalse(h.ChooseBossReward(reward,candidate.Id));Assert.IsFalse(h.CompleteBossSettlement());var run=Bytes(h.State.Run);var profile=Bytes(h.State.Profile);h.SetPaused(false);h.Tick(60);CollectionAssert.AreEqual(run,Bytes(h.State.Run));CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));var disk=File.ReadAllBytes(path);Assert.IsTrue(h.Reload(),h.Error);CollectionAssert.AreEqual(disk,File.ReadAllBytes(path));CollectionAssert.AreEqual(run,Bytes(h.State.Run));

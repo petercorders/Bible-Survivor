@@ -1,0 +1,133 @@
+{
+  "schema": "bible-survivors.art-exodus-r01-contract",
+  "schemaVersion": 1,
+  "note": "R10 exodus_01 enemies. 32px, PPU32, pivot16,1, right-facing parent flip, binary alpha. Chase/contact only; no walls, detection debuff or binding. New Codex script pixels; independent art review pending.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "1px clear ring; grounded ex1/ex3 lowest opaque row 30. Floating ex2 keeps fixed ground anchor/pivot but its eye body bobs above the shadow."
+  },
+  "colourLimit": {
+    "32": 16,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG"
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_exodus_r01_ext.json",
+      "name": "exodus-r01-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+    },
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "brief": "Bible-Survivor/docs/harness/r10-implementation-01.md: initial catalog and art ownership contract"
+  },
+  "assets": [
+    {
+      "id": "enm_ex1-brick-burden_move_32",
+      "ref": "monster:ex1",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Heavy brick-backed four-legged construct with a low forward head; slow lumbering contact chase. Bricks stay on its back; no wall creation."
+    },
+    {
+      "id": "enm_ex2-watching-eye_move_32",
+      "ref": "monster:ex2",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": false,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "Floating singular eye with a dark asymmetric trailing membrane; quick contact chase. Body bobs above its stable pivot/shadow; no detection aura or debuff."
+    },
+    {
+      "id": "enm_ex3-command-chain-armor_move_32",
+      "ref": "monster:ex3",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Broad empty animated armor with short decorative chain links attached to its chest and shoulders; slow high-HP contact chase. No human wearer, pharaonic regalia, reaching chain or binding effect."
+    }
+  ],
+  "notProduced": {
+    "extra mechanics": "No wall creation, detection debuff, binding, projectile, dash or new attack effect.",
+    "hit/death": "Existing shared enemy handling; no extra clips.",
+    "shadow": "Reuse art03 shadows unchanged; no new shadow PNG."
+  },
+  "motifs": {
+    "source": "Exodus 1:8-22 oppression/labor, creatively adapted as nonhuman constructs, not literal biblical beings.",
+    "ex1": "The burden of bricks made into a fictional brick-backed beast.",
+    "ex2": "Surveillance made into a fictional floating eye.",
+    "ex3": "Oppressive commands made into empty animated chain-decorated armor.",
+    "excluded": "No biblical person, Egyptian/Israelite person, ethnicity, culture, God or judgment is demonized; no human face, skin, national symbol or royal costume."
+  }
+}

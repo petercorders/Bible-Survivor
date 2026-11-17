@@ -33,11 +33,11 @@ CASES = [
         ('SaveMigrationArchive.cs', 'if (Directory.Exists(destination)) { VerifyPublishedArchive(destination); return; }', 'if (Directory.Exists(destination)) return;'),
     ], 'Schema archive path failure and incomplete'),
     ('unsupported_schema2_content_recovers_older_backup', [
-        ('SaveFormat.cs', 'if (version == CurrentVersion) throw new UnsupportedSaveVersionException();', 'if (version == CurrentVersion) throw new InvalidDataException("unsupported treated as corrupt");'),
-        ('SaveFormat.cs', 'if (version == CurrentVersion)\n                {', 'if (version < 0)\n                {'),
+        ('SaveFormat.cs', 'if (version >= GenesisVersion) throw new UnsupportedSaveVersionException();', 'if (version >= GenesisVersion) throw new InvalidDataException("unsupported treated as corrupt");'),
+        ('SaveFormat.cs', 'if (version == GenesisVersion)\n                {', 'if (version < 0)\n                {'),
     ], 'Schema2 reader preserves future boss content'),
     ('old_shallow_schema2_content_guard', [
-        ('SaveFormat.cs', 'if (version == CurrentVersion) CheckSupportedContent(root, SupportedContent);', '/* Original preparatory reader only checked envelope and direct Run fields. */'),
+        ('SaveFormat.cs', 'if (version >= GenesisVersion) CheckSupportedContent(root, SupportedContent);', '/* Original preparatory reader only checked envelope and direct Run fields. */'),
     ], ['Schema2 nested Profile unknown content', 'Schema2 nested World unknown content']),
     ('future_world_version_recovers_legacy_backup', [
         ('SaveFormat.cs', 'CheckWorldVersion(members.SingleOrDefault(x => x.Name == "World"));', '/* Original reader delegated future World version to typed corruption recovery. */'),

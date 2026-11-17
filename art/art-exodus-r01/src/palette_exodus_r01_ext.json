@@ -1,0 +1,38 @@
+{
+  "name": "exodus-r01-ext-v1",
+  "note": "Original Codex authored light-to-dark actor ramps; art03 base unchanged. No gemstone cyan, attack-warning orange or human skin tones.",
+  "actor": {
+    "burden": [
+      "#a491b2",
+      "#766481",
+      "#51425e",
+      "#332b40"
+    ],
+    "brick": [
+      "#b69b92",
+      "#88716f",
+      "#5b4b52"
+    ],
+    "watch": [
+      "#e3ddd4",
+      "#b9afbb",
+      "#81778d"
+    ],
+    "iris": [
+      "#d9dc8c",
+      "#939953",
+      "#555e37"
+    ],
+    "command": [
+      "#a7a7b9",
+      "#77798f",
+      "#4b5068",
+      "#2e3147"
+    ],
+    "chain": [
+      "#c3bac7",
+      "#8f839d",
+      "#5b516d"
+    ]
+  }
+}

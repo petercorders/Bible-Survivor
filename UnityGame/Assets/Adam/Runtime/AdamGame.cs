@@ -104,8 +104,11 @@ namespace BibleSurvivor.Unity
             { Host.SetPaused(!Host.Paused); inputReleased = false; touchStarted = false; }
             var slot = keys == null ? -1 : keys.digit1Key.wasPressedThisFrame ? 0 : keys.digit2Key.wasPressedThisFrame ? 1 : keys.digit3Key.wasPressedThisFrame ? 2 : -1;
             if (slot >= 0) SelectSlot(slot);
-            if (keys != null && keys.enterKey.wasPressedThisFrame && Host.Paused && Host.Error == null)
-            { Host.SetPaused(false); inputReleased = false; }
+            if (keys != null && keys.enterKey.wasPressedThisFrame && commandFrame != Time.frameCount && Host.Error == null && !Host.Suspended)
+            {
+                if(Host.CanEnterExodus)EnterExodus();
+                else if(Host.Paused && Host.Session?.ChapterComplete!=true && !Host.ContentComplete){Host.SetPaused(false);inputReleased=false;}
+            }
             var movement = KeyboardMovement(keys);
             var pressed = false;
             foreach (var touch in EnhancedTouch.activeTouches)
@@ -148,6 +151,13 @@ namespace BibleSurvivor.Unity
             ImpactAudio?.Update(Host,ArtWorld);
             ImpactParticles?.Update(Host,ArtWorld,delta);
             PrepareParticles(ScreenViewport(),Application.isMobilePlatform);
+        }
+        public void EnterExodus()
+        {
+            if(Host==null||Host.Error!=null||Host.Suspended||DeathPresentationVisible||commandFrame==Time.frameCount||!Host.CanEnterExodus)return;
+            commandFrame=Time.frameCount;
+            Host.TryEnterExodus();
+            inputReleased=false;touchStarted=false;
         }
         public void SelectSlot(int slot)
         {
@@ -262,11 +272,22 @@ namespace BibleSurvivor.Unity
                 Modal(width,height,"보상 적용됨 · 완료 정산",AdamBossPresentation.Forms(session));
                 if(ArtButton(new Rect(width/2-150,height/2+30,300,56),"완료 정산",button)){if(session.Stage=="boss_settlement")Host.CompleteBossSettlement();else Host.CompleteNormalSettlement();}
             }
-            else if(session?.ChapterComplete==true)
+            else if(session?.ChapterComplete==true || Host.ContentComplete)
             {
-                Modal(width,height,AdamRoundPresentation.ChapterHeading,AdamRoundPresentation.ChapterDetail);
+                var genesisComplete=session?.ChapterComplete==true;
+                var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);art.Panel(panel);
+                GUI.Label(new Rect(panel.x+12,panel.y+10,panel.width-24,36),genesisComplete?AdamRoundPresentation.ChapterHeading:AdamRoundPresentation.ContentHeading,title);
+                GUI.Label(new Rect(panel.x+24,panel.y+52,panel.width-48,90),genesisComplete?AdamRoundPresentation.ChapterDetail:AdamRoundPresentation.ContentDetail,label);
+                var enabled=GUI.enabled;
+                if(genesisComplete)
+                {
+                    GUI.enabled=enabled && Host.CanEnterExodus && !Host.Suspended;
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),AdamChoiceText.ExodusStartCard,button))EnterExodus();
+                }
+                GUI.enabled=enabled && !Host.Suspended;
                 for(var i=0;i<3;i++)
-                    if(ArtButton(mobile?AdamMobileLayout.StartButton(width,height,i):new Rect(width/2-240,height/2-15+i*58,480,50),AdamChoiceText.StartCard(Weapons[i],i,true),button))SelectSlot(i);
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,i+(genesisComplete?1:0)),AdamChoiceText.StartCard(Weapons[i],i,true),button))SelectSlot(i);
+                GUI.enabled=enabled;
             }
             else if (session == null || !session.IsActive)
             {

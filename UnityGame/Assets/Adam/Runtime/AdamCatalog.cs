@@ -15,26 +15,31 @@ namespace BibleSurvivor.Unity
         [Serializable] public class Boss { public string id; public int max_health,contact_damage,gold; public Attack attack; public Support[] support_summons; }
         [Serializable] public class Attack { public string pattern_id; public double cooldown_seconds,telegraph_seconds; public int damage,projectile_count; }
         [Serializable] public class Support { public double health_ratio; public string monster_id; public int count; }
-        [Serializable] public class Monster { public string id; public int max_health; public int contact_damage; public double speed_ratio; }
-        [Serializable] public class Round { public int number; public string id; public string boss_id; public int concurrency_cap; public int raw_xp_budget; public int completion_gold; public int spawn_budget; public string unlock_weapon_id; public Wave[] waves; }
+        [Serializable] public class Monster { public string id; public int max_health; public int contact_damage; public double speed_ratio; public string behavior_id; }
+        [Serializable] public class Round { public int number; public int local_number; public string id; public string boss_id; public int concurrency_cap; public int raw_xp_budget; public int completion_gold; public int spawn_budget; public string unlock_weapon_id; public Wave[] waves; }
         [Serializable] public class Wave { public double start_seconds; public double end_seconds; public Group[] composition; }
         [Serializable] public class Group { public string monster_id; public int count; }
         readonly Dictionary<int,RoundDefinition> definitions=new Dictionary<int,RoundDefinition>();
         public RoundDefinition Definition => ForRound(1); // Existing R01 callers retain their contract.
         public IReadOnlyDictionary<string, double> Speeds { get; }
+        IReadOnlyDictionary<string,double> exodusSpeeds;
+        public bool ExodusInstalled => definitions.ContainsKey(ExodusContent.GlobalRoundNumber);
+        public IReadOnlyDictionary<string,double> SpeedsFor(int round)=>round==ExodusContent.GlobalRoundNumber && ExodusInstalled?exodusSpeeds:Speeds;
         public RoundDefinition ForRound(int number)
         {
-            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only Genesis R01 through R09 are implemented; the next chapter is pending");
+            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Only Genesis R01 through R09 and installed Exodus R10 are supported; R11 is pending");
             return value;
         }
         public RoundDefinition ForCheckpoint(RunState run)
         {
+            if((run.Stage=="normal" || run.Stage=="round_settlement") && run.RoundNumber==10 || run.Stage=="between_rounds" && run.RoundNumber==11)
+                return ForRound(10);
             var boss=run.Stage=="boss_intro"||run.Stage=="boss"||run.Stage=="boss_reward"||run.Stage=="boss_settlement";
             var number=run.Stage=="normal"||run.Stage=="round_settlement"||boss?run.RoundNumber:run.Stage=="between_rounds"?run.RoundNumber-1:0;
             if((boss&&number!=3&&number!=6&&number!=9)||number<1||number>9 || (run.Stage=="round_settlement"&&number!=4&&number!=5&&number!=7&&number!=8))throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(number);
         }
-        public AdamCatalog(string json)
+        public AdamCatalog(string json,string exodusJson=null)
         {
             var root=JsonUtility.FromJson<Root>(json);
             if(root?.rules==null || root.monsters==null || root.rounds==null || root.schema_version!=1 || root.chapter_id!="genesis" || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170)
@@ -61,7 +66,30 @@ namespace BibleSurvivor.Unity
                 if(waves.SelectMany(w=>w.Groups).Sum(g=>g.Count)!=round.spawn_budget)throw new InvalidDataException("Budget mismatch");
                 definitions.Add(number,new RoundDefinition(number,round.concurrency_cap,round.raw_xp_budget,round.completion_gold,waves,round.id,string.IsNullOrEmpty(round.unlock_weapon_id)?null:round.unlock_weapon_id));
             }
+            if(exodusJson!=null)LoadExodus(exodusJson);
         }
-        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text);
+        void LoadExodus(string json)
+        {
+            var root=JsonUtility.FromJson<Root>(json);
+            if(root?.rules==null || root.schema_version!=1 || root.chapter_id!=ExodusContent.ChapterId || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170 || root.monsters==null || root.monsters.Length!=3 || root.rounds==null || root.rounds.Length!=1 || (root.bosses!=null && root.bosses.Length!=0))
+                throw new InvalidDataException("Unsupported Exodus catalog");
+            var monsters=root.monsters.ToDictionary(x=>x.id);
+            exodusSpeeds=root.monsters.ToDictionary(x=>x.id,x=>x.speed_ratio);
+            foreach(var expected in ExodusContent.MonsterSpeeds)
+                if(!monsters.TryGetValue(expected.Key,out var monster) || monster.speed_ratio!=expected.Value || monster.behavior_id!="chase")
+                    throw new InvalidDataException("Unsupported Exodus monster speed/behavior");
+            var round=root.rounds[0];
+            if(round.id!=ExodusContent.RoundId || round.number!=ExodusContent.GlobalRoundNumber || round.local_number!=ExodusContent.LocalRoundNumber || !string.IsNullOrEmpty(round.boss_id) || !string.IsNullOrEmpty(round.unlock_weapon_id) || round.waves==null)
+                throw new InvalidDataException("Unsupported Exodus round identity");
+            var waves=round.waves.Select(w=>new WaveDefinition(w.start_seconds,w.end_seconds,w.composition.Select(g=>
+            {
+                if(!monsters.TryGetValue(g.monster_id,out var monster))throw new InvalidDataException("Unknown Exodus monster");
+                return new SpawnGroup(g.monster_id,g.count,monster.max_health,monster.contact_damage);
+            }))).ToArray();
+            if(waves.SelectMany(w=>w.Groups).Sum(g=>g.Count)!=round.spawn_budget)throw new InvalidDataException("Exodus budget mismatch");
+            var definition=new RoundDefinition(round.number,round.concurrency_cap,round.raw_xp_budget,round.completion_gold,waves,round.id);
+            ExodusContent.Validate(definition);definitions.Add(definition.Number,definition);
+        }
+        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text);
     }
 }

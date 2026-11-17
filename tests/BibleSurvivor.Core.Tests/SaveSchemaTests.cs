@@ -45,7 +45,7 @@ internal static class SaveSchemaTests
         test("Future schema header precedes incompatible typed Run and never falls back to schema1 backup", () => WithStore(store => {
             var backup = Legacy(GameSnapshot.New()); File.WriteAllText(store.Path + ".bak", backup);
             foreach (var run in new[] { "42", "[]", "{\"Wave\":\"new-shape\"}" }) {
-                var future = "{\"Run\":" + run + ",\"SchemaVersion\":3,\"Profile\":false}";
+                var future = "{\"Run\":" + run + ",\"SchemaVersion\":4,\"Profile\":false}";
                 File.WriteAllText(store.Path, future);
                 Check.Throws<UnsupportedSaveVersionException>(() => store.Load());
                 Check.Throws<UnsupportedSaveVersionException>(() => store.Commit(GameSnapshot.New(), 0, "overwrite"));
@@ -173,7 +173,7 @@ internal static class SaveSchemaTests
             Check.Equal(original, File.ReadAllText(store.Path + ".pre-v2/primary.json"));
         }));
         test("Future backup is refused when primary is corrupt or absent", () => WithStore(store => {
-            File.WriteAllText(store.Path + ".bak", "{\"Run\":42,\"SchemaVersion\":3}");
+            File.WriteAllText(store.Path + ".bak", "{\"Run\":42,\"SchemaVersion\":4}");
             Check.Throws<UnsupportedSaveVersionException>(() => store.Load());
             File.WriteAllText(store.Path, "broken"); Check.Throws<UnsupportedSaveVersionException>(() => store.Load());
         }));

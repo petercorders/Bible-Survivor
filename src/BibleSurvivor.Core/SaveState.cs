@@ -43,6 +43,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public Dictionary<string,string>? Forms {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedSecondBoss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedThirdBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
         [DataMember(EmitDefaultValue=false)] public int PreviousNormalRound {get;set;}
@@ -51,7 +52,7 @@ namespace BibleSurvivor.Core
     [DataContract]
     public sealed class GameSnapshot
     {
-        [DataMember] public int SchemaVersion { get; set; } = SaveFormat.CurrentVersion;
+        [DataMember] public int SchemaVersion { get; set; } = SaveFormat.GenesisVersion;
         [DataMember] public long Revision { get; set; }
         [DataMember] public string LastOperationId { get; set; } = "";
         [DataMember] public ProfileState Profile { get; set; } = new ProfileState();
@@ -61,13 +62,18 @@ namespace BibleSurvivor.Core
         public void Validate()
         {
             if (SchemaVersion > SaveFormat.CurrentVersion) throw new UnsupportedSaveVersionException();
-            if ((SchemaVersion != 1 && SchemaVersion != SaveFormat.CurrentVersion) || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
+            if ((SchemaVersion != 1 && SchemaVersion != 2 && SchemaVersion != SaveFormat.CurrentVersion) || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
                 Profile.Upgrades == null || Profile.UnlockedWeapons == null || Profile.UnlockedWeapons.Distinct().Count() != Profile.UnlockedWeapons.Count ||
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > 10 ||
-                (Run.Stage=="normal" && Run.RoundNumber>(SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            var r10 = SchemaVersion == 3;
+            if(r10 && !((Run.RoundNumber==10 && (Run.Stage=="normal"||Run.Stage=="round_settlement"))||(Run.RoundNumber==11&&Run.Stage=="between_rounds")))
+                throw new UnsupportedSaveVersionException();
+            if(r10 && Run.RoundFingerprint!=ExodusContent.Round().Fingerprint)throw new UnsupportedSaveVersionException();
+            if(!r10 && Run.CompletedThirdBoss!=null)throw new UnsupportedSaveVersionException();
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?11:10) ||
+                (Run.Stage=="normal" && Run.RoundNumber>(r10?10:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -83,15 +89,15 @@ namespace BibleSurvivor.Core
                 throw new InvalidDataException("Invalid active enemy collection");
             var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&(Run.RoundNumber==4||Run.RoundNumber==7||Run.RoundNumber==10));
             if(bossStage!=(Run.Boss!=null)||bossStage&&(SchemaVersion!=2||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
-            if(Run.Forms!=null&&(SchemaVersion!=2||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
+            if(Run.Forms!=null&&((SchemaVersion!=2&&!r10)||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
             Run.Boss?.Validate(Run);
             var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7&&Run.Stage=="between_rounds";
-            var r09=Run.RoundNumber==9&&Run.Stage!="between_rounds"||Run.RoundNumber==10;
+            var r09=!r10&&(Run.RoundNumber==9&&Run.Stage!="between_rounds"||Run.RoundNumber==10);
             var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
-            var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8;
+            var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10;
             if(lateNormal)
             {
-                if(SchemaVersion!=2||Run.CompletedBoss==null||Run.PreviousNormalRound!=(normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?8:normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
@@ -111,12 +117,17 @@ namespace BibleSurvivor.Core
                 Run.CompletedBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=4,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,
                     Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
-            if(normalRound==7||normalRound==8||r09)
+            if(normalRound==7||normalRound==8||r09||r10)
             {
                 if(Run.CompletedSecondBoss==null||Run.CompletedSecondBoss.EncounterRound!=6||!Run.CompletedSecondBoss.CompletionApplied)throw new InvalidDataException("Missing R06 completed history");
                 Run.CompletedSecondBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=7,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
             else if(Run.CompletedSecondBoss!=null)throw new InvalidDataException("Second boss history outside R07/R08");
+            if(r10)
+            {
+                if(Run.CompletedThirdBoss==null||Run.CompletedThirdBoss.EncounterRound!=9||!Run.CompletedThirdBoss.CompletionApplied)throw new InvalidDataException("Missing R09 completed history");
+                Run.CompletedThirdBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=10,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
+            }
             if(r09&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=5&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
             Run.World?.Validate();
             if(Run.World!=null)
@@ -147,7 +158,7 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World weapon form does not match inventory");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(r09?4:lateNormal||r06?3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if((r06||r09)&&(Run.World.Charges==null||Run.World.Charges.Count!=0))throw new InvalidDataException("R06 cannot inherit D3 charges");
-                if((normalRound==5||normalRound==7||normalRound==8)&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
+                if((normalRound==5||normalRound==7||normalRound==8||r10)&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
                 if(lateNormal && (Run.World.Charges==null||!Run.World.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Wave?.Active??new List<SpawnedEnemy>()).Where(x=>x.MonsterId=="d3").Select(x=>x.Id).OrderBy(x=>x))||
                     (Run.NormalEndedAt.HasValue&&Math.Abs(Run.World.Time-Run.NormalEndedAt.Value)>1e-7)))throw new InvalidDataException("R04 charge world does not match round");
                 if(Run.Wave!=null && (Run.Wave.Active==null || Math.Abs(Run.World.Time-Run.Wave.Elapsed)>1e-7 ||
@@ -203,7 +214,7 @@ namespace BibleSurvivor.Core
 
         private GameSnapshot? LoadCore(out int sourceVersion)
         {
-            sourceVersion = SaveFormat.CurrentVersion;
+            sourceVersion = SaveFormat.GenesisVersion;
             if (!File.Exists(Path)) return File.Exists(Path + ".bak") ? Read(Path + ".bak", out sourceVersion) : null;
             try { return Read(Path, out sourceVersion); }
             catch (UnsupportedSaveVersionException) { throw; }
@@ -269,6 +280,8 @@ namespace BibleSurvivor.Core
             }
         }
 
+        public static GameSnapshot Copy(GameSnapshot state) => Decode(Encode(state));
+
         private static string Content(GameSnapshot state)
         {
             var copy = Decode(Encode(state)); copy.Revision = 0; copy.LastOperationId = "";
@@ -294,7 +307,7 @@ namespace BibleSurvivor.Core
             var state = new DataContractJsonSerializer(typeof(GameSnapshot)).ReadObject(stream) as GameSnapshot;
             if (state == null || state.SchemaVersion != sourceVersion) throw new InvalidDataException("Missing or inconsistent save state");
             state.Validate();
-            state.SchemaVersion = SaveFormat.CurrentVersion; // Memory migration only; Load never writes the original.
+            if (sourceVersion == 1) state.SchemaVersion = SaveFormat.GenesisVersion; // Memory migration only; Load never writes the original.
             return state;
         }
     }

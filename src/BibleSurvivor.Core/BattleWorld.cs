@@ -290,6 +290,8 @@ namespace BibleSurvivor.Core
             if(session.RoundNumber==7&&(!monsterSpeeds.TryGetValue("g1",out var g1)||g1!=.65||!monsterSpeeds.TryGetValue("g2",out var g2)||g2!=.55||!monsterSpeeds.TryGetValue("g3",out var g3)||g3!=.65))throw new ArgumentException("Unsupported R07 monster speed");
             if(session.RoundNumber==8&&(!monsterSpeeds.TryGetValue("h1",out var h1)||h1!=.65||!monsterSpeeds.TryGetValue("h2",out var h2)||h2!=.4||!monsterSpeeds.TryGetValue("h3",out var h3)||h3!=.55))throw new ArgumentException("Unsupported R08 monster speed");
             if(session.RoundNumber==9&&(!monsterSpeeds.TryGetValue("i1",out var i1)||i1!=.85||!monsterSpeeds.TryGetValue("i2",out var i2)||i2!=.6||!monsterSpeeds.TryGetValue("i3",out var i3)||i3!=.35))throw new ArgumentException("Unsupported R09 monster speed");
+            if(session.RoundNumber==10)foreach(var entry in ExodusContent.MonsterSpeeds)
+                if(!monsterSpeeds.TryGetValue(entry.Key,out var ratio)||ratio!=entry.Value)throw new ArgumentException("Unsupported R10 monster speed");
             speeds=monsterSpeeds.ToDictionary(x=>x.Key,x=>x.Value,StringComparer.Ordinal);
             random=unchecked((uint)seed);if(random==0)random=0x9e3779b9;
             SimulationTime=session.CombatTime;

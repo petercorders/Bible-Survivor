@@ -21,6 +21,13 @@ namespace BibleSurvivor.Unity
         public bool IsCurrency => Id!=null && Id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal);
         public string Card(int slot) => IsCurrency ? $"{slot + 1}. {Name}  |  {Kind}\n{Effect}" : $"{slot + 1}. {Name}  |  {Kind} · {(CurrentLevel == 0 ? "신규" : "강화")} {CurrentLevel} → {NextLevel}/{Maximum}\n{Effect}";
         public static string StartCard(string id,int slot,bool newChallenge=false)=>$"{slot+1}. "+(newChallenge?"새 도전 · ":"")+ItemName(id);
+        public const string ExodusStartCard="출애굽기 시작 (Enter)";
+        // Four actions fit the existing 410px panel at the supported 660x440 minimum.
+        public static Rect ChapterAction(Rect panel,int action)
+        {
+            if(action<0||action>3)throw new ArgumentOutOfRangeException(nameof(action));
+            return new Rect(panel.x+24,panel.y+150+action*58,panel.width-48,50);
+        }
         public static string ItemName(string id)
         {
             switch (id)
