@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "fd6b30a5cdca295b42d4d84c53f5e7b88573c3e8641e16119914ebc8ed949379",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex10-retreat-echo_move_32",
+      "source": "art/art-exodus-r04/export/png/enm_ex10-retreat-echo_move_32.png",
+      "sha256": "71aad4203f582ef72c10a5665752487a992c32fd082fc381245fe3a037a809c0",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex11-wilderness-grumble_move_32",
+      "source": "art/art-exodus-r04/export/png/enm_ex11-wilderness-grumble_move_32.png",
+      "sha256": "bcd9b615c2e758a325edbbd830c33f403acd4af7729967269c8abf83188e23ec",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex12-greedy-sack_move_32",
+      "source": "art/art-exodus-r04/export/png/enm_ex12-greedy-sack_move_32.png",
+      "sha256": "972f3866877cd78f627b3146993d2235831533315178061e8e049d85c60e88ca",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

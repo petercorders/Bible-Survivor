@@ -266,7 +266,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":Host.AwaitingR06?"이삭":Host.AwaitingR07?"야곱":Host.AwaitingR08?"요셉":Host.AwaitingR09?"유다":Host.AwaitingR11?"요게벳":Host.AwaitingR12?"모세":throw new InvalidOperationException("Unsupported next round");
+                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":Host.AwaitingR06?"이삭":Host.AwaitingR07?"야곱":Host.AwaitingR08?"요셉":Host.AwaitingR09?"유다":Host.AwaitingR11?"요게벳":Host.AwaitingR12?"모세":Host.AwaitingR13?"미리암":throw new InvalidOperationException("Unsupported next round");
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){Host.SetPaused(false);inputReleased=false;touchStarted=false;}

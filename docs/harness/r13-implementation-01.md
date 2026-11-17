@@ -41,3 +41,7 @@ R12 종료 후 Core 관련검사·네receipt/진입Load·정산retry/240once·fu
 ## 아트 선행 결과
 
 외부 `art-exodus-r04`의3PNG12frames·대표3보드 독립 정적 QA PASS, 막는 HIGH/MEDIUM과 필수 수정 없음. 임포트는 정확14 public whitelist만 사용하며 개인경로/부수파일이 없다. fps8/8/6·PPU32/pivot16,1·binary/right-parentflip·shadow small/wide/wide를 유지한다. 원본 manifest SHA256 `fd6b30a5cdca295b42d4d84c53f5e7b88573c3e8641e16119914ebc8ed949379`. 외부 `art-readiness-reviews/exodus-r04-review.md`와GC를 참조하며 실제 loop/혼전/Unity/모바일은 NOT_RUN이다. 이 PASS를 R13 Core/앱 완료로 세지 않는다.
+
+## Unity 병렬 소유 배정
+
+Core 반환 후 Host/catalog·기존Host/Play 경계와 통합 실행은 ctx_48964a7571cc, UI 네 표시파일과 신규 R13UiTests는 R12 UI 담당의 후속 배정, AdamArtWorld/새ExodusR04Art/Importer·신규WorldTests·승인14아트 복사는 R12 월드 담당의 후속 배정에 단독 배정했다. 기존 Core/아트 독립PASS와 UI/월드 소유 반환을 충족한 뒤 Host 통합자 한 명만 Editor/sync/build/Player를 실행한다. Core 독립 리뷰는 제품 편집 없이 docs/reviews/R13-core-code.md만 소유한다. root는 check_mutations.py Resume13 상한만 소유하며 별도 선택1건 검증을 맡는다. 타인 파일을 되돌리지 않으며 각각 실제시작/반환 상태를 구분한다.

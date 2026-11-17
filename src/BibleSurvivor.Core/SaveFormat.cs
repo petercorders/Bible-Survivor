@@ -22,7 +22,7 @@ namespace BibleSurvivor.Core
         private static readonly HashSet<string> RunFields = new HashSet<string> {
             "RunId", "RoundNumber", "Stage", "Health", "MaxHealth", "Level", "Experience", "KillRemainder",
             "LastHitTime", "PermanentSnapshot", "Weapons", "Passives", "Wave", "Drops", "PendingLevels",
-            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "CompletedSecondBoss", "CompletedThirdBoss", "NormalEndedAt", "RoundCompletionApplied", "PreviousNormalRound" };
+            "ChoiceSerial", "Choices", "World", "RoundFingerprint", "Boss", "Forms", "CompletedBoss", "CompletedSecondBoss", "CompletedThirdBoss", "CompletedFourthBoss", "NormalEndedAt", "RoundCompletionApplied", "PreviousNormalRound" };
         // Explicit serialized shapes avoid reflection/code generation in the Unity/IL2CPP reader.
         // Dictionary keys are data inside Key/Value entries, not names of DTO members.
         private sealed class ContentShape
@@ -59,7 +59,7 @@ namespace BibleSurvivor.Core
             var boss = Object("Version EncounterId NormalEndedAt IntroElapsed BossElapsed Health Paused NextAttackAt Telegraphing TargetX TargetY ThresholdUsed Summoned NextActorId BossGoldApplied CompletionApplied RoundNumber SummonMask",
                 ("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
-                ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("Forms",integerMap));
+                ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("CompletedFourthBoss",boss),("Forms",integerMap));
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run));
         }
 
@@ -158,13 +158,15 @@ namespace BibleSurvivor.Core
                     var policy=rewardFields.SingleOrDefault(x=>x.Name=="PolicyId");
                     if(policy!=null && policy.GetAttribute("type")=="string" && policy.InnerText!=BossDefinition.Policy && policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy&&policy.InnerText!=BossDefinition.JudahPolicy&&policy.InnerText!=BossDefinition.ChariotPolicy)throw new UnsupportedSaveVersionException();
                 }
-                if(version<3 && members.Any(x=>x.Name=="CompletedThirdBoss"))throw new UnsupportedSaveVersionException();
+                if(version<3 && members.Any(x=>x.Name=="CompletedThirdBoss"||x.Name=="CompletedFourthBoss"))throw new UnsupportedSaveVersionException();
                 if(version==3)
                 {
                     var stage3=members.SingleOrDefault(x=>x.Name=="Stage");
                     var round3=members.SingleOrDefault(x=>x.Name=="RoundNumber");
                     if(stage3==null||round3==null||!int.TryParse(round3.InnerText,out var rn)||
                         !SupportedExodusLifecycle(rn,stage3.InnerText))throw new UnsupportedSaveVersionException();
+                    var r13=rn==13&&stage3.InnerText!="between_rounds"||rn==14&&stage3.InnerText=="between_rounds";
+                    if(!r13&&members.Any(x=>x.Name=="CompletedFourthBoss"))throw new UnsupportedSaveVersionException();
                 }
                 if (version == GenesisVersion)
                 {
@@ -186,13 +188,13 @@ namespace BibleSurvivor.Core
         }
 
         internal static bool SupportedExodusLifecycle(int round,string stage)=>
-            ((round==10||round==11)&&(stage=="normal"||stage=="round_settlement"))||
+            ((round==10||round==11||round==13)&&(stage=="normal"||stage=="round_settlement"))||
             (round==12&&(stage=="normal"||stage=="boss_intro"||stage=="boss"||stage=="boss_reward"||stage=="boss_settlement"))||
-            ((round==11||round==12||round==13)&&stage=="between_rounds");
+            ((round==11||round==12||round==13||round==14)&&stage=="between_rounds");
 
         private static void CheckForms(XmlElement element)
         {
-            if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss"||element.Name=="CompletedThirdBoss")&&element.GetAttribute("type")=="object")
+            if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss"||element.Name=="CompletedThirdBoss"||element.Name=="CompletedFourthBoss")&&element.GetAttribute("type")=="object")
             {
                 var round=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="RoundNumber");
                 if(round?.GetAttribute("type")=="number"&&(!int.TryParse(round.InnerText,out var br)||(br!=0&&br!=3&&br!=6&&br!=9&&br!=12)))throw new UnsupportedSaveVersionException();

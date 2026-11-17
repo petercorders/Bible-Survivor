@@ -1,0 +1,133 @@
+{
+  "schema": "bible-survivors.art-exodus-r04-contract",
+  "schemaVersion": 1,
+  "note": "R13 exodus_04 fictional resentment constructs; chase/contact only. Codex script pixels; Claude Design unused; independent QA pending.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "1px clear ring; every actor anchored at ground row30."
+  },
+  "colourLimit": {
+    "32": 16,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG"
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_exodus_r04_ext.json",
+      "name": "exodus-r04-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+    },
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "brief": "Bible-Survivor/docs/harness/r13-implementation-01.md: R13 external art contract"
+  },
+  "assets": [
+    {
+      "id": "enm_ex10-retreat-echo_move_32",
+      "ref": "monster:ex10",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "Torn asymmetric banner and broken ornament construct: resentment, never a real soldier soul or corpse."
+    },
+    {
+      "id": "enm_ex11-wilderness-grumble_move_32",
+      "ref": "monster:ex11",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Sand body and visibly empty jar with gaping mouth: no confusion or debuff."
+    },
+    {
+      "id": "enm_ex12-greedy-sack_move_32",
+      "ref": "monster:ex12",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Broad grain sack with a large side mouth: no real drop or reward consumption."
+    }
+  ],
+  "notProduced": {
+    "extra mechanics": "No new attack, boss, field, water damage, hunger, debuff, aura, drop eating or escort mechanic.",
+    "hit/death": "Existing shared handling; no new clips.",
+    "shadow": "Reuse art03 stable shadow IDs unchanged; no shadow PNG produced."
+  },
+  "motifs": {
+    "source": "Exodus 15-16: after the sea, the community journey. Fictional resentment constructs, never Miriam, the people, song, manna, miracles, actual soldier souls or ethnic demons.",
+    "ex10": "Torn asymmetric banner and broken ornament construct: resentment, never a real soldier soul or corpse.",
+    "ex11": "Sand body and visibly empty jar with gaping mouth: no confusion or debuff.",
+    "ex12": "Broad grain sack with a large side mouth: no real drop or reward consumption.",
+    "excluded": "No person, corpse, soul, national insignia, miracle or divine supply is demonized."
+  }
+}

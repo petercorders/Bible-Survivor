@@ -1,0 +1,24 @@
+{
+  "name": "exodus-r04-ext-v1",
+  "note": "Original muted cloth, clay and sack ramps; no cyan XP, human skin or attack warning colour.",
+  "actor": {
+    "r13cloth": [
+      "#a39bb6",
+      "#766b8d",
+      "#504460",
+      "#332d40"
+    ],
+    "r13clay": [
+      "#b0a19a",
+      "#897775",
+      "#625154",
+      "#40353e"
+    ],
+    "r13sack": [
+      "#b4b08d",
+      "#8c8867",
+      "#625e49",
+      "#414034"
+    ]
+  }
+}

@@ -78,6 +78,30 @@
       "contact_damage": 13,
       "speed_ratio": 0.6,
       "behavior_id": "telegraphed_fixed_dash"
+    },
+    {
+      "id": "ex10",
+      "name_ko": "패주의 잔영",
+      "max_health": 150,
+      "contact_damage": 10,
+      "speed_ratio": 0.6,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex11",
+      "name_ko": "광야원망령",
+      "max_health": 280,
+      "contact_damage": 12,
+      "speed_ratio": 0.6,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex12",
+      "name_ko": "탐식의 자루마",
+      "max_health": 600,
+      "contact_damage": 15,
+      "speed_ratio": 0.35,
+      "behavior_id": "chase"
     }
   ],
   "rounds": [
@@ -260,6 +284,66 @@
             {
               "monster_id": "ex9",
               "count": 41
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exodus_04",
+      "number": 13,
+      "local_number": 4,
+      "focus_ko": "미리암",
+      "boss_id": null,
+      "spawn_budget": 1080,
+      "concurrency_cap": 110,
+      "raw_xp_budget": 4800,
+      "completion_gold": 240,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "composition": [
+            {
+              "monster_id": "ex10",
+              "count": 224
+            },
+            {
+              "monster_id": "ex11",
+              "count": 56
+            }
+          ]
+        },
+        {
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "composition": [
+            {
+              "monster_id": "ex10",
+              "count": 216
+            },
+            {
+              "monster_id": "ex11",
+              "count": 144
+            }
+          ]
+        },
+        {
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "composition": [
+            {
+              "monster_id": "ex10",
+              "count": 220
+            },
+            {
+              "monster_id": "ex11",
+              "count": 132
+            },
+            {
+              "monster_id": "ex12",
+              "count": 88
             }
           ]
         }

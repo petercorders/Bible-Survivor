@@ -25,11 +25,11 @@ public static class CatalogReader
         if(rules.GetProperty("normal_duration_seconds").GetInt32()!=180||rules.GetProperty("spawn_cutoff_seconds").GetInt32()!=170)
             throw new InvalidDataException("Incompatible Exodus clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
-        if(monsters.Count!=9||ExodusContent.SpeedsFor(number).Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!=(x.Key=="ex9"?"telegraphed_fixed_dash":"chase")))
+        if(monsters.Count!=12||ExodusContent.SpeedsFor(number).Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!=(x.Key=="ex9"?"telegraphed_fixed_dash":"chase")))
             throw new InvalidDataException("Unsupported Exodus monster contract");
         var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
-        if((number!=10&&number!=11&&number!=12)||round.GetProperty("local_number").GetInt32()!=number-9||
-            (number==12?round.GetProperty("boss_id").GetString()!="oppression_chariot":round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null)||round.GetProperty("spawn_budget").GetInt32()!=(number==12?1020:number==10?900:960))
+        if((number!=10&&number!=11&&number!=12&&number!=13)||round.GetProperty("local_number").GetInt32()!=number-9||
+            (number==12?round.GetProperty("boss_id").GetString()!="oppression_chariot":round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null)||round.GetProperty("spawn_budget").GetInt32()!=(number==13?1080:number==12?1020:number==10?900:960))
             throw new InvalidDataException("Unsupported Exodus identity");
         if(number==12)
         {
@@ -47,7 +47,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number==10||number==11||number==12) return Exodus(file,number);
+        if(number==10||number==11||number==12||number==13) return Exodus(file,number);
         if(number<1 || number>9) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R09 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;

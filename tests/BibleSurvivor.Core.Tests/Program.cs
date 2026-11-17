@@ -14,6 +14,7 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r13-only")&&!name.StartsWith("R13 ",StringComparison.Ordinal))return;
             if(args.Contains("--r12-only")&&!name.StartsWith("R12 ",StringComparison.Ordinal))return;
             if(args.Contains("--r11-only")&&!name.StartsWith("R11 ",StringComparison.Ordinal))return;
             if(args.Contains("--r11-related")&&!(name.StartsWith("R10 ",StringComparison.Ordinal)||name.StartsWith("R11 ",StringComparison.Ordinal)))return;
@@ -53,6 +54,7 @@ internal static class Program
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundTenTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundElevenTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundTwelveTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundThirteenTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")
