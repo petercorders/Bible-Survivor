@@ -13,3 +13,7 @@ R12~R14의 seed/DataMember/유효 phase/무기 clock/Reloadpause/예상 오류 �
 Root GC 준비: 최종3원본 화면 독립 UI PASS와 실제 실탄 이동순간은 정지화면 미관측인 한계를 접수했다. 실탄동작/Load/cleanup은 생산자 trace와 기존Core/Host검사로 구분하며 UI리뷰 실행횟수로 합산하지 않는다. 정상앱2개와 BuildPipeline전 중복씬gate exit1은 분리한다. 프로젝트 회고만 기록하고 전역 학습 상태/규칙을 자동편집하지 않는다. 최종 코드 리뷰·필수커밋/원격CI 성공은 별도남은 게이트다.
 
 Root 최종 GC: 독립 Unity코드도 PASS로 반환돼 Core/아트/UI까지 막는 결함이 없다. 코드리뷰는108입력 전체 해시행렬을 다시 계산하지 않고 관련12입력·DLL/catalog 결합만 확인했다. 기존 Core실좌표R09→R15와 최종앱 기술R14→R15를 재사용했고 새 연속15라운드앱 실행을 추가하지 않았다. R13/R14는 정상앱각1회, R15는QA lifecycle교정으로2회이며 실패를숨기지 않았다. Sol기본·Claude/Astra없음·공급자interval사용량만기록,누락비용0처리나절감률추정없음. 최종필수훅/해당SHA원격CI는커밋업로드뒤확인한다.
+
+최종 업로드 CI 후속: 첫 d81337f의 art44150560621은 성공했으나 Core44150560639가210/211에서 R15 swept시험의 Passives[seal] KeyNotFound로 실패했다. 재사용 완료fixture의6슬롯에seal존재는보장되지않는다. 제품피해공식·Unity앱·가드가아닌 테스트 기대계산 한곳을 기존R12방식 TryGetValue/없는방어0으로정정했고관련8/8이통과했다. 이를Linux제품결함이나게임저장손상으로확대하지않는다. 독립최소diff리뷰와복구SHA원격CI를후속확인한다.
+
+복구 독립 리뷰 docs/reviews/R15-ci-recovery.md PASS: 장비없으면방어0/있으면실level이라는 기대식은 raw18/min1 피해와 기존충돌·소멸·사망·cleanup assertion을그대로검증한다. Linux의missing관측을모든플랫폼선택순서의원인으로단정하지않았고 기존제품/앱검증은재사용했다. 복구커밋의필수훅과원격Core/art CI를 마지막게이트로확인한다.

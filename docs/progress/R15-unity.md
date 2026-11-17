@@ -23,3 +23,5 @@ UI/World 별도 작성자 반환과 Core/art 독립 PASS 뒤 단독 sync1회·�
 requested Sol 기본/observed gpt-6.1-sol, Claude/Astra/helper 호출은 없다. 자기 provider interval input6859259/cache6387200/output26728/reasoning5666/total6885987은 지연된 start event로 이전 phase tail을 포함할 수 있고 마지막 보고 tail을 제외한다. start의 이전 phase delta는 합산하지 않으며 reasoning을 output에 더하지 않는다. 실청구액/단가/effort/절감률은 미측정이다. fixed-product-source.json·verification-index.json·binding.json과 handoff.md가 실명령/XML/exit/앱/trace/3화면/실패 복구/usage를 연결한다. 제품·Editor·Player 소유를 반환하며 후속 책·무기·모바일은 시작하지 않는다.
 
 Root 최종 결합: 독립 Core/Unity코드/지정3화면 UI 모두 막는 HIGH/MEDIUM 없이 PASS. root Resume15 선택변이는 실제 검출 PASS(.local/r15-resume-mutation.log). 대표 연속 R09→R15는 기존 Core 좌표CLI/중간diskLoad로 확인했고 PC앱은 기술준비 R14→R15/출애굽기완료/새processLoad를 확인했다. 이를 앱15라운드 자연완주/native/모바일/성능 PASS로 합산하지 않는다. 필수커밋훅 및 원격 Core/art CI를 마지막SHA로 확인한 뒤 승인범위를 종료하며 레위기/새무기/추가모바일 작업은 시작하지 않는다.
+
+첫 업로드 d81337f의 art CI44150560621 success, Core44150560639는 신규시험의 seal미존재 KeyNotFound로210/211 실패했다. 테스트 기대피해 한줄만장비없는경우방어0/있으면실level로고쳤고관련8/8 exit0이다. 제품/CoreDLL/Unity최종앱/대표화면은불변이며복구SHA원격CI를별도확인한다.
