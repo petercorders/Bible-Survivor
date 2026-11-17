@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "0a9d44d1f79dcba097d723e29b4a5377a3dc008eb9da610d9ddd50cbbde9160a",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_i1-silver-devourer_move_32",
+      "source": "art/art-genesis-r09/export/png/enm_i1-silver-devourer_move_32.png",
+      "sha256": "c006522d7cae431376f9759424aaeac757191ecd543fc9a47e2cbe636bf6b5f9",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_i2-concealing-mask_move_32",
+      "source": "art/art-genesis-r09/export/png/enm_i2-concealing-mask_move_32.png",
+      "sha256": "e61ad6c6cdeabc9475930f9390b524100a9d64af677a13f81e9c11408a2b53ff",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_i3-brother-binder_move_32",
+      "source": "art/art-genesis-r09/export/png/enm_i3-brother-binder_move_32.png",
+      "sha256": "641b36d9d71bad3b2a7c3ace5e6dcdd7c3df663c5e65ad75cd8685ef1fe7ee3d",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_silver-cup-accuser_move_64",
+      "source": "art/art-genesis-r09/export/png/bos_silver-cup-accuser_move_64.png",
+      "sha256": "43009dea099dafe3ac9fe0dd313c483edafef8bb1be812da70e5dd96efd79e8f",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_silver-cup-accuser_windup_64",
+      "source": "art/art-genesis-r09/export/png/bos_silver-cup-accuser_windup_64.png",
+      "sha256": "b283aad90a557656637d136b1247bbe68934b7a9b4d5f28987374e466182e91b",
+      "width": 64,
+      "height": 64,
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_silver-cup-accuser_attack_64",
+      "source": "art/art-genesis-r09/export/png/bos_silver-cup-accuser_attack_64.png",
+      "sha256": "7e66a5b1f4cb36ad4bb7612d6ce71fbe347edb1f8d314e3a20d96a51edde2f5c",
+      "width": 64,
+      "height": 64,
+      "frames": 2,
+      "fps": 10,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "bos_silver-cup-accuser_death_64",
+      "source": "art/art-genesis-r09/export/png/bos_silver-cup-accuser_death_64.png",
+      "sha256": "9a6a64a7fe5b9727d3f4ce1511f83c33ff3d1335c3f4f5b5563fb81c35feec76",
+      "width": 64,
+      "height": 64,
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivotX": 32,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "prj_accuser-chain_fly_16",
+      "source": "art/art-genesis-r09/export/png/prj_accuser-chain_fly_16.png",
+      "sha256": "56fef384f277cd97ca1159d6ffc2f6b5df67d5d2ceb6678a3023c31048fab42a",
+      "width": 16,
+      "height": 16,
+      "frames": 2,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 8,
+      "pivotY": 8,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "EnemyProjectiles",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

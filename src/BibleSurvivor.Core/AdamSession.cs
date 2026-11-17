@@ -28,7 +28,7 @@ namespace BibleSurvivor.Core
         public string Stage => run.Stage;
         public BossEncounterState? Boss => run.Boss?.Copy();
         internal BossEncounterState? Encounter => run.Boss;
-        public BossDefinition? BossRules=>definition.Number==3||definition.Number==6?BossDefinition.ForRound(definition.Number):null;
+        public BossDefinition? BossRules=>definition.Number==3||definition.Number==6||definition.Number==9?BossDefinition.ForRound(definition.Number):null;
         public bool NeedsRewardImplementation => IsCurrent && run.Stage=="boss_reward" && run.Boss?.Reward?.PolicyId==BossDefinition.LegacyPolicy;
         public IReadOnlyList<BossRewardCandidate> BossChoices=>run.Boss?.Reward?.Candidates?.Select(x=>x.Copy()).ToList().AsReadOnly() ?? (IReadOnlyList<BossRewardCandidate>)Array.Empty<BossRewardCandidate>();
         public string WeaponForm(string weapon)=>Inventory.Forms.TryGetValue(weapon,out var form)?form:weapon;
@@ -51,6 +51,7 @@ namespace BibleSurvivor.Core
             return result;
         }
         public int RoundNumber => definition.Number;
+        public bool ChapterComplete=>IsCurrent&&definition.Number==9&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         internal int SpeciesOrdinal(int id) => Arena!.SpeciesOrdinal(id);
         public IReadOnlyDictionary<int,int> DroppedExperience => new System.Collections.ObjectModel.ReadOnlyDictionary<int,int>(run.Drops);
         public double CurrentHealth => state.Run == run ? run.Health : 0;
@@ -86,7 +87,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > 8 ||
+            if (definition.Number < 1 || definition.Number > 9 ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -105,7 +106,7 @@ namespace BibleSurvivor.Core
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number>8 || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number>9 || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             state.Validate(); Capture();
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
@@ -164,7 +165,7 @@ namespace BibleSurvivor.Core
                             var used=rules.Number==3?run.Boss.ThresholdUsed:(run.Boss.SummonMask&(1<<threshold))!=0;
                             if(used||run.Boss.Health>rules.MaxHealth*rules.Thresholds[threshold])continue;
                             run.Boss.ThresholdUsed=true;
-                            if(rules.Number==6)run.Boss.SummonMask|=1<<threshold;
+                            if(rules.Number!=3)run.Boss.SummonMask|=1<<threshold;
                             run.Boss.Summoned+=BossDefinition.SupportCount;
                             for(var i=0;i<BossDefinition.SupportCount;i++)run.Boss.Supports.Add(new SpawnedEnemy{Id=run.Boss.NextActorId++,MonsterId=rules.SupportMonster,Health=rules.SupportHitPoints,ContactDamage=rules.SupportContact,RawExperience=0});
                         }
@@ -235,12 +236,12 @@ namespace BibleSurvivor.Core
         private void Finish()
         {
             if (!IsActive) return;
-            if(definition.Number==3||definition.Number==6)
+            if(definition.Number==3||definition.Number==6||definition.Number==9)
             {
                 var ended=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
                 run.Drops.Clear();run.World=null;Wave=null;run.Stage="boss_intro";
-                run.Boss=new BossEncounterState{EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
+                run.Boss=new BossEncounterState{Version=definition.Number==9?3:2,ChainDirections=definition.Number==9?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
             if(definition.Number==4||definition.Number==5||definition.Number==7||definition.Number==8)

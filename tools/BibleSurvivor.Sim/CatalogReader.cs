@@ -18,7 +18,7 @@ public static class CatalogReader
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number<1 || number>8) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R08 core is implemented");
+        if(number<1 || number>9) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R09 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
         if(root.GetProperty("schema_version").GetInt32()!=1 || root.GetProperty("chapter_id").GetString()!="genesis")
@@ -28,7 +28,7 @@ public static class CatalogReader
             throw new InvalidDataException("Incompatible wave clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
         var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
-        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || ((number==3||number==6) ? round.GetProperty("boss_id").GetString()!=(number==3?"nephilim_tyrant":"sitnah_keeper") : round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null))
+        if(round.GetProperty("id").GetString()!="genesis_"+number.ToString("D2") || ((number==3||number==6||number==9) ? round.GetProperty("boss_id").GetString()!=(number==3?"nephilim_tyrant":number==6?"sitnah_keeper":"silver_cup_accuser") : round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null))
             throw new InvalidDataException("Incompatible round identity");
         if(number==3)
         {
@@ -67,6 +67,12 @@ public static class CatalogReader
         }
         if(number==7&&(monsters["g1"].GetProperty("behavior_id").GetString()!="chase"||monsters["g2"].GetProperty("behavior_id").GetString()!="chase"||monsters["g3"].GetProperty("behavior_id").GetString()!="two_sided_chase"||monsters["g1"].GetProperty("speed_ratio").GetDouble()!=.65||monsters["g2"].GetProperty("speed_ratio").GetDouble()!=.55||monsters["g3"].GetProperty("speed_ratio").GetDouble()!=.65))throw new InvalidDataException("Unsupported R07 chase contract");
         if(number==8&&(monsters["h1"].GetProperty("behavior_id").GetString()!="chase"||monsters["h2"].GetProperty("behavior_id").GetString()!="slow_chase"||monsters["h3"].GetProperty("behavior_id").GetString()!="chase"||monsters["h1"].GetProperty("speed_ratio").GetDouble()!=.65||monsters["h2"].GetProperty("speed_ratio").GetDouble()!=.4||monsters["h3"].GetProperty("speed_ratio").GetDouble()!=.55))throw new InvalidDataException("Unsupported R08 chase contract");
+        if(number==9)
+        {
+            var boss=root.GetProperty("bosses").EnumerateArray().Single(x=>x.GetProperty("id").GetString()=="silver_cup_accuser");var attack=boss.GetProperty("attack");var summons=boss.GetProperty("support_summons").EnumerateArray().ToArray();
+            if(boss.GetProperty("max_health").GetInt32()!=16000||boss.GetProperty("contact_damage").GetInt32()!=20||boss.GetProperty("gold").GetInt32()!=350||attack.GetProperty("pattern_id").GetString()!="three_way_chain_projectiles"||attack.GetProperty("cooldown_seconds").GetDouble()!=5||attack.GetProperty("telegraph_seconds").GetDouble()!=1||attack.GetProperty("damage").GetInt32()!=15||attack.GetProperty("projectile_count").GetInt32()!=3||summons.Length!=2||summons[0].GetProperty("health_ratio").GetDouble()!=.6||summons[1].GetProperty("health_ratio").GetDouble()!=.3||summons.Any(x=>x.GetProperty("monster_id").GetString()!="i2"||x.GetProperty("count").GetInt32()!=6)||
+                monsters["i1"].GetProperty("behavior_id").GetString()!="fast_chase"||monsters["i2"].GetProperty("behavior_id").GetString()!="chase"||monsters["i3"].GetProperty("behavior_id").GetString()!="slow_chase"||monsters["i1"].GetProperty("speed_ratio").GetDouble()!=.85||monsters["i2"].GetProperty("speed_ratio").GetDouble()!=.6||monsters["i3"].GetProperty("speed_ratio").GetDouble()!=.35)throw new InvalidDataException("Unsupported R09 chain contract");
+        }
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(
             w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=> {

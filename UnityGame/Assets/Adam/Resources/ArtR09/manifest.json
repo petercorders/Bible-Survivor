@@ -1,0 +1,908 @@
+{
+ "schema": "bible-survivors.art-manifest-r09",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R09 Genesis 44 created monsters and silver cup accuser; independent art review pending; Unity and device checks NOT_RUN",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_r09_ext.json",
+   "name": "r09-ext-v1",
+   "sha256": "7e1eb1343902f1c40dc9b78887ac757d59cec364582da5d2bd590b6d8f652455"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_r09.json",
+   "sha256": "98af8868796a9bf0f95144d6a8026515bd3c118aee82e961b42ff9221d321d11"
+  },
+  "telegraph": {
+   "file": "src/telegraph_r09.json",
+   "sha256": "57650f7fd81ee890ab52da37f078a5c74648b8e698fa75a898e24aacffd408a3",
+   "assets": "none (three direction warning from actual Core projection)"
+  },
+  "generator": {
+   "file": "scripts/actors_r09.py",
+   "sha256": "15aeb1529c858df0fcd5173de7a40c39d69d2d04ea71203e938f64e80b32ba48"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_r09.json",
+   "sha256": "324b3b4fdf646a2394e8a19131974e36df458e92fc56d296ea5de633ef7f5c17"
+  }
+ },
+ "references": {
+  "catalog": {
+   "repoFile": "content/genesis/catalog.json",
+   "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+   "monsters": {
+    "i1": "은전포식자",
+    "i2": "은폐가면",
+    "i3": "형제결박마"
+   },
+   "boss": "silver_cup_accuser",
+   "bossAttack": "three_way_chain_projectiles: cycle5s, windup1s, 3 directions base +/-20deg, speed1.35wu/s, radius.16wu, lifetime6s, damage15; technical initial values only"
+  },
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "r03": {
+   "package": "art-genesis-r03",
+   "why": "reuse existing boss shadow only; R09 attacks are not R03 slam rings",
+   "shadows": {
+    "fx_shadow-boss_static_40x8": {
+     "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+     "cell": [
+      40,
+      8
+     ],
+     "pivot": [
+      20,
+      4
+     ],
+     "alpha": "blend",
+     "sorting": "GroundDecal"
+    }
+   }
+  }
+ },
+ "notProduced": {
+  "warning PNG": "none: mandatory nonblinking three-direction real Core projection; lowFX always, above actors below HUD",
+  "new shadows": "reuse original Art03 small/wide and R03 boss; originals unchanged",
+  "extra effects": "no chains on player, bondage debuff, lane blockers, lasting ground, human demons or extra projectiles"
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_r09.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_r09.py: original Codex gpt-6.1-sol procedural pixel source; R06/Art03 helpers reused unchanged; no Claude calls this task",
+  "designCanvas": "NOT_USED: no Claude Design, hidden blob, canvas, or mock provider; review boards are local Pillow PNGs"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_r09_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Genesis 44 silver cup in grain sack and Judah pleading for Benjamin: creative obstacle monsters, not biblical people."
+ },
+ "assets": [
+  {
+   "id": "enm_i1-silver-devourer_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/enm_i1-silver-devourer_move_32.png",
+   "sha256": "c006522d7cae431376f9759424aaeac757191ecd543fc9a47e2cbe636bf6b5f9",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 10,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:i1",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     9,
+     28,
+     30
+    ],
+    [
+     1,
+     8,
+     28,
+     30
+    ],
+    [
+     1,
+     9,
+     28,
+     30
+    ],
+    [
+     1,
+     10,
+     28,
+     30
+    ]
+   ],
+   "use": "Fast coin-devouring quadruped; silver coin on back and open maw. Chase/contact only.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:i1",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#enm_i1-silver-devourer_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_i2-concealing-mask_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/enm_i2-concealing-mask_move_32.png",
+   "sha256": "e61ad6c6cdeabc9475930f9390b524100a9d64af677a13f81e9c11408a2b53ff",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:i2",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     7,
+     25,
+     30
+    ],
+    [
+     6,
+     5,
+     25,
+     30
+    ],
+    [
+     7,
+     6,
+     25,
+     30
+    ],
+    [
+     6,
+     7,
+     25,
+     30
+    ]
+   ],
+   "use": "Empty mask and torn veil; no biblical human face. Chase/contact only.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:i2",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#enm_i2-concealing-mask_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_i3-brother-binder_move_32",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/enm_i3-brother-binder_move_32.png",
+   "sha256": "641b36d9d71bad3b2a7c3ace5e6dcdd7c3df663c5e65ad75cd8685ef1fe7ee3d",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 5,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:i3",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     5,
+     28,
+     30
+    ],
+    [
+     3,
+     4,
+     28,
+     30
+    ],
+    [
+     3,
+     5,
+     28,
+     30
+    ],
+    [
+     3,
+     5,
+     28,
+     30
+    ]
+   ],
+   "use": "Heavy grain sack creature with separated chain ends, four short feet. No binding debuff or blocking.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:i3",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#enm_i3-brother-binder_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_silver-cup-accuser_move_64",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/bos_silver-cup-accuser_move_64.png",
+   "sha256": "43009dea099dafe3ac9fe0dd313c483edafef8bb1be812da70e5dd96efd79e8f",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:silver_cup_accuser",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     8,
+     8,
+     58,
+     62
+    ],
+    [
+     7,
+     7,
+     59,
+     62
+    ],
+    [
+     8,
+     8,
+     58,
+     62
+    ],
+    [
+     7,
+     9,
+     59,
+     62
+    ]
+   ],
+   "use": "Slow chase / intro frame0; oversized silver goblet on a grain sack body.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#bos_silver-cup-accuser_move_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_silver-cup-accuser_windup_64",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/bos_silver-cup-accuser_windup_64.png",
+   "sha256": "b283aad90a557656637d136b1247bbe68934b7a9b4d5f28987374e466182e91b",
+   "size": [
+    192,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 3,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 0,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:silver_cup_accuser",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 10,
+   "frameBBoxTopLeft": [
+    [
+     8,
+     8,
+     58,
+     62
+    ],
+    [
+     6,
+     7,
+     60,
+     62
+    ],
+    [
+     4,
+     6,
+     62,
+     62
+    ]
+   ],
+   "use": "Core 1s warning, frame floor(clamped elapsed/1s*3), last frame held. Core supplies current boss origin and saved three directions. No warning sprite.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#bos_silver-cup-accuser_windup_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_silver-cup-accuser_attack_64",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/bos_silver-cup-accuser_attack_64.png",
+   "sha256": "7e66a5b1f4cb36ad4bb7612d6ce71fbe347edb1f8d314e3a20d96a51edde2f5c",
+   "size": [
+    128,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 10,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:silver_cup_accuser",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     5,
+     8,
+     61,
+     62
+    ],
+    [
+     5,
+     10,
+     61,
+     62
+    ]
+   ],
+   "use": "Start on Core projectile emission, play once0.2s then move. Actual bullets are separate Core actors; this pose causes no damage.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#bos_silver-cup-accuser_attack_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "bos_silver-cup-accuser_death_64",
+   "kind": "actor",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/bos_silver-cup-accuser_death_64.png",
+   "sha256": "9a6a64a7fe5b9727d3f4ce1511f83c33ff3d1335c3f4f5b5563fb81c35feec76",
+   "size": [
+    256,
+    64
+   ],
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     64,
+     64
+    ],
+    [
+     64,
+     0,
+     64,
+     64
+    ],
+    [
+     128,
+     0,
+     64,
+     64
+    ],
+    [
+     192,
+     0,
+     64,
+     64
+    ]
+   ],
+   "fps": 6,
+   "loop": false,
+   "pivot": {
+    "px": [
+     32,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.015625
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "boss:silver_cup_accuser",
+   "shadow": {
+    "id": "fx_shadow-boss_static_40x8",
+    "from": "R03 package (unchanged)",
+    "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+    "pivot": [
+     20,
+     4
+    ]
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     8,
+     8,
+     58,
+     62
+    ],
+    [
+     6,
+     11,
+     60,
+     62
+    ],
+    [
+     5,
+     14,
+     61,
+     62
+    ],
+    [
+     5,
+     39,
+     61,
+     62
+    ]
+   ],
+   "use": "Play once2/3s then REMOVE actor and shadow. Cup collapses, separated chains release. Never permanent terrain or held final decoration.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:<lambda>",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#bos_silver-cup-accuser_death_64"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "prj_accuser-chain_fly_16",
+   "kind": "projectile",
+   "contract": "src/contract_r09.json",
+   "file": "export/png/prj_accuser-chain_fly_16.png",
+   "sha256": "56fef384f277cd97ca1159d6ffc2f6b5df67d5d2ceb6678a3023c31048fab42a",
+   "size": [
+    32,
+    16
+   ],
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "frameRects": [
+    [
+     0,
+     0,
+     16,
+     16
+    ],
+    [
+     16,
+     0,
+     16,
+     16
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     8,
+     8
+    ],
+    "normalized": [
+     0.5,
+     0.5
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "EnemyProjectiles",
+   "ref": "boss-projectile:silver_cup_accuser",
+   "shadow": null,
+   "colours": 4,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     4,
+     13,
+     12
+    ],
+    [
+     1,
+     4,
+     13,
+     12
+    ]
+   ],
+   "use": "Right-facing chain bolt, pivot8,8. Rotate once around centre from actual Core direction; use actual Core position/lifetime. Core radius.16wu is authority, not opaque bbox. No shadow, trail, homing, binding or terrain.",
+   "source": {
+    "authoring": "scripts/actors_r09.py:projectile",
+    "method": "original procedural pixel generator written by Codex gpt-6.1-sol; deterministic named palette pixels",
+    "pixelSource": "export/source/pixel-source_r09.json#prj_accuser-chain_fly_16"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

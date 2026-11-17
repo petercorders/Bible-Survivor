@@ -69,7 +69,7 @@ internal static class RoundSixTests
             Check.True(game.ChooseBossReward(game.Boss!.Reward!.RewardId,candidate.Id));Check.True(!game.ChooseBossReward(game.Boss!.Reward!.RewardId,candidate.Id));Check.True(!game.CompleteBossSettlement());RoundTransitionTests.Resolve(game);Check.True(game.CompleteBossSettlement());
             Check.Equal(gold+300,loaded.Profile.Gold);Check.Equal(7,loaded.Run.RoundNumber);Check.Near(loaded.Run.MaxHealth,game.CurrentHealth);Check.True(loaded.Profile.UnlockedWeapons.Contains("cross"));Check.True(!game.Inventory.TryChoose("cross",false));Check.True(!game.CompleteBossSettlement());
             Check.Equal(old,JsonSerializer.Serialize(loaded.Run.CompletedBoss));Check.Equal(6,loaded.Run.Boss!.EncounterRound);Check.True(loaded.Run.Boss.CompletionApplied);Check.Equal(EvolutionRules.Sling,game.Inventory.Forms["sling"]);Check.Equal(EvolutionRules.Bible,game.Inventory.Forms["bible"]);
-            store.Commit(loaded,1,"completed");store.Commit(loaded,1,"completed");loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,6));Check.True(!game.CompleteBossSettlement());Check.Equal(old,JsonSerializer.Serialize(loaded.Run!.CompletedBoss));Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,9));
+            store.Commit(loaded,1,"completed");store.Commit(loaded,1,"completed");loaded=store.Load()!;game=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,6));Check.True(!game.CompleteBossSettlement());Check.Equal(old,JsonSerializer.Serialize(loaded.Run!.CompletedBoss));Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,10));
         }));
         test("R06 regen pause shared iframe and lethal player damage precede boss credit",()=>{
             var (state,game)=Start();state.Run!.PermanentSnapshot["health"]=2;state.Run.PermanentSnapshot["armor"]=1;state.Run.PermanentSnapshot["regen"]=1;game.Advance(180);game.Advance(2);
@@ -79,7 +79,7 @@ internal static class RoundSixTests
         });
         test("R06 future encounter policy mask field and swapped historical identity protect original files",()=>Store(store=>{
             var (state,game,world)=Boss();game.Capture();state.Run!.World=world.Capture();store.Commit(state,0,"boss");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["Boss"]!["RoundNumber"]=9,n=>n["Run"]!["Boss"]!["EncounterId"]="run:genesis_06:future_boss",n=>n["Run"]!["Boss"]!["NewMask"]=1,n=>n["Run"]!["Boss"]!["Reward"]=new JsonObject{["PolicyId"]="future"}})
+            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["Boss"]!["RoundNumber"]=12,n=>n["Run"]!["Boss"]!["EncounterId"]="run:genesis_06:future_boss",n=>n["Run"]!["Boss"]!["NewMask"]=1,n=>n["Run"]!["Boss"]!["Reward"]=new JsonObject{["PolicyId"]="future"}})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
             state.Run.Boss!.SummonMask=2;Check.Throws<InvalidDataException>(()=>state.Validate());state.Run.Boss.SummonMask=0;state.Run.CompletedBoss=state.Run.Boss;Check.Throws<InvalidDataException>(()=>state.Validate());
         }));

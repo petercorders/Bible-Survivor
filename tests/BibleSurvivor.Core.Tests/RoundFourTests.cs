@@ -83,7 +83,7 @@ internal static class RoundFourTests
             Check.Equal("between_rounds",game.Stage);Check.Equal(5,loaded.Run!.RoundNumber);Check.Near(loaded.Run.MaxHealth,game.CurrentHealth);Check.Equal(gold+65,loaded.Profile.Gold);
             Check.True(loaded.Profile.UnlockedWeapons.Contains("fire_pillar"));Check.True(!game.Inventory.TryChoose("fire_pillar",false));Check.True(!game.CompleteNormalSettlement());game.Advance(180);Check.Equal(gold+65,loaded.Profile.Gold);
             store.Commit(loaded,1,"complete");store.Commit(loaded,1,"complete");game=AdamSession.Resume(store.Load()!,CatalogReader.Round(Catalog,4));Check.True(!game.IsActive);
-            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,9));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,10));
         }));
         test("R04 D3 uses only contact damage and shared iframe with stable overlap direction",()=>{
             var (state,game,world,id)=Charger();var snapshot=world.Capture();var actor=snapshot.Enemies.Single(x=>x.Id==id);actor.X=actor.Y=0;
@@ -93,7 +93,7 @@ internal static class RoundFourTests
         test("R04 future World charge and completed receipt preserve originals while invalid clocks are rejected",()=>Store(store=>{
             var (state,game,world,id)=Charger();game.Capture();state.Run!.World=world.Capture();store.Commit(state,0,"charge");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
             foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["World"]!["Charges"]![0]!["Version"]=2,n=>n["Run"]!["World"]!["Charges"]![0]!["Phase"]="future",
-                n=>n["Run"]!["World"]!["Charges"]![0]!["NewField"]=1,n=>n["Run"]!["World"]!["SchemaVersion"]=4,n=>n["Run"]!["CompletedBoss"]!["Version"]=3})
+                n=>n["Run"]!["World"]!["Charges"]![0]!["NewField"]=1,n=>n["Run"]!["World"]!["SchemaVersion"]=5,n=>n["Run"]!["CompletedBoss"]!["Version"]=3})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
             state.Run.World.Charges![0].NextAt=double.NaN;Check.Throws<ArgumentException>(()=>state.Validate());
         }));

@@ -10,7 +10,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = [
-    ('normal_uses_old_finish', 'AdamSession.cs', 'if(definition.Number==3||definition.Number==6)', 'if(definition.Number<0)', 'normal timeout'),
+    ('normal_uses_old_finish', 'AdamSession.cs', 'if(definition.Number==3||definition.Number==6||definition.Number==9)', 'if(definition.Number<0)', 'normal timeout'),
     ('support_threshold_not_retained', 'AdamSession.cs', 'run.Boss.ThresholdUsed=true;', 'run.Boss.ThresholdUsed=rules.Number!=3;', 'threshold summons six'),
     ('boss_added_to_general_remainder', 'AdamSession.cs', 'private void BossDefeated()\n        {', 'private void BossDefeated()\n        {\n            CreditKill();', 'kill gold excludes boss remainder'),
     ('world_clock_reset_on_restore', 'BattleWorld.cs', 'world.SimulationTime=snapshot.Time;', 'world.SimulationTime=0;', 'telegraph midpoint World and Run'),

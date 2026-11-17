@@ -20,6 +20,7 @@ namespace BibleSurvivor.Unity
         public double AfterValue { get; private set; }
         public bool IsCurrency => Id!=null && Id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal);
         public string Card(int slot) => IsCurrency ? $"{slot + 1}. {Name}  |  {Kind}\n{Effect}" : $"{slot + 1}. {Name}  |  {Kind} · {(CurrentLevel == 0 ? "신규" : "강화")} {CurrentLevel} → {NextLevel}/{Maximum}\n{Effect}";
+        public static string StartCard(string id,int slot,bool newChallenge=false)=>$"{slot+1}. "+(newChallenge?"새 도전 · ":"")+ItemName(id);
         public static string ItemName(string id)
         {
             switch (id)

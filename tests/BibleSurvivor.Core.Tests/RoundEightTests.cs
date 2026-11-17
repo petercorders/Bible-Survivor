@@ -10,7 +10,7 @@ namespace BibleSurvivor.Core.Tests;
 internal static class RoundEightTests
 {
     private const string Catalog="content/genesis/catalog.json";
-    private static (GameSnapshot State,AdamSession Game) CompletedSeven()
+    internal static (GameSnapshot State,AdamSession Game) CompletedSeven()
     {var (state,game)=RoundSevenTests.CompletedSix();game=game.StartNextRound(CatalogReader.Round(Catalog,7));game.Advance(180);return(state,game);}
     private static void Store(Action<SaveStore> action)
     {var folder=Path.Combine(Path.GetTempPath(),"r08-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);try{action(new SaveStore(Path.Combine(folder,"save.json")));}finally{Directory.Delete(folder,true);}}
@@ -55,7 +55,7 @@ internal static class RoundEightTests
             var actor=game.Targets.Values.First(x=>x.MonsterId=="h2");var position=snapshot.Enemies.Single(x=>x.Id==actor.Id);position.X=10;position.Y=0;
             snapshot.Weapons.Add(new BattleWeaponState{WeaponId="sling",WeaponForm=EvolutionRules.Sling,NextCycle=1000});world=BattleWorld.Restore(game,speeds,snapshot);world.Advance(BattleWorld.FixedStep,Vector2.Zero);
             Check.Near(10-snapshot.Tuning.PlayerSpeed*.4*BattleWorld.FixedStep,world.EnemyPositions[actor.Id].X,1e-5);
-            snapshot=world.Capture();position=snapshot.Enemies.Single(x=>x.Id==actor.Id);position.X=position.Y=0;world=BattleWorld.Restore(game,speeds,snapshot);var hp=game.CurrentHealth;world.Advance(BattleWorld.FixedStep,Vector2.Zero);Check.Near(hp-12,game.CurrentHealth);
+            snapshot=world.Capture();position=snapshot.Enemies.Single(x=>x.Id==actor.Id);position.X=position.Y=0;world=BattleWorld.Restore(game,speeds,snapshot);var hp=game.CurrentHealth;world.Advance(BattleWorld.FixedStep,Vector2.Zero);Check.Near(hp-Math.Max(1,12-(game.Inventory.Passives.TryGetValue("seal",out var armor)?armor:0)),game.CurrentHealth);
             game.Capture();state.Run!.World=world.Capture();store.Commit(state,0,"mid");var loaded=store.Load()!;var resumed=AdamSession.Resume(loaded,CatalogReader.Round(Catalog,8));var replay=BattleWorld.Restore(resumed,speeds,loaded.Run!.World!);
             world.Advance(.5,Vector2.UnitY);replay.Advance(.5,Vector2.UnitY);Check.Equal(JsonSerializer.Serialize(world.Capture()),JsonSerializer.Serialize(replay.Capture()));
             game.Pause(true);var before=JsonSerializer.Serialize(world.Capture());world.Advance(1,Vector2.Zero);Check.Equal(before,JsonSerializer.Serialize(world.Capture()));
@@ -64,9 +64,9 @@ internal static class RoundEightTests
             var (state,game)=CompletedSeven();game=game.StartNextRound(CatalogReader.Round(Catalog,8));var first=JsonSerializer.Serialize(state.Run!.CompletedBoss);var second=JsonSerializer.Serialize(state.Run.CompletedSecondBoss);var unlocks=string.Join(",",state.Profile.UnlockedWeapons);game.Advance(60);game.Damage(20);
             foreach(var id in game.Targets.Keys.ToArray())game.Kill(id);var gold=state.Profile.Gold;game.Advance(180);Check.Equal("round_settlement",game.Stage);Check.Equal(gold,state.Profile.Gold);Check.True(game.CurrentHealth<state.Run.MaxHealth);Check.True(!game.CompleteNormalSettlement());
             store.Commit(state,0,"growth");state=store.Load()!;game=AdamSession.Resume(state,CatalogReader.Round(Catalog,8));RoundTransitionTests.Resolve(game);Check.Equal(9,state.Run!.RoundNumber);Check.Equal("between_rounds",game.Stage);Check.Equal(gold+140,state.Profile.Gold);Check.Near(state.Run.MaxHealth,game.CurrentHealth);Check.Equal(unlocks,string.Join(",",state.Profile.UnlockedWeapons));Check.True(!game.CompleteNormalSettlement());
-            Check.Equal(first,JsonSerializer.Serialize(state.Run.CompletedBoss));Check.Equal(second,JsonSerializer.Serialize(state.Run.CompletedSecondBoss));store.Commit(state,1,"done");store.Commit(state,1,"done");state=store.Load()!;game=AdamSession.Resume(state,CatalogReader.Round(Catalog,8));Check.True(!game.CompleteNormalSettlement());Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,9));Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(9,110,3500,140,CatalogReader.Round(Catalog,8).Waves)));
+            Check.Equal(first,JsonSerializer.Serialize(state.Run.CompletedBoss));Check.Equal(second,JsonSerializer.Serialize(state.Run.CompletedSecondBoss));store.Commit(state,1,"done");store.Commit(state,1,"done");state=store.Load()!;game=AdamSession.Resume(state,CatalogReader.Round(Catalog,8));Check.True(!game.CompleteNormalSettlement());Check.Throws<ArgumentOutOfRangeException>(()=>CatalogReader.Round(Catalog,10));Check.Throws<InvalidOperationException>(()=>game.StartNextRound(new RoundDefinition(10,110,3500,140,CatalogReader.Round(Catalog,8).Waves)));
             var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>{n["Run"]!["Stage"]="normal";n["Run"]!["RoundNumber"]=9;},n=>n["Run"]!["CompletedSecondBoss"]!["FutureReceipt"]=1,n=>n["Run"]!["CompletedBoss"]!["Reward"]!["PolicyId"]="future"})
+            foreach(var change in new Action<JsonNode>[] {n=>{n["Run"]!["Stage"]="normal";n["Run"]!["RoundNumber"]=10;},n=>n["Run"]!["CompletedSecondBoss"]!["FutureReceipt"]=1,n=>n["Run"]!["CompletedBoss"]!["Reward"]!["PolicyId"]="future"})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),2,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
         }));
     }

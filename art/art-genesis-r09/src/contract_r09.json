@@ -1,0 +1,277 @@
+{
+  "schema": "bible-survivors.art-r09-contract",
+  "schemaVersion": 1,
+  "note": "R09 Genesis 44 created monsters: I1-I3 chase/contact only; silver cup accuser and chain projectile. PPU32, binary alpha, one-pixel margin. Actor parent flip once. Projectile is right facing and rotated once from actual Core direction around centre pivot. No debuff, blocking or extra damage. Warning is three real Core projected directions, never a slam ring.",
+  "ppu": 32,
+  "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+  "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+  "flip": {
+    "artFaces": "right",
+    "faceLeft": "flipX",
+    "applyOn": "parent",
+    "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R05"
+  },
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "spriteMode": "multiple, one rect per frame",
+    "ppu": 32
+  },
+  "alphaPolicies": {
+    "binary": "alpha is 0 or 255 only; RGB is 0 wherever alpha is 0"
+  },
+  "edgeMargin": {
+    "px": 1,
+    "why": "no opaque pixel in the outer 1 px ring of a frame, so Point filtering and flipX never cut the outline; ground sprites stand on the foot row = cell.h - 1 - pivot.y (30 for 32 px, 62 for 64 px)"
+  },
+  "colourLimit": {
+    "32": 16,
+    "64": 24,
+    "fx": 24,
+    "note": "distinct RGBA values per PNG"
+  },
+  "palette": {
+    "base": {
+      "file": "src/palette_v03.json",
+      "name": "master-v0.3",
+      "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+    },
+    "ext": {
+      "file": "src/palette_r09_ext.json",
+      "name": "r09-ext-v1",
+      "rampsMustNotCollide": true
+    }
+  },
+  "references": {
+    "catalog": {
+      "repoFile": "content/genesis/catalog.json",
+      "sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
+      "monsters": {
+        "i1": "은전포식자",
+        "i2": "은폐가면",
+        "i3": "형제결박마"
+      },
+      "boss": "silver_cup_accuser",
+      "bossAttack": "three_way_chain_projectiles: cycle5s, windup1s, 3 directions base +/-20deg, speed1.35wu/s, radius.16wu, lifetime6s, damage15; technical initial values only"
+    },
+    "art03": {
+      "manifest": "export/manifest_v3.json",
+      "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+    },
+    "shadows": {
+      "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+      "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+    },
+    "r03": {
+      "package": "art-genesis-r03",
+      "why": "reuse existing boss shadow only; R09 attacks are not R03 slam rings",
+      "shadows": {
+        "fx_shadow-boss_static_40x8": {
+          "sha256": "a3e512c303cfdbf0bd3b4b14f2b3ebcc759d035d60f41264da4f188d902be404",
+          "cell": [
+            40,
+            8
+          ],
+          "pivot": [
+            20,
+            4
+          ],
+          "alpha": "blend",
+          "sorting": "GroundDecal"
+        }
+      }
+    }
+  },
+  "assets": [
+    {
+      "id": "enm_i1-silver-devourer_move_32",
+      "ref": "monster:i1",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "Fast coin-devouring quadruped; silver coin on back and open maw. Chase/contact only.",
+      "kind": "actor"
+    },
+    {
+      "id": "enm_i2-concealing-mask_move_32",
+      "ref": "monster:i2",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-small_static_12x4",
+      "facing": "right",
+      "use": "Empty mask and torn veil; no biblical human face. Chase/contact only.",
+      "kind": "actor"
+    },
+    {
+      "id": "enm_i3-brother-binder_move_32",
+      "ref": "monster:i3",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "pivot": [
+        16,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-wide_static_24x6",
+      "facing": "right",
+      "use": "Heavy grain sack creature with separated chain ends, four short feet. No binding debuff or blocking.",
+      "kind": "actor"
+    },
+    {
+      "id": "bos_silver-cup-accuser_move_64",
+      "ref": "boss:silver_cup_accuser",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Slow chase / intro frame0; oversized silver goblet on a grain sack body.",
+      "kind": "actor"
+    },
+    {
+      "id": "bos_silver-cup-accuser_windup_64",
+      "ref": "boss:silver_cup_accuser",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 3,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Core 1s warning, frame floor(clamped elapsed/1s*3), last frame held. Core supplies current boss origin and saved three directions. No warning sprite.",
+      "kind": "actor"
+    },
+    {
+      "id": "bos_silver-cup-accuser_attack_64",
+      "ref": "boss:silver_cup_accuser",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 2,
+      "fps": 10,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Start on Core projectile emission, play once0.2s then move. Actual bullets are separate Core actors; this pose causes no damage.",
+      "kind": "actor"
+    },
+    {
+      "id": "bos_silver-cup-accuser_death_64",
+      "ref": "boss:silver_cup_accuser",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "pivot": [
+        32,
+        1
+      ],
+      "ground": true,
+      "alpha": "binary",
+      "sorting": "Actors",
+      "shadow": "fx_shadow-boss_static_40x8",
+      "facing": "right",
+      "use": "Play once2/3s then REMOVE actor and shadow. Cup collapses, separated chains release. Never permanent terrain or held final decoration.",
+      "kind": "actor"
+    },
+    {
+      "id": "prj_accuser-chain_fly_16",
+      "ref": "boss-projectile:silver_cup_accuser",
+      "cell": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 8,
+      "loop": true,
+      "pivot": [
+        8,
+        8
+      ],
+      "ground": false,
+      "alpha": "binary",
+      "sorting": "EnemyProjectiles",
+      "shadow": null,
+      "facing": "right",
+      "use": "Right-facing chain bolt, pivot8,8. Rotate once around centre from actual Core direction; use actual Core position/lifetime. Core radius.16wu is authority, not opaque bbox. No shadow, trail, homing, binding or terrain.",
+      "kind": "projectile"
+    }
+  ],
+  "notProduced": {
+    "warning PNG": "none: mandatory nonblinking three-direction real Core projection; lowFX always, above actors below HUD",
+    "new shadows": "reuse original Art03 small/wide and R03 boss; originals unchanged",
+    "extra effects": "no chains on player, bondage debuff, lane blockers, lasting ground, human demons or extra projectiles"
+  },
+  "motifs": {
+    "source": "Genesis 44 silver cup in grain sack and Judah pleading for Benjamin: creative obstacle monsters, not biblical people.",
+    "i1": "coin greed as a devouring quadruped",
+    "i2": "concealment as an empty mask and cloth",
+    "i3": "separation as a grain sack beast with loose chain ends",
+    "boss": "silver cup and grain sack accusation creature; chains visibly release in short death clip",
+    "excluded": "Judah, Joseph and Benjamin are never demonized; no human figures or hostage mechanic"
+  }
+}

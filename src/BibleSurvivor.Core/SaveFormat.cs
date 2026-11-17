@@ -14,7 +14,7 @@ namespace BibleSurvivor.Core
     public static class SaveFormat
     {
         public const int CurrentVersion = 2;
-        private const int CurrentWorldVersion = 3;
+        private const int CurrentWorldVersion = 4;
         internal const int MaximumBytes = 4 * 1024 * 1024;
         private static readonly HashSet<string> EnvelopeFields = new HashSet<string> {
             "SchemaVersion", "Revision", "LastOperationId", "Profile", "Run" };
@@ -50,13 +50,13 @@ namespace BibleSurvivor.Core
             var weapon = Object("WeaponId WeaponForm NextCycle ActiveUntil ActiveSince NextBurst BurstsRemaining PendingBursts NextPulse PulseUntil FocusTargetId PulseHitIds",
                 ("OrbitHits", Array(Object("Id At"))),("FormHits",Array(Object("Id At"))));
             var tuning = Object("PlayerSpeed CameraHalfWidth CameraHalfHeight SpawnMargin PlayerRadius EnemyRadius BibleOrbitRadius BookRadius JawboneRange SlingSpeed SlingLifetime PickupRadius MaxProjectiles");
-            var world = Object("SchemaVersion Time Remainder PlayerX PlayerY FacingX FacingY RandomState NextProjectileId ShotsFired Hits Kills BossKills Collected DamageTaken",
+            var world = Object("SchemaVersion Time Remainder NextHostileId PlayerX PlayerY FacingX FacingY RandomState NextProjectileId ShotsFired Hits Kills BossKills Collected DamageTaken",
                 ("Tuning", tuning), ("Enemies", Array(entity)), ("Drops", Array(entity)),
                 ("Projectiles", Array(projectile)), ("Weapons", Array(weapon)),
-                ("MonsterSpeeds", Array(Object("MonsterId Ratio"))),("Charges",Array(Object("Version Id Phase NextAt Until TargetX TargetY DirectionX DirectionY"))));
+                ("MonsterSpeeds", Array(Object("MonsterId Ratio"))),("HostileProjectiles",Array(Object("Version Id BornAt StartX StartY X Y DirectionX DirectionY Lifetime"))),("Charges",Array(Object("Version Id Phase NextAt Until TargetX TargetY DirectionX DirectionY"))));
             var reward = Object("RewardId PolicyId EligibleEvolutions Applied UnlockedWeapons SelectedId PromotedFrom GoldApplied",("Weapons",integerMap),("Passives",integerMap),("Forms",integerMap),("Candidates",Array(Object("Id Kind ItemId Level Gold"))));
             var boss = Object("Version EncounterId NormalEndedAt IntroElapsed BossElapsed Health Paused NextAttackAt Telegraphing TargetX TargetY ThresholdUsed Summoned NextActorId BossGoldApplied CompletionApplied RoundNumber SummonMask",
-                ("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
+                ("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
                 ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("Forms",integerMap));
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run));
@@ -145,12 +145,12 @@ namespace BibleSurvivor.Core
                     if(bossFields.Select(x=>x.Name).Distinct().Count()!=bossFields.Length)throw new InvalidDataException("Duplicate boss field");
                     var bossVersion=bossFields.SingleOrDefault(x=>x.Name=="Version");
                     if(bossVersion!=null && bossVersion.GetAttribute("type")=="number" &&
-                        (!int.TryParse(bossVersion.InnerText,out var bv)||bv>2))throw new UnsupportedSaveVersionException();
+                        (!int.TryParse(bossVersion.InnerText,out var bv)||bv>3))throw new UnsupportedSaveVersionException();
                     var reward=bossFields.SingleOrDefault(x=>x.Name=="Reward");
                     var rewardFields=reward?.ChildNodes.OfType<XmlElement>().ToArray()??System.Array.Empty<XmlElement>();
                     if(rewardFields.Select(x=>x.Name).Distinct().Count()!=rewardFields.Length)throw new InvalidDataException("Duplicate reward field");
                     var policy=rewardFields.SingleOrDefault(x=>x.Name=="PolicyId");
-                    if(policy!=null && policy.GetAttribute("type")=="string" && policy.InnerText!=BossDefinition.Policy && policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy)throw new UnsupportedSaveVersionException();
+                    if(policy!=null && policy.GetAttribute("type")=="string" && policy.InnerText!=BossDefinition.Policy && policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy&&policy.InnerText!=BossDefinition.JudahPolicy)throw new UnsupportedSaveVersionException();
                 }
                 if (version == CurrentVersion)
                 {
@@ -161,7 +161,7 @@ namespace BibleSurvivor.Core
                     if (stage != null && round != null && round.GetAttribute("type") == "number" &&
                         round.InnerText.Length > 0 && round.InnerText.All(c => c >= '0' && c <= '9') &&
                         (!int.TryParse(round.InnerText, NumberStyles.None, CultureInfo.InvariantCulture, out var numberValue) ||
-                         (stage.InnerText == "normal" && numberValue > 8) || (stage.InnerText == "between_rounds" && numberValue > 9) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>6) || (stage.InnerText=="round_settlement"&&numberValue>8)))
+                         (stage.InnerText == "normal" && numberValue > 9) || (stage.InnerText == "between_rounds" && numberValue > 10) || ((stage.InnerText=="boss"||stage.InnerText=="boss_intro"||stage.InnerText=="boss_reward"||stage.InnerText=="boss_settlement") && numberValue>9) || (stage.InnerText=="round_settlement"&&numberValue>8)))
                         throw new UnsupportedSaveVersionException();
                 }
             }
@@ -176,15 +176,21 @@ namespace BibleSurvivor.Core
             if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss")&&element.GetAttribute("type")=="object")
             {
                 var round=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="RoundNumber");
-                if(round?.GetAttribute("type")=="number"&&(!int.TryParse(round.InnerText,out var br)||(br!=0&&br!=3&&br!=6)))throw new UnsupportedSaveVersionException();
+                if(round?.GetAttribute("type")=="number"&&(!int.TryParse(round.InnerText,out var br)||(br!=0&&br!=3&&br!=6&&br!=9)))throw new UnsupportedSaveVersionException();
                 var encounter=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="EncounterId");
-                if(encounter?.GetAttribute("type")=="string"&&!encounter.InnerText.EndsWith(":genesis_03:nephilim_tyrant",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":genesis_06:sitnah_keeper",StringComparison.Ordinal))throw new UnsupportedSaveVersionException();
+                if(encounter?.GetAttribute("type")=="string"&&!encounter.InnerText.EndsWith(":genesis_03:nephilim_tyrant",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":genesis_06:sitnah_keeper",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":genesis_09:silver_cup_accuser",StringComparison.Ordinal))throw new UnsupportedSaveVersionException();
                 var version=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Version");
-                if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var bv)||bv>2))throw new UnsupportedSaveVersionException();
+                if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var bv)||bv>(round?.InnerText=="9"?3:2)))throw new UnsupportedSaveVersionException();
                 var reward=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Reward");
                 var policy=reward?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="PolicyId");
-                if(policy?.GetAttribute("type")=="string"&&policy.InnerText!=BossDefinition.Policy&&policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy)throw new UnsupportedSaveVersionException();
+                if(policy?.GetAttribute("type")=="string"&&policy.InnerText!=BossDefinition.Policy&&policy.InnerText!=BossDefinition.LegacyPolicy&&policy.InnerText!=BossDefinition.SitnahPolicy&&policy.InnerText!=BossDefinition.JudahPolicy)throw new UnsupportedSaveVersionException();
             }
+            if(element.Name=="HostileProjectiles"&&element.GetAttribute("type")=="array")
+                foreach(var shot in element.ChildNodes.OfType<XmlElement>())
+                {
+                    var version=shot.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Version");
+                    if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var hv)||hv>1))throw new UnsupportedSaveVersionException();
+                }
             if(element.Name=="Choices"&&element.GetAttribute("type")=="array")
                 foreach(var choice in element.ChildNodes.OfType<XmlElement>())
                     if(choice.GetAttribute("type")=="string"&&!AdamSession.KnownGrowthChoice(choice.InnerText))throw new UnsupportedSaveVersionException();
