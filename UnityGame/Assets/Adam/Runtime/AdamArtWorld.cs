@@ -17,6 +17,7 @@ namespace BibleSurvivor.Unity
         AdamR08Art r08;
         AdamR09Art r09;
         AdamExodusR01Art exodusR01;
+        AdamExodusR02Art exodusR02;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
@@ -178,7 +179,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;danger.Dispose();chargeLane.Dispose();}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;danger.Dispose();chargeLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
@@ -191,6 +192,7 @@ namespace BibleSurvivor.Unity
                 case "h1":case "h2":case "h3":return AdamR08Art.EnemyClip(id);
                 case "i1":case "i2":case "i3":case "silver_cup_accuser":return AdamR09Art.EnemyClip(id);
                 case "ex1":case "ex2":case "ex3":return AdamExodusR01Art.EnemyClip(id);
+                case "ex4":case "ex5":case "ex6":return AdamExodusR02Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -260,7 +262,14 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamExodusR01Art.Enemy(monster.MonsterId))
+                        if(AdamExodusR02Art.Enemy(monster.MonsterId))
+                        {
+                            if(exodusR02==null){exodusR02=new AdamExodusR02Art();exodusR02.PrepareHitMasks();}
+                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
+                            exodusR02.Draw(clip,anchor,scale,Clock,left);
+                            exodusR02.DrawHit(clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));
+                        }
+                        else if(AdamExodusR01Art.Enemy(monster.MonsterId))
                         {
                             if(exodusR01==null){exodusR01=new AdamExodusR01Art();exodusR01.PrepareHitMasks();}
                             var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;

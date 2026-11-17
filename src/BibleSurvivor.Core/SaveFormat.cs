@@ -159,7 +159,7 @@ namespace BibleSurvivor.Core
                     var stage3=members.SingleOrDefault(x=>x.Name=="Stage");
                     var round3=members.SingleOrDefault(x=>x.Name=="RoundNumber");
                     if(stage3==null||round3==null||!int.TryParse(round3.InnerText,out var rn)||
-                        !((rn==10&&(stage3.InnerText=="normal"||stage3.InnerText=="round_settlement"))||(rn==11&&stage3.InnerText=="between_rounds")))throw new UnsupportedSaveVersionException();
+                        !(((rn==10||rn==11)&&(stage3.InnerText=="normal"||stage3.InnerText=="round_settlement"))||((rn==11||rn==12)&&stage3.InnerText=="between_rounds")))throw new UnsupportedSaveVersionException();
                 }
                 if (version == GenesisVersion)
                 {

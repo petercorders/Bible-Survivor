@@ -28,3 +28,11 @@ ID `exodus_02`, local2/global11, 일반180초/마감170초, 동시110/총960/원
 4. 승인아트와 UI/월드/Host를 파일별로 연결. Editor/빌드/GUI 통합자1명, 관련검사+한앱·대표3화면/새프로세스Load. 독립 코드/UI→GC→commitpush/CI 후 R12 보스 단위로 이어간다. 기술fixture와 자연완주·native·모바일·성능미검증은 구분한다.
 
 Claude 제외·Sol 우선·사용량start/end/실청구미계산·사용자앱/저장불조회·각영역소유·새Run없음은 R10과 같다. 이 파일 작성은 R11 Core/Unity 구현 완료를 뜻하지 않는다.
+
+## 현재 배정
+
+R10 SHA409327e의 원격 Core/art CI 두 개 success 확인 후 R11 Core181개/한seed 좌표전투·Load/원구조 정산변이 검증이 반환됐다. 독립 Core 리뷰를 기존 Run에 배정했으며 R11 아트는 독립 정적 PASS다. UI는 기존4개표시파일·새R11UiTests, 월드는 AdamArtWorld·새ExodusR02 loader/importer·새R11WorldTests·승인화이트리스트, Host는 AdamHost/AdamCatalog·새R11HostTests·관련기존경계시험·sync/QA/progressretro를 각각 단독 소유한다. 다른 영역 파일은 소유 반환 전 편집하지 않는다.
+
+월드 작성자의 실제 시작 보고를 접수했다. Host/UI 배정과 실제 편집 시작은 별도로 보고한다. Core 독립 PASS와 UI/월드 반환 뒤 Host만 Editor/sync/최종앱을 실행한다. Root는 Core 반환 때 보고된 Resume상한 변경에 맞춰 기존 completion_resume_refused 변이의 anchor10→11만 갱신하고, 같은 원래 거절 주입의 의미는 유지한다. 최종 관련 도구 검증은 R11 종료 때 한 번 확인한다.
+
+2026-11-18 배정 복구: R11 Core 독립 PASS와 월드 반환을 접수했다. 이전 UI의 완료된 R10 뒤 New messages 대기열은 실제 liveness exited·R11 UI편집0을 한 번 확인하고 해당 assignment를 abandon으로 정리했다(프로세스 종료/삭제 없음). 같은 Run의 `ctx_8455384ee1f4`/`task_5fcd56a5e4c2`가 R11 UI의 유일한 현 작성 소유자다. 오래된 큐 메시지는 이 제품 파일의 편집 권한을 주지 않는다. 새 배정 ready를 실제 편집 시작·시험 PASS로 세지 않으며 반환 뒤 통합자가 실행한다.

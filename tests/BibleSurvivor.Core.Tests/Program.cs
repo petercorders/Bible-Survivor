@@ -14,6 +14,8 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r11-only")&&!name.StartsWith("R11 ",StringComparison.Ordinal))return;
+            if(args.Contains("--r11-related")&&!(name.StartsWith("R10 ",StringComparison.Ordinal)||name.StartsWith("R11 ",StringComparison.Ordinal)))return;
             if(args.Contains("--r10-only")&&!name.StartsWith("R10 ",StringComparison.Ordinal))return;
             if(args.Contains("--r09-related")&&!(name.StartsWith("R09 ",StringComparison.Ordinal)||name.StartsWith("R06 ",StringComparison.Ordinal)||name.StartsWith("R08 ",StringComparison.Ordinal)||name=="Schema2 reader preserves future boss content instead of recovering older normal backup"||name=="Schema1 R01 and R02 active and between checkpoints resume without fingerprint or economy changes"))return;
             if(args.Contains("--r09-only")&&!name.StartsWith("R09 ",StringComparison.Ordinal))return;
@@ -48,6 +50,7 @@ internal static class Program
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundEightTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundNineTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundTenTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundElevenTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

@@ -30,6 +30,30 @@
       "contact_damage": 13,
       "speed_ratio": 0.35,
       "behavior_id": "chase"
+    },
+    {
+      "id": "ex4",
+      "name_ko": "갈대 매복마",
+      "max_health": 180,
+      "contact_damage": 10,
+      "speed_ratio": 0.6,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex5",
+      "name_ko": "수색등불",
+      "max_health": 140,
+      "contact_damage": 10,
+      "speed_ratio": 0.75,
+      "behavior_id": "chase"
+    },
+    {
+      "id": "ex6",
+      "name_ko": "나일 추격수",
+      "max_health": 240,
+      "contact_damage": 12,
+      "speed_ratio": 0.9,
+      "behavior_id": "chase"
     }
   ],
   "rounds": [
@@ -88,6 +112,66 @@
             {
               "monster_id": "ex3",
               "count": 54
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exodus_02",
+      "number": 11,
+      "local_number": 2,
+      "focus_ko": "요게벳",
+      "boss_id": null,
+      "spawn_budget": 960,
+      "concurrency_cap": 110,
+      "raw_xp_budget": 4000,
+      "completion_gold": 200,
+      "unlock_weapon_id": null,
+      "waves": [
+        {
+          "start_seconds": 0,
+          "end_seconds": 60,
+          "composition": [
+            {
+              "monster_id": "ex4",
+              "count": 192
+            },
+            {
+              "monster_id": "ex5",
+              "count": 48
+            }
+          ]
+        },
+        {
+          "start_seconds": 60,
+          "end_seconds": 120,
+          "composition": [
+            {
+              "monster_id": "ex4",
+              "count": 192
+            },
+            {
+              "monster_id": "ex5",
+              "count": 128
+            }
+          ]
+        },
+        {
+          "start_seconds": 120,
+          "end_seconds": 170,
+          "composition": [
+            {
+              "monster_id": "ex4",
+              "count": 200
+            },
+            {
+              "monster_id": "ex5",
+              "count": 120
+            },
+            {
+              "monster_id": "ex6",
+              "count": 80
             }
           ]
         }

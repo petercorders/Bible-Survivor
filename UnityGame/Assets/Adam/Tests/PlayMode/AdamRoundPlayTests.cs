@@ -149,7 +149,19 @@ public sealed class AdamRoundPlayTests
         host.SetSuspended(true);var revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(9,host.Session.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
         InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;game.SetLifecycle(true,false);InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;
         Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(run,host.State.Run.RunId);Assert.AreEqual(revision+1,host.State.Revision);
-        host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.ContentComplete);revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.IsTrue(host.ContentComplete);Assert.AreEqual(11,host.State.Run.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
+        host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.AwaitingR11);InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(11,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.ContentComplete);revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.IsTrue(host.ContentComplete);Assert.AreEqual(12,host.State.Run.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
+    }
+    [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
+    {
+        var host=CompletedGenesisForEntry("r11-click");Assert.IsTrue(host.TryEnterExodus());host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.Reload());Assert.IsTrue(host.AwaitingR11);var id=host.State.Run.RunId;var gold=host.State.Profile.Gold;var revision=host.State.Revision;
+        game.enabled=false;game.Initialize(host);var window=ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game=game;window.minSize=window.maxSize=new Vector2(660,440);window.position=new Rect(40,40,660,440);window.ShowUtility();window.Repaint();yield return null;game.SetLifecycle(true,false);
+            var point=new Vector2(330,268);window.SendEvent(new Event{type=EventType.MouseDown,mousePosition=point,button=0,clickCount=1});window.SendEvent(new Event{type=EventType.MouseUp,mousePosition=point,button=0,clickCount=1});
+            Assert.AreEqual(11,host.Session.RoundNumber);Assert.AreEqual(id,host.State.Run.RunId);Assert.AreEqual(gold,host.State.Profile.Gold);Assert.AreEqual(revision+1,host.State.Revision);Assert.Zero(host.World.SimulationTime);Assert.IsTrue(host.Reload());Assert.AreEqual(11,host.Session.RoundNumber);
+        }
+        finally{window.Close();}
     }
     [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameUseExplicitNewChallengeOnly()
     {

@@ -1,0 +1,405 @@
+{
+ "schema": "bible-survivors.art-manifest-exodus_r02",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R11 (Exodus) ex4-ex6 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_exodus_r02_ext.json",
+   "name": "exodus-r02-ext-v1",
+   "sha256": "178e3157b0dc17c297794a5b65f496c9ee65cd46d1739d421ebc05a4aac583b2"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_exodus_r02.json",
+   "sha256": "339534750de0965b3450c0e1a33088da3f16c3ab9609ae6eae8cd48c4b57fd1c"
+  },
+  "generator": {
+   "file": "scripts/actors_exodus_r02.py",
+   "sha256": "914cbeeac9941d93cfe8f3de847cb3f788d3898452ac37c9bdf093af397d8715"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_exodus_r02.json",
+   "sha256": "ffa959a68d90f6f0d7cc19cbe4b0cdabc3ea1a94adb8d0bc5fdbaffbec19f007"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "brief": "Bible-Survivor/docs/harness/r11-implementation-01.md: R11 art ownership and stable IDs"
+ },
+ "notProduced": {
+  "extra mechanics": "No infant/escort HP, stealth, invulnerability, detection, beam damage, bondage, dash or water damage.",
+  "hit/death": "Existing shared enemy handling; no extra clips.",
+  "shadow": "Reuse art03 shadows unchanged; no new shadow PNG."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_exodus_r02.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_exodus_r02.py, a procedural generator written by Codex (OpenAI model) in this session; not exported from the Claude Design product",
+  "designCanvas": "None; no Claude Design, canvas or image model used"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_exodus_r02_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Exodus 2:1-10 hiding among reeds and rescue: fictional search/chase obstacles, not literal people, river or ethnic group as demons."
+ },
+ "assets": [
+  {
+   "id": "enm_ex4-reed-stalker_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r02.json",
+   "file": "export/png/enm_ex4-reed-stalker_move_32.png",
+   "sha256": "9e63b44e042955ca71a958f824e8b8beb10dd8a375719908973ee79f94466089",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex4",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 8,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     3,
+     29,
+     30
+    ],
+    [
+     4,
+     2,
+     29,
+     30
+    ],
+    [
+     5,
+     2,
+     29,
+     30
+    ],
+    [
+     4,
+     3,
+     29,
+     30
+    ]
+   ],
+   "use": "Reed-bodied four-legged marsh construct, constantly visible after spawn; no stealth or invulnerability.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r02.py:reed_stalker",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r02.json#enm_ex4-reed-stalker_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex5-search-lantern_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r02.json",
+   "file": "export/png/enm_ex5-search-lantern_move_32.png",
+   "sha256": "531db274cead7be839a1d42ca5582493b24a59d70f0d1a681b4bc43485ceab64",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": false,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex5",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 7,
+   "frameBBoxTopLeft": [
+    [
+     7,
+     4,
+     25,
+     30
+    ],
+    [
+     7,
+     3,
+     25,
+     29
+    ],
+    [
+     7,
+     2,
+     25,
+     28
+    ],
+    [
+     7,
+     3,
+     25,
+     29
+    ]
+   ],
+   "use": "Floating lantern cage with a single eye; light stays inside its body silhouette, no beam, aura or detection mechanic.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r02.py:search_lantern",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r02.json#enm_ex5-search-lantern_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex6-nile-hunter_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r02.json",
+   "file": "export/png/enm_ex6-nile-hunter_move_32.png",
+   "sha256": "88c6038021c28df2f2ff388592d99472ffcd68de1fa78c8ba548263a5dd6ed79",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 10,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex6",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 11,
+   "frameBBoxTopLeft": [
+    [
+     1,
+     8,
+     29,
+     30
+    ],
+    [
+     1,
+     7,
+     29,
+     30
+    ],
+    [
+     1,
+     7,
+     29,
+     30
+    ],
+    [
+     1,
+     8,
+     29,
+     30
+    ]
+   ],
+   "use": "Quick low fictional reed-and-mud chase beast with trailing tail; no human, ethnic animal icon, dash or water damage.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r02.py:nile_hunter",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r02.json#enm_ex6-nile-hunter_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

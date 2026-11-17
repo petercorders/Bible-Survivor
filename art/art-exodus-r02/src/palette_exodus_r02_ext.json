@@ -1,0 +1,35 @@
+{
+  "name": "exodus-r02-ext-v1",
+  "note": "Original Codex pixel ramps; no human skin, gemstone cyan, beam or warning palette.",
+  "actor": {
+    "reed": [
+      "#bec49a",
+      "#90996c",
+      "#626e4c",
+      "#3c4938"
+    ],
+    "mud": [
+      "#b6a48b",
+      "#85715f",
+      "#594b46",
+      "#38333a"
+    ],
+    "lanternmetal": [
+      "#c6beb4",
+      "#939099",
+      "#625f73",
+      "#3c3b50"
+    ],
+    "lantern": [
+      "#eee0b4",
+      "#c4b781",
+      "#8c835b"
+    ],
+    "hunter": [
+      "#b3adb9",
+      "#807d91",
+      "#56556c",
+      "#34374d"
+    ]
+  }
+}

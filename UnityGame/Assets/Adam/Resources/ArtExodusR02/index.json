@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "a5f67620fbabbe28671e8639df700614e18a3d6565c287c912b0c94f7ccd16cf",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex4-reed-stalker_move_32",
+      "source": "art/art-exodus-r02/export/png/enm_ex4-reed-stalker_move_32.png",
+      "sha256": "9e63b44e042955ca71a958f824e8b8beb10dd8a375719908973ee79f94466089",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex5-search-lantern_move_32",
+      "source": "art/art-exodus-r02/export/png/enm_ex5-search-lantern_move_32.png",
+      "sha256": "531db274cead7be839a1d42ca5582493b24a59d70f0d1a681b4bc43485ceab64",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex6-nile-hunter_move_32",
+      "source": "art/art-exodus-r02/export/png/enm_ex6-nile-hunter_move_32.png",
+      "sha256": "88c6038021c28df2f2ff388592d99472ffcd68de1fa78c8ba548263a5dd6ed79",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

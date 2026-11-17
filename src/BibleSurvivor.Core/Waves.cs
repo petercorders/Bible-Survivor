@@ -89,6 +89,7 @@ namespace BibleSurvivor.Core
             if(number==7)parts.Add("g1-speed0.65:g2-speed0.55:g3-speed0.65:stable-species-ordinal-odd-left-even-right:independent-hp");
             if(number==8)parts.Add("h1-speed0.65:h2-speed0.40:h3-speed0.55:chase-contact:no-status-effects");
             if(number==10)parts.Add(ExodusContent.SpeedContract);
+            if(number==11)parts.Add(ExodusContent.RoundElevenSpeedContract);
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();

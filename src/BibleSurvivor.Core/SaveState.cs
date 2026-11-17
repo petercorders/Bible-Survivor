@@ -68,12 +68,12 @@ namespace BibleSurvivor.Core
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
             var r10 = SchemaVersion == 3;
-            if(r10 && !((Run.RoundNumber==10 && (Run.Stage=="normal"||Run.Stage=="round_settlement"))||(Run.RoundNumber==11&&Run.Stage=="between_rounds")))
+            if(r10 && !(((Run.RoundNumber==10||Run.RoundNumber==11) && (Run.Stage=="normal"||Run.Stage=="round_settlement"))||((Run.RoundNumber==11||Run.RoundNumber==12)&&Run.Stage=="between_rounds")))
                 throw new UnsupportedSaveVersionException();
-            if(r10 && Run.RoundFingerprint!=ExodusContent.Round().Fingerprint)throw new UnsupportedSaveVersionException();
+            if(r10 && Run.RoundFingerprint!=ExodusContent.Round(Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber).Fingerprint)throw new UnsupportedSaveVersionException();
             if(!r10 && Run.CompletedThirdBoss!=null)throw new UnsupportedSaveVersionException();
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?11:10) ||
-                (Run.Stage=="normal" && Run.RoundNumber>(r10?10:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?12:10) ||
+                (Run.Stage=="normal" && Run.RoundNumber>(r10?11:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -97,7 +97,7 @@ namespace BibleSurvivor.Core
             var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10;
             if(lateNormal)
             {
-                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?8:normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))

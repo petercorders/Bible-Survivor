@@ -33,7 +33,8 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR07 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==7 && Session?.RoundNumber==6;
         public bool AwaitingR08 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==8 && Session?.RoundNumber==7;
         public bool AwaitingR09 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==9 && Session?.RoundNumber==8;
-        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09;
+        public bool AwaitingR11 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==11 && Session?.RoundNumber==10;
+        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09 || AwaitingR11;
         public bool CanEnterExodus => Error==null && !Suspended && operation==null && exodusCandidate==null && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
         public bool ContentComplete => Session?.ContentComplete == true;
         public bool CanStartNew => Error==null && exodusCandidate==null && State!=null && (State.Run==null || ((Session?.ChapterComplete==true || ContentComplete) && Session.PendingChoices.Count==0));
@@ -142,7 +143,7 @@ namespace BibleSurvivor.Unity
             try
             {
                 var next=Session.StartNextRound(catalog.ForRound(State.Run.RoundNumber));
-                var arena=new BattleWorld(next,catalog.Speeds,7);
+                var arena=new BattleWorld(next,catalog.SpeedsFor(next.RoundNumber),7);
                 Session=next;World=arena;sinceSave=0;
                 // Publish exactly once, then freeze this same new arena/payload if its entry commit fails.
                 Checkpoint();

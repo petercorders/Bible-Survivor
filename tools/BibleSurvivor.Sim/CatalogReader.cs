@@ -15,7 +15,7 @@ public static class CatalogReader
         return document.RootElement.GetProperty("monsters").EnumerateArray()
             .ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x.GetProperty("speed_ratio").GetDouble());
     }
-    public static RoundDefinition Exodus(string file)
+    public static RoundDefinition Exodus(string file,int number=10)
     {
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
@@ -25,20 +25,20 @@ public static class CatalogReader
         if(rules.GetProperty("normal_duration_seconds").GetInt32()!=180||rules.GetProperty("spawn_cutoff_seconds").GetInt32()!=170)
             throw new InvalidDataException("Incompatible Exodus clock");
         var monsters=root.GetProperty("monsters").EnumerateArray().ToDictionary(x=>x.GetProperty("id").GetString()!,x=>x);
-        if(monsters.Count!=3||ExodusContent.MonsterSpeeds.Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!="chase"))
+        if(monsters.Count!=6||ExodusContent.SpeedsFor(number).Any(x=>!monsters.TryGetValue(x.Key,out var m)||m.GetProperty("speed_ratio").GetDouble()!=x.Value||m.GetProperty("behavior_id").GetString()!="chase"))
             throw new InvalidDataException("Unsupported Exodus monster contract");
-        var round=root.GetProperty("rounds").EnumerateArray().Single();
-        if(round.GetProperty("number").GetInt32()!=10||round.GetProperty("local_number").GetInt32()!=1||round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null||round.GetProperty("spawn_budget").GetInt32()!=900)
+        var round=root.GetProperty("rounds").EnumerateArray().Single(x=>x.GetProperty("number").GetInt32()==number);
+        if((number!=10&&number!=11)||round.GetProperty("local_number").GetInt32()!=number-9||round.GetProperty("boss_id").ValueKind!=JsonValueKind.Null||round.GetProperty("spawn_budget").GetInt32()!=(number==10?900:960))
             throw new InvalidDataException("Unsupported Exodus identity");
         var waves=round.GetProperty("waves").EnumerateArray().Select(w=>new WaveDefinition(w.GetProperty("start_seconds").GetDouble(),w.GetProperty("end_seconds").GetDouble(),
             w.GetProperty("composition").EnumerateArray().Select(g=>{var id=g.GetProperty("monster_id").GetString()!;var monster=monsters[id];return new SpawnGroup(id,g.GetProperty("count").GetInt32(),monster.GetProperty("max_health").GetInt32(),monster.GetProperty("contact_damage").GetInt32());}))).ToArray();
-        var result=new RoundDefinition(10,round.GetProperty("concurrency_cap").GetInt32(),round.GetProperty("raw_xp_budget").GetInt32(),round.GetProperty("completion_gold").GetInt32(),waves,round.GetProperty("id").GetString(),round.GetProperty("unlock_weapon_id").GetString());
+        var result=new RoundDefinition(number,round.GetProperty("concurrency_cap").GetInt32(),round.GetProperty("raw_xp_budget").GetInt32(),round.GetProperty("completion_gold").GetInt32(),waves,round.GetProperty("id").GetString(),round.GetProperty("unlock_weapon_id").GetString());
         ExodusContent.Validate(result);return result;
     }
     public static RoundDefinition Adam(string file) => Round(file,1);
     public static RoundDefinition Round(string file,int number)
     {
-        if(number==10) return Exodus(file);
+        if(number==10||number==11) return Exodus(file,number);
         if(number<1 || number>9) throw new ArgumentOutOfRangeException(nameof(number),"Only R01 through R09 core is implemented");
         using var document=JsonDocument.Parse(File.ReadAllText(file));
         var root=document.RootElement;
