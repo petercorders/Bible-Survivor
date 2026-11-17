@@ -1,0 +1,405 @@
+{
+ "schema": "bible-survivors.art-manifest-exodus_r05",
+ "schemaVersion": 1,
+ "status": "production-draft",
+ "statusNote": "offline R14 (Exodus) ex13-ex15 enemy sidecar draft: root art review pending; not imported into Unity, not checked on devices, not final game art",
+ "ppu": 32,
+ "pivotSpace": "pixel-edge coordinates, origin at the bottom-left corner of one frame cell, x right, y up",
+ "frameLayout": "one horizontal strip per clip; frame i occupies x = i*cell.w .. (i+1)*cell.w, full height; no padding",
+ "flip": {
+  "artFaces": "right",
+  "faceLeft": "flipX",
+  "applyOn": "parent",
+  "note": "flip once on the actor's parent (or its single renderer), same rule as art 03 / R02-R07"
+ },
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "spriteMode": "multiple, one rect per frame",
+  "ppu": 32
+ },
+ "palette": {
+  "base": {
+   "file": "src/palette_v03.json",
+   "name": "master-v0.3",
+   "sha256": "636c0ba15ceafaf1de1339792c3fb44fb6ba72a349e6bf67a8848e0cfc9364f3"
+  },
+  "ext": {
+   "file": "src/palette_exodus_r05_ext.json",
+   "name": "exodus-r05-ext-v1",
+   "sha256": "01d704142db1604ce2b0c7fcea3799de3d52f4eb557372a3272e032f5d8c5d55"
+  }
+ },
+ "inputs": {
+  "contract": {
+   "file": "src/contract_exodus_r05.json",
+   "sha256": "f49d21f638197246fc3de9a95483828327f5c25ea8886304283b02ee1cd46c3e"
+  },
+  "generator": {
+   "file": "scripts/actors_exodus_r05.py",
+   "sha256": "d30e7687c1d7a464df2bef9f33f4ad83e7a54ef3ba41218f470c5b58aff3df9c"
+  },
+  "helpers": {
+   "scripts/px03.py": "3bbac7b8d801389433c22cee99f8786d005ea394eb84380843b31157d43d70b4",
+   "scripts/pngio.py": "f045c204f9d04ab5c6d860a145a8af0cc68ce279cc2b03124b5d62a22d4f8780"
+  }
+ },
+ "data": {
+  "pixelSource": {
+   "file": "export/source/pixel-source_exodus_r05.json",
+   "sha256": "d13ec804871a77ff649ac7945b930e128c514c049d620269779ed417b432484d"
+  }
+ },
+ "references": {
+  "art03": {
+   "manifest": "export/manifest_v3.json",
+   "sha256": "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751"
+  },
+  "shadows": {
+   "fx_shadow-small_static_12x4": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368",
+   "fx_shadow-wide_static_24x6": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+  },
+  "brief": "Bible-Survivor/docs/harness/r14-implementation-01.md: R14 external art contract"
+ },
+ "notProduced": {
+  "extra mechanics": "No new attack, boss, effect, dash, projectile, charm, reversed controls, aura, frontal immunity or coordinated attack bonus.",
+  "hit/death": "Existing shared handling; no new clips.",
+  "shadow": "Reuse art03 stable shadow IDs unchanged; no shadow PNG produced."
+ },
+ "build": {
+  "command": "python3 -I -B scripts/build_exodus_r05.py",
+  "testedWith": {
+   "python": "3.11.6",
+   "numpy": "2.4.3"
+  },
+  "png": "scripts/convert_source.py (standard library) from the pixel source"
+ },
+ "provenance": {
+  "pixels": "scripts/actors_exodus_r05.py, a procedural generator written by Codex (OpenAI model) in this session; not exported from the Claude Design product",
+  "designCanvas": "None; no Claude Design, canvas or image model used"
+ },
+ "license": {
+  "status": "original",
+  "references": [],
+  "art": "every PNG here was made for Bible Survivors by this folder's scripts from src/palette_v03.json (art 03 master palette, unchanged) and src/palette_exodus_r05_ext.json. No third-party images, traces or reference art.",
+  "motifs": "Exodus 17-34 community journey: fictional ambush, discord and idolatry constructs."
+ },
+ "assets": [
+  {
+   "id": "enm_ex13-ambush-shadow_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r05.json",
+   "file": "export/png/enm_ex13-ambush-shadow_move_32.png",
+   "sha256": "90dc612bbdb53d20917516262afd9db731b89f9b4cdee872db88db00ac30f09a",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex13",
+   "shadow": {
+    "id": "fx_shadow-small_static_12x4",
+    "from": "art 03 (unchanged)",
+    "sha256": "8d8cb1d4a8c46db0cb398cae426b250f7d6115ea67c126f451fd92b61c692368"
+   },
+   "colours": 5,
+   "frameBBoxTopLeft": [
+    [
+     2,
+     13,
+     28,
+     30
+    ],
+    [
+     2,
+     12,
+     29,
+     30
+    ],
+    [
+     2,
+     12,
+     28,
+     30
+    ],
+    [
+     2,
+     13,
+     28,
+     30
+    ]
+   ],
+   "use": "Low fast nonhuman shadow beast with long forward claws; one independent body, no human warrior clothing.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r05.py:ambush_shadow",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r05.json#enm_ex13-ambush-shadow_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex14-discord-stone-armor_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r05.json",
+   "file": "export/png/enm_ex14-discord-stone-armor_move_32.png",
+   "sha256": "801d3253abc3d29f1967f06f7d8b28bd876c5e7912de8218ddb49c4442ca84dd",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 6,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex14",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 5,
+   "frameBBoxTopLeft": [
+    [
+     3,
+     5,
+     29,
+     30
+    ],
+    [
+     3,
+     4,
+     29,
+     30
+    ],
+    [
+     3,
+     4,
+     29,
+     30
+    ],
+    [
+     3,
+     5,
+     29,
+     30
+    ]
+   ],
+   "use": "Slow broad stone carapace construct with rough jagged plates; no law tablet shape, letters or sacred office.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r05.py:discord_stone_armor",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r05.json#enm_ex14-discord-stone-armor_move_32"
+   },
+   "status": "production-draft"
+  },
+  {
+   "id": "enm_ex15-golden-mask_move_32",
+   "kind": "actor",
+   "contract": "src/contract_exodus_r05.json",
+   "file": "export/png/enm_ex15-golden-mask_move_32.png",
+   "sha256": "abc9398ae1f15d6684036c9ae2066bad56aeb5153384567e94f3983aa7664e39",
+   "size": [
+    128,
+    32
+   ],
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frameRects": [
+    [
+     0,
+     0,
+     32,
+     32
+    ],
+    [
+     32,
+     0,
+     32,
+     32
+    ],
+    [
+     64,
+     0,
+     32,
+     32
+    ],
+    [
+     96,
+     0,
+     32,
+     32
+    ]
+   ],
+   "fps": 8,
+   "loop": true,
+   "pivot": {
+    "px": [
+     16,
+     1
+    ],
+    "normalized": [
+     0.5,
+     0.03125
+    ]
+   },
+   "ground": true,
+   "facing": "right",
+   "alpha": {
+    "policy": "binary",
+    "values": [
+     0,
+     255
+    ]
+   },
+   "sorting": "Actors",
+   "ref": "monster:ex15",
+   "shadow": {
+    "id": "fx_shadow-wide_static_24x6",
+    "from": "art 03 (unchanged)",
+    "sha256": "d7f8ff71c2179c88941b76981ef652920cb17e1d713687251179ed4e2c5036ef"
+   },
+   "colours": 9,
+   "frameBBoxTopLeft": [
+    [
+     4,
+     2,
+     28,
+     30
+    ],
+    [
+     4,
+     1,
+     28,
+     30
+    ],
+    [
+     4,
+     1,
+     28,
+     30
+    ],
+    [
+     4,
+     2,
+     28,
+     30
+    ]
+   ],
+   "use": "Horned bovine gold mask on a nonhuman body, representing idolatry; not Aaron, people, ethnicity or a sacred object.",
+   "source": {
+    "canvas": null,
+    "authoring": "scripts/actors_exodus_r05.py:golden_mask",
+    "method": "procedural generator written by Codex in this session (palette ramps only), deterministic",
+    "pixelSource": "export/source/pixel-source_exodus_r05.json#enm_ex15-golden-mask_move_32"
+   },
+   "status": "production-draft"
+  }
+ ]
+}

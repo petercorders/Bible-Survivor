@@ -20,6 +20,7 @@ namespace BibleSurvivor.Unity
         AdamExodusR02Art exodusR02;
         AdamExodusR03Art exodusR03;
         AdamExodusR04Art exodusR04;
+        AdamExodusR05Art exodusR05;
         ChariotDashView chariotVisual;
         readonly AdamChargeLane chargeLane=new AdamChargeLane();
         readonly AdamChargeLane chariotLane=new AdamChargeLane();
@@ -187,7 +188,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
@@ -203,6 +204,7 @@ namespace BibleSurvivor.Unity
                 case "ex4":case "ex5":case "ex6":return AdamExodusR02Art.EnemyClip(id);
                 case "ex7":case "ex8":case "ex9":case "oppression_chariot":return AdamExodusR03Art.EnemyClip(id);
                 case "ex10":case "ex11":case "ex12":return AdamExodusR04Art.EnemyClip(id);
+                case "ex13":case "ex14":case "ex15":return AdamExodusR05Art.EnemyClip(id);
                 default:throw new InvalidOperationException("No reviewed enemy art: "+id); }
         }
         public static bool PathCell(int x,int y) => x==0 || y==0; // One-cell-wide cross, never a filled 2x2.
@@ -272,7 +274,14 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamExodusR04Art.Enemy(monster.MonsterId))
+                        if(AdamExodusR05Art.Enemy(monster.MonsterId))
+                        {
+                            if(exodusR05==null){exodusR05=new AdamExodusR05Art();exodusR05.PrepareHitMasks();}
+                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;
+                            exodusR05.Draw(clip,anchor,scale,Clock,left);
+                            exodusR05.DrawHit(clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));
+                        }
+                        else if(AdamExodusR04Art.Enemy(monster.MonsterId))
                         {
                             if(exodusR04==null){exodusR04=new AdamExodusR04Art();exodusR04.PrepareHitMasks();}
                             var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;

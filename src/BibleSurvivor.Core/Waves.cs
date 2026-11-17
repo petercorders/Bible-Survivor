@@ -92,6 +92,7 @@ namespace BibleSurvivor.Core
             if(number==11)parts.Add(ExodusContent.RoundElevenSpeedContract);
             if(number==12)parts.Add(ExodusContent.RoundTwelveContract);
             if(number==13)parts.Add(ExodusContent.RoundThirteenSpeedContract);
+            if(number==14)parts.Add(ExodusContent.RoundFourteenSpeedContract);
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();

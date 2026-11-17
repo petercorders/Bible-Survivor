@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "ppu": 32,
+  "manifestSha256": "f9b64d0e96bedc4b0ade476fc3cb93dde571714e2335cd59c4e0ebd07186c8fc",
+  "layers": [],
+  "assets": [
+    {
+      "id": "enm_ex13-ambush-shadow_move_32",
+      "source": "art/art-exodus-r05/export/png/enm_ex13-ambush-shadow_move_32.png",
+      "sha256": "90dc612bbdb53d20917516262afd9db731b89f9b4cdee872db88db00ac30f09a",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex14-discord-stone-armor_move_32",
+      "source": "art/art-exodus-r05/export/png/enm_ex14-discord-stone-armor_move_32.png",
+      "sha256": "801d3253abc3d29f1967f06f7d8b28bd876c5e7912de8218ddb49c4442ca84dd",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "enm_ex15-golden-mask_move_32",
+      "source": "art/art-exodus-r05/export/png/enm_ex15-golden-mask_move_32.png",
+      "sha256": "abc9398ae1f15d6684036c9ae2066bad56aeb5153384567e94f3983aa7664e39",
+      "width": 32,
+      "height": 32,
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "pivotX": 16,
+      "pivotY": 1,
+      "alpha": "binary",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "sorting": "Actors",
+      "quality": "core",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

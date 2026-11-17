@@ -1,0 +1,24 @@
+{
+  "name": "exodus-r05-ext-v1",
+  "note": "Muted cool shadow, neutral stone, ochre mask; no emissive XP cyan, human skin or attack warning.",
+  "actor": {
+    "r14shade": [
+      "#827c98",
+      "#5a536e",
+      "#3c364d",
+      "#292635"
+    ],
+    "r14stone": [
+      "#c0b9a8",
+      "#969285",
+      "#6a6a62",
+      "#444842"
+    ],
+    "r14gold": [
+      "#c4ab6b",
+      "#9d8044",
+      "#6e552f",
+      "#483c2c"
+    ]
+  }
+}

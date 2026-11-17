@@ -41,3 +41,7 @@ R13 between14→R14 일반 전환이며 새 챕터 진입이 아니다. R03/R06/
 원본격자/manifest/상대경로 필수계약/정확public whitelist·normalregen1회·혼합/흑백/x1~3 최대3보드, Codex 스크립트픽셀 출처·Claude/Design 미사용·실시간/Unity 미검증을 명시한다. 독립 QA 전 제품 임포트하지 않는다.
 
 이전 단위 종료 뒤 Core 관련시험(실좌우 생성/독립HP/중간Load/네receipt/고갈선택·260once/미지원R15/새도전)·원래구조 최소변이/한무기한seed 좌표CLI→독립리뷰→UI/월드/Host 소유분리·단독Editor·관련검사/한앱/대표3화면·새processLoad→독립code/UI→GC→commitpush/CI 후 R15로 이어간다. 과거 전체조합/픽셀/빌드를 반복하지 않고 기술fixture·자연밸런스/native/mobile/performance를 구분한다. 보호 사용자앱/저장은 불조회다.
+
+## Unity 파일 소유
+
+Core 반환 뒤 Host/catalog·기존Host/Play경계 및 최종Editor/빌드는 ctx_3f916250d2a7 단독소유, UI 표시파일·새R14UiTests·기존R09~R13UiTests 현재설치끝 기대는 UI담당 단독소유, AdamArtWorld·새ExodusR05Art/Importer·WorldTests·승인14복사는 월드담당 단독소유다. Core독립리뷰와 UI/월드 고정반환 뒤 Host통합자만 sync/import/관련검사·정상앱1개/3화면/새processLoad를 실행한다. root는Resume14 선택변이만 별도로 맡는다. 다른작성자의파일을되돌리지않고 Core/아트증거를재사용한다.

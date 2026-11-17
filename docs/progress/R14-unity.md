@@ -1,0 +1,23 @@
+# R14 Unity 통합
+
+2026-11-18 KST. **작성자 검증 및 최종 독립 코드·UI 리뷰 PASS.** Core203/관련6·기존 R07/R13 관련 검사·원조건 좌우 좌표 변이·root 선택 Resume 변이와 독립 Core/art PASS를 재사용했다. 기술 CLI의 R14는973/1140 kills·180초/90샘플이며 전처치/자연 완주나 앱 연속14라운드 검증으로 세지 않는다. Core 제품/수치/저장 형식·원본 아트·CI/checker는 수정하지 않았다.
+
+Host에 AwaitingR14/R13 between14→R14 일반 전환을 추가했다. Catalog는 ForRound14/SpeedsFor14를 기존 연속 정의 검증으로 읽고 R14 round_settlement 및 between15 checkpoint를 지원한다. 다른 라운드 fingerprint/R12 보스 정의와 R09→R10 후보/고정 operation/revision·Commit/Load/Resume 후 게시 원자성은 유지한다. 새 World는 World3/clock0/LastHitTime=-1/빈 돌진·적탄이며 현재 Boss가 없다. 네 boss receipt/RunId·장비·진화·영구 snapshot·프로필을 보존하고 R13 완료240을 다시 지급하지 않는다. R14 완료는260/null 해금/최대HP회복·between15/ContentComplete이며 출애굽기 전체 완료가 아니다. 명시 새 도전/사망은 R01/schema2/프로필 유지다.
+
+반환 UI의 아론/출애굽기5·R15 브살렐 대기/완료260·small/wide/wide 그림자와 반환 월드3PNG/12frames를 통합했다. Reimport/ValidateBuild 및 이중 import의 sprite name/GUID/localID/rect/pivot12개 동등을 확인했다. 좌우 생성은 실제 Core ex13 정책이며 Unity가 생성/HP/피해/새 패턴을 추가하지 않았다. R12 두줄 HUD/forms footer를 보존했고 이 통합자는 UI/World 제품을 재편집하지 않았다. 기존 UI 설치 끝 기대는 UI 담당이 소유·갱신했다.
+
+sync1회/compile/importer·project/portable·diff exit0. Core DLL SHA256 `a7bf1a4cb4229a54f30cf219a23051212c6361d63405768919aa0d9bfc40530c`, provenance schema2이며 root save3과 별개다. 관련 Edit는 **고유101건: 최초100 PASS/1 FAIL 및 그1건 교정 PASS**다. 신규 Host9/UI8/World3와 관련 R09~R13 Host/UI·depth/hitflash를 포함한다. 좌우·독립HP fixture의 직접 Session.Kill은 World drop geometry를 만들지 않으므로 후속 저장/복원 비교가 실패했다. 기술 drop을 폐기하고 checkpoint 성공을 명시적으로 확인한 뒤 해당1건만 PASS로 확인했으며 최초 exit2/XML을 보존했다. 제품 수정이나 검증 약화는 없었다. 다른 과거 Host시험은 현재 설치 끝/미지원 경계만 갱신해 컴파일했으며 전 suite 실행으로 세지 않는다. Play14/14는 실제 R13→R14 Continue 클릭/InputSystem Enter, 완료/오류·suspend·같은 frame 명령과 기존 창세기 진입 경계를 포함한다. 실제 명령/exit/XML은 `evidence/r14-unity-integration-20261118/verification-index.json`에 있다.
+
+최종 앱은 `evidence/r14-unity-integration-20261118/build/R14Qa.app`, bundle `com.biblesurvivor.adam.r02artqa.r1446fdab19d0bf`다. **정상 mac 빌드1회**이며 고정103개 소스/DLL 입력과 QA 사본·앱 Core DLL이 같다. 이전 자기 R13 완료 Run/Profile evidence와 정확 LastOperationId envelope를 재사용했고 장비/후보/serial을 새로 조정하지 않았다. build 직전 Core.Validate→완료R13 Resume→R14 StartNextRound/네receipt/World3/무추가지급을 확인했다. 같은 seed의 실제 Core3초와 실제 WorldProjection으로 좌우 가시성도 먼저 확인했으며 build.log의 R14_SEED_PREFLIGHT/R14_SPLIT_PREFLIGHT PASS(왼쪽4/오른쪽4)가 근거다. QA 시작 전에 예상 저장 예외의 콘솔 팝업만 비활성화하고 raw exception을 남겼다. 번들 패치·재빌드·추가 조합은 없다.
+
+한 trace에서 R13 완료 무쓰기 Load→R14 진입 beforeReplace 실패·옛 durable boundary 유지/같은 arena·payload 정지→같은 RetrySave→World0/PreviousNormal13/네receipt·profile/forms 동일을 확인했다. 기술 HP10000/무기8·진화3/6슬롯은 이전 seed에서 상속했다. 초기 실제 Core3초 시점에 ex13 가시 개체가 왼쪽4/오른쪽4이며 중앙에 겹치기 전에 첫 화면을 기록했다. 이는 초기 표본이며 추적 후 중앙에 모인 상태의 배치를 좌우 생성 PASS로 확대하지 않는다. Host 시험에서 Hit7 후 첫 actor213/이웃220, 첫 actor kill 뒤 이웃220으로 독립HP를 확인했다; 이 직접 Hit/kill/drop 폐기는 기술 주입이다. 엄격한 종별 홀짝/화면 밖 생성 좌표·원회귀 변이는 기존 Core 근거를 재사용한다.
+
+다음 timeout/directkill/drop 폐기/cycle1000 준비 뒤 실제 Core ex13/ex14/ex15 추적3초의 혼합 lowFX와 midWorld pause/disk Load, 효과 토글 뒤 World 동일·돌진/적탄/ChariotDash 유출 없음을 확인했다. 초기3초와 혼합 준비 후3초는 구분한다. 실제 Kill/Collect XP로 생긴 정상 성장은 후보1/PendingLevels1/Choose1·full serial 골드25 once다. 완료도 후보1/PendingLevels1/Choose1·25와 별도 완료260을 구분했다. gold4020→4161(기술 준비 처치 포함)→4193(추가 처치·정상25 포함)→4488(처치·완료 성장25·완료260 포함)이다. 완료 최대HP회복/null 해금·네receipt/forms 유지와 새 process의 정확 Run/Profile Load, 중복260/자동R15/초기화 없음, 명시 R01/schema2 새 도전·프로필 보존을 확인했다. 선택/완료 저장 retry는 Host 시험의 첫/마지막 full serial 실패 후 동일 payload·금액 once로 확인했다.
+
+대표 화면은 capture의 **660 초기 좌우, 660 세 적 혼합 lowFX, 1100 완료 R15 브살렐 대기3장**이며 모두 실제 열람했다. 자연1140킬/자연180초 밸런스·앱 R01~R14 연속 완주·native/device/mobile/performance는 NOT_RUN이다. 실제 입력은 Editor의 InputSystem/IMGUI 시험이며 native OS 입력으로 확대하지 않는다. 기술 준비와 실제 Core 추적 관찰을 구분한다.
+
+no-Host probe 뒤 정확 fresh identity realpath와 자기 main/bak/lock 부재를 확인했다. probe/capture/reload의 정확 child PID/exit0 및 자기3파일의 원래 absent 복구는 restoration.json에 있다. 보호 preview pivot9534f7594886/unknownparticlesqa/iOS와 해당 저장은 조회·조작하지 않았다. 자기 Editor 종료 뒤 Art03 meta79개의 자동 기본 플랫폼 block과 빈 icon 확장만 exact HEAD 확인으로 복구했고 사전 diff/hash를 보존했다. 다른 작성자 변경을 되돌리지 않았다.
+
+binding.json/fixed-product-source.json이 소스·앱·DLL/provenance/catalog·103입력·XML/실명령/12 stable 등록·trace/3화면·보존을 묶는다. requested Sol 기본/observed gpt-6.1-sol, Claude/Astra/helper 없음. 자기 usage provider interval input7755879/cache7727488/output22992/reasoning12487/total7778871는 지연 start event 때문에 이전 세션 tail을 포함할 수 있고 마지막 보고 tail을 제외한다. start의 이전 phase delta는 R14로 합산하지 않으며 effort/청구/단가/절감률은 미측정이다. 제품·Editor·Player 소유를 반환한다. root 최종 독립 code/UI·GC·commitpush/CI가 남고 R15 제품을 임의로 시작하지 않았다.
+
+Root 최종 마감: Core/Unity 코드와 대표3화면 리뷰 모두 막는 HIGH/MEDIUM 없이 PASS. root Resume14 선택변이는 실제 검출 PASS(.local/r14-resume-mutation.log)이며 기존 검사를 반복하지 않았다. forms행/일부 적 겹침 LOW는 공통 표시 개선 의견으로 보존한다. 필수 커밋 훅 및 해당SHA 원격 CI는 업로드 단계에서 확인한다.

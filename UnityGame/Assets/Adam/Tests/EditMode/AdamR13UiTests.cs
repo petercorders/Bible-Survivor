@@ -5,23 +5,24 @@ using NUnit.Framework;
 
 public sealed class AdamR13UiTests
 {
-    [Test] public void MiriamUsesFourthExodusTitleAndR14RemainsUninstalled()
+    [Test] public void MiriamUsesFourthExodusTitleAndR15RemainsUninstalled()
     {
         Assert.AreEqual("미리암",AdamRoundPresentation.Name(13));
         Assert.AreEqual("출애굽기 4 / 미리암 · 3분 시제품",AdamRoundPresentation.Title(13));
         Assert.AreEqual("출애굽기 3 / 모세 · 3분 시제품",AdamRoundPresentation.Title(12));
         Assert.AreEqual("출애굽기 2 / 요게벳 · 3분 시제품",AdamRoundPresentation.Title(11));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(14));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(14));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(15));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(15));
         Assert.Throws<ArgumentException>(()=>AdamBossPresentation.Name(13));
     }
 
-    [Test] public void InstalledEndShowsCompletion240AndR14WithoutWholeBookClaim()
+    [Test] public void InstalledEndShowsCompletion260AndR15WithoutWholeBookClaim()
     {
-        Assert.AreEqual("출애굽기 4 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
-        StringAssert.Contains("완료 골드 +240",AdamRoundPresentation.ContentDetail);
-        StringAssert.Contains("R14 대기",AdamRoundPresentation.ContentDetail);
+        Assert.AreEqual("출애굽기 5 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
+        Assert.AreEqual(240,ExodusContent.Round(13).CompletionGold);
+        StringAssert.Contains("완료 골드 +260",AdamRoundPresentation.ContentDetail);
+        StringAssert.Contains("R15 브살렐 대기",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("다음 라운드 준비 중",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("진행 유지",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("새 도전 선택 시 성장·장비 초기화",AdamRoundPresentation.ContentDetail);
@@ -43,7 +44,7 @@ public sealed class AdamR13UiTests
     {
         foreach(var id in new[]{"ex7","ex8","ex9","oppression_chariot","ex13","unknown",null})
             Assert.IsFalse(AdamRoundPresentation.R13Enemy(id));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex13"));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex16"));
         Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("unknown"));
         Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("ex9"));
         Assert.AreEqual("fx_shadow-boss_static_40x8",AdamRoundPresentation.Shadow("oppression_chariot"));

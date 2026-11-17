@@ -12,15 +12,15 @@ public sealed class AdamR11UiTests
         Assert.AreEqual("출애굽기 1 / 십브라·부아 · 3분 시제품",AdamRoundPresentation.Title(10));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
         Assert.AreEqual("창세기 / 아담 · 3분 시제품",AdamRoundPresentation.Title(1));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(14));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(14));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(15));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(15));
         Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(0));
     }
 
-    [Test] public void InstalledEndWaitsForR14AndDoesNotClaimWholeBookCompletion()
+    [Test] public void InstalledEndWaitsForR15AndDoesNotClaimWholeBookCompletion()
     {
-        Assert.AreEqual("출애굽기 4 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
-        StringAssert.Contains("R14 대기",AdamRoundPresentation.ContentDetail);
+        Assert.AreEqual("출애굽기 5 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
+        StringAssert.Contains("R15 브살렐 대기",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("진행 유지",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("새 도전 선택 시 성장·장비 초기화",AdamRoundPresentation.ContentDetail);
         StringAssert.DoesNotContain("R11 대기",AdamRoundPresentation.ContentDetail);
@@ -41,7 +41,7 @@ public sealed class AdamR11UiTests
     {
         foreach(var id in new[]{"ex1","ex2","ex3","i1","silver_cup_accuser","ex7","unknown",null})
             Assert.IsFalse(AdamRoundPresentation.R11Enemy(id));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex13"));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex16"));
         Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("unknown"));
         Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("ex1"));
         Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("ex2"));

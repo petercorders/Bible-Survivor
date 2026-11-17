@@ -5,23 +5,23 @@ using NUnit.Framework;
 
 public sealed class AdamR12UiTests
 {
-    [Test] public void MosesUsesThirdExodusTitleAndR14RemainsUninstalled()
+    [Test] public void MosesUsesThirdExodusTitleAndR15RemainsUninstalled()
     {
         Assert.AreEqual("모세",AdamRoundPresentation.Name(12));
         Assert.AreEqual("출애굽기 3 / 모세 · 3분 시제품",AdamRoundPresentation.Title(12));
         Assert.AreEqual("출애굽기 2 / 요게벳 · 3분 시제품",AdamRoundPresentation.Title(11));
         Assert.AreEqual("출애굽기 1 / 십브라·부아 · 3분 시제품",AdamRoundPresentation.Title(10));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(14));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(14));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(15));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(15));
     }
 
-    [Test] public void InstalledEndWaitsForR14AndCompletion240WithoutWholeBookClaim()
+    [Test] public void InstalledEndWaitsForR15AndCompletion260WithoutWholeBookClaim()
     {
-        Assert.AreEqual("출애굽기 4 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
+        Assert.AreEqual("출애굽기 5 완료 · 진행 저장됨",AdamRoundPresentation.ContentHeading);
         Assert.AreEqual(220,ExodusContent.Round(12).CompletionGold);
-        StringAssert.Contains("R14 대기",AdamRoundPresentation.ContentDetail);
-        StringAssert.Contains("완료 골드 +240",AdamRoundPresentation.ContentDetail);
+        StringAssert.Contains("R15 브살렐 대기",AdamRoundPresentation.ContentDetail);
+        StringAssert.Contains("완료 골드 +260",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("진행 유지",AdamRoundPresentation.ContentDetail);
         StringAssert.Contains("새 도전 선택 시 성장·장비 초기화",AdamRoundPresentation.ContentDetail);
         StringAssert.DoesNotContain("출애굽기 완료",AdamRoundPresentation.ContentHeading);
@@ -42,7 +42,7 @@ public sealed class AdamR12UiTests
     {
         foreach(var id in new[]{"ex4","ex5","ex6","silver_cup_accuser","ex10","unknown",null})
             Assert.IsFalse(AdamRoundPresentation.R12Enemy(id));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex13"));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Shadow("ex16"));
         Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("ex4"));
         Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("ex5"));
         Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("ex6"));
@@ -86,7 +86,7 @@ public sealed class AdamR12UiTests
         StringAssert.Contains("돌진 예고",AdamBossPresentation.AttackPhase(12,true,false,6));
     }
 
-    [Test] public void FixedBoss400Fallback100Growth25AndInstalledCompletion240StayDistinct()
+    [Test] public void FixedBoss400Fallback100Growth25AndInstalledCompletion260StayDistinct()
     {
         var fixedReward=AdamBossPresentation.RewardDetail(BossDefinition.ForRound(12));
         StringAssert.Contains("압제의 전차장",fixedReward);
@@ -100,7 +100,7 @@ public sealed class AdamR12UiTests
         StringAssert.DoesNotContain("강화",growth.Card(0));
         StringAssert.DoesNotContain("→",growth.Card(0));
         Assert.AreEqual(220,ExodusContent.Round(12).CompletionGold);
-        StringAssert.Contains("완료 골드 +240",AdamRoundPresentation.ContentDetail);
+        StringAssert.Contains("완료 골드 +260",AdamRoundPresentation.ContentDetail);
     }
 
     [Test] public void ExplicitNewChallengeAndGenesisEntryKeepTheirDescriptions()

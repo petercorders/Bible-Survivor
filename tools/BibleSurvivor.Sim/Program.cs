@@ -12,6 +12,7 @@ internal static class Program
     {
         try
         {
+            if(args.Length>0 && args[0]=="--r14-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true);
             if(args.Length>0 && args[0]=="--r13-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true);
             if(args.Length>0 && args[0]=="--r12-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true);
             if(args.Length>0 && args[0]=="--r11-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true);

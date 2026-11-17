@@ -165,8 +165,8 @@ namespace BibleSurvivor.Core
                     var round3=members.SingleOrDefault(x=>x.Name=="RoundNumber");
                     if(stage3==null||round3==null||!int.TryParse(round3.InnerText,out var rn)||
                         !SupportedExodusLifecycle(rn,stage3.InnerText))throw new UnsupportedSaveVersionException();
-                    var r13=rn==13&&stage3.InnerText!="between_rounds"||rn==14&&stage3.InnerText=="between_rounds";
-                    if(!r13&&members.Any(x=>x.Name=="CompletedFourthBoss"))throw new UnsupportedSaveVersionException();
+                    var normalRound=rn-(stage3.InnerText=="between_rounds"?1:0);
+                    if(normalRound!=13&&normalRound!=14&&members.Any(x=>x.Name=="CompletedFourthBoss"))throw new UnsupportedSaveVersionException();
                 }
                 if (version == GenesisVersion)
                 {
@@ -188,9 +188,9 @@ namespace BibleSurvivor.Core
         }
 
         internal static bool SupportedExodusLifecycle(int round,string stage)=>
-            ((round==10||round==11||round==13)&&(stage=="normal"||stage=="round_settlement"))||
+            ((round==10||round==11||round==13||round==14)&&(stage=="normal"||stage=="round_settlement"))||
             (round==12&&(stage=="normal"||stage=="boss_intro"||stage=="boss"||stage=="boss_reward"||stage=="boss_settlement"))||
-            ((round==11||round==12||round==13||round==14)&&stage=="between_rounds");
+            ((round==11||round==12||round==13||round==14||round==15)&&stage=="between_rounds");
 
         private static void CheckForms(XmlElement element)
         {

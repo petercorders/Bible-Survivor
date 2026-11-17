@@ -18,13 +18,15 @@ namespace BibleSurvivor.Core
             new WaveDefinition(60,120,new[]{new SpawnGroup("ex1",180,160,10),new SpawnGroup("ex2",120,100,9)}),
             new WaveDefinition(120,170,new[]{new SpawnGroup("ex1",180,160,10),new SpawnGroup("ex2",126,100,9),new SpawnGroup("ex3",54,450,13)})
         },RoundId);
-        public const int LastInstalledRound = 13;
+        public const int LastInstalledRound = 14;
+        public const string RoundFourteenSpeedContract = "ex13-speed0.80:ex14-speed0.35:ex15-speed0.60:stable-species-ordinal-odd-left-even-right:independent-hp:chase-contact:no-status-effects";
         public const string RoundThirteenSpeedContract = "ex10-speed0.60:ex11-speed0.60:ex12-speed0.35:chase-contact:no-status-effects";
         public static string RoundTwelveContract=>"ex7-speed0.55:ex8-speed0.45:ex9-speed0.60:"+BattleWorld.ChargeContract+":"+BossDefinition.ForRound(12).FingerprintContract;
         public const string RoundElevenSpeedContract = "ex4-speed0.60:ex5-speed0.75:ex6-speed0.90:chase-contact:no-status-effects";
         public static IReadOnlyDictionary<string,double> SpeedsFor(int number)
         {
             if(number==10)return MonsterSpeeds;
+            if(number==14)return new System.Collections.ObjectModel.ReadOnlyDictionary<string,double>(new Dictionary<string,double>{{"ex13",.80},{"ex14",.35},{"ex15",.60}});
             if(number==13)return new System.Collections.ObjectModel.ReadOnlyDictionary<string,double>(new Dictionary<string,double>{{"ex10",.60},{"ex11",.60},{"ex12",.35}});
             if(number==12)return new System.Collections.ObjectModel.ReadOnlyDictionary<string,double>(new Dictionary<string,double>{{"ex7",.55},{"ex8",.45},{"ex9",.60}});
             if(number!=11)throw new ArgumentOutOfRangeException(nameof(number));
@@ -33,6 +35,11 @@ namespace BibleSurvivor.Core
         public static RoundDefinition Round(int number)
         {
             if(number==10)return Round();
+            if(number==14)return new RoundDefinition(14,120,5200,260,new[]{
+                new WaveDefinition(0,60,new[]{new SpawnGroup("ex13",240,220,12),new SpawnGroup("ex14",60,700,15)}),
+                new WaveDefinition(60,120,new[]{new SpawnGroup("ex13",266,220,12),new SpawnGroup("ex14",114,700,15)}),
+                new WaveDefinition(120,170,new[]{new SpawnGroup("ex13",230,220,12),new SpawnGroup("ex14",138,700,15),new SpawnGroup("ex15",92,360,14)})
+            },"exodus_05");
             if(number==13)return new RoundDefinition(13,110,4800,240,new[]{
                 new WaveDefinition(0,60,new[]{new SpawnGroup("ex10",224,150,10),new SpawnGroup("ex11",56,280,12)}),
                 new WaveDefinition(60,120,new[]{new SpawnGroup("ex10",216,150,10),new SpawnGroup("ex11",144,280,12)}),
@@ -52,7 +59,7 @@ namespace BibleSurvivor.Core
         }
         public static void Validate(RoundDefinition definition)
         {
-            if(definition==null||(definition.Number!=10&&definition.Number!=11&&definition.Number!=12&&definition.Number!=13)||definition.Fingerprint!=Round(definition.Number).Fingerprint)
+            if(definition==null||(definition.Number!=10&&definition.Number!=11&&definition.Number!=12&&definition.Number!=13&&definition.Number!=14)||definition.Fingerprint!=Round(definition.Number).Fingerprint)
                 throw new ArgumentException("Unsupported Exodus round catalog");
         }
     }

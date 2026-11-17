@@ -33,7 +33,7 @@ namespace BibleSurvivor.Unity
         }
         public RoundDefinition ForCheckpoint(RunState run)
         {
-            if((run.Stage=="normal" || run.Stage=="round_settlement" && (run.RoundNumber==10 || run.RoundNumber==11 || run.RoundNumber==13)) && run.RoundNumber>=10 && run.RoundNumber<=LastInstalledRound)
+            if((run.Stage=="normal" || run.Stage=="round_settlement" && (run.RoundNumber==10 || run.RoundNumber==11 || run.RoundNumber==13 || run.RoundNumber==14)) && run.RoundNumber>=10 && run.RoundNumber<=LastInstalledRound)
                 return ForRound(run.RoundNumber);
             if(run.Stage=="between_rounds" && run.RoundNumber>=11 && run.RoundNumber<=LastInstalledRound+1)
                 return ForRound(run.RoundNumber-1);
