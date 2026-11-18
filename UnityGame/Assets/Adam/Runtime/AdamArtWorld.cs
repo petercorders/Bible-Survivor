@@ -243,6 +243,7 @@ namespace BibleSurvivor.Unity
         public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null)
         {
             if(Snapshot==null || source!=host.World) return;
+            var exodus=AdamBookGround.Exodus(host.Session.RoundNumber);
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);
             var projection=new AdamWorldProjection(arena,origin);
@@ -253,14 +254,16 @@ namespace BibleSurvivor.Unity
             for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
             for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
             {
-                art.Draw(AdamVisualQualityWorld.Ground(x,y),Point(x+.5f,y+.5f),scale);
-                if(PathCell(x,y)) art.Draw("til_eden_path-16mask_static_32",Point(x+.5f,y+.5f),scale,frame:PathMask(x,y));
+                art.Draw(AdamBookGround.Ground(x,y,exodus),Point(x+.5f,y+.5f),scale);
+                if(PathCell(x,y)) art.Draw(AdamBookGround.Path(exodus),Point(x+.5f,y+.5f),scale,frame:PathMask(x,y));
             }
+            if(exodus)AdamBookGround.Hollows(art,projection,origin,rx,ry);
             for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
             for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
                 if(!PathCell(x,y) && (uint)(x*73856093^y*19349663)%5==0)
-                    art.Draw((x+y)%2==0?"dec_eden_tuft-1_11x8":"dec_eden_flowers-1_16x10",Point(x+.5f,y+.2f),scale);
-            AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
+                    art.Draw(AdamBookGround.Decor(x,y,exodus),Point(x+.5f,y+.2f),scale);
+            if(exodus)AdamBookGround.Edges(arena,FeedbackEnabled);
+            else AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
             // Optional hit smoke/chips stay below XP, actors, weapons and required telegraphs.
             particles?.Draw(projection);

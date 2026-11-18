@@ -1,0 +1,333 @@
+{
+ "schema": "bible-survivors.visual-quality-art",
+ "schemaVersion": 1,
+ "bundle": "book03",
+ "ppu": 32,
+ "pivotSpace": "bottom-left-pixel-edge",
+ "borderOrder": "left,bottom,right,top",
+ "status": "production-draft",
+ "independentReview": "PENDING",
+ "productCopy": "NOT_RUN",
+ "frameLayout": "horizontal strip, frame 0 at left",
+ "transparent": "alpha 0 pixels have RGB 0",
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "ppu": 32
+ },
+ "provenance": {
+  "author": "Claude Fable 5.2 (claude-fable-5-2), scripted pixels from src/build.py",
+  "direction": "Claude Design canvas for art-visual-quality-03 (boards show mock arenas built from these same tiles)",
+  "palette": "master-v0.3 terrain.path/soil/rock, actor.tunic, recolor.dye.olive and ink-and-bronze tokens; no new colour",
+  "note": "Script-authored game-asset candidates, not Design output."
+ },
+ "assets": [
+  {
+   "id": "til_exodus_sand-a_static_32",
+   "file": "til_exodus_sand-a_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_grass-a_static_32",
+   "sha256": "10d3b4a307a5f2a2d1f3477acab266d209a01afb8b901a017022fbf8e8e333b5"
+  },
+  {
+   "id": "til_exodus_sand-b_static_32",
+   "file": "til_exodus_sand-b_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_grass-b_static_32",
+   "sha256": "aa3261a6e28b14c8ec8923109612034662adf290dd654ebaba15c25b5ce165b1"
+  },
+  {
+   "id": "til_exodus_sand-c_static_32",
+   "file": "til_exodus_sand-c_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_grass-c_static_32",
+   "sha256": "58e713b6f539a24c1c03e4929230571009567d298b38a01dcf4ce2e50786cc56"
+  },
+  {
+   "id": "til_exodus_sand-d_static_32",
+   "file": "til_exodus_sand-d_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_grass-d_static_32",
+   "sha256": "feaa90893732e3e0db2f197d63d1482dc20e255a96840c9a9a0069817b15b93e"
+  },
+  {
+   "id": "til_exodus_flag-a_static_32",
+   "file": "til_exodus_flag-a_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_meadow-a_static_32",
+   "sha256": "6e67af4a88369559c76ad8dc79b1698efb3c62cb62fcec176bd1cd8f30703ae2"
+  },
+  {
+   "id": "til_exodus_flag-b_static_32",
+   "file": "til_exodus_flag-b_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_meadow-b_static_32",
+   "sha256": "0ecb5e2cfe3f11410c1284befd3f7b2d9c8f6ca11ce86d4463b1bb8be40edbe4"
+  },
+  {
+   "id": "til_exodus_path-16mask_static_32",
+   "file": "til_exodus_path-16mask_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 16,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "Ground",
+   "quality": "core",
+   "new": true,
+   "mirrors": "til_eden_path-16mask_static_32",
+   "maskBits": "N=1,E=2,S=4,W=8",
+   "sha256": "066bca9855c585f7a37caad6f1e6e7672d3b9b8491c2665f44ef4d83a02dec5b"
+  },
+  {
+   "id": "dec_exodus_pebbles-1_11x8",
+   "file": "dec_exodus_pebbles-1_11x8.png",
+   "cell": [
+    11,
+    8
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    5,
+    0
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "new": true,
+   "mirrors": "dec_eden_tuft-1_11x8",
+   "pivotNote": "copy the eden decor pivot at import if it differs",
+   "sha256": "1d2bbdded15f3334bddbdf8b183c9f1687db380c056d810500edbf61652d9a2c"
+  },
+  {
+   "id": "dec_exodus_scrub-1_16x10",
+   "file": "dec_exodus_scrub-1_16x10.png",
+   "cell": [
+    16,
+    10
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    8,
+    0
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "new": true,
+   "mirrors": "dec_eden_flowers-1_16x10",
+   "pivotNote": "copy the eden decor pivot at import if it differs",
+   "sha256": "c7cbd31bfef8e6ccfee1339264c26fc0d4a5ce883f6dc4a6526d547c72c6877c"
+  },
+  {
+   "id": "dec_ground-hollow_static_64",
+   "file": "dec_ground-hollow_static_64.png",
+   "cell": [
+    64,
+    64
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    32,
+    32
+   ],
+   "alpha": "blend",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "GroundDecal",
+   "quality": "core",
+   "new": true,
+   "alphaValues": [
+    0,
+    36
+   ],
+   "sha256": "a6a130017fddf46bdc0c0911315e0f49dbeca50d78ba9333c66bc1fe700a993f"
+  },
+  {
+   "id": "ui_book-crest_static_32",
+   "file": "ui_book-crest_static_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 2,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "genesis",
+    "exodus"
+   ],
+   "sha256": "4c41f5cd74997cdeeecb267ec7727691efd4216fe768fe042a2030131ff721a1"
+  }
+ ]
+}
