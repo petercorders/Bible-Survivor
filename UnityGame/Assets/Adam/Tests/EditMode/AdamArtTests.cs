@@ -22,15 +22,16 @@ public sealed class AdamArtTests
             var importer=(TextureImporter)AssetImporter.GetAtPath(path);
             Assert.AreEqual(FilterMode.Point,importer.filterMode,c.id); Assert.IsFalse(importer.mipmapEnabled);
             Assert.AreEqual(TextureImporterCompression.Uncompressed,importer.textureCompression);
+            var original=AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(x=>x.name,StringComparer.Ordinal).ToArray();
             for(var i=0;i<c.frames;i++)
             {
-                var sprite=art.Sprite(c.id,i);
+                var sprite=original[i];
                 Assert.AreEqual(new Rect(i*c.width,0,c.width,c.height),sprite.rect,c.id);
                 Assert.AreEqual(new Vector2(c.pivotX,c.pivotY),sprite.pivot,c.id);
                 Assert.AreEqual(32,sprite.pixelsPerUnit,c.id);
                 Assert.AreEqual(new Vector4(c.borders[0],c.borders[1],c.borders[2],c.borders[3]),sprite.border,c.id);
             }
-            foreach(var pixel in art.Sprite(c.id,0).texture.GetPixels32()) Assert.Contains((int)pixel.a,c.alphaValues,c.id);
+            foreach(var pixel in original[0].texture.GetPixels32()) Assert.Contains((int)pixel.a,c.alphaValues,c.id);
         }
     }
     [Test] public void AllSixLayersShareRegisteredFramesAndDeclaredPlayback()

@@ -31,7 +31,7 @@ public sealed class AdamImpactTests
         host.Tick(1d/60);view.Update(host,0);
         var impacts=new List<BattleImpact>();host.World.ReadImpacts(0,impacts);
         Assert.Greater(impacts.Count,1);if(lethal)Assert.IsTrue(impacts.Any(e=>e.Killed));
-        Assert.AreEqual(impacts.Count(e=>e.TargetId>0),view.Effects.Count(e=>e.Active&&e.Clip=="fx_hit-spark_hit_16"));
+        Assert.AreEqual(Math.Min(3,impacts.Count(e=>e.TargetId>0)),view.Effects.Count(e=>e.Active&&e.Clip=="fx_hit-spark_hit_16"));
         Assert.AreEqual(impacts.Count(e=>e.Killed),view.Effects.Count(e=>e.Active&&e.Clip=="fx_enemy-death_burst_32"));
         Assert.AreEqual(impacts.Count,view.ConsumedImpacts);
         if(!lethal)Assert.IsTrue(view.EnemyReacting(impacts[0].TargetId),"surviving enemy must show the actual hit reaction");

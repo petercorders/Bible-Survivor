@@ -1,0 +1,186 @@
+{
+  "schema": "bible-survivors.visual-quality-art",
+  "schemaVersion": 1,
+  "bundle": "effects",
+  "ppu": 32,
+  "pivotSpace": "bottom-left-pixel-edge",
+  "borderOrder": "left,bottom,right,top",
+  "status": "production-draft",
+  "independentReview": "PENDING",
+  "productCopy": "NOT_RUN",
+  "frameLayout": "horizontal strip, frame 0 at left",
+  "transparent": "alpha 0 pixels have RGB 0",
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "ppu": 32
+  },
+  "notes": {
+    "file": "file is relative to this manifest",
+    "compatibleMetadata": "sorting, quality, alphaValues, attachX, attachY, states and new are extra fields carried from Art03/index.json so a sidecar can keep the original clip contract",
+    "attach": "attachX/attachY are the art03 arrays unchanged: one point per frame, x right and y DOWN from the top-left pixel of the 64x64 cell (not the bottom-left pivot space), the leading-edge point at radius 29.5 from the cell centre, drawn facing +X. On the edge sheet that pixel is opaque on frames 0-2; frame 3 of the edge sheet is empty as in art03.",
+    "trailAlpha": "art03 trail alphaValues were [0,112,176]; this trail is [0,46,76] (max 29.8%). A sidecar that keeps the art03 alphaValues for this ID would fail an alpha-membership check.",
+    "heldAndIcon": "wpn_jawbone-club_held_32 and ico_wpn_jawbone-club_static_16 are not in this bundle; the approved art-jawbone-feedback-01 v2 files are reused unchanged."
+  },
+  "provenance": {
+    "direction": "Claude Design canvas KX2wBLHRncNVKvwZPLuHBG and art-visual-quality-01/tokens.json (ink and bronze)",
+    "pixels": "Pixel rows, stamps, placements and arc numbers typed by Claude Fable 5.2 (claude-fable-5-2) in this session, following the hit / death / swing direction of the Claude Design canvas KX2wBLHRncNVKvwZPLuHBG (board Boss660) and art-visual-quality-01/tokens.json color.fx + effects.hit. Not an export of the Design page.",
+    "png": "scripts/build.py with unchanged art03 px03.py/pngio.py; PNGs are generated from src/effects_pixels.json, not exported from the Design page"
+  },
+  "assets": [
+    {
+      "id": "fx_hit-spark_hit_16",
+      "file": "fx_hit-spark_hit_16.png",
+      "cell": [
+        16,
+        16
+      ],
+      "frames": 3,
+      "fps": 15,
+      "loop": false,
+      "pivot": [
+        8,
+        8
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "ade641fe4d262f375087b4cbfdc9faad88ed882bec53adb53ca177ba428b827e",
+      "states": [],
+      "new": false,
+      "sorting": "FX",
+      "quality": "core",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_enemy-death_burst_32",
+      "file": "fx_enemy-death_burst_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "pivot": [
+        16,
+        1
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "3c91902f503392ecf6f325dc39a3c9da9cb053972d61585d20a3689f7a0667ca",
+      "states": [],
+      "new": false,
+      "sorting": "FX",
+      "quality": "core",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "attachX": [],
+      "attachY": []
+    },
+    {
+      "id": "fx_jawbone-swing-trail_hit_64",
+      "file": "fx_jawbone-swing-trail_hit_64.png",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 20,
+      "loop": false,
+      "pivot": [
+        32,
+        32
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "8481af4571a5374d77258635183a3fba587ea2ea03f0350e5000f110474fa02e",
+      "states": [],
+      "new": false,
+      "sorting": "WeaponFX",
+      "quality": "optional-fx",
+      "alphaValues": [
+        0,
+        46,
+        76
+      ],
+      "attachX": [
+        59,
+        60,
+        49,
+        47
+      ],
+      "attachY": [
+        44,
+        24,
+        8,
+        6
+      ]
+    },
+    {
+      "id": "fx_jawbone-swing-edge_hit_64",
+      "file": "fx_jawbone-swing-edge_hit_64.png",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 4,
+      "fps": 20,
+      "loop": false,
+      "pivot": [
+        32,
+        32
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "5156a838c922ec3b0ad822f66dc02367f51fbdd662dffb8c0fe14344660170c4",
+      "states": [],
+      "new": false,
+      "sorting": "WeaponFX",
+      "quality": "core",
+      "alphaValues": [
+        0,
+        255
+      ],
+      "attachX": [
+        59,
+        60,
+        49,
+        47
+      ],
+      "attachY": [
+        44,
+        24,
+        8,
+        6
+      ]
+    }
+  ]
+}

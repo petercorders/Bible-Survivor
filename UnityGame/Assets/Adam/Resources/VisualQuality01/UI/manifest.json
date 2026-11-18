@@ -1,0 +1,453 @@
+{
+  "schema": "bible-survivors.visual-quality-art",
+  "schemaVersion": 1,
+  "bundle": "ui",
+  "ppu": 32,
+  "pivotSpace": "bottom-left-pixel-edge",
+  "borderOrder": "left,bottom,right,top",
+  "status": "production-draft",
+  "independentReview": "PENDING",
+  "productCopy": "NOT_RUN",
+  "frameLayout": "horizontal strip, frame 0 at left",
+  "transparent": "alpha 0 pixels have RGB 0",
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "ppu": 32
+  },
+  "notes": {
+    "keycapBorders": "The design intent in art-visual-quality-01/asset-contract.json is L,R,T,B = [3,3,3,4]. This package states it in the runtime Vector4 order L,B,R,T = [3,4,3,3]. The outer contract file is not edited.",
+    "file": "file is relative to this manifest",
+    "barFrame": "ui_bar-frame_9slice_8x6 and ui_swatch_12 keep a transparent centre, as in art03"
+  },
+  "provenance": {
+    "direction": "Claude Design canvas KX2wBLHRncNVKvwZPLuHBG and art-visual-quality-01/tokens.json (ink and bronze)",
+    "pixels": "Pixel grids typed by Claude Fable 5.2 (claude-fable-5-2) in this session, following the ink-and-bronze direction of the Claude Design canvas KX2wBLHRncNVKvwZPLuHBG and art-visual-quality-01/tokens.json. Not an export of the Design page.",
+    "png": "scripts/build.py with unchanged art03 px03.py/pngio.py; PNGs are generated from src/ui_pixels.json, not exported from the Design page"
+  },
+  "assets": [
+    {
+      "id": "ui_panel_9slice_16",
+      "file": "ui_panel_9slice_16.png",
+      "cell": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        8,
+        8
+      ],
+      "alpha": "binary",
+      "borders": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "sha256": "9622bf5873ebb5673b19fb6181a5e694c53d751b95fa92c71757e542175f9733",
+      "states": [
+        "default"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_card_9slice_24",
+      "file": "ui_card_9slice_24.png",
+      "cell": [
+        24,
+        24
+      ],
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        12,
+        12
+      ],
+      "alpha": "binary",
+      "borders": [
+        6,
+        6,
+        6,
+        6
+      ],
+      "sha256": "cb5a0b3ca4d889fe7e90a5f037aa5ea672832e9ed41e24602c3bc080cac69cfd",
+      "states": [
+        "normal",
+        "focus",
+        "pressed",
+        "disabled"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_button_9slice_16",
+      "file": "ui_button_9slice_16.png",
+      "cell": [
+        16,
+        16
+      ],
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        8,
+        8
+      ],
+      "alpha": "binary",
+      "borders": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "sha256": "e0e8468c7ae3c12e866688f67cd462e57983473fe555a40e4c7de22728e43ad1",
+      "states": [
+        "normal",
+        "focus",
+        "pressed",
+        "disabled"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_arrow_6x9",
+      "file": "ui_arrow_6x9.png",
+      "cell": [
+        6,
+        9
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        3,
+        4
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "b09843425be2778d946259d3e39c7a603721d1ce9c89db7c5f2f18fbce9d72dc",
+      "states": [
+        "default"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_slot_18",
+      "file": "ui_slot_18.png",
+      "cell": [
+        18,
+        18
+      ],
+      "frames": 4,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        9,
+        9
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "86f1a9e3bc3a0429b494832f0648bc2a81b364a0b1dc94eeb8aa92a84230c8a5",
+      "states": [
+        "empty",
+        "filled",
+        "new",
+        "max"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_pip_2",
+      "file": "ui_pip_2.png",
+      "cell": [
+        2,
+        2
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        1,
+        1
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "ca95efcb862819844729637fe27ea40b423176bb40aaa9d60773479c2ae68a88",
+      "states": [
+        "off",
+        "on"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_bar-frame_9slice_8x6",
+      "file": "ui_bar-frame_9slice_8x6.png",
+      "cell": [
+        8,
+        6
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        4,
+        3
+      ],
+      "alpha": "binary",
+      "borders": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "sha256": "4d11fb7fa97152140b7f34b7113f1fca5262a542f0c557017b55adbd1854116e",
+      "states": [
+        "default"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_bar-xp_tile_1x4",
+      "file": "ui_bar-xp_tile_1x4.png",
+      "cell": [
+        1,
+        4
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        0,
+        2
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "15cfc08bddc0ddf2d784740b47aed97350376ebbfdd4f834311b017c483d39c4",
+      "states": [
+        "back",
+        "fill"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_bar-hp_tile_1x2",
+      "file": "ui_bar-hp_tile_1x2.png",
+      "cell": [
+        1,
+        2
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        0,
+        1
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "7bc48242574a2cdf060b37ae9c0dd14b7e701827e7f7ac443c6f496e584499aa",
+      "states": [
+        "back",
+        "fill"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_swatch_12",
+      "file": "ui_swatch_12.png",
+      "cell": [
+        12,
+        12
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        6,
+        6
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "226b8d86faa4ea3e8682862abd1d56b93af2c69eec938184ebd705b775829ec0",
+      "states": [
+        "normal",
+        "selected"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_badge-evolve_8",
+      "file": "ui_badge-evolve_8.png",
+      "cell": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        4,
+        4
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "e3bbe20f83845ae0b779b6f8398f39617851539a010a13aba57e9c6bc839cf54",
+      "states": [
+        "default"
+      ],
+      "new": false
+    },
+    {
+      "id": "ui_keycap_9slice_12",
+      "file": "ui_keycap_9slice_12.png",
+      "cell": [
+        12,
+        12
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        6,
+        6
+      ],
+      "alpha": "binary",
+      "borders": [
+        3,
+        4,
+        3,
+        3
+      ],
+      "sha256": "32bfa4dd89868cf9a3ff6f1d839fac89b3aa25551f158c5d878398abc2bed545",
+      "states": [
+        "normal",
+        "focus"
+      ],
+      "new": true
+    },
+    {
+      "id": "ui_chip_9slice_8",
+      "file": "ui_chip_9slice_8.png",
+      "cell": [
+        8,
+        8
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        4,
+        4
+      ],
+      "alpha": "binary",
+      "borders": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "sha256": "d149b1a52473b98ff2510b13c1e02e461d07b4ce780e1655d7bf247edba3feeb",
+      "states": [
+        "tag",
+        "danger"
+      ],
+      "new": true
+    },
+    {
+      "id": "ui_bar-boss_tile_1x4",
+      "file": "ui_bar-boss_tile_1x4.png",
+      "cell": [
+        1,
+        4
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        0,
+        2
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "1b5628b47b6aaf79099ab264b5542729407f993581776306f84d8483a3f44d20",
+      "states": [
+        "back",
+        "fill"
+      ],
+      "new": true
+    },
+    {
+      "id": "ui_rule_tile_2x1",
+      "file": "ui_rule_tile_2x1.png",
+      "cell": [
+        2,
+        1
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        0,
+        0
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "2ae5e32451f5ba8f4cb6cb11825b98933aced02a55884ef61af8f74f56b7aace",
+      "states": [
+        "bronze",
+        "ink"
+      ],
+      "new": true
+    }
+  ]
+}

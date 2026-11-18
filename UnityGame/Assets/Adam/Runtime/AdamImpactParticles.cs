@@ -67,28 +67,37 @@ namespace BibleSurvivor.Unity
             if(!host.CanPlay){Consume(view);return;} // Freeze existing particles during pause/choice/background, discard late batches.
             ParticleCount=0;
             foreach(var slot in slots){slot.Simulate(Mathf.Clamp(delta,0,.1f),false,false,false);slot.Pause(false);ParticleCount+=slot.particleCount;}
+            var chips=0;
             foreach(var impact in view.FrameImpacts)
             {
                 if(impact.Sequence<=cursor)continue;cursor=impact.Sequence;
                 if(impact.TargetId==0 || (impact.Cause!="bible" && impact.Cause!="jawbone" && impact.Cause!="sling"))continue;
+                var count=impact.Cause=="jawbone"?ChipCount(impact.Killed):4;if(chips+count>18)continue;
                 var priority=impact.Killed?2:1;var found=-1;
                 for(var i=0;i<slots.Length;i++){var candidate=(next+i)%slots.Length;if(slots[candidate].particleCount==0){found=candidate;break;}}
                 if(found<0 && priority==2)for(var i=0;i<slots.Length;i++){var candidate=(next+i)%slots.Length;if(priorities[candidate]<priority){found=candidate;break;}}
                 if(found<0){Dropped++;continue;}next=(found+1)%slots.Length;var ps=slots[found];
                 ParticleCount-=ps.particleCount;ps.Stop(false,ParticleSystemStopBehavior.StopEmittingAndClear);priorities[found]=priority;
-                var count=impact.Killed?12:impact.Cause=="jawbone"?8:impact.Cause=="bible"?6:4;
-                var color=impact.Killed?new Color32(247,220,133,255):impact.Cause=="bible"?new Color32(247,220,133,255):impact.Cause=="jawbone"?new Color32(182,138,101,255):new Color32(230,224,211,255);
+                var axis=ImpactAxis(new Vector2(impact.Position.X,impact.Position.Y),new Vector2(view.Snapshot.PlayerX,view.Snapshot.PlayerY));
+                if(impact.Cause=="sling")axis=view.VisualQuality.ImpactDirection(new Vector2(impact.Position.X,impact.Position.Y),axis);
+                if(impact.Cause=="bible")axis=new Vector2(-axis.y,axis.x);
                 for(var i=0;i<count;i++)
                 {
-                    var angle=(impact.Sequence*.618+i/(double)count)*Math.PI*2;var speed=impact.Cause=="jawbone"?.9f:1.6f;
-                    ps.Emit(new ParticleSystem.EmitParams{position=new Vector3(impact.Position.X,impact.Position.Y,0),velocity=new Vector3((float)Math.Cos(angle),(float)Math.Sin(angle),0)*speed,
-                        startSize=impact.Cause=="jawbone"?.075f:.045f,startLifetime=impact.Killed?.22f:impact.Cause=="jawbone"?.2f:.13f,startColor=color},1);
+                    var velocity=ChipVelocity(axis,i,count,impact.Cause=="sling"?1.15f:impact.Cause=="bible"?.6f:.75f,impact.Cause=="sling"?30:impact.Cause=="bible"?35:50);
+                    var color=i%2==0?new Color32(182,138,101,255):new Color32(220,204,164,255);
+                    ps.Emit(new ParticleSystem.EmitParams{position=new Vector3(impact.Position.X,impact.Position.Y,0),velocity=new Vector3(velocity.x,velocity.y,0),
+                        startSize=impact.Cause=="jawbone"?.09f:impact.Cause=="sling"?.055f:.045f,startLifetime=impact.Cause=="jawbone"?.16f:.12f,startColor=color},1);
                 }
+                chips+=count;
                 // Manual paused simulation does not reliably refresh Unity's automatic world culling bound.
                 renderers[found].bounds=new Bounds(new Vector3(impact.Position.X,impact.Position.Y,0),new Vector3(2,2,2));
                 ps.Pause(false);ParticleCount+=count;EmittedImpacts++;
             }
         }
+        public static int ChipCount(bool killed)=>killed?10:6;
+        public static Vector2 ImpactAxis(Vector2 impact,Vector2 player)=>(impact-player).sqrMagnitude>1e-8f?(impact-player).normalized:Vector2.right;
+        public static Vector2 ChipVelocity(Vector2 axis,int index,int count,float speed,float cone=50)
+        {var angle=Mathf.Atan2(axis.y,axis.x)+Mathf.Lerp(-cone,cone,count>1?index/(float)(count-1):.5f)*Mathf.Deg2Rad;return new Vector2(Mathf.Cos(angle),Mathf.Sin(angle))*speed;}
         // Called in Update using the same viewport as OnGUI, so the automatic URP camera renders before GUI composition.
         public void Prepare(AdamWorldProjection projection)
         {

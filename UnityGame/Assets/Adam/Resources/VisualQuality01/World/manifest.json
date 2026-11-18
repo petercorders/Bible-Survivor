@@ -1,0 +1,391 @@
+{
+  "schema": "bible-survivors.visual-quality-art",
+  "schemaVersion": 1,
+  "bundle": "world",
+  "ppu": 32,
+  "pivotSpace": "bottom-left-pixel-edge",
+  "borderOrder": "left,bottom,right,top",
+  "status": "production-draft",
+  "independentReview": "PENDING",
+  "productCopy": "NOT_RUN",
+  "frameLayout": "horizontal strip, frame 0 at left",
+  "transparent": "alpha 0 pixels have RGB 0",
+  "importer": {
+    "filterMode": "Point",
+    "mipmaps": false,
+    "compression": "none",
+    "ppu": 32
+  },
+  "notes": {
+    "file": "file is relative to this manifest",
+    "existingIds": "fps/loop/borders/sorting/quality of the 11 existing IDs are the art03 index values (the outer contract omits them); cell, frame count, frame order, pivot and alpha policy are unchanged",
+    "pathMask": "til_eden_path-16mask_static_32 frame index = mask = N*1 + E*2 + S*4 + W*8 (bit set when that neighbour cell is path), same as AdamArtWorld.PathMask; the path outline per frame equals art03",
+    "tiles": "all tiles are fully opaque (alphaValues [255]) as in art03; every grass-facing edge is plain base grass so any grass/meadow/path tile can sit next to any other without rotation or flip",
+    "shadows": "two-tone #1B1424: outer alpha 51 (20%), inner alpha 77 (30%); outer silhouette equals art03. Alpha 77 comes from tokens.json color.world.shadow.inner and is not a master-v0.3 palette entry",
+    "canopy": "new optional-fx GroundDecal, alpha 51 only; shade is solid at the bottom-left pivot corner and steps away from it. Other corners need flipX/flipY about the pivot. Draw above ground tiles and below shadows/actors/pickups/telegraphs; skip in lowFX; keep out of the centre 60% of the arena"
+  },
+  "provenance": {
+    "direction": "Claude Design canvas KX2wBLHRncNVKvwZPLuHBG and art-visual-quality-01/tokens.json (color.world)",
+    "pixels": "Pixel-source grids written by rules that Claude Fable 5.2 (claude-fable-5-2) authored in this session (scripts/author.py -> src/world_pixels.json), following the canvas direction. Not an export of the Design page.",
+    "png": "scripts/build.py with unchanged art03 px03.py/pngio.py; PNGs are generated from src/world_pixels.json"
+  },
+  "assets": [
+    {
+      "id": "til_eden_grass-a_static_32",
+      "file": "til_eden_grass-a_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "af4b19219b8aa281b77a7e40d777aadb2c6cbed6fe1d3ef33421989dd164df2d",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_grass-b_static_32",
+      "file": "til_eden_grass-b_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "e54212bf13fc7ddd48e680cc261fd4e40bc1defe63d3d653bf31b19d1c09019a",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_grass-c_static_32",
+      "file": "til_eden_grass-c_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "e37a1249be088aa766006507519980ec1808e6cf10bdedb52c126fa611301fdf",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_grass-d_static_32",
+      "file": "til_eden_grass-d_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "d3d60dd9137ccae952fa19cd510be53c9ebef87f1aca4e47bbea4ee6aea59476",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_meadow-a_static_32",
+      "file": "til_eden_meadow-a_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "1249fd23828f95ffb957f8cf83dfbd122dab52eb32126c7d80ddeafe98304a84",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_meadow-b_static_32",
+      "file": "til_eden_meadow-b_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "8650d341efc25a49c39ea09a0cb17d8261ec4f8ec159edbc22bb3a2a037bde79",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "til_eden_path-16mask_static_32",
+      "file": "til_eden_path-16mask_static_32.png",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 16,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        16,
+        16
+      ],
+      "alpha": "binary",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "449eed226cf0a5e0c4e8d9881804806453ac5a246624bbbd6fa07062124ac34c",
+      "alphaValues": [
+        255
+      ],
+      "sorting": "Ground",
+      "quality": "terrain",
+      "new": false
+    },
+    {
+      "id": "fx_shadow_static_16x6",
+      "file": "fx_shadow_static_16x6.png",
+      "cell": [
+        16,
+        6
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        8,
+        3
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "a37d2f9ba29ff4e1bc2890408eb2345b6f9700dedf04437c52892b1d190d9083",
+      "alphaValues": [
+        0,
+        51,
+        77
+      ],
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "new": false
+    },
+    {
+      "id": "fx_shadow-snake_static_20x4",
+      "file": "fx_shadow-snake_static_20x4.png",
+      "cell": [
+        20,
+        4
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        10,
+        2
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "9a0cca16110b8dc0b7b5d08bbe9d0e72a18bc877cabd66e9beb91b150f5a7fc8",
+      "alphaValues": [
+        0,
+        51,
+        77
+      ],
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "new": false
+    },
+    {
+      "id": "fx_shadow-wide_static_24x6",
+      "file": "fx_shadow-wide_static_24x6.png",
+      "cell": [
+        24,
+        6
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        12,
+        3
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "a2eca1e578321425c6ea5f14b2b266e652b35c1db03693983d997757eebaf918",
+      "alphaValues": [
+        0,
+        51,
+        77
+      ],
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "new": false
+    },
+    {
+      "id": "fx_shadow-small_static_12x4",
+      "file": "fx_shadow-small_static_12x4.png",
+      "cell": [
+        12,
+        4
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        6,
+        2
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "5dd790a6349491d967ed63b84fe38dd35b0bcb91ec66749186cb1cb717e046ed",
+      "alphaValues": [
+        0,
+        51,
+        77
+      ],
+      "sorting": "GroundDecal",
+      "quality": "core",
+      "new": false
+    },
+    {
+      "id": "dec_eden_canopy-shade_static_64",
+      "file": "dec_eden_canopy-shade_static_64.png",
+      "cell": [
+        64,
+        64
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "pivot": [
+        0,
+        0
+      ],
+      "alpha": "blend",
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "sha256": "0ba1f03d72581e117a710a573a23d440ff84b1ecc839ed226877e49ed0d441b8",
+      "alphaValues": [
+        0,
+        51
+      ],
+      "sorting": "GroundDecal",
+      "quality": "optional-fx",
+      "new": true
+    }
+  ]
+}

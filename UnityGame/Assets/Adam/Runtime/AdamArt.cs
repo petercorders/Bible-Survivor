@@ -35,6 +35,7 @@ namespace BibleSurvivor.Unity
         { using(var sha=SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "").ToLowerInvariant()==IndexSha; }
         public const string ManifestSha = "0c7f6ff0b86d83217beedf62f298294cd6c01c036ab589e2abed383c1e429751";
         public readonly AdamArtIndex Index;
+        public readonly Sprite JawboneClub;
         readonly Dictionary<string, AdamArtClip> clips = new Dictionary<string, AdamArtClip>();
         readonly Dictionary<string, Sprite[]> sprites = new Dictionary<string, Sprite[]>();
         public bool OptionalEffects = true;
@@ -62,6 +63,8 @@ namespace BibleSurvivor.Unity
                 sprites.Add(clip.id, frames);
             }
             AdamBibleArtSidecar.Apply(clips, sprites);
+            JawboneClub=AdamJawboneArt.Load(sprites);
+            AdamVisualQualityArt.Apply(clips,sprites);
         }
         public AdamArtClip Clip(string id) => clips[id];
         public Sprite Sprite(string id, int frame) => sprites[id][Mathf.Clamp(frame, 0, clips[id].frames - 1)];

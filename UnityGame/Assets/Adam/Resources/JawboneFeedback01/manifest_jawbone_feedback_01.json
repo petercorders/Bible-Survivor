@@ -1,0 +1,87 @@
+{
+  "schema": "bible-survivors.art-manifest-jawbone-feedback-01",
+  "schemaVersion": 1,
+  "revision": 2,
+  "status": "production-draft",
+  "independent_review": "PENDING",
+  "product_copy": "NOT_RUN",
+  "provenance": "Codex script pixels; no Claude Design, imagegen, or canvas used",
+  "public_whitelist": [
+    "export/wpn_jawbone-club_held_32.png",
+    "export/ico_wpn_jawbone-club_static_16.png",
+    "export/manifest_jawbone_feedback_01.json"
+  ],
+  "source": "src/jawbone_pixels.json",
+  "contract": "src/contract.json",
+  "assets": [
+    {
+      "name": "wpn_jawbone-club_held_32",
+      "cell": [
+        32,
+        32
+      ],
+      "fps": 0,
+      "loop": false,
+      "pivot_px_bottom_left": [
+        7.5,
+        11.5
+      ],
+      "grip_pixel_top_left": [
+        7,
+        20
+      ],
+      "baseline_direction": [
+        1,
+        0
+      ],
+      "file": "export/wpn_jawbone-club_held_32.png",
+      "frame_count": 1,
+      "ppu": 32,
+      "filter": "Point",
+      "compression": "None",
+      "mipmaps": false,
+      "alpha": "binary",
+      "opaque_color_count": 7,
+      "bbox_top_left_inclusive": [
+        2,
+        12,
+        30,
+        25
+      ],
+      "sha256": "51f4364ebe5c9b25fc6c8aba192acfa55fb4554958c01b5318851494e1304a6e"
+    },
+    {
+      "name": "ico_wpn_jawbone-club_static_16",
+      "cell": [
+        16,
+        16
+      ],
+      "fps": 0,
+      "loop": false,
+      "pivot_px_bottom_left": [
+        8,
+        8
+      ],
+      "grip_pixel_top_left": null,
+      "baseline_direction": [
+        1,
+        0
+      ],
+      "file": "export/ico_wpn_jawbone-club_static_16.png",
+      "frame_count": 1,
+      "ppu": 32,
+      "filter": "Point",
+      "compression": "None",
+      "mipmaps": false,
+      "alpha": "binary",
+      "opaque_color_count": 7,
+      "bbox_top_left_inclusive": [
+        1,
+        2,
+        15,
+        12
+      ],
+      "sha256": "847297b86a862e4279dd77434a2ef806342fc87cb54ffd3196d926a454720245"
+    }
+  ]
+}

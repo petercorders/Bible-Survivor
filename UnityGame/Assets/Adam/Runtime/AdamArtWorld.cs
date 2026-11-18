@@ -8,6 +8,8 @@ namespace BibleSurvivor.Unity
     // Read-only projection of BattleWorld. No collisions, damage callbacks, timers or random calls enter the core.
     public sealed class AdamArtWorld : IDisposable
     {
+        public readonly AdamJawboneSwing JawboneSwing=new AdamJawboneSwing();
+        public readonly AdamVisualQualityWorld VisualQuality=new AdamVisualQualityWorld();
         AdamR02Art r02;
         AdamR03Art r03;
         AdamR04Art r04;
@@ -107,6 +109,8 @@ namespace BibleSurvivor.Unity
         long impactCursor;
         public bool EnemyReacting(int id) => reactions.TryGetValue(id,out var until) && Clock<until;
         public const double HitFlashSeconds=.04;
+        public int ContactStars
+        {get{var count=0;foreach(var effect in Effects)if(effect.Active&&effect.Clip=="fx_hit-spark_hit_16"&&Clock-effect.Started<.2)count++;return count;}}
         public float EnemyFlashOpacity(int id) => FeedbackEnabled && reactions.TryGetValue(id,out var until) &&
             Clock<until && until-Clock>.09-HitFlashSeconds+1e-9 ? .65f : 0;
         public static Matrix4x4 ReactionMatrix(Vector2 feet,float strength) => Matrix4x4.Translate(feet)*
@@ -122,6 +126,9 @@ namespace BibleSurvivor.Unity
             impactCursor=source.ImpactSequence;reportedKills.Clear();
             var next=source.Capture();var active=host.Session.IsActive;var monsters=host.Session.Wave?.Active;
             var nextBoss=host.Session.Boss;
+            VisualQuality.Observe(next);
+            if(host.Session.Inventory.Weapons.ContainsKey("jawbone"))
+                JawboneSwing.Observe(next,host.Session.AttackProfile("jawbone").Amount,WeaponRules.Get("jawbone",host.Session.Inventory.Weapons["jawbone"]).BurstInterval);
             if(bossVisual!=null && nextBoss!=null)
             {
                 if(nextBoss.NextAttackAt>bossVisual.NextAttackAt)bossImpactAt=next.Time;
@@ -149,14 +156,8 @@ namespace BibleSurvivor.Unity
                     var position=new Vector2(impact.Position.X,impact.Position.Y);
                     if(impact.TargetId==0)
                     {PlayerHitUntil=Clock+.1;effectPool.Emit("fx_hit-spark_hit_16",position,Clock,2);continue;}
-                    if(FeedbackEnabled) {Emit("fx_hit-spark_hit_16",position);reactions[impact.TargetId]=Clock+.09;}
-                    if(impact.Killed){reportedKills.Add(impact.TargetId);Emit("fx_enemy-death_burst_32",position);}
-                }
-                if(active && monsters!=null)
-                {
-                    foreach(var pair in previousPositions)
-                        if(!monsters.ContainsKey(pair.Key) && !reportedKills.Contains(pair.Key)) Emit("fx_enemy-death_burst_32",pair.Value);
-                    // Direct Session.Kill callers can still remove an enemy without a World impact. Never infer hit sounds/sparks from HP deltas.
+                    if(FeedbackEnabled) {if(ContactStars<3)Emit("fx_hit-spark_hit_16",position);reactions[impact.TargetId]=Clock+.09;}
+                    if(impact.Killed){reportedKills.Add(impact.TargetId);if(FeedbackEnabled)Emit("fx_enemy-death_burst_32",position);}
                 }
                 previousPositions.Clear();
                 foreach(var enemy in next.Enemies) previousPositions[enemy.Id]=new Vector2(enemy.X,enemy.Y);
@@ -182,6 +183,7 @@ namespace BibleSurvivor.Unity
         public double PlayerSeconds => PlayerMotion=="death" ? Math.Max(0,Clock-deathAt) : Clock;
         public void Clear()
         {
+            JawboneSwing.Clear();VisualQuality.Clear();
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
@@ -245,15 +247,20 @@ namespace BibleSurvivor.Unity
             for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
             for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
             {
-                var variation=(int)((uint)(x*73856093^y*19349663)%4);
-                art.Draw("til_eden_grass-"+(char)('a'+variation)+"_static_32",Point(x+.5f,y+.5f),scale);
+                art.Draw(AdamVisualQualityWorld.Ground(x,y),Point(x+.5f,y+.5f),scale);
                 if(PathCell(x,y)) art.Draw("til_eden_path-16mask_static_32",Point(x+.5f,y+.5f),scale,frame:PathMask(x,y));
             }
             for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
             for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
                 if(!PathCell(x,y) && (uint)(x*73856093^y*19349663)%5==0)
                     art.Draw((x+y)%2==0?"dec_eden_tuft-1_11x8":"dec_eden_flowers-1_16x10",Point(x+.5f,y+.2f),scale);
+            AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
+            // Optional hit smoke/chips stay below XP, actors, weapons and required telegraphs.
+            particles?.Draw(projection);
+            foreach(var effect in Effects)
+                if((FeedbackEnabled||effect.Priority==2) && effect.Active && Clock-effect.Started<art.Clip(effect.Clip).frames/(double)art.Clip(effect.Clip).fps)
+                    art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
             if(host.Session.IsActive)
             {
                 var monsters=host.Session.Targets;var experience=host.Session.DroppedExperience;
@@ -397,11 +404,10 @@ namespace BibleSurvivor.Unity
                 else if(bossVisual.Rules.Number==6){if(r06==null)r06=new AdamR06Art();r06.Draw(AdamR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else{if(r03==null)r03=new AdamR03Art();r03.Draw(AdamR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
             }
-            // Transparent particles sit above terrain/enemies but below actor/weapons and every HUD/modal control.
-            particles?.Draw(projection);
+
             // All six layers share ONE parent reflection about the registered feet pivot.
             var feet=Point(snap.PlayerX,snap.PlayerY); var matrix=GUI.matrix;
-            if(PlayerLeft) GUI.matrix=matrix*Matrix4x4.Translate(new Vector3(feet.x,feet.y,0))*Matrix4x4.Scale(new Vector3(-1,1,1))*Matrix4x4.Translate(new Vector3(-feet.x,-feet.y,0));
+            if(PlayerLeft) GUI.matrix=matrix*FacingMatrix(feet+arena.position,Vector2.left);
             var playerTint=GUI.color;
             if(Clock<PlayerHitUntil) GUI.color=new Color(1,.4f,.4f,1);
             foreach(var layer in art.Index.layers)
@@ -411,11 +417,12 @@ namespace BibleSurvivor.Unity
             foreach(var p in snap.Projectiles)
             {
                 var anchor=Point(p.X,p.Y);var before=GUI.matrix;
-                GUI.matrix=before*FacingMatrix(anchor,new Vector2(p.VelocityX,p.VelocityY));
-                art.Draw("fx_sling-trail_static_20x8",anchor,scale);
+                GUI.matrix=before*FacingMatrix(anchor+arena.position,new Vector2(p.VelocityX,p.VelocityY));
+                if(FeedbackEnabled){var length=AdamVisualQualityWorld.TrailPixels(p,scale);AdamArt.Blit(art.Sprite("fx_sling-trail_static_20x8",0),new Rect(anchor.x-length,anchor.y-4*scale,length,8*scale));}
                 art.Draw("wpn_sling-stone_spin_8",anchor,scale,Clock);
                 GUI.matrix=before;
             }
+            VisualQuality.SlingRelease(arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
             foreach(var weapon in snap.Weapons)
             {
                 if(weapon.WeaponId=="bible" && weapon.ActiveUntil>snap.Time)
@@ -431,23 +438,17 @@ namespace BibleSurvivor.Unity
                 }
                 if(weapon.WeaponId=="jawbone")
                 {
-                    var at=LatestJawboneBurst(weapon,snap.Time,host.Session.AttackProfile("jawbone").Amount,
-                        WeaponRules.Get("jawbone",host.Session.Inventory.Weapons["jawbone"]).BurstInterval);
-                    var elapsed=snap.Time-at;
-                    if(at<0 || elapsed>=.2)continue;
-                    var pos=Point(snap.PlayerX,snap.PlayerY);var before=GUI.matrix;
-                    GUI.matrix=before*FacingMatrix(pos,new Vector2(snap.FacingX,snap.FacingY));
-                    art.Draw("fx_jawbone-swing-trail_hit_64",pos,scale,elapsed);
-                    art.Draw("fx_jawbone-swing-edge_hit_64",pos,scale,elapsed);
-                    var clip=art.Clip("fx_jawbone-swing-edge_hit_64");var frame=clip.Frame(elapsed);
-                    var attached=pos+new Vector2(clip.attachX[frame]-clip.pivotX,clip.attachY[frame]-(clip.height-clip.pivotY))*scale;
-                    art.Draw("wpn_jawbone_held_16",attached,scale);
-                    GUI.matrix=before;
+                    AdamVisualQualityWorld.SwingFx(art,JawboneSwing,arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
+                    JawboneSwing.Draw(art,arena,feet,scale,PlayerLeft,snap.Time,
+                        (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled);
                 }
             }
-            foreach(var effect in Effects)
-                if(effect.Active && Clock-effect.Started<art.Clip(effect.Clip).frames/(double)art.Clip(effect.Clip).fps)
-                    art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
+            if(FeedbackEnabled)
+            {
+                if(snap.Charges!=null)foreach(var charge in snap.Charges){AdamChargeGeometry band;var visible=host.Session.RoundNumber==12?AdamChariotWarning.TryNormalGeometry(snap,charge,out band):AdamChargeLane.TryGeometry(snap,charge,out band);if(visible)AdamVisualQualityWorld.WarningBand(projection,band,true);}
+                for(var direction=0;direction<3;direction++)if(TryChainGeometry(snap,bossVisual,host.Session.Stage,direction,out var band))AdamVisualQualityWorld.WarningBand(projection,band,true);
+                if(AdamChariotWarning.TryBossGeometry(chariotVisual,out var bossBand))AdamVisualQualityWorld.WarningBand(projection,bossBand,true);
+            }
             if(bossVisual?.Telegraphing==true && !bossVisual.Rules.UsesChainProjectiles && !bossVisual.Rules.IsChariot && host.Session.Stage=="boss")
                 danger.Draw(projection,new Vector2(bossVisual.TargetX,bossVisual.TargetY),(float)BossDefinition.SlamRadius);
             if(snap.Charges!=null)foreach(var charge in snap.Charges)

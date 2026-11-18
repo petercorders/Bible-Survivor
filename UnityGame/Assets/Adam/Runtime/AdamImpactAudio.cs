@@ -36,14 +36,34 @@ namespace BibleSurvivor.Unity
         public static float[] Samples(string weapon)
         {
             var index=Array.IndexOf(Weapons,weapon);if(index<0)throw new ArgumentException("Unknown impact weapon");
-            var length=index==1?.14:.095;var samples=new float[(int)(SampleRate*length)];uint noise=0x514e3a7u;
+            var length=index==1?.16:index==0?.105:.115;var samples=new float[(int)(SampleRate*length)];uint noise=0x514e3a7u;
+            var lowNoise=0d;
             for(var n=0;n<samples.Length;n++)
             {
-                var t=n/(double)SampleRate;var envelope=Math.Min(1,t/.002)*Math.Exp(-t*(index==1?35:55));
+                var t=n/(double)SampleRate;
                 noise^=noise<<13;noise^=noise>>17;noise^=noise<<5;var grit=(noise/(double)uint.MaxValue*2-1);
-                var tone=index==0 ? Math.Sin(2*Math.PI*740*t)+.35*Math.Sin(2*Math.PI*1180*t) :
-                    index==1 ? Math.Sin(2*Math.PI*(120*t-90*t*t))+.6*grit : .6*Math.Sin(2*Math.PI*1900*t)+.7*grit;
-                samples[n]=(float)(.35*envelope*tone);
+                if(index==1)
+                {
+                    lowNoise=lowNoise*.88+grit*.12;
+                    var body=Math.Sin(2*Math.PI*(100*t-135*t*t))*.7+Math.Sin(2*Math.PI*58*t)*.3;
+                    var tap=grit*Math.Exp(-t*480)*.45;
+                    samples[n]=(float)(.7*Math.Min(1,t/.001)*(body*Math.Exp(-t*31)+lowNoise*Math.Exp(-t*50)*.45+tap));
+                }
+                else if(index==0)
+                {
+                    lowNoise=lowNoise*.65+grit*.35;
+                    var page=(grit-lowNoise)*Math.Exp(-t*85);
+                    var contact=Math.Sin(2*Math.PI*620*t)*Math.Exp(-t*65);
+                    samples[n]=(float)(.55*Math.Min(1,t/.0015)*(page*.6+contact*.45));
+                }
+                else
+                {
+                    lowNoise=lowNoise*.8+grit*.2;
+                    var crack=(grit-lowNoise)*Math.Exp(-t*160);
+                    var stone=Math.Sin(2*Math.PI*(270*t-280*t*t))*Math.Exp(-t*55);
+                    var tick=Math.Sin(2*Math.PI*1650*t)*Math.Exp(-t*220);
+                    samples[n]=(float)(.65*Math.Min(1,t/.0008)*(crack*.4+stone*.65+tick*.3));
+                }
             }
             return samples;
         }
@@ -61,7 +81,7 @@ namespace BibleSurvivor.Unity
                 var source=voices[slot];source.clip=clips[kind];
                 var distance=UnityEngine.Vector2.Distance(new UnityEngine.Vector2(impact.Position.X,impact.Position.Y),
                     new UnityEngine.Vector2(view.Snapshot.PlayerX,view.Snapshot.PlayerY));
-                source.volume=Mathf.Clamp01(Volume)*Mathf.Clamp01(1-distance/20f);
+                source.volume=Mathf.Clamp01(Volume*(kind==1?1.15f:1))*Mathf.Clamp01(1-distance/20f);
                 source.pitch=1;source.Play();ends[slot]=view.Clock+clips[kind].length;last[kind]=view.Clock;ActiveVoices++;PlayedCount++;
             }
         }
