@@ -22,6 +22,7 @@ namespace BibleSurvivor.Unity
     // Final reviewed overlay. Resources owns imported textures; no Core state or original index is changed.
     public static class AdamVisualQualityArt
     {
+        public const string FrontispieceRoot="VisualQuality03Frontispiece/",FrontispieceManifestSha="9e36c6c12cd2fff0699e8eb798552f9ddec8ab23aaf306b6ccc2f18d245cd24e";
         public const string BookRoot="VisualQuality03/",BookManifestSha="a9e7b7b8c1b8293bc69f23b56a9aa79831553f5f18416194eb8122f725bb568c";
         public const string Root="VisualQuality01/",PolishRoot="VisualQuality02/",PolishManifestSha="23b25655a3e80920a5086df978a144ceb3e367ea2be0f1d9d5971bfed9f539c8";
         public const string UiManifestSha="cdf356aeef006982aed99c2c7adcee2cb0cff1817a4681d30a6632965642448b",WorldManifestSha="9dc1c57aa5b5dc72ab0d1b47c500318b553a4631eb932a375cebc03889c20d9c",EffectsManifestSha="e6aec4f76b3b679af00dc6f2c61cd705ccbc1f78240049396abd663b56d7c47b";
@@ -30,7 +31,7 @@ namespace BibleSurvivor.Unity
         static AdamVisualQualityArt(){Application.quitting+=Release;}
         static Dictionary<string,AdamArtClip> clips;
         static Dictionary<string,Sprite[]> sprites;
-        public static string ManifestSha(string bundle)=>bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:bundle=="Book03"?BookManifestSha:bundle=="Polish02"?PolishManifestSha:throw new InvalidOperationException("Unknown visual bundle");
+        public static string ManifestSha(string bundle)=>bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:bundle=="Frontispiece03"?FrontispieceManifestSha:bundle=="Book03"?BookManifestSha:bundle=="Polish02"?PolishManifestSha:throw new InvalidOperationException("Unknown visual bundle");
         public static string[] Ids(string bundle)
         {
             switch(bundle)
@@ -38,6 +39,7 @@ namespace BibleSurvivor.Unity
                 case "UI":return new[]{"ui_panel_9slice_16","ui_card_9slice_24","ui_button_9slice_16","ui_arrow_6x9","ui_slot_18","ui_pip_2","ui_bar-frame_9slice_8x6","ui_bar-hp_tile_1x2","ui_bar-xp_tile_1x4","ui_swatch_12","ui_badge-evolve_8","ui_keycap_9slice_12","ui_chip_9slice_8","ui_bar-boss_tile_1x4","ui_rule_tile_2x1"};
                 case "World":return new[]{"til_eden_grass-a_static_32","til_eden_grass-b_static_32","til_eden_grass-c_static_32","til_eden_grass-d_static_32","til_eden_meadow-a_static_32","til_eden_meadow-b_static_32","til_eden_path-16mask_static_32","fx_shadow_static_16x6","fx_shadow-snake_static_20x4","fx_shadow-wide_static_24x6","fx_shadow-small_static_12x4","dec_eden_canopy-shade_static_64"};
                 case "Effects":return new[]{"fx_hit-spark_hit_16","fx_enemy-death_burst_32","fx_jawbone-swing-trail_hit_64","fx_jawbone-swing-edge_hit_64"};
+                case "Frontispiece03":return new[]{"bg_book-horizon_static_400x55","ui_band-fade_static_16x55"};
                 case "Book03":return new[]{"til_exodus_sand-a_static_32","til_exodus_sand-b_static_32","til_exodus_sand-c_static_32","til_exodus_sand-d_static_32","til_exodus_flag-a_static_32","til_exodus_flag-b_static_32","til_exodus_path-16mask_static_32","dec_exodus_pebbles-1_11x8","dec_exodus_scrub-1_16x10","dec_ground-hollow_static_64","ui_book-crest_static_32"};
                 case "Polish02":return new[]{"ico_wpn_bible_emblem_32","ico_wpn_jawbone_emblem_32","ico_wpn_sling_emblem_32","ico_atk-shape_static_16","ui_focus-bracket_9slice_12","fx_jawbone-thud_hit_24","fx_sling-windup_loop_24","fx_sling-crack_hit_16","fx_bible-page-flare_hit_16"};
                 default:throw new InvalidOperationException("Unknown visual bundle");
@@ -53,7 +55,7 @@ namespace BibleSurvivor.Unity
             var remaining=new HashSet<string>(Ids(bundle));
             foreach(var a in manifest.assets)
                 if(a==null || !remaining.Remove(a.id) || a.file!=a.id+".png" || a.cell==null || a.cell.Length!=2 || a.cell[0]<1 || a.cell[1]<1 || a.pivot==null || a.pivot.Length!=2 ||
-                    a.borders==null || a.borders.Length!=4 || a.frames<1 || a.fps<0 || string.IsNullOrEmpty(a.sha256) || (a.alpha!="binary"&&a.alpha!="blend"))throw new InvalidOperationException("Invalid visual asset "+bundle);
+                    a.borders==null || a.borders.Length!=4 || a.frames<1 || a.fps<0 || string.IsNullOrEmpty(a.sha256) || (a.alpha!="binary"&&a.alpha!="blend"&&a.alpha!="opaque"))throw new InvalidOperationException("Invalid visual asset "+bundle);
             if(remaining.Count!=0)throw new InvalidOperationException("Incomplete visual whitelist "+bundle);return manifest;
         }
         public static AdamArtClip Contract(AdamVisualAsset a,AdamArtIndex original)
@@ -67,7 +69,7 @@ namespace BibleSurvivor.Unity
                 // The authoritative attach arrays remain the original index contract.
                 if(a.attachX!=null && a.attachX.Length>0 && !Same(a.attachX,old.attachX) || a.attachY!=null && a.attachY.Length>0 && !Same(a.attachY,old.attachY))throw new InvalidOperationException("Visual attachment drift "+a.id);
             }
-            return new AdamArtClip{id=a.id,source=Root+a.id,sha256=a.sha256,width=a.cell[0],height=a.cell[1],frames=a.frames,fps=a.fps,loop=a.loop,pivotX=a.pivot[0],pivotY=a.pivot[1],alpha=a.alpha,alphaValues=a.alphaValues??new[]{0,255},borders=(int[])a.borders.Clone(),attachX=old?.attachX,attachY=old?.attachY,states=a.states,quality=a.quality??(a.id=="dec_eden_canopy-shade_static_64"||a.id=="fx_jawbone-swing-trail_hit_64"?"optional-fx":old?.quality),sorting=a.sorting??old?.sorting};
+            return new AdamArtClip{id=a.id,source=Root+a.id,sha256=a.sha256,width=a.cell[0],height=a.cell[1],frames=a.frames,fps=a.fps,loop=a.loop,pivotX=a.pivot[0],pivotY=a.pivot[1],alpha=a.alpha,alphaValues=a.alphaValues??(a.alpha=="opaque"?new[]{255}:new[]{0,255}),borders=(int[])a.borders.Clone(),attachX=old?.attachX,attachY=old?.attachY,states=a.states,quality=a.quality??(a.id=="dec_eden_canopy-shade_static_64"||a.id=="fx_jawbone-swing-trail_hit_64"?"optional-fx":old?.quality),sorting=a.sorting??old?.sorting};
         }
         static bool Same(int[] a,int[] b){if(b==null||a.Length!=b.Length)return false;for(var i=0;i<a.Length;i++)if(a[i]!=b[i])return false;return true;}
         static void Load()
@@ -78,9 +80,10 @@ namespace BibleSurvivor.Unity
             var bundles=new List<string>(Bundles);
             if(Resources.Load<TextAsset>(PolishRoot+"manifest")!=null)bundles.Add("Polish02");
             if(Resources.Load<TextAsset>(BookRoot+"manifest")!=null)bundles.Add("Book03");
+            if(Resources.Load<TextAsset>(FrontispieceRoot+"manifest")!=null)bundles.Add("Frontispiece03");
             foreach(var bundle in bundles)
             {
-                var path=bundle=="Book03"?BookRoot:bundle=="Polish02"?PolishRoot:Root+bundle+"/";
+                var path=bundle=="Frontispiece03"?FrontispieceRoot:bundle=="Book03"?BookRoot:bundle=="Polish02"?PolishRoot:Root+bundle+"/";
                 var text=Resources.Load<TextAsset>(path+"manifest");if(text==null)throw new InvalidOperationException("Missing visual manifest "+bundle);
                 foreach(var a in Parse(text.bytes,bundle).assets)
                 {

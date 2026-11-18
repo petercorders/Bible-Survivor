@@ -49,6 +49,15 @@ public class AdamPlayTests
         if (Directory.Exists(directory)) Directory.Delete(directory, true);
     }
     void Keys(params Key[] keys) { InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys)); }
+    [UnityTest] public IEnumerator FrontispieceInitializeReloadAndImmediateSelectDoNotReplayDeparture()
+    {
+        game.SetLifecycle(true,false);Assert.IsFalse(game.SortieVisible);game.SelectSlot(0);var id=game.Host.State.Run.RunId;
+        Assert.AreEqual(1,game.Host.Session.RoundNumber);game.UpdatePresentation(0);Assert.AreEqual(AdamBookTitle.Enabled,game.SortieVisible);
+        game.SelectSlot(2);Assert.AreEqual(id,game.Host.State.Run.RunId);
+        Assert.IsTrue(game.Host.Reload(),game.Host.Error);game.UpdatePresentation(0);game.Host.SetPaused(false);game.UpdatePresentation(0);
+        Assert.IsFalse(game.SortieVisible);Assert.AreEqual(id,game.Host.State.Run.RunId);
+        game.Initialize(game.Host);game.UpdatePresentation(0);Assert.IsFalse(game.SortieVisible);yield return null;
+    }
     [UnityTest] public IEnumerator KeyboardSelectionMovementPauseAndLifecycle()
     {
         Keys(Key.Digit3); yield return null; Keys(); yield return null;

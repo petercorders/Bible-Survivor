@@ -1,0 +1,105 @@
+{
+ "schema": "bible-survivors.visual-quality-art",
+ "schemaVersion": 1,
+ "bundle": "frontispiece03",
+ "ppu": 32,
+ "pivotSpace": "bottom-left-pixel-edge",
+ "borderOrder": "left,bottom,right,top",
+ "status": "production-draft",
+ "independentReview": "PENDING",
+ "productCopy": "NOT_RUN",
+ "frameLayout": "horizontal strip, frame 0 at left",
+ "transparent": "alpha 0 pixels have RGB 0",
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "ppu": 32,
+  "wrapMode": "Clamp"
+ },
+ "reuses": [
+  {
+   "id": "ui_book-crest_static_32",
+   "from": "art-visual-quality-03/production",
+   "sha256": "4c41f5cd74997cdeeecb267ec7727691efd4216fe768fe042a2030131ff721a1",
+   "note": "two frames reused unchanged; not copied into this bundle"
+  }
+ ],
+ "provenance": {
+  "author": "Claude Fable 5.2 (claude-fable-5-2), scripted pixels from src/build.py",
+  "direction": "Claude Design canvas 2DWHeDPPUJqvGD8z9Vb7K2, artboard 'Main' (book frontispiece) and the added artboard 'Frontispiece'",
+  "palette": "master-v0.3 + ink-and-bronze tokens; no new colour",
+  "note": "Script-authored game-asset candidates, not Design output."
+ },
+ "assets": [
+  {
+   "id": "bg_book-horizon_static_400x55",
+   "file": "bg_book-horizon_static_400x55.png",
+   "cell": [
+    400,
+    55
+   ],
+   "frames": 2,
+   "fps": 0,
+   "loop": false,
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "new": true,
+   "pivot": [
+    400,
+    0
+   ],
+   "alpha": "opaque",
+   "sorting": "UI",
+   "quality": "ui",
+   "states": [
+    "genesis",
+    "exodus"
+   ],
+   "stretch": {
+    "anchor": "right",
+    "tileBlockX": [
+     0,
+     8
+    ],
+    "safeColumns": 16,
+    "focalColumn": 330,
+    "note": "tile block x 0..7 to the left when the band is wider than the cell; never scale horizontally"
+   },
+   "sha256": "2c33dbc85f7669852305010d7fa24cbf7fc074a6b34caeccaf58259764c0dd58"
+  },
+  {
+   "id": "ui_band-fade_static_16x55",
+   "file": "ui_band-fade_static_16x55.png",
+   "cell": [
+    16,
+    55
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "new": true,
+   "pivot": [
+    0,
+    0
+   ],
+   "alpha": "binary",
+   "sorting": "UI",
+   "quality": "ui",
+   "states": [
+    "default"
+   ],
+   "sha256": "17475527558ff1dc03569e950aa2481e4d87a54e833c4e89233f70878162ceca"
+  }
+ ]
+}

@@ -240,7 +240,7 @@ namespace BibleSurvivor.Unity
             }
             return latest;
         }
-        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null)
+        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null)
         {
             if(Snapshot==null || source!=host.World) return;
             var exodus=AdamBookGround.Exodus(host.Session.RoundNumber);
@@ -458,6 +458,7 @@ namespace BibleSurvivor.Unity
                         (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled);
                 }
             }
+            beforeTelegraphs?.Invoke();
             if(FeedbackEnabled)
             {
                 if(snap.Charges!=null)foreach(var charge in snap.Charges){AdamChargeGeometry band;var visible=host.Session.RoundNumber==12?AdamChariotWarning.TryNormalGeometry(snap,charge,out band):AdamChargeLane.TryGeometry(snap,charge,out band);if(visible)AdamVisualQualityWorld.WarningBand(projection,band,true);}
