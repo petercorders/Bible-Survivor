@@ -8,6 +8,7 @@ namespace BibleSurvivor.Unity
     // Presentation only: all values come from the current aggregate; no local battle clock.
     public static class AdamHud
     {
+        public static bool PolishEnabled=>AdamVisualQualityArt.TryGetClip("ico_wpn_bible_emblem_32",out _);
         public static Color GuiColor(Color color)=>QualitySettings.activeColorSpace==ColorSpace.Linear?color.linear:color;
         public static readonly Color Ink0=GuiColor(new Color32(11,14,19,255)), Ink1=GuiColor(new Color32(20,25,34,255)),
             Ink2=GuiColor(new Color32(28,34,45,255)), Ink4=GuiColor(new Color32(58,69,88,255)),
@@ -23,10 +24,22 @@ namespace BibleSurvivor.Unity
         public static string Timer(double worldSeconds,double? bossElapsed)=>Clock(bossElapsed??Math.Min(180,worldSeconds));
         public static string Timer(AdamSession session,double worldSeconds)=>Timer(worldSeconds,session?.Boss?.BossElapsed);
         public static string TimerRole(AdamSession session)=>session?.Boss!=null?"보스 경과":"일반 / 3:00";
-        public static Rect Health(float width)=>new Rect(20,40,Mathf.Min(260,width*.32f),18);
+        public static Rect Health(float width)=>Health(width,PolishEnabled);
+        public static Rect Health(float width,bool polish)=>polish?new Rect(20,14,Mathf.Min(260,Mathf.Floor(width*.32f/2)*2),22):new Rect(20,40,Mathf.Min(260,width*.32f),18);
+        // At 660 the real 10000/10000 fixture cannot fit between the bar and centred timer.
+        public static Rect HealthValue(float width)=>HealthValue(width,PolishEnabled);
+        public static Rect HealthValue(float width,bool polish)=>new Rect(26,14,Health(width,polish).width-12,22);
         public static Rect TimerRect(float width)=>new Rect(width/2-66,14,132,38);
         public static Rect Pause(float width,bool mobile)=>mobile?new Rect(width-175,54,150,66):new Rect(width-146,16,126,44);
-        public static Rect Experience(float width)=>new Rect(94,86,width-114,16);
+        public static Rect Experience(float width)=>Experience(width,PolishEnabled);
+        public static Rect Experience(float width,bool polish)=>polish?new Rect(94,83,width-214,16):new Rect(94,86,width-114,16);
+        public static Rect ExperienceValue(float width)=>new Rect(width-112,80,92,22);
+        public static Rect PauseSetting(Rect panel,int slot)=>new Rect(panel.x+30+slot%2*286,panel.y+112+slot/2*44,274,36);
+        public static Rect BossBacking(float width)=>BossBacking(width,PolishEnabled);
+        public static Rect BossBacking(float width,bool polish)=>new Rect(28,117,width-56,polish?42:64);
+        public static Rect PausePanel(float width,float height)=>new Rect(width/2-310,height/2-160,620,340);
+        public static Rect PauseResume(float width,float height,bool mobile)=>PauseResume(width,height,mobile,PolishEnabled);
+        public static Rect PauseResume(float width,float height,bool mobile,bool polish)=>mobile||!polish?new Rect(width/2-125,height/2+20,250,mobile?66:56):new Rect(width/2-125,PausePanel(width,height).y+270,250,50);
         public static Rect Footer(float width,float height)=>new Rect(0,height-78,width,78);
         public static Rect InventorySlot(float height,int slot,bool weapon)
         {

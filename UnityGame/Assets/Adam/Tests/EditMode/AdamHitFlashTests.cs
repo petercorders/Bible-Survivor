@@ -42,7 +42,7 @@ public sealed class AdamHitFlashTests
             {
                 view.Update(host,0);host.Tick(1d/60);view.Update(host,0);var target=view.FrameImpacts.First(x=>x.TargetId>0&&!x.Killed).TargetId;
                 Assert.Greater(view.EnemyFlashOpacity(target),0);Assert.Zero(view.EnemyFlashOpacity(int.MaxValue));
-                view.FeedbackEnabled=false;Assert.Zero(view.EnemyFlashOpacity(target));view.FeedbackEnabled=true;
+                view.FeedbackEnabled=false;if(view.PolishEnabled)Assert.Greater(view.EnemyFlashOpacity(target),0);else Assert.Zero(view.EnemyFlashOpacity(target));view.FeedbackEnabled=true;
                 host.SetPaused(true);var clock=view.Clock;view.Update(host,10);Assert.AreEqual(clock,view.Clock);Assert.Greater(view.EnemyFlashOpacity(target),0);
                 host.SetPaused(false);for(var i=0;i<3;i++){host.Tick(1d/60);view.Update(host,0);}Assert.Zero(view.EnemyFlashOpacity(target));Assert.IsTrue(view.EnemyReacting(target),"brief flash ends before original .09s reaction");
                 host.Checkpoint();Assert.IsTrue(host.Reload());view.Update(host,0);Assert.Zero(view.EnemyFlashOpacity(target));Assert.IsFalse(view.EnemyReacting(target));view.Clear();Assert.Zero(view.EnemyFlashOpacity(target));

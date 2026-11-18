@@ -1,0 +1,287 @@
+{
+ "schema": "bible-survivors.visual-quality-art",
+ "schemaVersion": 1,
+ "bundle": "polish02",
+ "ppu": 32,
+ "pivotSpace": "bottom-left-pixel-edge",
+ "borderOrder": "left,bottom,right,top",
+ "status": "production-draft",
+ "independentReview": "PENDING",
+ "productCopy": "NOT_RUN",
+ "frameLayout": "horizontal strip, frame 0 at left",
+ "transparent": "alpha 0 pixels have RGB 0",
+ "importer": {
+  "filterMode": "Point",
+  "mipmaps": false,
+  "compression": "none",
+  "ppu": 32
+ },
+ "provenance": {
+  "author": "Claude Fable 5.2 (claude-fable-5-2), scripted pixels from src/build.py",
+  "direction": "Claude Design canvas Ld7qTArwAWyWMqZ3bQNpoh (boards show these same PNGs)",
+  "palette": "art-visual-quality-01/tokens.json; no new colours",
+  "note": "Pixels are script-authored game-asset candidates, not Design output. Design output is the canvas."
+ },
+ "assets": [
+  {
+   "id": "ico_wpn_bible_emblem_32",
+   "file": "ico_wpn_bible_emblem_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "default"
+   ],
+   "sha256": "b0a95807e0ea3ba055ec64ece5f832ed8fc622ab9af01aae6fd3ad041253e234"
+  },
+  {
+   "id": "ico_wpn_jawbone_emblem_32",
+   "file": "ico_wpn_jawbone_emblem_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "default"
+   ],
+   "sha256": "8e5063c637b8da1ef07e62eb279cbe71891a6ee70a3ef5018384bf5c9f1dd411"
+  },
+  {
+   "id": "ico_wpn_sling_emblem_32",
+   "file": "ico_wpn_sling_emblem_32.png",
+   "cell": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    16,
+    16
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "default"
+   ],
+   "sha256": "20c3a12fdaf1d44193c6ca9207ea83c06761a467f2cd9b2bbfc13589af643509"
+  },
+  {
+   "id": "ico_atk-shape_static_16",
+   "file": "ico_atk-shape_static_16.png",
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "fps": 0,
+   "loop": false,
+   "pivot": [
+    8,
+    8
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "orbit",
+    "swing",
+    "shot"
+   ],
+   "sha256": "dce3ff241fec85e4980691c5f9315634d7b1da47132df3a3b950fc6d461fff3d"
+  },
+  {
+   "id": "ui_focus-bracket_9slice_12",
+   "file": "ui_focus-bracket_9slice_12.png",
+   "cell": [
+    12,
+    12
+   ],
+   "frames": 2,
+   "fps": 2,
+   "loop": true,
+   "pivot": [
+    6,
+    6
+   ],
+   "alpha": "binary",
+   "borders": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "sorting": "UI",
+   "quality": "ui",
+   "new": true,
+   "states": [
+    "rest",
+    "pulse"
+   ],
+   "sha256": "cf68565d19ee5fe32eab89d2870cf53513182269048f9cfced5294060b78f036"
+  },
+  {
+   "id": "fx_jawbone-thud_hit_24",
+   "file": "fx_jawbone-thud_hit_24.png",
+   "cell": [
+    24,
+    24
+   ],
+   "frames": 6,
+   "fps": 12,
+   "loop": false,
+   "pivot": [
+    12,
+    12
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "FX",
+   "quality": "optional-fx",
+   "new": true,
+   "states": [
+    "east-0",
+    "east-1",
+    "east-2",
+    "northeast-0",
+    "northeast-1",
+    "northeast-2"
+   ],
+   "sha256": "fb1735f285372be382183102f256e2a25cc1f954d9fa97cd9eddbffdaaad7ff1"
+  },
+  {
+   "id": "fx_sling-windup_loop_24",
+   "file": "fx_sling-windup_loop_24.png",
+   "cell": [
+    24,
+    24
+   ],
+   "frames": 4,
+   "fps": 30,
+   "loop": false,
+   "pivot": [
+    12,
+    12
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "WeaponFX",
+   "quality": "optional-fx",
+   "new": true,
+   "sha256": "cb713f7b664f7ad6f1ee8bd9358e8ed1ba2d70e53e1e9bee184572d02a404384"
+  },
+  {
+   "id": "fx_sling-crack_hit_16",
+   "file": "fx_sling-crack_hit_16.png",
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "fps": 20,
+   "loop": false,
+   "pivot": [
+    8,
+    8
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "FX",
+   "quality": "optional-fx",
+   "new": true,
+   "sha256": "02e99b7f77f6f6b7bf8e355ca288779f976250a407020d2c2814e790f64d3e58"
+  },
+  {
+   "id": "fx_bible-page-flare_hit_16",
+   "file": "fx_bible-page-flare_hit_16.png",
+   "cell": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "fps": 15,
+   "loop": false,
+   "pivot": [
+    8,
+    8
+   ],
+   "alpha": "binary",
+   "borders": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "sorting": "FX",
+   "quality": "optional-fx",
+   "new": true,
+   "sha256": "2086221ab6d84ae584979c992a14ed3f50722b19f2365a3409ee0fdd1429c974"
+  }
+ ]
+}

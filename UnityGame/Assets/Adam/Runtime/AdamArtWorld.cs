@@ -10,6 +10,9 @@ namespace BibleSurvivor.Unity
     {
         public readonly AdamJawboneSwing JawboneSwing=new AdamJawboneSwing();
         public readonly AdamVisualQualityWorld VisualQuality=new AdamVisualQualityWorld();
+        public readonly AdamPolishContacts PolishContacts=new AdamPolishContacts();
+        readonly AdamPolishFlash polishFlash=new AdamPolishFlash();
+        public bool PolishEnabled=>AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Thud,out _);
         AdamR02Art r02;
         AdamR03Art r03;
         AdamR04Art r04;
@@ -111,8 +114,8 @@ namespace BibleSurvivor.Unity
         public const double HitFlashSeconds=.04;
         public int ContactStars
         {get{var count=0;foreach(var effect in Effects)if(effect.Active&&effect.Clip=="fx_hit-spark_hit_16"&&Clock-effect.Started<.2)count++;return count;}}
-        public float EnemyFlashOpacity(int id) => FeedbackEnabled && reactions.TryGetValue(id,out var until) &&
-            Clock<until && until-Clock>.09-HitFlashSeconds+1e-9 ? .65f : 0;
+        public float EnemyFlashOpacity(int id) => (FeedbackEnabled||PolishEnabled) && reactions.TryGetValue(id,out var until) &&
+            Clock<until && until-Clock>.09-(PolishEnabled?.05:HitFlashSeconds)+1e-9 ? .65f : 0;
         public static Matrix4x4 ReactionMatrix(Vector2 feet,float strength) => Matrix4x4.Translate(feet)*
             Matrix4x4.Scale(new Vector3(1+.12f*strength,1-.15f*strength,1))*Matrix4x4.Translate(-feet);
         BattleWorld source;
@@ -156,7 +159,10 @@ namespace BibleSurvivor.Unity
                     var position=new Vector2(impact.Position.X,impact.Position.Y);
                     if(impact.TargetId==0)
                     {PlayerHitUntil=Clock+.1;effectPool.Emit("fx_hit-spark_hit_16",position,Clock,2);continue;}
-                    if(FeedbackEnabled) {if(ContactStars<3)Emit("fx_hit-spark_hit_16",position);reactions[impact.TargetId]=Clock+.09;}
+                    var contact=AdamPolishContacts.Id(impact.Cause);var differentiated=contact!=null&&AdamVisualQualityArt.TryGetClip(contact,out _);
+                    if(differentiated)PolishContacts.Observe(impact,next,FeedbackEnabled);
+                    else if(FeedbackEnabled&&ContactStars<3)Emit("fx_hit-spark_hit_16",position);
+                    if(FeedbackEnabled||PolishEnabled)reactions[impact.TargetId]=Clock+.09;
                     if(impact.Killed){reportedKills.Add(impact.TargetId);if(FeedbackEnabled)Emit("fx_enemy-death_burst_32",position);}
                 }
                 previousPositions.Clear();
@@ -183,7 +189,7 @@ namespace BibleSurvivor.Unity
         public double PlayerSeconds => PlayerMotion=="death" ? Math.Max(0,Clock-deathAt) : Clock;
         public void Clear()
         {
-            JawboneSwing.Clear();VisualQuality.Clear();
+            JawboneSwing.Clear();VisualQuality.Clear();PolishContacts.Clear();
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
@@ -191,7 +197,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
         public static string EnemyClip(string id)
         {
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
@@ -258,6 +264,7 @@ namespace BibleSurvivor.Unity
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
             // Optional hit smoke/chips stay below XP, actors, weapons and required telegraphs.
             particles?.Draw(projection);
+            PolishContacts.Draw(projection,Clock,FeedbackEnabled);
             foreach(var effect in Effects)
                 if((FeedbackEnabled||effect.Priority==2) && effect.Active && Clock-effect.Started<art.Clip(effect.Clip).frames/(double)art.Clip(effect.Clip).fps)
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
@@ -391,7 +398,7 @@ namespace BibleSurvivor.Unity
                             r02.Draw(clip,anchor,scale,Clock,left);
                             r02.DrawHit(clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));
                         }
-                        else art.Draw(EnemyClip(monster.MonsterId),anchor,scale,Clock,enemy.X>snap.PlayerX);
+                        else{var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;art.Draw(clip,anchor,scale,Clock,left);if(PolishEnabled)polishFlash.Draw(art,clip,anchor,scale,Clock,left,EnemyFlashOpacity(enemy.Id));}
                         GUI.matrix=before;GUI.color=tint;
                     }
                 }
@@ -416,6 +423,7 @@ namespace BibleSurvivor.Unity
             if(!host.Session.IsActive) {GUI.EndGroup();return;}
             foreach(var p in snap.Projectiles)
             {
+                VisualQuality.AfterStones(art,projection,p,Clock,FeedbackEnabled);
                 var anchor=Point(p.X,p.Y);var before=GUI.matrix;
                 GUI.matrix=before*FacingMatrix(anchor+arena.position,new Vector2(p.VelocityX,p.VelocityY));
                 if(FeedbackEnabled){var length=AdamVisualQualityWorld.TrailPixels(p,scale);AdamArt.Blit(art.Sprite("fx_sling-trail_static_20x8",0),new Rect(anchor.x-length,anchor.y-4*scale,length,8*scale));}
@@ -433,6 +441,10 @@ namespace BibleSurvivor.Unity
                         var angle=snap.Time*2.5*WeaponRules.Get("bible",host.Session.Inventory.Weapons["bible"]).RotationSpeedMultiplier+i*Math.PI*2/profile.Amount;
                         var radius=snap.Tuning.BibleOrbitRadius*profile.AreaMultiplier;
                         var pos=Point(snap.PlayerX+(float)(Math.Cos(angle)*radius),snap.PlayerY+(float)(Math.Sin(angle)*radius));
+                        if(FeedbackEnabled&&AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Page,out _))
+                        {
+                            var tint=GUI.color;try{for(var age=2;age>=1;age--){var behind=angle-age*12*Mathf.Deg2Rad;var ghost=Point(snap.PlayerX+(float)(Math.Cos(behind)*radius),snap.PlayerY+(float)(Math.Sin(behind)*radius));GUI.color=new Color(1,1,1,age==1?.45f:.2f);art.Draw("wpn_bible-book_spin_16",ghost,scale,Clock);}}finally{GUI.color=tint;}
+                        }
                         art.Draw("fx_bible-glow_static_20",pos,scale); art.Draw("wpn_bible-book_spin_16",pos,scale,Clock);
                     }
                 }

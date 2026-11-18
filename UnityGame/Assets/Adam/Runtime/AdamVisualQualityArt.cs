@@ -12,7 +12,7 @@ namespace BibleSurvivor.Unity
     }
     [Serializable] public sealed class AdamVisualAsset
     {
-        public string id,file,alpha,sha256;
+        public string id,file,alpha,sha256,sorting,quality;
         public int[] cell,pivot,borders,attachX,attachY,alphaValues;
         public int frames;
         public float fps;
@@ -22,14 +22,14 @@ namespace BibleSurvivor.Unity
     // Final reviewed overlay. Resources owns imported textures; no Core state or original index is changed.
     public static class AdamVisualQualityArt
     {
-        public const string Root="VisualQuality01/";
+        public const string Root="VisualQuality01/",PolishRoot="VisualQuality02/",PolishManifestSha="23b25655a3e80920a5086df978a144ceb3e367ea2be0f1d9d5971bfed9f539c8";
         public const string UiManifestSha="cdf356aeef006982aed99c2c7adcee2cb0cff1817a4681d30a6632965642448b",WorldManifestSha="9dc1c57aa5b5dc72ab0d1b47c500318b553a4631eb932a375cebc03889c20d9c",EffectsManifestSha="e6aec4f76b3b679af00dc6f2c61cd705ccbc1f78240049396abd663b56d7c47b";
         public static readonly string[] Bundles={"UI","World","Effects"};
         static readonly List<UnityEngine.Object> ownedPresentation=new List<UnityEngine.Object>();
         static AdamVisualQualityArt(){Application.quitting+=Release;}
         static Dictionary<string,AdamArtClip> clips;
         static Dictionary<string,Sprite[]> sprites;
-        public static string ManifestSha(string bundle)=>bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:throw new InvalidOperationException("Unknown visual bundle");
+        public static string ManifestSha(string bundle)=>bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:bundle=="Polish02"?PolishManifestSha:throw new InvalidOperationException("Unknown visual bundle");
         public static string[] Ids(string bundle)
         {
             switch(bundle)
@@ -37,6 +37,7 @@ namespace BibleSurvivor.Unity
                 case "UI":return new[]{"ui_panel_9slice_16","ui_card_9slice_24","ui_button_9slice_16","ui_arrow_6x9","ui_slot_18","ui_pip_2","ui_bar-frame_9slice_8x6","ui_bar-hp_tile_1x2","ui_bar-xp_tile_1x4","ui_swatch_12","ui_badge-evolve_8","ui_keycap_9slice_12","ui_chip_9slice_8","ui_bar-boss_tile_1x4","ui_rule_tile_2x1"};
                 case "World":return new[]{"til_eden_grass-a_static_32","til_eden_grass-b_static_32","til_eden_grass-c_static_32","til_eden_grass-d_static_32","til_eden_meadow-a_static_32","til_eden_meadow-b_static_32","til_eden_path-16mask_static_32","fx_shadow_static_16x6","fx_shadow-snake_static_20x4","fx_shadow-wide_static_24x6","fx_shadow-small_static_12x4","dec_eden_canopy-shade_static_64"};
                 case "Effects":return new[]{"fx_hit-spark_hit_16","fx_enemy-death_burst_32","fx_jawbone-swing-trail_hit_64","fx_jawbone-swing-edge_hit_64"};
+                case "Polish02":return new[]{"ico_wpn_bible_emblem_32","ico_wpn_jawbone_emblem_32","ico_wpn_sling_emblem_32","ico_atk-shape_static_16","ui_focus-bracket_9slice_12","fx_jawbone-thud_hit_24","fx_sling-windup_loop_24","fx_sling-crack_hit_16","fx_bible-page-flare_hit_16"};
                 default:throw new InvalidOperationException("Unknown visual bundle");
             }
         }
@@ -64,7 +65,7 @@ namespace BibleSurvivor.Unity
                 // The authoritative attach arrays remain the original index contract.
                 if(a.attachX!=null && a.attachX.Length>0 && !Same(a.attachX,old.attachX) || a.attachY!=null && a.attachY.Length>0 && !Same(a.attachY,old.attachY))throw new InvalidOperationException("Visual attachment drift "+a.id);
             }
-            return new AdamArtClip{id=a.id,source=Root+a.id,sha256=a.sha256,width=a.cell[0],height=a.cell[1],frames=a.frames,fps=a.fps,loop=a.loop,pivotX=a.pivot[0],pivotY=a.pivot[1],alpha=a.alpha,alphaValues=a.alphaValues??new[]{0,255},borders=(int[])a.borders.Clone(),attachX=old?.attachX,attachY=old?.attachY,states=a.states,quality=a.id=="dec_eden_canopy-shade_static_64"||a.id=="fx_jawbone-swing-trail_hit_64"?"optional-fx":old?.quality,sorting=old?.sorting};
+            return new AdamArtClip{id=a.id,source=Root+a.id,sha256=a.sha256,width=a.cell[0],height=a.cell[1],frames=a.frames,fps=a.fps,loop=a.loop,pivotX=a.pivot[0],pivotY=a.pivot[1],alpha=a.alpha,alphaValues=a.alphaValues??new[]{0,255},borders=(int[])a.borders.Clone(),attachX=old?.attachX,attachY=old?.attachY,states=a.states,quality=a.quality??(a.id=="dec_eden_canopy-shade_static_64"||a.id=="fx_jawbone-swing-trail_hit_64"?"optional-fx":old?.quality),sorting=a.sorting??old?.sorting};
         }
         static bool Same(int[] a,int[] b){if(b==null||a.Length!=b.Length)return false;for(var i=0;i<a.Length;i++)if(a[i]!=b[i])return false;return true;}
         static void Load()
@@ -72,12 +73,15 @@ namespace BibleSurvivor.Unity
             if(clips!=null)return;
             var nextClips=new Dictionary<string,AdamArtClip>();var nextSprites=new Dictionary<string,Sprite[]>();
             var original=JsonUtility.FromJson<AdamArtIndex>(Resources.Load<TextAsset>("Art03/index").text);
-            foreach(var bundle in Bundles)
+            var bundles=new List<string>(Bundles);
+            if(Resources.Load<TextAsset>(PolishRoot+"manifest")!=null)bundles.Add("Polish02");
+            foreach(var bundle in bundles)
             {
-                var text=Resources.Load<TextAsset>(Root+bundle+"/manifest");if(text==null)throw new InvalidOperationException("Missing visual manifest "+bundle);
+                var path=bundle=="Polish02"?PolishRoot:Root+bundle+"/";
+                var text=Resources.Load<TextAsset>(path+"manifest");if(text==null)throw new InvalidOperationException("Missing visual manifest "+bundle);
                 foreach(var a in Parse(text.bytes,bundle).assets)
                 {
-                    var c=Contract(a,original);var frames=Resources.LoadAll<Sprite>(Root+bundle+"/"+a.id);Array.Sort(frames,(x,y)=>string.CompareOrdinal(x.name,y.name));
+                    var c=Contract(a,original);c.source=path+a.id;var frames=Resources.LoadAll<Sprite>(path+a.id);Array.Sort(frames,(x,y)=>string.CompareOrdinal(x.name,y.name));
                     if(frames.Length!=c.frames)throw new InvalidOperationException("Missing visual sprites "+c.id);
                     for(var i=0;i<frames.Length;i++)
                     {

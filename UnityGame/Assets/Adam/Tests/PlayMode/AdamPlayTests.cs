@@ -207,6 +207,38 @@ public class AdamPlayTests
         }
         finally{window.Close();}
     }
+    [UnityTest] public IEnumerator PolishKeyboardFocusIgnoresNonPointerCoordinatesAndEnterRelease()
+    {
+        if(!AdamHud.PolishEnabled)Assert.Ignore("optional polish02 absent");
+        var window=UnityEngine.ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game=game;window.minSize=window.maxSize=new Vector2(660,440);window.position=new Rect(80,80,660,440);window.ShowUtility();window.Repaint();yield return null;game.SetLifecycle(true,false);
+            var first=AdamStartStage.Card(660,440,0).center;
+            window.SendEvent(new Event{type=EventType.MouseMove,mousePosition=first});
+            Keys(Key.RightArrow);yield return null;Keys();yield return null;Assert.AreEqual(1,game.StartFocus);
+            // Original regression: a key/repaint coordinate at a different card overwrote keyboard focus.
+            window.SendEvent(new Event{type=EventType.KeyDown,keyCode=KeyCode.None,mousePosition=first});window.Repaint();yield return null;Assert.AreEqual(1,game.StartFocus);
+            Keys(Key.Enter);yield return null;Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("jawbone"));var id=game.Host.State.Run.RunId;
+            for(var i=0;i<3;i++)yield return null;Keys();yield return null;Assert.AreEqual(id,game.Host.State.Run.RunId);Assert.IsFalse(game.StartStageAvailable);
+        }
+        finally{window.Close();}
+    }
+    [UnityTest] public IEnumerator PolishMovingStartCardUsesImmediatePointerHitTarget()
+    {
+        if(!AdamHud.PolishEnabled)Assert.Ignore("optional polish02 absent");
+        var window=UnityEngine.ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game=game;window.minSize=window.maxSize=new Vector2(660,440);window.position=new Rect(80,80,660,440);window.ShowUtility();window.Repaint();yield return null;game.SetLifecycle(true,false);
+            var point=AdamStartStage.Card(660,440,2).center;
+            window.SendEvent(new Event{type=EventType.MouseMove,mousePosition=point});
+            window.SendEvent(new Event{type=EventType.MouseDown,mousePosition=point,button=0,clickCount=1});
+            window.SendEvent(new Event{type=EventType.MouseUp,mousePosition=point,button=0,clickCount=1});
+            Assert.IsNotNull(game.Host.Session);Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("sling"));yield return null;
+        }
+        finally{window.Close();}
+    }
     [UnityTest] public IEnumerator SmallPauseModalPointerClickResumesBattle()
     {
         game.Host.Start("sling"); game.Host.SetPaused(true);
@@ -222,7 +254,7 @@ public class AdamPlayTests
             yield return new WaitForSecondsRealtime(.08f);
             Assert.IsTrue(game.Host.Paused); Assert.AreEqual(time, game.Host.World.SimulationTime);
             // A genuine IMGUI mouse click inside the visible modal, far below the old hidden HUD button.
-            var point = new Vector2(330, 268);
+            var point = AdamHud.PauseResume(660,440,false).center;
             window.SendEvent(new Event { type = EventType.MouseDown, mousePosition = point, button = 0, clickCount = 1 });
             window.SendEvent(new Event { type = EventType.MouseUp, mousePosition = point, button = 0, clickCount = 1 });
             Assert.IsFalse(game.Host.Paused, "Clicking the small-window modal's own Resume button must resume");

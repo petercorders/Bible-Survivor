@@ -8,15 +8,16 @@ namespace BibleSurvivor.Unity
  public sealed class AdamVisualQualityWorld
  {
   List<BattleProjectileState> currentShots=new List<BattleProjectileState>(),previousShots=new List<BattleProjectileState>();
+  List<BattleProjectileState> olderShots=new List<BattleProjectileState>();double observedClock=-1;
   readonly HashSet<long> ids=new HashSet<long>();bool initialized;
   public double SlingReleasedAt {get;private set;}=-1;
   public Vector2 SlingDirection {get;private set;}=Vector2.right;
-  public void Clear(){ids.Clear();currentShots.Clear();previousShots.Clear();initialized=false;SlingReleasedAt=-1;SlingDirection=Vector2.right;}
+  public void Clear(){ids.Clear();currentShots.Clear();previousShots.Clear();olderShots.Clear();observedClock=-1;initialized=false;SlingReleasedAt=-1;SlingDirection=Vector2.right;}
   public void Observe(BattleSnapshot snapshot)
   {
    foreach(var p in snapshot.Projectiles)if(initialized&&!ids.Contains(p.Id))
    {var velocity=new Vector2(p.VelocityX,p.VelocityY);if(velocity.sqrMagnitude>0){SlingReleasedAt=snapshot.Time;SlingDirection=velocity.normalized;}}
-   previousShots=currentShots;currentShots=new List<BattleProjectileState>(snapshot.Projectiles);
+   if(!initialized||snapshot.Time!=observedClock){olderShots=previousShots;previousShots=currentShots;currentShots=new List<BattleProjectileState>(snapshot.Projectiles);observedClock=snapshot.Time;}
    ids.Clear();foreach(var p in snapshot.Projectiles)ids.Add(p.Id);initialized=true;
   }
   public Vector2 ImpactDirection(Vector2 position,Vector2 fallback)
@@ -24,12 +25,33 @@ namespace BibleSurvivor.Unity
    var nearest=float.MaxValue;var axis=fallback;
    foreach(var collection in new[]{previousShots,currentShots})foreach(var p in collection){var delta=(new Vector2(p.X,p.Y)-position).sqrMagnitude;var v=new Vector2(p.VelocityX,p.VelocityY);if(delta<nearest&&v.sqrMagnitude>0){nearest=delta;axis=v.normalized;}}return axis;
   }
+  public bool TryAfterStone(long id,int age,out Vector2 point)
+  {foreach(var p in age==1?previousShots:olderShots)if(p.Id==id){point=new Vector2(p.X,p.Y);return true;}point=default;return false;}
+  public void AfterStones(AdamArt art,AdamWorldProjection projection,BattleProjectileState shot,double clock,bool feedback)
+  {
+   if(!feedback||!AdamVisualQualityArt.TryGetClip("fx_sling-windup_loop_24",out _))return;var tint=GUI.color;var matrix=GUI.matrix;
+   try{for(var age=2;age>=1;age--)if(TryAfterStone(shot.Id,age,out var point)){var anchor=projection.Point(point.x,point.y);GUI.matrix=matrix*AdamArtWorld.FacingMatrix(anchor+projection.Arena.position,new Vector2(shot.VelocityX,shot.VelocityY));GUI.color=new Color(1,1,1,age==1?.5f:.25f);art.Draw("wpn_sling-stone_spin_8",anchor,projection.Scale,clock);}}
+   finally{GUI.color=tint;GUI.matrix=matrix;}
+  }
   public bool SlingReleasing(double clock)=>SlingReleasedAt>=0&&clock>=SlingReleasedAt&&clock-SlingReleasedAt<.12;
   public static float TrailPixels(BattleProjectileState p,int scale)=>Mathf.Min(20*scale,new Vector2(p.VelocityX,p.VelocityY).magnitude*.035f*32*scale);
   public static string Ground(int x,int y)
   {
    var hash=(uint)(x*73856093^y*19349663);var patch=(uint)((x/4)*83492791^(y/4)*2971215073u)%11;
    return patch==0?"til_eden_meadow-"+(hash%2==0?"a":"b")+"_static_32":"til_eden_grass-"+(char)('a'+hash%4)+"_static_32";
+  }
+  public static void DrawBackdrop(AdamArt art,Rect arena,bool feedback)
+  {
+   var projection=new AdamWorldProjection(arena,Vector2.zero);var scale=projection.Scale;var pixels=32*scale;
+   GUI.BeginGroup(arena);
+   try
+   {
+    var rx=Mathf.CeilToInt(arena.width/(float)pixels/2)+1;var ry=Mathf.CeilToInt(arena.height/(float)pixels/2)+1;
+    for(var y=-ry;y<=ry;y++)for(var x=-rx;x<=rx;x++)
+    {var point=projection.Point(x+.5f,y+.5f);art.Draw(Ground(x,y),point,scale);if(AdamArtWorld.PathCell(x,y))art.Draw("til_eden_path-16mask_static_32",point,scale,frame:AdamArtWorld.PathMask(x,y));}
+    Canopy(art,arena,scale,feedback);
+   }
+   finally{GUI.EndGroup();}
   }
   public static Rect[] CanopyRects(Rect arena,int scale)
   {
@@ -53,7 +75,10 @@ namespace BibleSurvivor.Unity
   {if(feedback)Line(projection.Arena,projection.Point(geometry.Start.x,geometry.Start.y),projection.Point(geometry.End.x,geometry.End.y),9*projection.Scale,new Color(224/255f,64/255f,80/255f,.4f));}
   public void SlingRelease(Rect arena,Vector2 feet,int scale,bool left,double clock,bool feedback)
   {
-   if(!feedback||!SlingReleasing(clock))return;var hand=AdamJawboneSwing.Hand(feet,scale,left);var direction=new Vector2(SlingDirection.x,-SlingDirection.y);var side=new Vector2(-direction.y,direction.x);var t=(float)((clock-SlingReleasedAt)/.12);
+   if(!feedback||!SlingReleasing(clock))return;var hand=AdamJawboneSwing.Hand(feet,scale,left);
+   if(AdamVisualQualityArt.TryGetClip("fx_sling-windup_loop_24",out var whirl))
+   {var sprite=AdamVisualQualityArt.Sprite(whirl.id,whirl.Frame(clock-SlingReleasedAt));AdamArt.Blit(sprite,AdamArt.PlacedRect(whirl,hand,scale));return;}
+   var direction=new Vector2(SlingDirection.x,-SlingDirection.y);var side=new Vector2(-direction.y,direction.x);var t=(float)((clock-SlingReleasedAt)/.12);
    var pouch=hand-direction*(10*(1-t)*scale)+side*Mathf.Sin(t*Mathf.PI)*4*scale;
    Line(arena,hand+side*2*scale,pouch,scale,new Color32(220,204,164,255));Line(arena,pouch,hand-side*2*scale,scale,new Color32(180,124,74,255));
   }
