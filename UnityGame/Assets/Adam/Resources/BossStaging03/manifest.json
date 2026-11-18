@@ -1,0 +1,119 @@
+{
+ "schema": "bible-survivors.staging-audio",
+ "schemaVersion": 1,
+ "bundle": "boss-staging03",
+ "status": "candidate (listening NOT_RUN, independent review PENDING)",
+ "format": "22050 Hz mono, 16-bit PCM WAV reference; runtime may regenerate float[] from the recipes like AdamImpactAudio.Samples",
+ "contract": {
+  "peakCeiling": 0.6,
+  "peakCeilingDbfs": -4.44,
+  "startEndZero": true,
+  "dcOffsetMax": 0.005,
+  "maxBytes": 65536,
+  "maxSeconds": 1.2,
+  "voices": 1,
+  "noise": "fixed LCG only (recipes.lcg)",
+  "sources": "no samples, recordings, loops or music"
+ },
+ "recipes": {
+  "sfx_boss-arrive": "len 0.45 s. phase = 2pi*(42t + 1.44*(1-exp(-t/0.09))); body = sin(phase)*exp(-t/0.11); second = 0.22*sin(2*phase)*exp(-t/0.05); low = 0.86*low + 0.14*lcg(3151); skin = 0.55*low*exp(-t/0.012); y = 0.62*min(1,t/0.004)*(body+second+skin); linear fade over the last 5 ms",
+  "sfx_boss-fall": "len 0.20 s. phase = 2pi*(38t + 1.08*(1-exp(-t/0.03))); body = sin(phase)*exp(-t/0.045); low = 0.9*low + 0.1*lcg(977); knock = 0.7*low*exp(-t/0.006); y = 0.66*min(1,t/0.002)*(body+knock); linear fade over the last 5 ms",
+  "sfx_boss-seal": "len 1.20 s. y = 0.24*min(1,t/0.005)*sum(gain*sin(2pi*hz*t)*exp(-t/decay)) over partials (392,1,0.42) (394.6,0.45,0.40) (588,0.42,0.30) (1081.9,0.30,0.17) (1568,0.12,0.10) (2116.8,0.10,0.06); linear fade over the last 20 ms",
+  "dcBlock": "after the formula: y[n] = x[n] - x[n-1] + 0.995*y[n-1], then a linear fade over the last 5 ms",
+  "gain": "after the DC block, multiply every sample by the cue's `gain` constant so the peak equals `targetPeak`",
+  "lcg": "s = (1664525*s + 1013904223) mod 2^32, value = s/2^31 - 1, one draw per sample, seeded as written"
+ },
+ "cues": [
+  {
+   "id": "sfx_boss-arrive",
+   "file": "sfx_boss-arrive.wav",
+   "sampleRate": 22050,
+   "channels": 1,
+   "bits": 16,
+   "bytes": 19888,
+   "sha256": "53fc475f0ea9c724eae6bb558255189e75417c0a07dc7d321de61935fb9ee3f6",
+   "recipe": "len 0.45 s. phase = 2pi*(42t + 1.44*(1-exp(-t/0.09))); body = sin(phase)*exp(-t/0.11); second = 0.22*sin(2*phase)*exp(-t/0.05); low = 0.86*low + 0.14*lcg(3151); skin = 0.55*low*exp(-t/0.012); y = 0.62*min(1,t/0.004)*(body+second+skin); linear fade over the last 5 ms",
+   "beat": "entrance",
+   "role": "the boss stands",
+   "priority": 2,
+   "targetPeak": 0.55,
+   "gain": 0.962945,
+   "measured": {
+    "samples": 9922,
+    "seconds": 0.45,
+    "peak": 0.55,
+    "peakDbfs": -5.19,
+    "rms": 0.1381,
+    "rmsDbfs": -17.2,
+    "dcOffset": -2e-06,
+    "firstSample": 0.0,
+    "lastSample": -0.0,
+    "timeToMinus20dB": 0.25,
+    "timeToMinus40dB": 0.45,
+    "zeroCrossingsPerSecond": 102.2
+   }
+  },
+  {
+   "id": "sfx_boss-fall",
+   "file": "sfx_boss-fall.wav",
+   "sampleRate": 22050,
+   "channels": 1,
+   "bits": 16,
+   "bytes": 8864,
+   "sha256": "43b132f274084e064342b7f3056dff6a7c06c04a8163092d6d6fa05ea69bf91c",
+   "recipe": "len 0.20 s. phase = 2pi*(38t + 1.08*(1-exp(-t/0.03))); body = sin(phase)*exp(-t/0.045); low = 0.9*low + 0.1*lcg(977); knock = 0.7*low*exp(-t/0.006); y = 0.66*min(1,t/0.002)*(body+knock); linear fade over the last 5 ms",
+   "beat": "defeat",
+   "role": "the last blow lands",
+   "priority": 1,
+   "targetPeak": 0.58,
+   "gain": 1.032145,
+   "measured": {
+    "samples": 4410,
+    "seconds": 0.2,
+    "peak": 0.58,
+    "peakDbfs": -4.73,
+    "rms": 0.1514,
+    "rmsDbfs": -16.4,
+    "dcOffset": 0.000118,
+    "firstSample": 0.0,
+    "lastSample": -0.0,
+    "timeToMinus20dB": 0.1,
+    "timeToMinus40dB": 0.2,
+    "zeroCrossingsPerSecond": 90.0
+   }
+  },
+  {
+   "id": "sfx_boss-seal",
+   "file": "sfx_boss-seal.wav",
+   "sampleRate": 22050,
+   "channels": 1,
+   "bits": 16,
+   "bytes": 52964,
+   "sha256": "a3e0bcdc456bb4b5a7c8f4263707ac7a41935c3bf3495426897c2d5b697e5762",
+   "recipe": "len 1.20 s. y = 0.24*min(1,t/0.005)*sum(gain*sin(2pi*hz*t)*exp(-t/decay)) over partials (392,1,0.42) (394.6,0.45,0.40) (588,0.42,0.30) (1081.9,0.30,0.17) (1568,0.12,0.10) (2116.8,0.10,0.06); linear fade over the last 20 ms",
+   "beat": "victory",
+   "role": "the crest is set on the reward header",
+   "priority": 3,
+   "targetPeak": 0.45,
+   "gain": 0.901739,
+   "measured": {
+    "samples": 26460,
+    "seconds": 1.2,
+    "peak": 0.45,
+    "peakDbfs": -6.94,
+    "rms": 0.0756,
+    "rmsDbfs": -22.42,
+    "dcOffset": 0.0,
+    "firstSample": 0.0,
+    "lastSample": 0.0,
+    "timeToMinus20dB": 0.83,
+    "timeToMinus40dB": 1.2,
+    "zeroCrossingsPerSecond": 790.0
+   }
+  }
+ ],
+ "provenance": {
+  "author": "Claude Fable 5.2 (claude-fable-5-2), synthesised by src/synth.py",
+  "listening": "NOT_RUN — nothing was played back by the author; no audio device or app was operated"
+ }
+}

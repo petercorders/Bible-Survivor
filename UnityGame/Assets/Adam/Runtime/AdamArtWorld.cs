@@ -240,7 +240,7 @@ namespace BibleSurvivor.Unity
             }
             return latest;
         }
-        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null)
+        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null, bool bossShadowOnly = false)
         {
             if(Snapshot==null || source!=host.World) return;
             var exodus=AdamBookGround.Exodus(host.Session.RoundNumber);
@@ -288,6 +288,7 @@ namespace BibleSurvivor.Unity
                 for(var spriteIndex=0;spriteIndex<orderedSprites.Count;spriteIndex++)
                 {
                     var sprite=orderedSprites[spriteIndex];var enemy=sprite.Enemy;
+                    if (bossShadowOnly && enemy.Id == host.Session.BossRules?.BossActorId) continue;
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;

@@ -28,6 +28,7 @@ namespace BibleSurvivor.Unity
         AdamArt art;
         readonly AdamStartStage startStage=new AdamStartStage();
         readonly AdamUiMotion uiMotion=new AdamUiMotion();
+        readonly AdamBossStaging bossStaging = new AdamBossStaging();
         readonly AdamSortieRibbon sortie=new AdamSortieRibbon();
         AdamSession sortieSession;
         public bool SortieVisible=>AdamBookTitle.Enabled&&Host?.CanPlay==true&&Host.Session.Boss==null&&
@@ -54,11 +55,10 @@ namespace BibleSurvivor.Unity
         // Reviewed death strip: six frames at 8 fps. Keep the actor visible before covering it with restart controls.
         public bool DeathPresentationVisible => Host?.Session != null && !Host.Session.IsActive && Host.Session.CurrentHealth <= 0 &&
             ArtWorld.PlayerMotion == "death" && ArtWorld.PlayerSeconds < 6d / 8;
-        static readonly Color TextColor = AdamHud.Primary; // art03 text.0
         public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
         void OnEnable() {EnhancedTouchSupport.Enable();if(Host!=null && ImpactParticles==null)ImpactParticles=new AdamImpactParticles();}
-        void OnDisable() {EnhancedTouchSupport.Disable();ImpactAudio?.Stop();ImpactParticles?.Dispose();ImpactParticles=null;}
-        void OnDestroy() { ArtWorld.Dispose(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); fonts?.Dispose(); }
+        void OnDisable() {EnhancedTouchSupport.Disable();bossStaging.Reset();ImpactAudio?.Stop();ImpactParticles?.Dispose();ImpactParticles=null;}
+        void OnDestroy() { ArtWorld.Dispose(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); bossStaging.Audio?.Dispose(); fonts?.Dispose(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -72,7 +72,17 @@ namespace BibleSurvivor.Unity
             try { Initialize(new AdamHost(AdamCatalog.Load(), new SaveStore(Path.Combine(Application.persistentDataPath, "adam-prototype.json")))); }
             catch (Exception e) { startupError = e.Message; }
         }
-        public void Initialize(AdamHost host) { Host = host; sortie.Reset();sortieSession=host.Session; inputReleased = false; ImpactAudio?.Dispose(); ImpactAudio=new AdamImpactAudio(gameObject);ImpactParticles?.Dispose();ImpactParticles=new AdamImpactParticles(); }
+        public void Initialize(AdamHost host)
+        {
+            bossStaging.Initialize(gameObject);
+            Host = host;
+            sortie.Reset();sortieSession=host.Session;inputReleased=false;
+            // The listener serves both audio systems and survives a host replacement.
+            if (GetComponent<AudioListener>() == null && FindAnyObjectByType<AudioListener>() == null)
+                gameObject.AddComponent<AudioListener>();
+            ImpactAudio?.Dispose();ImpactAudio=new AdamImpactAudio(gameObject);
+            ImpactParticles?.Dispose();ImpactParticles=new AdamImpactParticles();
+        }
         public static Vector2 KeyboardMovement(Keyboard keys)
         {
             if (keys == null) return Vector2.zero;
@@ -84,8 +94,13 @@ namespace BibleSurvivor.Unity
         public void SetLifecycle(bool hasFocus, bool paused)
         {
             focused = hasFocus; appPaused = paused; inputReleased = false; touchStarted = false;
+            if (!focused || appPaused)
+            {
+                bossStaging.Interrupt();
+                ImpactAudio?.Stop();
+            }
             Host?.SetSuspended(!focused || appPaused);
-            if(!focused || appPaused)ImpactAudio?.Stop();
+            SyncBossStaging();
         }
         void OnApplicationFocus(bool value) => SetLifecycle(value, appPaused);
         void OnApplicationPause(bool value) => SetLifecycle(focused, value);
@@ -103,7 +118,7 @@ namespace BibleSurvivor.Unity
             var safe = Screen.safeArea;
             if (Application.isMobilePlatform && previousTouchSafe != default && safe != previousTouchSafe)
             {
-                Host.SetPaused(true); inputReleased = false; touchStarted = false;
+                SetPlayPaused(true); inputReleased = false; touchStarted = false;
             }
 #if DEVELOPMENT_BUILD && !UNITY_EDITOR
             if (safe != previousTouchSafe)
@@ -123,7 +138,7 @@ namespace BibleSurvivor.Unity
             if(keys!=null && keys.f7Key.wasPressedThisFrame) ImpactAudio.Muted=!ImpactAudio.Muted;
             if(keys!=null && keys.f8Key.wasPressedThisFrame) ImpactAudio.Volume=ImpactAudio.Volume>=.99f?.25f:Mathf.Min(1,ImpactAudio.Volume+.25f);
             if (keys != null && keys.escapeKey.wasPressedThisFrame && Host.Session != null && Host.Session.IsActive)
-            { Host.SetPaused(!Host.Paused); inputReleased = false; touchStarted = false; }
+            { SetPlayPaused(!Host.Paused); inputReleased = false; touchStarted = false; }
             var slot = keys == null ? -1 : keys.digit1Key.wasPressedThisFrame ? 0 : keys.digit2Key.wasPressedThisFrame ? 1 : keys.digit3Key.wasPressedThisFrame ? 2 : -1;
             if (slot >= 0) SelectSlot(slot);
             if (keys != null && keys.enterKey.wasPressedThisFrame) EnterCommand();
@@ -156,11 +171,21 @@ namespace BibleSurvivor.Unity
                 Host.SetMovement(movement);
             }
             var tickSession=Host.Session;var tickRun=Host.State?.Run?.RunId;
+            var stagingBefore = bossStaging.BeforeTick(Host, ImpactAudio, isActiveAndEnabled);
             Host.Tick(Time.unscaledDeltaTime);
+            bossStaging.AfterTick(stagingBefore, Host, ImpactAudio, isActiveAndEnabled);
             RecordSortieTransition(tickSession,tickRun);
             ReleaseOnWorldChange();
             UpdatePresentation(Time.unscaledDeltaTime);
             uiMotion.Advance(UiSequence(),Time.unscaledDeltaTime);
+            bossStaging.AdvanceReward(Host, uiMotion.Elapsed, ImpactAudio, isActiveAndEnabled);
+        }
+        void SyncBossStaging() => bossStaging.Sync(Host, ImpactAudio, isActiveAndEnabled);
+        void SetPlayPaused(bool paused)
+        {
+            if (paused) bossStaging.Interrupt();
+            Host.SetPaused(paused);
+            SyncBossStaging();
         }
         void ReleaseOnWorldChange()
         {
@@ -198,11 +223,16 @@ namespace BibleSurvivor.Unity
             commandFrame = Time.frameCount;
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
             if(Host.Session?.Stage=="boss_reward")
-            {var choices=Host.Session.BossChoices;if(slot<choices.Count)Host.ChooseBossReward(Host.Session.Boss.Reward.RewardId,choices[slot].Id);}
+            {var choices=Host.Session.BossChoices;if(slot<choices.Count)ChooseBossReward(Host.Session.Boss.Reward.RewardId,choices[slot].Id);}
             else if (Host.Session == null || Host.CanStartNew) Host.Start(Weapons[slot]);
             else if (slot < Host.Session.PendingChoices.Count) Host.Choose(Host.Session.PendingChoices[slot]);
             RecordSortieTransition(previous,run);
             inputReleased = false; touchStarted = false;
+        }
+        void ChooseBossReward(string rewardId, string candidateId)
+        {
+            Host.ChooseBossReward(rewardId, candidateId);
+            SyncBossStaging();
         }
         void OnGUI()
         {
@@ -230,7 +260,8 @@ namespace BibleSurvivor.Unity
             art.OptionalEffects=ArtWorld.FeedbackEnabled;
             System.Action beforeTelegraphs=null;
             if(!modalOpen&&session?.Boss==null&&SortieVisible)beforeTelegraphs=()=>DrawSortie(width,session,arena.position);
-            if (Host.World != null) ArtWorld.Draw(art, Host, arena, ImpactParticles,beforeTelegraphs);
+            if (Host.World != null) ArtWorld.Draw(art, Host, arena, ImpactParticles, beforeTelegraphs,
+                bossStaging.ShadowOnly(Host, UiMotionEnabled));
             if(AdamHud.PolishEnabled&&modalOpen&&!DeathPresentationVisible&&session!=null&&(session.IsActive||session.CurrentHealth>0))
             {var dim=AdamHud.Ink0;dim.a=AdamUiMotion.Dim(uiMotion.Elapsed,UiMotionEnabled);AdamHud.Fill(arena,dim);}
             if(session?.Boss!=null && session.IsActive && !modalOpen){if(AdamHud.PolishEnabled)DrawBossHud(width,session,instruction);else DrawLegacyBossHud(width,session,instruction);}
@@ -247,12 +278,13 @@ namespace BibleSurvivor.Unity
                 GUI.enabled = previousEnabled && (!mobile || Host.HasSaveRetry);
                 if (ArtButton(mobile ? new Rect(24, height / 2 + 40, (width - 60) / 2, 66) : new Rect(width / 2 - 220, height / 2 + 40, 210, 50), mobile && !Host.HasSaveRetry ? "재시도 불가" : "같은 저장 재시도", button)) RetrySaveWithDeparture();
                 GUI.enabled = previousEnabled;
-                if (ArtButton(mobile ? new Rect(width / 2 + 6, height / 2 + 40, (width - 60) / 2, 66) : new Rect(width / 2 + 10, height / 2 + 40, 210, 50), "저장 다시 불러오기", button)) Host.Reload();
+                if (ArtButton(mobile ? new Rect(width / 2 + 6, height / 2 + 40, (width - 60) / 2, 66) : new Rect(width / 2 + 10, height / 2 + 40, 210, 50), "저장 다시 불러오기", button)) { Host.Reload(); SyncBossStaging(); }
             }
             else if(session?.Stage=="boss_reward")
             {
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);AdamHud.Panel(art,MotionRect(panel));
-                ChoiceHeader(panel,AdamRoundPresentation.Name(session.RoundNumber)+" · 보스 보상","하나를 선택하세요",AdamBossPresentation.Name(session)+" · 게임 각색");
+                ChoiceHeader(panel,AdamRoundPresentation.Name(session.RoundNumber)+" · 보스 보상","하나를 선택하세요",AdamBossPresentation.Name(session)+" · 게임 각색",
+                    AdamHud.PolishEnabled && AdamBossStaging.ShowsCandidateHeader(Host));
                 PanelFooter(panel,"고정 골드 +"+AdamUiMotion.Gold(session.BossRules.KillGold,uiMotion.Elapsed,UiMotionEnabled)+" 적용됨","선택 즉시 저장",true);
                 if(session.NeedsRewardImplementation)
                 {if(ArtButton(new Rect(panel.x+24,panel.y+130,panel.width-48,56),"이전 보상 후보 준비",button))Host.PromoteBossReward();}
@@ -260,7 +292,7 @@ namespace BibleSurvivor.Unity
                 {
                     var candidates=session.BossChoices;var rewardId=session.Boss.Reward.RewardId;
                     for(var i=0;i<candidates.Count;i++)
-                    {var candidate=candidates[i];if(ArtButton(AdamChoiceText.ChoiceCard(panel,i),AdamBossPresentation.Card(candidate,i,session),choiceButton,candidate.Kind=="gold"?"gold":candidate.ItemId))Host.ChooseBossReward(rewardId,candidate.Id);}
+                    {var candidate=candidates[i];if(ArtButton(AdamChoiceText.ChoiceCard(panel,i),AdamBossPresentation.Card(candidate,i,session),choiceButton,candidate.Kind=="gold"?"gold":candidate.ItemId))ChooseBossReward(rewardId,candidate.Id);}
                 }
             }
             else if (session != null && session.PendingChoices.Count > 0)
@@ -342,12 +374,12 @@ namespace BibleSurvivor.Unity
         void ResumePlay()
         {
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
-            Host.SetPaused(false);RecordSortieTransition(previous,run);
+            SetPlayPaused(false);RecordSortieTransition(previous,run);
         }
         void RetrySaveWithDeparture()
         {
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
-            Host.RetrySave();RecordSortieTransition(previous,run);
+            Host.RetrySave();SyncBossStaging();RecordSortieTransition(previous,run);
         }
         void AdvanceSortie(double seconds)
         {
@@ -465,7 +497,7 @@ namespace BibleSurvivor.Unity
             GUI.Label(new Rect(width/2-66,52,132,24),AdamHud.TimerRole(session),HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
             AdamHud.Image(art,"ico_res_gold_static_16",new Rect(width-246,23,24,24));
             GUI.Label(new Rect(width-218,20,70,30),Host.State.Profile.Gold.ToString(),HudText(20,AdamHud.Gold));
-            if(ArtButton(AdamHud.Pause(width,mobile),Host.Paused?"재개":"일시정지",button)){Host.SetPaused(!Host.Paused);inputReleased=false;}
+            if(ArtButton(AdamHud.Pause(width,mobile),Host.Paused?"재개":"일시정지",button)){SetPlayPaused(!Host.Paused);inputReleased=false;}
             var level=new Rect(20,82,66,26);AdamHud.Panel(art,level,"ui_chip_9slice_8");
             GUI.Label(level,"Lv "+session.Growth.Level,HudText(16,AdamHud.Lapis,true,TextAnchor.MiddleCenter));
             var xp=AdamHud.Experience(width);var required=ExperienceRules.Required(session.Growth.Level);
@@ -504,7 +536,7 @@ namespace BibleSurvivor.Unity
             GUI.Label(new Rect(width/2-66,52,132,24),AdamHud.TimerRole(session),HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
             AdamHud.Image(art,"ico_res_gold_static_16",new Rect(width-246,23,24,24));
             GUI.Label(new Rect(width-218,20,70,30),Host.State.Profile.Gold.ToString(),HudText(20,AdamHud.Gold));
-            if(ArtButton(AdamHud.Pause(width,mobile),Host.Paused?"재개":"일시정지",button)){Host.SetPaused(!Host.Paused);inputReleased=false;}
+            if(ArtButton(AdamHud.Pause(width,mobile),Host.Paused?"재개":"일시정지",button)){SetPlayPaused(!Host.Paused);inputReleased=false;}
             var level=new Rect(20,80,66,22);AdamHud.Panel(art,level,"ui_chip_9slice_8");
             GUI.Label(level,"Lv "+session.Growth.Level,HudText(16,AdamHud.Lapis,true,TextAnchor.MiddleCenter));
             var xp=AdamHud.Experience(width);var required=ExperienceRules.Required(session.Growth.Level);
@@ -527,12 +559,17 @@ namespace BibleSurvivor.Unity
         {
             var boss=session.Boss;
             AdamHud.Fill(AdamHud.BossBacking(width),AdamHud.Ink1);
-            AdamHud.Bar(art,new Rect(32,121,width-64,12),"ui_bar-boss_tile_1x4",AdamBossPresentation.HealthFraction(session));
+            AdamHud.Bar(art,new Rect(32,121,width-64,12),"ui_bar-boss_tile_1x4",bossStaging.HealthFraction(Host, UiMotionEnabled));
             var name=AdamBossPresentation.Name(session);var nameStyle=HudText(16,AdamHud.Primary);
             GUI.Label(new Rect(34,135,width-220,22),name,nameStyle);
             GUI.Label(new Rect(width-190,135,156,22),$"{boss.Health:0} / {session.BossRules.MaxHealth:0}",HudText(16,AdamHud.Secondary,false,TextAnchor.MiddleRight));
             var phase=AdamBossPresentation.Phase(session);
-            if(boss.Telegraphing)
+            if (session.Stage == "boss_intro")
+            {
+                var w = Mathf.Min(width - 64, instruction.CalcSize(new GUIContent(phase)).x + 24);
+                StateChip(new Rect((width - w) / 2, 164, w, 24), phase);
+            }
+            else if(boss.Telegraphing)
             {
                 var w=Mathf.Min(width-64,instruction.CalcSize(new GUIContent(phase)).x+24);
                 var chip=new Rect((width-w)/2,164,w,24);AdamHud.Panel(art,chip,"ui_chip_9slice_8",1,1);
@@ -578,7 +615,7 @@ namespace BibleSurvivor.Unity
             if (label != null) return;
             art = new AdamArt();
             fonts = new AdamFonts();
-            label = new GUIStyle(GUI.skin.label) { font = fonts.Body, fontSize = 20, alignment = TextAnchor.MiddleCenter, normal = { textColor = TextColor } };
+            label = new GUIStyle(GUI.skin.label) { font = fonts.Body, fontSize = 20, alignment = TextAnchor.MiddleCenter, normal = { textColor = AdamHud.Primary } };
             title = new GUIStyle(label) { font = fonts.Title, fontSize = 24, fontStyle = FontStyle.Normal };
             button = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 24, fixedHeight = 50 };
             choiceButton = new GUIStyle(button) { fontSize = 24, fixedHeight = 0, wordWrap = true, alignment = TextAnchor.MiddleLeft, padding = new RectOffset(16,16,8,8) };
@@ -635,12 +672,47 @@ namespace BibleSurvivor.Unity
             }
             return clicked;
         }
-        void ChoiceHeader(Rect panel,string eyebrow,string heading,string detail)
+        void ChoiceHeader(Rect panel, string eyebrow, string heading, string detail, bool bossHeader = false)
         {
-            panel=MotionRect(panel);
-            GUI.Label(new Rect(panel.x+16,panel.y+8,panel.width-32,22),eyebrow,HudText(16,AdamHud.Lapis,false,TextAnchor.MiddleCenter));
-            GUI.Label(new Rect(panel.x+16,panel.y+30,panel.width-32,32),heading,title);
-            GUI.Label(new Rect(panel.x+16,panel.y+(drawingMobile?56:64),panel.width-32,24),detail,HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
+            var firstCard = bossHeader ? MotionRect(AdamChoiceText.ChoiceCard(panel, 0)) : default;
+            panel = MotionRect(panel);
+            var eyebrowArea = new Rect(panel.x + 16, panel.y + 8, panel.width - 32, 22);
+            var headingArea = new Rect(panel.x + 16, panel.y + 30, panel.width - 32, 32);
+            var detailArea = new Rect(panel.x + 16, panel.y + (drawingMobile ? 56 : 64), panel.width - 32, 24);
+            var eyebrowStyle = HudText(16, AdamHud.Lapis, false, TextAnchor.MiddleCenter);
+            var detailStyle = HudText(16, AdamHud.Muted, false, TextAnchor.MiddleCenter);
+            if (bossHeader)
+            {
+                var tick = bossStaging.HeaderTick(Host, UiMotionEnabled);
+                var eighths = AdamBossStaging.RuleEighths(tick);
+                if (eighths > 0)
+                {
+                    var lineWidth = 2 * Mathf.RoundToInt(140f * eighths / 8);
+                    var rule = new Rect(panel.center.x - lineWidth / 2f, panel.y + 88, lineWidth, 2);
+                    if (!rule.Overlaps(eyebrowArea) && !rule.Overlaps(headingArea) && !rule.Overlaps(detailArea) &&
+                        !rule.Overlaps(firstCard))
+                        AdamHud.Fill(rule, AdamHud.GuiColor(new Color32(180, 124, 74, 255)));
+
+                    var crest = new Rect(panel.x + 16, panel.y + (tick == 6 ? 10 : 14), 64, 64);
+                    var frame = AdamBookTitle.Book(Host.Session.RoundNumber);
+                    if (ClearsCrest(crest, eyebrowArea, eyebrowStyle, eyebrow) &&
+                        ClearsCrest(crest, headingArea, title, heading) &&
+                        ClearsCrest(crest, detailArea, detailStyle, detail) &&
+                        !crest.Overlaps(firstCard) &&
+                        AdamVisualQualityArt.TryGetClip(AdamBookTitle.Crest, out var clip) && frame < clip.frames)
+                        AdamArt.Blit(AdamVisualQualityArt.Sprite(AdamBookTitle.Crest, frame), crest);
+                }
+            }
+            GUI.Label(eyebrowArea, eyebrow, eyebrowStyle);
+            GUI.Label(headingArea, heading, title);
+            GUI.Label(detailArea, detail, detailStyle);
+        }
+        static bool ClearsCrest(Rect crest, Rect labelArea, GUIStyle style, string text)
+        {
+            var size = style.CalcSize(new GUIContent(text));
+            var bounds = new Rect(labelArea.center - size / 2, size);
+            return crest.xMax + 8 <= bounds.xMin || crest.yMax + 8 <= bounds.yMin ||
+                bounds.yMax + 8 <= crest.yMin;
         }
         void PanelFooter(Rect panel,string result,string guidance,bool gold=false)
         {
