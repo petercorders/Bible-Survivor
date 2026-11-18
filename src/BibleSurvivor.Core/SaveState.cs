@@ -45,6 +45,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedSecondBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedThirdBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedFourthBoss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedFifthBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
         [DataMember(EmitDefaultValue=false)] public int PreviousNormalRound {get;set;}
@@ -69,12 +70,16 @@ namespace BibleSurvivor.Core
             PermanentRules.Validate(Profile.Upgrades);
             if (Run == null) return;
             var r10 = SchemaVersion == 3;
-            if(r10 && !SaveFormat.SupportedExodusLifecycle(Run.RoundNumber,Run.Stage))
+            if(r10 && !SaveFormat.SupportedChapterLifecycle(Run.RoundNumber,Run.Stage))
                 throw new UnsupportedSaveVersionException();
-            if(r10 && Run.RoundFingerprint!=ExodusContent.Round(Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber).Fingerprint)throw new UnsupportedSaveVersionException();
+            var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
+            var r16=r10&&normalRound==LeviticusContent.GlobalRoundNumber;
+            if(r10 && Run.RoundFingerprint!=(r16?LeviticusContent.Round():ExodusContent.Round(normalRound)).Fingerprint)
+                throw new UnsupportedSaveVersionException();
+            if(!r16&&Run.CompletedFifthBoss!=null)throw new UnsupportedSaveVersionException();
             if(!r10 && (Run.CompletedThirdBoss!=null||Run.CompletedFourthBoss!=null))throw new UnsupportedSaveVersionException();
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?16:10) ||
-                (Run.Stage=="normal" && Run.RoundNumber>(r10?15:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?17:10) ||
+                (Run.Stage=="normal" && Run.RoundNumber>(r10?16:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -97,12 +102,11 @@ namespace BibleSurvivor.Core
             var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7&&Run.Stage=="between_rounds";
             var r09=!r10&&(Run.RoundNumber==9&&Run.Stage!="between_rounds"||Run.RoundNumber==10);
             var chainWorld=r09||r15;
-            var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
-            var fourthHistory=r10&&(normalRound==13||normalRound==14||normalRound==15);
+            var fourthHistory=r10&&(normalRound==13||normalRound==14||normalRound==15||r16);
             var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10&&!r12&&!r15;
             if(lateNormal)
             {
-                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(r16?15:normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
@@ -139,6 +143,13 @@ namespace BibleSurvivor.Core
                 Run.CompletedFourthBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=13,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
             else if(Run.CompletedFourthBoss!=null)throw new UnsupportedSaveVersionException();
+            if(r16)
+            {
+                if(Run.CompletedFifthBoss==null||Run.CompletedFifthBoss.EncounterRound!=15||!Run.CompletedFifthBoss.CompletionApplied)
+                    throw new InvalidDataException("Missing R15 completed history");
+                Run.CompletedFifthBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=16,
+                    Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
+            }
             if(chainWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=5&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
             if(r12&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>0&&Run.World==null)throw new InvalidDataException("R12 combat requires live geometry");
             Run.World?.Validate();

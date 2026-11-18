@@ -29,6 +29,14 @@ internal static class RoundFifteenTests
         foreach(var id in game.Inventory.Weapons.Keys)s.Weapons.Add(new BattleWeaponState{WeaponId=id,WeaponForm=game.Inventory.Forms.TryGetValue(id,out var form)?form:null,NextCycle=1000});
         return(state,game,BattleWorld.Restore(game,Speeds,s));
     }
+    internal static (GameSnapshot State,AdamSession Game) CompletedFifteen()
+    {
+        var (state,game,world)=Boss();
+        game.Hit(1201,26000);
+        world.Advance(0,Vector2.Zero);
+        if(!game.CompleteBossSettlement())throw new InvalidOperationException("Expected gold-only R15 completion");
+        return (state,game);
+    }
     private static void Store(Action<SaveStore> action)
     {var dir=Path.Combine(Path.GetTempPath(),"r15-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(dir);try{action(new SaveStore(Path.Combine(dir,"save.json")));}finally{Directory.Delete(dir,true);}}
     private static string Histories(GameSnapshot s)=>Json(new{s.Run!.CompletedBoss,s.Run.CompletedSecondBoss,s.Run.CompletedThirdBoss,s.Run.CompletedFourthBoss});

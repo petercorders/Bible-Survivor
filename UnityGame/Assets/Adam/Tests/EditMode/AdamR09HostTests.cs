@@ -47,7 +47,7 @@ public sealed class AdamR09HostTests
         var c=AdamCatalog.Load();var d=c.ForRound(9);Assert.AreEqual(1140,d.Waves.Sum(w=>w.Groups.Sum(g=>g.Count)));Assert.AreEqual(4200,d.RawExperience);Assert.AreEqual(120,d.ConcurrencyCap);Assert.AreEqual(160,d.CompletionGold);Assert.IsNull(d.UnlockWeaponId);
         foreach(var round in new[]{3,6,9}){var rule=BossDefinition.ForRound(round);Assert.AreEqual(round,c.ForRound(round).Number);Assert.Greater(rule.MaxHealth,0);}
         Assert.AreEqual(1,BossDefinition.ForRound(9).TelegraphDuration);Assert.Throws<InvalidDataException>(()=>c.ForRound(16));
-        Assert.Throws<InvalidDataException>(()=>c.ForCheckpoint(new RunState{RoundNumber=16,Stage="normal"}));
+        Assert.Throws<UnsupportedSaveVersionException>(()=>c.ForCheckpoint(new RunState{RoundNumber=16,Stage="normal"}));
     }
     [TestCase("clock")][TestCase("count")][TestCase("pattern")]
     public void CatalogRejectsR09SlamContractInsteadOfAcceptingOldBossDefaults(string field)
