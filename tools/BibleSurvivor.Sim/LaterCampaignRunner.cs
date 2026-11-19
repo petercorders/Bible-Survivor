@@ -5,9 +5,9 @@ using BibleSurvivor.Core;
 
 namespace BibleSurvivor.Sim;
 
-internal static class LeviticusRunner
+internal static class LaterCampaignRunner
 {
-    internal static int Run(AdamSession session,SaveStore store,long revision,string weapon,int seed)
+    internal static int Run(AdamSession session,SaveStore store,long revision,string weapon,int seed,int lastRound)
     {
         var previous=store.Load()!;
         var previousReceipt=JsonSerializer.Serialize(previous.Run!.Boss);
@@ -18,15 +18,26 @@ internal static class LeviticusRunner
         session=AdamSession.Resume(state,LeviticusContent.Round(16));
         var records=new List<object>();
         string? sixthReceipt=null;
-        for(var round=16;round<=LeviticusContent.LastInstalledRound;round++)
+        var laterReceipts=new List<string>();
+        for(var round=16;round<=lastRound;round++)
         {
-            var definition=LeviticusContent.Round(round);
-            var speeds=LeviticusContent.SpeedsFor(round);
-            if(round>16)session=session.StartNextRound(definition);
+            var definition=CampaignContent.Round(round);
+            var speeds=CampaignContent.SpeedsFor(round);
+            if(round==NumbersContent.GlobalRoundNumber)
+            {
+                var before=state.Profile.Gold;
+                var entering=session.PrepareNumbers(definition);
+                passed&=session.LeviticusComplete&&entering.Profile.Gold==before;
+                revision=store.Commit(entering,revision,"numbers-entry");
+                state=store.Load()!;
+                session=AdamSession.Resume(state,definition);
+            }
+            else if(round>16)session=session.StartNextRound(definition);
+            var hasBoss=session.BossRules!=null;
             var world=new BattleWorld(session,speeds,seed);
             var phases=new HashSet<string>();
             var midpoint=false;
-            for(var tick=0;tick<(round==18?36000:10860)&&session.IsActive;tick++)
+            for(var tick=0;tick<(hasBoss?48000:10860)&&session.IsActive;tick++)
             {
                 BattleRunner.Resolve(session,weapon);
                 world.Advance(BattleWorld.FixedStep,BattleRunner.Movement(world));
@@ -46,7 +57,7 @@ internal static class LeviticusRunner
                 passed&=geometry==JsonSerializer.Serialize(world.Capture());
                 midpoint|=phase=="midpoint";
             }
-            if(round==18&&world.BossKills==1)
+            if(hasBoss&&world.BossKills==1)
             {
                 if(session.Stage=="boss_reward")
                 {
@@ -55,12 +66,13 @@ internal static class LeviticusRunner
                 }
                 BattleRunner.Resolve(session,weapon);
                 passed&=session.CompleteBossSettlement();
-                sixthReceipt=JsonSerializer.Serialize(state.Run!.Boss);
+                if(round==18)sixthReceipt=JsonSerializer.Serialize(state.Run!.Boss);
+                else if(round<CampaignContent.LastInstalledRound)laterReceipts.Add(JsonSerializer.Serialize(state.Run!.Boss));
             }
 
             records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases});
             passed&=midpoint&&world.Hits>0&&world.Kills>0&&session.Stage=="between_rounds"&&
-                (round!=18||world.BossKills==1&&phases.Contains("telegraph")&&phases.Contains("projectiles"));
+                (!hasBoss||world.BossKills==1&&phases.Contains("telegraph")&&phases.Contains("projectiles"));
             if(!passed)break;
             session.Capture();
             revision=store.Commit(state,revision,"leviticus-complete-"+round);
@@ -68,12 +80,18 @@ internal static class LeviticusRunner
             session=AdamSession.Resume(state,definition);
             passed&=state.Run!.RoundNumber==round+1&&previousReceipt==JsonSerializer.Serialize(state.Run.CompletedFifthBoss)&&
                 (round<=18||sixthReceipt==JsonSerializer.Serialize(state.Run.CompletedSixthBoss))&&
-                session.ContentComplete==(round==LeviticusContent.LastInstalledRound);
+                session.ContentComplete==(round==CampaignContent.LastInstalledRound);
+            if(round>=NumbersContent.GlobalRoundNumber)
+            {
+                var expected=round%3==0&&round<CampaignContent.LastInstalledRound?laterReceipts.Count-1:laterReceipts.Count;
+                passed&=state.Run.LaterBossHistory!=null&&
+                    laterReceipts.Take(expected).SequenceEqual(state.Run.LaterBossHistory.Select(r=>JsonSerializer.Serialize(r)));
+            }
             if(!passed)break;
         }
         System.Console.WriteLine(JsonSerializer.Serialize(new
         {
-            status=passed?"PASS":"FAIL", kind="Leviticus R16–R20 coordinate combat, technical equipment/health fixture",
+            status=passed?"PASS":"FAIL", kind=$"Campaign R16–R{lastRound} coordinate combat, technical equipment/health fixture",
             records, content_complete=session.ContentComplete, next_round=state.Run?.RoundNumber
         }));
         return passed?0:1;

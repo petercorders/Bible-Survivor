@@ -26,7 +26,7 @@ internal static class LeviticusSeriesTests
                 Check.Equal(170d,definition.Waves.Last().End);
             }
             Check.Equal("ash_veil",BossDefinition.ForRound(18).Id);
-            Check.Throws<ArgumentOutOfRangeException>(()=>LeviticusContent.Round(21));
+            Check.Throws<ArgumentOutOfRangeException>(()=>LeviticusContent.Round(22));
         });
 
         test("R20 continuous Leviticus progression preserves six receipts across disk and pays once",() =>
@@ -88,7 +88,7 @@ internal static class LeviticusSeriesTests
                     Check.Equal(gold,state.Profile.Gold);
                     Check.Equal(r15,JsonSerializer.Serialize(state.Run!.CompletedFifthBoss));
                     if(round>18)Check.Equal(r18,JsonSerializer.Serialize(state.Run!.CompletedSixthBoss));
-                    Check.Equal(round==20,session.ContentComplete);
+                    Check.True(!session.ContentComplete);
                 }
                 Check.Equal(21,state.Run!.RoundNumber);
                 Check.True(!session.CanEnterLeviticus&&!session.ExodusComplete);
@@ -96,7 +96,7 @@ internal static class LeviticusSeriesTests
                 var backup=File.ReadAllText(store.Path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>n["Run"]!["RoundNumber"]=22,
+                    n=>n["Run"]!["RoundNumber"]=32,
                     n=>n["Run"]!["CompletedSixthBoss"]!["FutureExtension"]=true
                 })
                 {

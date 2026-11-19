@@ -8,7 +8,7 @@ namespace BibleSurvivor.Core
     {
         public const string ChapterId = "leviticus";
         public const int GlobalRoundNumber = 16;
-        public const int LastInstalledRound = 20;
+        public const int LastInstalledRound = 21;
         public const string RoundId = "leviticus_01";
         internal const string SpeedContract = "lv1-speed0.60:lv2-speed0.85:lv3-speed0.35:chase-contact";
 
@@ -39,6 +39,7 @@ namespace BibleSurvivor.Core
             18=>LaterRound(18,"leviticus_03",6400,340,1380,350,240,950),
             19=>LaterRound(19,"leviticus_04",6600,360,1440,375,255,980),
             20=>LaterRound(20,"leviticus_05",6800,380,1500,400,270,1010),
+            21=>LaterRound(21,"leviticus_06",7000,400,1560,425,285,1040),
             _=>throw new ArgumentOutOfRangeException(nameof(number))
         };
 

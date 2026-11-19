@@ -40,16 +40,21 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR15 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==15 && Session?.RoundNumber==14;
         public bool AwaitingNextRound => State?.Run?.Stage=="between_rounds" && Session?.RoundNumber==State.Run.RoundNumber-1 &&
             State.Run.RoundNumber!=ExodusContent.GlobalRoundNumber && State.Run.RoundNumber!=LeviticusContent.GlobalRoundNumber &&
+            State.Run.RoundNumber!=NumbersContent.GlobalRoundNumber &&
             State.Run.RoundNumber<=catalog.LastInstalledRound;
         bool CanEnterChapter => Error==null && !Suspended && operation==null && chapterCandidate==null;
         public bool CanEnterExodus => CanEnterChapter && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
         public bool LeviticusInstalled => catalog.LeviticusInstalled;
         public bool CanEnterLeviticus => CanEnterChapter && LeviticusInstalled && Session?.CanEnterLeviticus==true;
         public bool HasLeviticusEntryRetry => chapterCandidate?.Run?.RoundNumber==LeviticusContent.GlobalRoundNumber;
+        public bool NumbersInstalled => catalog.NumbersInstalled;
+        public bool CanEnterNumbers => CanEnterChapter && NumbersInstalled && Session?.CanEnterNumbers==true;
+        public bool HasNumbersEntryRetry => chapterCandidate?.Run?.RoundNumber==NumbersContent.GlobalRoundNumber;
         public bool ContentComplete => Session?.ContentComplete==true || (ExodusComplete && !LeviticusInstalled);
         public bool ExodusComplete => Session?.ExodusComplete == true;
+        public bool LeviticusComplete => Session?.LeviticusComplete == true;
         public bool CanStartNew => Error==null && chapterCandidate==null && State!=null &&
-            (State.Run==null || ((Session?.ChapterComplete==true || ExodusComplete || ContentComplete) && Session.PendingChoices.Count==0));
+            (State.Run==null || ((Session?.ChapterComplete==true || ExodusComplete || LeviticusComplete || ContentComplete) && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
         public bool Reload()
@@ -77,13 +82,20 @@ namespace BibleSurvivor.Unity
         }
         public bool TryEnterExodus() => CanEnterExodus && TryEnterChapter(ExodusContent.GlobalRoundNumber);
         public bool TryEnterLeviticus() => CanEnterLeviticus && TryEnterChapter(LeviticusContent.GlobalRoundNumber);
+        public bool TryEnterNumbers() => CanEnterNumbers && TryEnterChapter(NumbersContent.GlobalRoundNumber);
         bool TryEnterChapter(int round)
         {
             try
             {
                 // Keep the completed book published while preparing and committing a separate candidate.
                 var definition=catalog.ForRound(round);
-                var candidate=round==ExodusContent.GlobalRoundNumber?Session.PrepareExodus(definition):Session.PrepareLeviticus(definition);
+                var candidate=round switch
+                {
+                    ExodusContent.GlobalRoundNumber=>Session.PrepareExodus(definition),
+                    LeviticusContent.GlobalRoundNumber=>Session.PrepareLeviticus(definition),
+                    NumbersContent.GlobalRoundNumber=>Session.PrepareNumbers(definition),
+                    _=>throw new ArgumentOutOfRangeException(nameof(round))
+                };
                 var preview=AdamSession.Resume(candidate,definition);
                 candidate.Run.World=new BattleWorld(preview,catalog.SpeedsFor(definition.Number),7).Capture();
                 candidate.Validate();

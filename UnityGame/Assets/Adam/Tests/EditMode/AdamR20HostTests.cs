@@ -76,7 +76,7 @@ public sealed class AdamR20HostTests
     }
 
     [Test]
-    public void ChaptersAndInstalledEndUseDistinctCheckpointsAcrossProcessReloads()
+    public void LeviticusKeepsTheRunAcrossReloadsAndCompletesAtR21()
     {
         var catalog=AdamCatalog.Load();
         var store=new SaveStore(path);
@@ -88,7 +88,7 @@ public sealed class AdamR20HostTests
         Assert.IsTrue(host.TryEnterLeviticus(),host.Error);
         Assert.AreEqual(oldGold,host.State.Profile.Gold);
         byte[] sixthBoss=null;
-        for(var round=16;round<=20;round++)
+        for(var round=16;round<=21;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(runId,host.State.Run.RunId);
@@ -98,23 +98,8 @@ public sealed class AdamR20HostTests
             var definition=catalog.ForRound(round);
             Assert.AreEqual(LeviticusContent.Round(round).Fingerprint,definition.Fingerprint);
             CollectionAssert.AreEquivalent(new[]{"lv1","lv2","lv3"},catalog.SpeedsFor(round).Keys);
-            oldGold=host.State.Profile.Gold;
-            host.Session.Advance(180);
-            if(round==18)
-            {
-                host.Session.Advance(2);
-                Assert.AreEqual("ash_veil",host.Session.BossRules.Id);
-                host.Session.Hit(host.Session.BossRules.BossActorId,host.Session.BossRules.MaxHealth);
-                Assert.IsTrue(host.Checkpoint(),host.Error);
-                if(host.Session.Stage=="boss_reward")
-                    Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));
-                while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));
-                oldGold=host.State.Profile.Gold;
-                Assert.IsTrue(host.CompleteBossSettlement(),host.Error);
-                Assert.IsFalse(host.CompleteBossSettlement());
-                sixthBoss=Bytes(host.State.Run.Boss);
-            }
-            Assert.IsTrue(host.Checkpoint(),host.Error);
+            oldGold=CompleteRound(host,round==18?"ash_veil":round==21?"oath_wraith":null);
+            if(round==18)sixthBoss=Bytes(host.State.Run.Boss);
             var committed=File.ReadAllBytes(path);
             host=new AdamHost(catalog,store);
             Assert.IsNull(host.Error);
@@ -122,28 +107,133 @@ public sealed class AdamR20HostTests
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(round+1,host.State.Run.RoundNumber);
             Assert.AreEqual(oldGold+definition.CompletionGold,host.State.Profile.Gold);
-            Assert.AreEqual(round==20,host.ContentComplete);
-            Assert.AreEqual(round<20,host.AwaitingNextRound);
+            Assert.IsFalse(host.ContentComplete);
+            Assert.AreEqual(round==21,host.LeviticusComplete);
+            Assert.AreEqual(round==21,host.CanEnterNumbers);
+            Assert.AreEqual(round<21,host.AwaitingNextRound);
             CollectionAssert.AreEqual(committed,File.ReadAllBytes(path));
-            if(round<20)host.SetPaused(false);
+            if(round<21)host.SetPaused(false);
         }
         var revision=host.State.Revision;
         host.SetPaused(false);host.Tick(.1);
-        Assert.AreEqual(20,host.Session.RoundNumber);
+        Assert.AreEqual(21,host.Session.RoundNumber);
         Assert.AreEqual(revision,host.State.Revision);
         Assert.IsTrue(host.CanStartNew);
         Assert.IsFalse(host.CanPlay);
-        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(21));
+        Assert.IsTrue(host.CanEnterNumbers);
+    }
+
+    [TestCase(false)] [TestCase(true)]
+    public void NumbersEntryRetryKeepsR21PublishedUntilR22Commits(bool replaceBeforeFailure)
+    {
+        var completed=AdamR15UiTests.CompletedFifteen(path);
+        Assert.IsTrue(completed.TryEnterLeviticus(),completed.Error);
+        for(var round=16;round<=21;round++)
+        {
+            Assert.AreEqual(round,completed.Session.RoundNumber);
+            CompleteRound(completed,round==18?"ash_veil":round==21?"oath_wraith":null);
+            if(round<21)completed.SetPaused(false);
+        }
+
+        var genesis=Resources.Load<TextAsset>("genesis-catalog").text;
+        var exodus=Resources.Load<TextAsset>("exodus-catalog").text;
+        var partialCatalog=new AdamCatalog(genesis,exodus,installLeviticus:true);
+        var partial=new AdamHost(partialCatalog,new SaveStore(path));
+        Assert.IsNull(partial.Error);
+        Assert.IsTrue(partial.LeviticusComplete);
+        Assert.IsFalse(partial.CanEnterNumbers);
+        Assert.IsFalse(partial.TryEnterNumbers());
+
+        var callbacks=0;
+        var store=new SaveStore(path,()=>
+        {
+            if(++callbacks!=1)return;
+            if(replaceBeforeFailure)
+                File.Replace(Directory.GetFiles(directory,"save.json.tmp-*").Single(),path,path+".bak");
+            throw new IOException("Numbers entry write or acknowledgement failure");
+        });
+        var host=new AdamHost(AdamCatalog.Load(),store);
+        var published=host.State;
+        var publishedBytes=Bytes(published);
+        Assert.IsTrue(host.CanEnterNumbers);
+        Assert.IsFalse(host.TryEnterNumbers());
+        Assert.IsTrue(host.HasNumbersEntryRetry);
+        Assert.IsTrue(host.Paused);
+        Assert.IsTrue(host.LeviticusComplete);
+        Assert.IsFalse(host.ContentComplete);
+        Assert.IsFalse(host.TryEnterNumbers());
+        host.Start("sling");host.Tick(.1);
+        Assert.AreSame(published,host.State);
+        CollectionAssert.AreEqual(publishedBytes,Bytes(host.State));
+        var afterFailure=store.Load();
+        Assert.AreEqual(published.Revision+(replaceBeforeFailure?1:0),afterFailure.Revision);
+
+        Assert.IsTrue(host.RetrySave(),host.Error);
+        Assert.AreEqual(replaceBeforeFailure?1:2,callbacks);
+        Assert.IsFalse(host.HasNumbersEntryRetry);
+        Assert.IsTrue(host.Paused);
+        Assert.AreEqual(22,host.Session.RoundNumber);
+        Assert.AreEqual(published.Revision+1,host.State.Revision);
+        if(replaceBeforeFailure)Assert.AreEqual(afterFailure.LastOperationId,host.State.LastOperationId);
+        Assert.AreEqual(published.Run.RunId,host.State.Run.RunId);
+        CollectionAssert.AreEqual(Bytes(published.Profile),Bytes(host.State.Profile));
+        CollectionAssert.AreEquivalent(published.Run.Weapons,host.State.Run.Weapons);
+        CollectionAssert.AreEquivalent(published.Run.Passives,host.State.Run.Passives);
+        Assert.Zero(host.World.SimulationTime);
+        Assert.IsFalse(partial.Reload());
+        Assert.IsTrue(partial.RequiresNewerGame);
+    }
+
+    static long CompleteRound(AdamHost host,string bossId)
+    {
+        var gold=host.State.Profile.Gold;
+        host.Session.Advance(180);
+        if(bossId!=null)
+        {
+            host.Session.Advance(2);
+            Assert.AreEqual(bossId,host.Session.BossRules.Id);
+            host.Session.Hit(host.Session.BossRules.BossActorId,host.Session.BossRules.MaxHealth);
+            Assert.IsTrue(host.Checkpoint(),host.Error);
+            if(host.Session.Stage=="boss_reward")
+                Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));
+            while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));
+            gold=host.State.Profile.Gold;
+            Assert.IsTrue(host.CompleteBossSettlement(),host.Error);
+            Assert.IsFalse(host.CompleteBossSettlement());
+        }
+        else Assert.IsTrue(host.Checkpoint(),host.Error);
+        return gold;
     }
 
     [TestCase(16,"아론")] [TestCase(17,"정결의 길")] [TestCase(18,"속죄일")]
-    [TestCase(19,"이웃 돌봄")] [TestCase(20,"희년")]
+    [TestCase(19,"이웃 돌봄")] [TestCase(20,"희년")] [TestCase(21,"서원의 끝")]
     public void LeviticusTitlesUseBookLocalRoundAndShowInstalledRange(int round,string name)
     {
         Assert.AreEqual($"레위기 {round-15} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
-        Assert.AreEqual("희년 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,true));
-        StringAssert.Contains("레위기 1–5 라운드",AdamRoundPresentation.CompletionDetail(false,false,true,true));
+        Assert.AreEqual("레위기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,true));
+        StringAssert.Contains("레위기 1–6 라운드",AdamRoundPresentation.CompletionDetail(false,false,true,true));
+        StringAssert.Contains("민수기는 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,true,true,true));
         StringAssert.Contains("성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,true,true));
+    }
+
+    [TestCase(22,"인구 조사")] [TestCase(23,"광야 행진")] [TestCase(24,"불평의 진영")]
+    [TestCase(25,"정탐꾼")] [TestCase(26,"긴 광야")] [TestCase(27,"바위의 물")]
+    [TestCase(28,"놋뱀")] [TestCase(29,"모압 평야")] [TestCase(30,"요단 앞")]
+    public void NumbersTitlesUseBookLocalRound(int round,string name)
+    {
+        Assert.AreEqual($"민수기 {round-21} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
+        Assert.AreEqual("민수기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        StringAssert.Contains("민수기 1–9 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+    }
+
+    [TestCase(21,"서원의 망령")] [TestCase(24,"먼지의 폭군")]
+    [TestCase(27,"협곡의 추적자")] [TestCase(30,"광야의 수문장")]
+    public void NewBossHudShowsProjectileWarning(int round,string name)
+    {
+        var rules=BossDefinition.ForRound(round);
+        Assert.AreEqual(name,AdamBossPresentation.Name(rules));
+        Assert.IsTrue(AdamBossPresentation.UsesTwoLineHud(rules));
+        StringAssert.Contains("파편 3방향 예고",AdamBossPresentation.Phase("boss",new BossEncounterState{Telegraphing=true},rules));
     }
 
     static byte[] Bytes(object value)

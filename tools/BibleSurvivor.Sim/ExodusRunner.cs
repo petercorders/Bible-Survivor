@@ -7,7 +7,7 @@ using BibleSurvivor.Core;
 namespace BibleSurvivor.Sim;
 internal static class ExodusRunner
 {
-    internal static int Run(GameSnapshot state,AdamSession game,SaveStore store,long revision,string weapon,int seed,bool eleventh=false,bool twelfth=false,bool thirteenth=false,bool fourteenth=false,bool fifteenth=false,bool twentieth=false)
+    internal static int Run(GameSnapshot state,AdamSession game,SaveStore store,long revision,string weapon,int seed,bool eleventh=false,bool twelfth=false,bool thirteenth=false,bool fourteenth=false,bool fifteenth=false,int laterRound=0)
     {
         var definition=CatalogReader.Exodus("content/exodus/catalog.json");var speeds=CatalogReader.MonsterSpeeds("content/exodus/catalog.json");
         var before=File.ReadAllBytes(store.Path);var gold=state.Profile.Gold;var health=game.CurrentHealth;var runId=state.Run!.RunId;
@@ -80,7 +80,7 @@ internal static class ExodusRunner
             records.Add(new{round,midpoint_disk_restore=midpoint,boss_phase_restores=phaseRestores,coordinates,hits=world.Hits,kills=world.Kills,boss_kills=world.BossKills,seconds=world.SimulationTime,equipment});
         }
         Console.WriteLine(JsonSerializer.Serialize(new {status=passed?"PASS":"FAIL",kind="R01 through R"+(fifteenth?"15":fourteenth?"14":thirteenth?"13":twelfth?"12":eleventh?"11":"10")+" actual coordinate combat; existing equipment8/passive1 HP10000 technical fixture; no injected hits or kills; not natural completion",weapon,seed,r09_completion_checkpoint=true,exodus_entry_no_payment_or_heal=candidate.Profile.Gold==gold&&candidate.Run!.Health==health,rounds=records,three_boss_receipts_preserved=passed,four_boss_receipts_preserved=thirteenth||fourteenth||fifteenth?(bool?)passed:null,content_complete=game.ContentComplete,exodus_complete=game.ExodusComplete,chapter_complete=game.ChapterComplete,next_round=state.Run?.RoundNumber,hits=world.Hits,kills=world.Kills,seconds=world.SimulationTime,gold=state.Profile.Gold,save=store.Path,unity="NOT_RUN",mobile="NOT_RUN",balance="UNVALIDATED"},new JsonSerializerOptions{WriteIndented=true}));
-        if(passed&&twentieth)return LeviticusRunner.Run(game,store,revision,weapon,seed);
+        if(passed&&laterRound>15)return LaterCampaignRunner.Run(game,store,revision,weapon,seed,laterRound);
         return passed?0:1;
     }
 }

@@ -25,7 +25,11 @@ namespace BibleSurvivor.Core
         public const string ChariotPolicy="r12-production-v1";
         public const string WeaverPolicy="r15-production-v1";
         public const string AshVeilPolicy="r18-production-v1";
-        public bool UsesChainProjectiles=>Number==9||Number==15||Number==18;
+        internal const string OathPolicy="r21-production-v1",DustPolicy="r24-production-v1",
+            RavinePolicy="r27-production-v1",WardenPolicy="r30-production-v1";
+        internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
+            or ChariotPolicy or WeaverPolicy or AshVeilPolicy or OathPolicy or DustPolicy or RavinePolicy or WardenPolicy;
+        public bool UsesChainProjectiles=>Number==9||Number>=15;
         public double ProjectileSpeed=>UsesChainProjectiles?ChainSpeed:0;
         public double ProjectileRadius=>UsesChainProjectiles?ChainRadius:0;
         public double ProjectileLifetime=>UsesChainProjectiles?ChainLifetime:0;
@@ -61,12 +65,22 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition MosesBoss=new BossDefinition(12,"oppression_chariot",20000,20,400,6,0,1021,"ex8",360,14,.45,ChariotPolicy,.60,.30);
         private static readonly BossDefinition BezalelBoss=new BossDefinition(15,"defilement_weaver",26000,22,500,5,18,1201,"ex17",400,14,.65,WeaverPolicy,.60,.30);
         private static readonly BossDefinition AshVeilBoss=new BossDefinition(18,"ash_veil",31000,24,560,5,20,1381,"lv1",350,14,.60,AshVeilPolicy,.60,.30);
+        private static readonly BossDefinition OathBoss=new BossDefinition(21,"oath_wraith",33200,25,620,5,21,1561,"lv1",425,14,.60,OathPolicy,.60,.30);
+        private static readonly BossDefinition DustBoss=new BossDefinition(24,"dust_tyrant",35500,26,680,5,22,1681,"nm1",480,15,.63,DustPolicy,.65,.30);
+        private static readonly BossDefinition RavineBoss=new BossDefinition(27,"ravine_stalker",38000,27,740,5,23,1861,"nm1",540,15,.63,RavinePolicy,.65,.35);
+        private static readonly BossDefinition WardenBoss=new BossDefinition(30,"wilderness_warden",41000,29,820,5,24,2041,"nm1",600,15,.63,WardenPolicy,.70,.35);
         internal static BossDefinition? Find(int number)=>number switch
         {
-            3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,_=>null
+            3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
-        public string EncounterKey(string runId)=>runId+(Number==18?":leviticus_03:":Number==15?":exodus_06:":IsChariot?":exodus_03:":":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":")+Id;
+        internal string EncounterSuffix => ":"+(Number switch
+        {
+            >=NumbersContent.GlobalRoundNumber=>NumbersContent.RoundId(Number),
+            21=>"leviticus_06",18=>"leviticus_03",15=>"exodus_06",12=>"exodus_03",
+            _=>"genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)
+        })+":"+Id;
+        public string EncounterKey(string runId)=>runId+EncounterSuffix;
         public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":UsesChainProjectiles?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
                 Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));

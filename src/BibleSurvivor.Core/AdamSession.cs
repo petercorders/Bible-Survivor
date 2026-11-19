@@ -53,7 +53,9 @@ namespace BibleSurvivor.Core
         public int RoundNumber => definition.Number;
         public bool CanEnterExodus=>ChapterComplete&&run.PendingLevels==0;
         public bool CanEnterLeviticus=>ExodusComplete&&run.PendingLevels==0;
-        public bool ContentComplete=>IsCurrent&&definition.Number==LeviticusContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
+        public bool LeviticusComplete=>IsCurrent&&definition.Number==LeviticusContent.LastInstalledRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterNumbers=>LeviticusComplete&&run.PendingLevels==0;
+        public bool ContentComplete=>IsCurrent&&definition.Number==CampaignContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
         public bool ExodusComplete=>IsCurrent&&definition.Number==15&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool ChapterComplete=>IsCurrent&&definition.Number==9&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         internal int SpeciesOrdinal(int id) => Arena!.SpeciesOrdinal(id);
@@ -91,7 +93,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > LeviticusContent.LastInstalledRound ||
+            if (definition.Number < 1 || definition.Number > CampaignContent.LastInstalledRound ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -99,7 +101,7 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Round catalog changed; checkpoint preserved");
             if (run.RoundFingerprint == null && definition.Number != 1)
                 throw new ArgumentException("Legacy saves support only R01 and its completion checkpoint");
-            if(definition.Number>=LeviticusContent.GlobalRoundNumber)LeviticusContent.Validate(definition);
+            if(definition.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(definition);
             else if(definition.Number>=10)ExodusContent.Validate(definition);
             this.state = state; this.definition = definition;
             Inventory = EquipmentInventory.Restore(run.Weapons, run.Passives,run.Forms);
@@ -149,29 +151,52 @@ namespace BibleSurvivor.Core
             return candidate;
         }
 
+        public GameSnapshot PrepareNumbers(RoundDefinition next)
+        {
+            if(!CanEnterNumbers)throw new InvalidOperationException("Explicit Numbers entry requires completed R21");
+            if(next.Number!=NumbersContent.GlobalRoundNumber)throw new ArgumentException("Numbers entry requires R22");
+            CampaignContent.Validate(next);
+            state.Validate();
+            var candidate=SaveStore.Copy(state);
+            BeginNextRound(candidate.Run!,next);
+            _=Resume(candidate,next);
+            return candidate;
+        }
+
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number>LeviticusContent.LastInstalledRound || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number==NumbersContent.GlobalRoundNumber || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
-            if(next.Number>=LeviticusContent.GlobalRoundNumber)LeviticusContent.Validate(next);
+            if(next.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(next);
             else if(next.Number>=11)ExodusContent.Validate(next);
             state.Validate(); Capture();
+            BeginNextRound(run,next);
+            return Resume(state,next);
+        }
+
+        private static void BeginNextRound(RunState run,RoundDefinition next)
+        {
+            var previous=next.Number-1;
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
             var arena=new WaveDirector(next);
             if(run.Boss!=null)
             {
-                if(definition.Number==18){run.CompletedSixthBoss=run.Boss.Copy();run.PreviousNormalRound=18;}
-                else if(definition.Number==12){run.CompletedFourthBoss=run.Boss.Copy();run.PreviousNormalRound=12;}
-                else if(definition.Number==6)run.CompletedSecondBoss=run.Boss.Copy();
+                if(previous>=21)
+                {
+                    (run.LaterBossHistory??=new List<BossEncounterState>()).Add(run.Boss.Copy());
+                    run.PreviousNormalRound=previous;
+                }
+                else if(previous==18){run.CompletedSixthBoss=run.Boss.Copy();run.PreviousNormalRound=18;}
+                else if(previous==12){run.CompletedFourthBoss=run.Boss.Copy();run.PreviousNormalRound=12;}
+                else if(previous==6)run.CompletedSecondBoss=run.Boss.Copy();
                 else run.CompletedBoss=run.Boss.Copy();
                 run.Boss=null;
             }
-            if(run.RoundCompletionApplied)run.PreviousNormalRound=definition.Number;
+            if(run.RoundCompletionApplied)run.PreviousNormalRound=previous;
             run.NormalEndedAt=null;run.RoundCompletionApplied=false;
             run.Stage="normal";run.RoundFingerprint=next.Fingerprint;run.Wave=arena.Snapshot();
             run.World=null;run.Drops.Clear();run.LastHitTime=-1;
-            return Resume(state,next);
         }
 
         public void Advance(double seconds)

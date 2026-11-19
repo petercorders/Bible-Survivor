@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    // Genesis and Exodus use JSON catalogs. Leviticus uses the canonical Core definitions.
+    // Genesis and Exodus use JSON catalogs. The later books use the canonical Core definitions.
     public sealed class AdamCatalog
     {
         [Serializable] public class Root { public int schema_version; public string chapter_id; public Rules rules; public Monster[] monsters; public Round[] rounds; public Boss[] bosses; }
@@ -26,10 +26,11 @@ namespace BibleSurvivor.Unity
         public int LastInstalledRound { get; }
         public bool ExodusInstalled => definitions.ContainsKey(ExodusContent.GlobalRoundNumber);
         public bool LeviticusInstalled => definitions.ContainsKey(LeviticusContent.GlobalRoundNumber);
+        public bool NumbersInstalled => definitions.ContainsKey(NumbersContent.GlobalRoundNumber);
         public IReadOnlyDictionary<string,double> SpeedsFor(int round)
         {
             ForRound(round);
-            if(round>=LeviticusContent.GlobalRoundNumber)return LeviticusContent.SpeedsFor(round);
+            if(round>=LeviticusContent.GlobalRoundNumber)return CampaignContent.SpeedsFor(round);
             return round>=ExodusContent.GlobalRoundNumber?exodusSpeeds[round]:Speeds;
         }
         public RoundDefinition ForRound(int number)
@@ -45,14 +46,14 @@ namespace BibleSurvivor.Unity
             var supportedStage=run.Stage switch
             {
                 "normal" or "between_rounds" => true,
-                "round_settlement" => playedRound is 4 or 5 or 7 or 8 or 10 or 11 or 13 or 14 or 16 or 17 or 19 or 20,
-                "boss_intro" or "boss" or "boss_reward" or "boss_settlement" => playedRound is 3 or 6 or 9 or 12 or 15 or 18,
+                "round_settlement" => playedRound is 4 or 5 or 7 or 8 or 10 or 11 or 13 or 14 or 16 or 17 or 19 or 20 or 22 or 23 or 25 or 26 or 28 or 29,
+                "boss_intro" or "boss" or "boss_reward" or "boss_settlement" => playedRound is 3 or 6 or 9 or 12 or 15 or 18 or 21 or 24 or 27 or 30,
                 _ => false
             };
             if(!supportedStage)throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(playedRound);
         }
-        public AdamCatalog(string json,string exodusJson=null,bool installLeviticus=false)
+        public AdamCatalog(string json,string exodusJson=null,bool installLeviticus=false,bool installNumbers=false)
         {
             var root=JsonUtility.FromJson<Root>(json);
             if(root?.rules==null || root.monsters==null || root.rounds==null || root.schema_version!=1 || root.chapter_id!="genesis" || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170)
@@ -81,8 +82,11 @@ namespace BibleSurvivor.Unity
             }
             if(exodusJson!=null)LoadExodus(exodusJson);
             if(installLeviticus && definitions.ContainsKey(ExodusContent.LastInstalledRound))
-                for(var round=LeviticusContent.GlobalRoundNumber;round<=LeviticusContent.LastInstalledRound;round++)
-                    definitions.Add(round,LeviticusContent.Round(round));
+            {
+                var last=installNumbers?CampaignContent.LastInstalledRound:LeviticusContent.LastInstalledRound;
+                for(var round=LeviticusContent.GlobalRoundNumber;round<=last;round++)
+                    definitions.Add(round,CampaignContent.Round(round));
+            }
             LastInstalledRound=definitions.Keys.Max();
         }
         void LoadExodus(string json)
@@ -127,6 +131,6 @@ namespace BibleSurvivor.Unity
                 exodusSpeeds.Add(round.number,expectedSpeeds.ToDictionary(x=>x.Key,x=>monsters[x.Key].speed_ratio));
             }
         }
-        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text,true);
+        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text,true,true);
     }
 }
