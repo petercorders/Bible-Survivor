@@ -78,13 +78,13 @@ internal static class RoundSixteenTests
             Check.True(pending>0);
             while(resumed.PendingChoices.Count>0)
                 Check.True(resumed.Choose(resumed.PendingChoices.Single()));
-            Check.True(resumed.ContentComplete&&!resumed.ExodusComplete&&!resumed.CompleteNormalSettlement());
+            Check.True(!resumed.ContentComplete&&!resumed.ExodusComplete&&!resumed.CompleteNormalSettlement());
             gold+=pending*25;
             Check.Equal(gold+300,loaded.Profile.Gold);
             Check.Equal(17,loaded.Run.RoundNumber);
             store.Commit(loaded,2,"complete");
             loaded=store.Load()!;
-            Check.True(AdamSession.Resume(loaded,definition).ContentComplete);
+            Check.Equal("between_rounds",AdamSession.Resume(loaded,definition).Stage);
             Check.Equal(gold+300,loaded.Profile.Gold);
         }));
 
@@ -95,7 +95,7 @@ internal static class RoundSixteenTests
             var valid=File.ReadAllText(store.Path);
             File.WriteAllText(store.Path+".bak",valid);
             foreach(var change in new Action<JsonNode>[] {
-                n=>n["Run"]!["RoundNumber"]=17,
+                n=>n["Run"]!["RoundNumber"]=21,
                 n=>n["Run"]!["RoundFingerprint"]="future-fingerprint",
                 n=>n["Run"]!["CompletedFifthBoss"]!["FutureRule"]=true
             })

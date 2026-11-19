@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    // Adapter reads the unchanged canonical catalog for the nine implemented rounds.
+    // Genesis and Exodus use JSON catalogs. Leviticus uses the canonical Core definitions.
     public sealed class AdamCatalog
     {
         [Serializable] public class Root { public int schema_version; public string chapter_id; public Rules rules; public Monster[] monsters; public Round[] rounds; public Boss[] bosses; }
@@ -23,30 +23,36 @@ namespace BibleSurvivor.Unity
         public RoundDefinition Definition => ForRound(1); // Existing R01 callers retain their contract.
         public IReadOnlyDictionary<string, double> Speeds { get; }
         readonly Dictionary<int,IReadOnlyDictionary<string,double>> exodusSpeeds=new Dictionary<int,IReadOnlyDictionary<string,double>>();
-        public int LastInstalledRound => definitions.Keys.Max();
+        public int LastInstalledRound { get; }
         public bool ExodusInstalled => definitions.ContainsKey(ExodusContent.GlobalRoundNumber);
-        public IReadOnlyDictionary<string,double> SpeedsFor(int round)=>round>=10?exodusSpeeds.TryGetValue(round,out var speeds)?speeds:throw new InvalidDataException("Exodus round not installed"):Speeds;
+        public bool LeviticusInstalled => definitions.ContainsKey(LeviticusContent.GlobalRoundNumber);
+        public IReadOnlyDictionary<string,double> SpeedsFor(int round)
+        {
+            ForRound(round);
+            if(round>=LeviticusContent.GlobalRoundNumber)return LeviticusContent.SpeedsFor(round);
+            return round>=ExodusContent.GlobalRoundNumber?exodusSpeeds[round]:Speeds;
+        }
         public RoundDefinition ForRound(int number)
         {
-            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Round is outside installed content; later Exodus rounds are pending");
+            if(!definitions.TryGetValue(number,out var value))throw new InvalidDataException("Round is outside installed content");
             return value;
         }
         public RoundDefinition ForCheckpoint(RunState run)
         {
             var playedRound=run.Stage=="between_rounds"?run.RoundNumber-1:run.RoundNumber;
-            if(playedRound>=LeviticusContent.GlobalRoundNumber&&playedRound>LastInstalledRound)
+            if(playedRound>=LeviticusContent.GlobalRoundNumber&&!definitions.ContainsKey(playedRound))
                 throw new UnsupportedSaveVersionException();
-            if((run.Stage=="normal" || run.Stage=="round_settlement" && (run.RoundNumber==10 || run.RoundNumber==11 || run.RoundNumber==13 || run.RoundNumber==14)) && run.RoundNumber>=10 && run.RoundNumber<=LastInstalledRound)
-                return ForRound(run.RoundNumber);
-            if(run.Stage=="between_rounds" && run.RoundNumber>=11 && run.RoundNumber<=LastInstalledRound+1)
-                return ForRound(run.RoundNumber-1);
-            var boss=run.Stage=="boss_intro"||run.Stage=="boss"||run.Stage=="boss_reward"||run.Stage=="boss_settlement";
-            if(boss && (run.RoundNumber==12 || run.RoundNumber==15) && LastInstalledRound>=run.RoundNumber)return ForRound(run.RoundNumber);
-            var number=run.Stage=="normal"||run.Stage=="round_settlement"||boss?run.RoundNumber:run.Stage=="between_rounds"?run.RoundNumber-1:0;
-            if((boss&&number!=3&&number!=6&&number!=9)||number<1||number>9 || (run.Stage=="round_settlement"&&number!=4&&number!=5&&number!=7&&number!=8))throw new InvalidDataException("Checkpoint is outside implemented content");
-            return ForRound(number);
+            var supportedStage=run.Stage switch
+            {
+                "normal" or "between_rounds" => true,
+                "round_settlement" => playedRound is 4 or 5 or 7 or 8 or 10 or 11 or 13 or 14 or 16 or 17 or 19 or 20,
+                "boss_intro" or "boss" or "boss_reward" or "boss_settlement" => playedRound is 3 or 6 or 9 or 12 or 15 or 18,
+                _ => false
+            };
+            if(!supportedStage)throw new InvalidDataException("Checkpoint is outside implemented content");
+            return ForRound(playedRound);
         }
-        public AdamCatalog(string json,string exodusJson=null)
+        public AdamCatalog(string json,string exodusJson=null,bool installLeviticus=false)
         {
             var root=JsonUtility.FromJson<Root>(json);
             if(root?.rules==null || root.monsters==null || root.rounds==null || root.schema_version!=1 || root.chapter_id!="genesis" || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170)
@@ -74,6 +80,10 @@ namespace BibleSurvivor.Unity
                 definitions.Add(number,new RoundDefinition(number,round.concurrency_cap,round.raw_xp_budget,round.completion_gold,waves,round.id,string.IsNullOrEmpty(round.unlock_weapon_id)?null:round.unlock_weapon_id));
             }
             if(exodusJson!=null)LoadExodus(exodusJson);
+            if(installLeviticus && definitions.ContainsKey(ExodusContent.LastInstalledRound))
+                for(var round=LeviticusContent.GlobalRoundNumber;round<=LeviticusContent.LastInstalledRound;round++)
+                    definitions.Add(round,LeviticusContent.Round(round));
+            LastInstalledRound=definitions.Keys.Max();
         }
         void LoadExodus(string json)
         {
@@ -117,6 +127,6 @@ namespace BibleSurvivor.Unity
                 exodusSpeeds.Add(round.number,expectedSpeeds.ToDictionary(x=>x.Key,x=>monsters[x.Key].speed_ratio));
             }
         }
-        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text);
+        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text,true);
     }
 }

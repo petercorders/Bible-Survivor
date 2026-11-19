@@ -143,14 +143,61 @@ public sealed class AdamRoundPlayTests
         }
         session.Capture();state.Run.World=null;var path=Path.Combine(directory,suffix+".json");new SaveStore(path).Commit(state,0,"technical-Genesis-completion");return new AdamHost(catalog,new SaveStore(path));
     }
-    [UnityTest]public IEnumerator R10EnterKeyHonorsSuspensionThenStartsOnceAndDoesNotRestartAtInstalledEnd()
+    // Technical progression fixture; actual keyboard commands drive the saved round transitions.
+    static void SettleForEntry(AdamHost host)
     {
-        var host=CompletedGenesisForEntry("enter");var run=host.State.Run.RunId;game.Initialize(host);game.SetLifecycle(true,false);yield return null;Assert.AreEqual(9,host.Session.RoundNumber);Assert.IsTrue(host.Paused);
-        host.SetSuspended(true);var revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(9,host.Session.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
-        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;game.SetLifecycle(true,false);InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;
-        Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(run,host.State.Run.RunId);Assert.AreEqual(revision+1,host.State.Revision);
-        host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.AwaitingR11);InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(11,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint(),host.Error);Assert.IsTrue(host.AwaitingR12);InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(12,host.Session.RoundNumber);
-        host.Session.Advance(180);host.Session.Advance(2);host.Session.Hit(host.Session.BossRules.BossActorId,host.Session.BossRules.MaxHealth);Assert.IsTrue(host.Checkpoint(),host.Error);if(host.Session.Stage=="boss_reward")Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));Assert.IsTrue(host.CompleteBossSettlement());Assert.IsTrue(host.AwaitingR13);Assert.IsTrue(host.Reload());InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(13,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.AwaitingR14);Assert.IsTrue(host.Reload());InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(14,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.AwaitingR15);Assert.IsTrue(host.Reload());InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.AreEqual(15,host.Session.RoundNumber);host.Session.Advance(180);host.Session.Advance(2);host.Session.Hit(host.Session.BossRules.BossActorId,host.Session.BossRules.MaxHealth);Assert.IsTrue(host.Checkpoint());if(host.Session.Stage=="boss_reward")Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));Assert.IsTrue(host.CompleteBossSettlement());Assert.IsTrue(host.ExodusComplete);Assert.IsTrue(host.ContentComplete);revision=host.State.Revision;InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Enter));yield return null;Assert.IsTrue(host.ContentComplete);Assert.AreEqual(16,host.State.Run.RoundNumber);Assert.AreEqual(revision,host.State.Revision);
+        host.Session.Advance(180);
+        if(host.Session.Stage=="boss_intro")
+        {
+            host.Session.Advance(2);
+            host.Session.Hit(host.Session.BossRules.BossActorId,host.Session.BossRules.MaxHealth);
+            Assert.IsTrue(host.Checkpoint(),host.Error);
+            if(host.Session.Stage=="boss_reward")
+                Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));
+            while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));
+            Assert.IsTrue(host.CompleteBossSettlement(),host.Error);
+        }
+        else Assert.IsTrue(host.Checkpoint(),host.Error);
+    }
+
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR20()
+    {
+        var host=CompletedGenesisForEntry("enter");
+        var run=host.State.Run.RunId;
+        game.Initialize(host);game.SetLifecycle(true,false);
+        yield return null;
+        Assert.AreEqual(9,host.Session.RoundNumber);
+        Assert.IsTrue(host.Paused);
+        host.SetSuspended(true);
+        var revision=host.State.Revision;
+        Keys(Key.Enter);yield return null;
+        Assert.AreEqual(9,host.Session.RoundNumber);
+        Assert.AreEqual(revision,host.State.Revision);
+        Keys();yield return null;
+        game.SetLifecycle(true,false);
+        Keys(Key.Enter);yield return null;
+        Assert.AreEqual(10,host.Session.RoundNumber);
+        Assert.AreEqual(run,host.State.Run.RunId);
+        Assert.AreEqual(revision+1,host.State.Revision);
+        for(var round=10;round<=20;round++)
+        {
+            Assert.AreEqual(round,host.Session.RoundNumber);
+            SettleForEntry(host);
+            Assert.IsTrue(host.Reload(),host.Error);
+            Assert.AreEqual(round==15,host.CanEnterLeviticus);
+            Assert.AreEqual(round==20,host.ContentComplete);
+            Assert.AreEqual(round!=15&&round!=20,host.AwaitingNextRound);
+            revision=host.State.Revision;
+            Keys();yield return null;
+            Assert.AreEqual(round,host.Session.RoundNumber);
+            Assert.AreEqual(revision,host.State.Revision);
+            Keys(Key.Enter);yield return null;
+            Assert.AreEqual(Math.Min(20,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==20?0:1),host.State.Revision);
+            Assert.AreEqual(run,host.State.Run.RunId);
+        }
+        Assert.IsTrue(host.ContentComplete);
+        Assert.AreEqual(21,host.State.Run.RoundNumber);
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
     {

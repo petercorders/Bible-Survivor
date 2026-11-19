@@ -46,6 +46,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedThirdBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedFourthBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedFifthBoss {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossEncounterState? CompletedSixthBoss {get;set;}
         [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
         [DataMember(EmitDefaultValue=false)] public int PreviousNormalRound {get;set;}
@@ -73,13 +74,14 @@ namespace BibleSurvivor.Core
             if(r10 && !SaveFormat.SupportedChapterLifecycle(Run.RoundNumber,Run.Stage))
                 throw new UnsupportedSaveVersionException();
             var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
-            var r16=r10&&normalRound==LeviticusContent.GlobalRoundNumber;
-            if(r10 && Run.RoundFingerprint!=(r16?LeviticusContent.Round():ExodusContent.Round(normalRound)).Fingerprint)
+            var leviticus=r10&&normalRound>=LeviticusContent.GlobalRoundNumber;
+            var sixthHistory=leviticus&&normalRound>18;
+            if(r10 && Run.RoundFingerprint!=(leviticus?LeviticusContent.Round(normalRound):ExodusContent.Round(normalRound)).Fingerprint)
                 throw new UnsupportedSaveVersionException();
-            if(!r16&&Run.CompletedFifthBoss!=null)throw new UnsupportedSaveVersionException();
+            if(!leviticus&&Run.CompletedFifthBoss!=null||!sixthHistory&&Run.CompletedSixthBoss!=null)throw new UnsupportedSaveVersionException();
             if(!r10 && (Run.CompletedThirdBoss!=null||Run.CompletedFourthBoss!=null))throw new UnsupportedSaveVersionException();
-            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?17:10) ||
-                (Run.Stage=="normal" && Run.RoundNumber>(r10?16:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+            if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?LeviticusContent.LastInstalledRound+1:10) ||
+                (Run.Stage=="normal" && Run.RoundNumber>(r10?LeviticusContent.LastInstalledRound:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -93,34 +95,35 @@ namespace BibleSurvivor.Core
             PermanentRules.Validate(Run.PermanentSnapshot);
             if(Run.Wave!=null && (Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null)))
                 throw new InvalidDataException("Invalid active enemy collection");
-            var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&(Run.RoundNumber==4||Run.RoundNumber==7||Run.RoundNumber==10||r10&&(Run.RoundNumber==13||Run.RoundNumber==16)));
-            if(bossStage!=(Run.Boss!=null)||bossStage&&((r10?(Run.Boss!.EncounterRound!=12&&Run.Boss.EncounterRound!=15):SchemaVersion!=2)||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
+            var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&(Run.RoundNumber==4||Run.RoundNumber==7||Run.RoundNumber==10||r10&&(Run.RoundNumber==13||Run.RoundNumber==16||Run.RoundNumber==19)));
+            if(bossStage!=(Run.Boss!=null)||bossStage&&((r10?(Run.Boss!.EncounterRound!=12&&Run.Boss.EncounterRound!=15&&Run.Boss.EncounterRound!=18):SchemaVersion!=2)||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
             if(Run.Forms!=null&&((SchemaVersion!=2&&!r10)||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
             Run.Boss?.Validate(Run);
             var r12=r10&&(Run.RoundNumber==12&&Run.Stage!="between_rounds"||Run.RoundNumber==13&&Run.Stage=="between_rounds");
             var r15=r10&&(Run.RoundNumber==15&&Run.Stage!="between_rounds"||Run.RoundNumber==16&&Run.Stage=="between_rounds");
+            var r18=leviticus&&normalRound==18;
             var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7&&Run.Stage=="between_rounds";
             var r09=!r10&&(Run.RoundNumber==9&&Run.Stage!="between_rounds"||Run.RoundNumber==10);
-            var chainWorld=r09||r15;
-            var fourthHistory=r10&&(normalRound==13||normalRound==14||normalRound==15||r16);
-            var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10&&!r12&&!r15;
+            var chainWorld=r09||r15||r18;
+            var fourthHistory=r10&&(normalRound>=13);
+            var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10&&!r12&&!r15&&!r18;
             if(lateNormal)
             {
-                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(r16?15:normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(leviticus?normalRound-1:normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
                     throw new InvalidDataException("Invalid later normal lifecycle");
 
             }
-            else if(r06||r09||r12||r15)
+            else if(r06||r09||r12||r15||r18)
             {
-                if((SchemaVersion!=2&&!r12&&!r15)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r15?14:r12?11:r09?8:5)||Run.RoundCompletionApplied||Run.NormalEndedAt!=null||
+                if((SchemaVersion!=2&&!r12&&!r15&&!r18)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r18?17:r15?14:r12?11:r09?8:5)||Run.RoundCompletionApplied||Run.NormalEndedAt!=null||
                     (Run.Stage!="normal"&&Run.Stage!="boss_intro"&&Run.Stage!="boss"&&Run.Stage!="boss_reward"&&Run.Stage!="boss_settlement"&&Run.Stage!="between_rounds")||
-                    (Run.Boss!=null&&Run.Boss.EncounterRound!=(r15?15:r12?12:r09?9:6)))throw new InvalidDataException("Invalid R06 history/lifecycle");
+                    (Run.Boss!=null&&Run.Boss.EncounterRound!=(r18?18:r15?15:r12?12:r09?9:6)))throw new InvalidDataException("Invalid R06 history/lifecycle");
             }
             else if(Run.Stage=="round_settlement"||Run.CompletedBoss!=null||Run.NormalEndedAt!=null||Run.RoundCompletionApplied||Run.PreviousNormalRound!=0)throw new InvalidDataException("Normal receipt outside implemented rounds");
-            if(lateNormal||r06||r09||r12||r15)
+            if(lateNormal||r06||r09||r12||r15||r18)
             {
                 if(Run.CompletedBoss!.EncounterRound!=3||!Run.CompletedBoss.CompletionApplied)throw new InvalidDataException("Invalid or reordered completed boss history");
                 Run.CompletedBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=4,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,
@@ -143,11 +146,18 @@ namespace BibleSurvivor.Core
                 Run.CompletedFourthBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=13,Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
             else if(Run.CompletedFourthBoss!=null)throw new UnsupportedSaveVersionException();
-            if(r16)
+            if(leviticus)
             {
                 if(Run.CompletedFifthBoss==null||Run.CompletedFifthBoss.EncounterRound!=15||!Run.CompletedFifthBoss.CompletionApplied)
                     throw new InvalidDataException("Missing R15 completed history");
                 Run.CompletedFifthBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=16,
+                    Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
+            }
+            if(sixthHistory)
+            {
+                if(Run.CompletedSixthBoss==null||Run.CompletedSixthBoss.EncounterRound!=18||!Run.CompletedSixthBoss.CompletionApplied)
+                    throw new InvalidDataException("Missing R18 completed history");
+                Run.CompletedSixthBoss.Validate(new RunState{RunId=Run.RunId,Stage="between_rounds",RoundNumber=19,
                     Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
             }
             if(chainWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=5&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
@@ -191,7 +201,7 @@ namespace BibleSurvivor.Core
                     (Run.Stage=="between_rounds" && (Run.World.Enemies.Count!=0 || Run.World.Projectiles.Count!=0)))
                     throw new InvalidDataException("World checkpoint does not match round lifecycle");
             }
-            if((lateNormal||r12||r15)&&Run.Wave!=null)
+            if((lateNormal||r12||r15||r18)&&Run.Wave!=null)
             {
                 if(Run.Wave.Active.Any(x=>BattleWorld.UsesNormalCharge(normalRound,x.MonsterId)&&(!x.SpawnedAt.HasValue||!Finite(x.SpawnedAt.Value)||x.SpawnedAt<0||x.SpawnedAt>Run.Wave.Elapsed)))throw new InvalidDataException("Invalid D3 spawn time");
                 if(Run.Wave.Active.Any(x=>BattleWorld.UsesNormalCharge(normalRound,x.MonsterId))&&Run.World==null)throw new InvalidDataException("D3 checkpoint requires geometry and charge state");

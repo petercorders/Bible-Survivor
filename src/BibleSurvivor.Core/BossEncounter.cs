@@ -24,7 +24,8 @@ namespace BibleSurvivor.Core
         public const string JudahPolicy="r09-production-v1";
         public const string ChariotPolicy="r12-production-v1";
         public const string WeaverPolicy="r15-production-v1";
-        public bool UsesChainProjectiles=>Number==9||Number==15;
+        public const string AshVeilPolicy="r18-production-v1";
+        public bool UsesChainProjectiles=>Number==9||Number==15||Number==18;
         public double ProjectileSpeed=>UsesChainProjectiles?ChainSpeed:0;
         public double ProjectileRadius=>UsesChainProjectiles?ChainRadius:0;
         public double ProjectileLifetime=>UsesChainProjectiles?ChainLifetime:0;
@@ -59,8 +60,13 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition JudahBoss=new BossDefinition(9,"silver_cup_accuser",16000,20,350,5,15,1141,"i2",260,11,.60,JudahPolicy,.60,.30);
         private static readonly BossDefinition MosesBoss=new BossDefinition(12,"oppression_chariot",20000,20,400,6,0,1021,"ex8",360,14,.45,ChariotPolicy,.60,.30);
         private static readonly BossDefinition BezalelBoss=new BossDefinition(15,"defilement_weaver",26000,22,500,5,18,1201,"ex17",400,14,.65,WeaverPolicy,.60,.30);
-        public static BossDefinition ForRound(int number)=>number==3?AdamBoss:number==6?IsaacBoss:number==9?JudahBoss:number==12?MosesBoss:number==15?BezalelBoss:throw new ArgumentException("No implemented boss for round");
-        public string EncounterKey(string runId)=>runId+(Number==15?":exodus_06:":IsChariot?":exodus_03:":":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":")+Id;
+        private static readonly BossDefinition AshVeilBoss=new BossDefinition(18,"ash_veil",31000,24,560,5,20,1381,"lv1",350,14,.60,AshVeilPolicy,.60,.30);
+        internal static BossDefinition? Find(int number)=>number switch
+        {
+            3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,_=>null
+        };
+        public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
+        public string EncounterKey(string runId)=>runId+(Number==18?":leviticus_03:":Number==15?":exodus_06:":IsChariot?":exodus_03:":":genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)+":")+Id;
         public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":UsesChainProjectiles?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
                 Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
@@ -145,7 +151,7 @@ namespace BibleSurvivor.Core
         internal void Validate(RunState run)
         {
             bool Finite(double n)=>BattleSnapshot.Finite(n);
-            if(Version>4||EncounterRound!=3&&EncounterRound!=6&&EncounterRound!=9&&EncounterRound!=12&&EncounterRound!=15)throw new UnsupportedSaveVersionException();
+            if(Version>4||BossDefinition.Find(EncounterRound)==null)throw new UnsupportedSaveVersionException();
             var rules=Rules;var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
             var used=(mask&1)+((mask>>1)&1);var maxMask=(1<<rules.Thresholds.Count)-1;
             if((rules.IsChariot?Version!=4:Version!=1&&Version!=2&&Version!=3)||(rules.Number==6&&Version!=2)||(rules.UsesChainProjectiles&&Version!=3)||(!rules.UsesChainProjectiles&&Version==3)||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||

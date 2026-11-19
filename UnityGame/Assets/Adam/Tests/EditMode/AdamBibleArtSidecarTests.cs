@@ -13,8 +13,15 @@ public sealed class AdamBibleArtSidecarTests
         Assert.AreEqual(79,art.Index.assets.Length);
         foreach(var clip in art.Index.assets)
         {
+            // The reviewed visual overlay is applied after the base and Bible sidecar imports.
+            if(AdamVisualQualityArt.TryGetClip(clip.id,out _))
+            {
+                Assert.AreSame(AdamVisualQualityArt.Sprite(clip.id,0),art.Sprite(clip.id,0),clip.id);
+                continue;
+            }
             var root=AdamBibleArtSidecar.Overrides(clip.id)?AdamBibleArtSidecar.Root:"Art03/";
-            var imported=Resources.LoadAll<Sprite>(root+clip.id).OrderBy(s=>s.name,StringComparer.Ordinal).ToArray();
+            var resource=clip.id=="ico_wpn_jawbone_static_16"?AdamJawboneArt.Root+AdamJawboneArt.Icon:root+clip.id;
+            var imported=Resources.LoadAll<Sprite>(resource).OrderBy(s=>s.name,StringComparer.Ordinal).ToArray();
             Assert.AreSame(imported[0],art.Sprite(clip.id,0),clip.id);
         }
         var book=art.Clip(AdamBibleArtSidecar.Book);var glow=art.Clip(AdamBibleArtSidecar.Glow);

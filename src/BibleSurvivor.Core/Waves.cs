@@ -94,7 +94,11 @@ namespace BibleSurvivor.Core
             if(number==13)parts.Add(ExodusContent.RoundThirteenSpeedContract);
             if(number==14)parts.Add(ExodusContent.RoundFourteenSpeedContract);
             if(number==15)parts.Add(ExodusContent.RoundFifteenContract);
-            if(number==LeviticusContent.GlobalRoundNumber)parts.Add(LeviticusContent.SpeedContract);
+            if(number>=LeviticusContent.GlobalRoundNumber&&number<=LeviticusContent.LastInstalledRound)
+            {
+                parts.Add(LeviticusContent.SpeedContract);
+                if(number==18)parts.Add(BossDefinition.ForRound(number).FingerprintContract);
+            }
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();
