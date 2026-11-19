@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace BibleSurvivor.Core
@@ -55,6 +56,10 @@ namespace BibleSurvivor.Core
         public bool CanEnterLeviticus=>ExodusComplete&&run.PendingLevels==0;
         public bool LeviticusComplete=>IsCurrent&&definition.Number==LeviticusContent.LastInstalledRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool CanEnterNumbers=>LeviticusComplete&&run.PendingLevels==0;
+        public bool NumbersComplete=>IsCurrent&&definition.Number==NumbersContent.LastRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterDeuteronomy=>NumbersComplete&&run.PendingLevels==0;
+        public bool DeuteronomyComplete=>IsCurrent&&definition.Number==DeuteronomyContent.LastRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterJoshua=>DeuteronomyComplete&&run.PendingLevels==0;
         public bool ContentComplete=>IsCurrent&&definition.Number==CampaignContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
         public bool ExodusComplete=>IsCurrent&&definition.Number==15&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool ChapterComplete=>IsCurrent&&definition.Number==9&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
@@ -151,10 +156,14 @@ namespace BibleSurvivor.Core
             return candidate;
         }
 
-        public GameSnapshot PrepareNumbers(RoundDefinition next)
+        public GameSnapshot PrepareNumbers(RoundDefinition next)=>PrepareLaterBook(CanEnterNumbers,NumbersContent.GlobalRoundNumber,next,"Numbers");
+        public GameSnapshot PrepareDeuteronomy(RoundDefinition next)=>PrepareLaterBook(CanEnterDeuteronomy,DeuteronomyContent.GlobalRoundNumber,next,"Deuteronomy");
+        public GameSnapshot PrepareJoshua(RoundDefinition next)=>PrepareLaterBook(CanEnterJoshua,JoshuaContent.GlobalRoundNumber,next,"Joshua");
+
+        private GameSnapshot PrepareLaterBook(bool allowed,int first,RoundDefinition next,string book)
         {
-            if(!CanEnterNumbers)throw new InvalidOperationException("Explicit Numbers entry requires completed R21");
-            if(next.Number!=NumbersContent.GlobalRoundNumber)throw new ArgumentException("Numbers entry requires R22");
+            if(!allowed)throw new InvalidOperationException("Explicit "+book+" entry requires completed R"+(first-1).ToString(CultureInfo.InvariantCulture));
+            if(next.Number!=first)throw new ArgumentException(book+" entry requires R"+first.ToString(CultureInfo.InvariantCulture));
             CampaignContent.Validate(next);
             state.Validate();
             var candidate=SaveStore.Copy(state);
@@ -166,7 +175,8 @@ namespace BibleSurvivor.Core
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number==NumbersContent.GlobalRoundNumber || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number==NumbersContent.GlobalRoundNumber || next.Number==DeuteronomyContent.GlobalRoundNumber ||
+                next.Number==JoshuaContent.GlobalRoundNumber || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             if(next.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(next);
             else if(next.Number>=11)ExodusContent.Validate(next);

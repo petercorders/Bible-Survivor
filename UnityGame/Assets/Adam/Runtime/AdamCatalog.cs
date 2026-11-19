@@ -27,6 +27,8 @@ namespace BibleSurvivor.Unity
         public bool ExodusInstalled => definitions.ContainsKey(ExodusContent.GlobalRoundNumber);
         public bool LeviticusInstalled => definitions.ContainsKey(LeviticusContent.GlobalRoundNumber);
         public bool NumbersInstalled => definitions.ContainsKey(NumbersContent.GlobalRoundNumber);
+        public bool DeuteronomyInstalled => definitions.ContainsKey(DeuteronomyContent.GlobalRoundNumber);
+        public bool JoshuaInstalled => definitions.ContainsKey(JoshuaContent.GlobalRoundNumber);
         public IReadOnlyDictionary<string,double> SpeedsFor(int round)
         {
             ForRound(round);
@@ -46,14 +48,15 @@ namespace BibleSurvivor.Unity
             var supportedStage=run.Stage switch
             {
                 "normal" or "between_rounds" => true,
-                "round_settlement" => playedRound is 4 or 5 or 7 or 8 or 10 or 11 or 13 or 14 or 16 or 17 or 19 or 20 or 22 or 23 or 25 or 26 or 28 or 29,
-                "boss_intro" or "boss" or "boss_reward" or "boss_settlement" => playedRound is 3 or 6 or 9 or 12 or 15 or 18 or 21 or 24 or 27 or 30,
+                "round_settlement" => playedRound is 4 or 5 or 7 or 8 or 10 or 11 or 13 or 14 or 16 or 17 or 19 or 20 or 22 or 23 or 25 or 26 or 28 or 29 or
+                    31 or 32 or 34 or 35 or 37 or 38 or 40,
+                "boss_intro" or "boss" or "boss_reward" or "boss_settlement" => playedRound is 3 or 6 or 9 or 12 or 15 or 18 or 21 or 24 or 27 or 30 or 33 or 36 or 39,
                 _ => false
             };
             if(!supportedStage)throw new InvalidDataException("Checkpoint is outside implemented content");
             return ForRound(playedRound);
         }
-        public AdamCatalog(string json,string exodusJson=null,bool installLeviticus=false,bool installNumbers=false)
+        public AdamCatalog(string json,string exodusJson=null,bool installLeviticus=false,bool installNumbers=false,bool installDeuteronomy=false,bool installJoshua=false)
         {
             var root=JsonUtility.FromJson<Root>(json);
             if(root?.rules==null || root.monsters==null || root.rounds==null || root.schema_version!=1 || root.chapter_id!="genesis" || root.rules.normal_duration_seconds!=180 || root.rules.spawn_cutoff_seconds!=170)
@@ -83,7 +86,9 @@ namespace BibleSurvivor.Unity
             if(exodusJson!=null)LoadExodus(exodusJson);
             if(installLeviticus && definitions.ContainsKey(ExodusContent.LastInstalledRound))
             {
-                var last=installNumbers?CampaignContent.LastInstalledRound:LeviticusContent.LastInstalledRound;
+                // Each later book installs only after the book before it.
+                var last=!installNumbers?LeviticusContent.LastInstalledRound:!installDeuteronomy?NumbersContent.LastRound:
+                    !installJoshua?DeuteronomyContent.LastRound:CampaignContent.LastInstalledRound;
                 for(var round=LeviticusContent.GlobalRoundNumber;round<=last;round++)
                     definitions.Add(round,CampaignContent.Round(round));
             }
@@ -131,6 +136,6 @@ namespace BibleSurvivor.Unity
                 exodusSpeeds.Add(round.number,expectedSpeeds.ToDictionary(x=>x.Key,x=>monsters[x.Key].speed_ratio));
             }
         }
-        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text,true,true);
+        public static AdamCatalog Load()=>new AdamCatalog(Resources.Load<TextAsset>("genesis-catalog").text,Resources.Load<TextAsset>("exodus-catalog")?.text,true,true,true,true);
     }
 }

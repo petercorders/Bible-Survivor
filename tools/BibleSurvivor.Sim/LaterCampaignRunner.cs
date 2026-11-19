@@ -23,12 +23,17 @@ internal static class LaterCampaignRunner
         {
             var definition=CampaignContent.Round(round);
             var speeds=CampaignContent.SpeedsFor(round);
-            if(round==NumbersContent.GlobalRoundNumber)
+            if(round is NumbersContent.GlobalRoundNumber or DeuteronomyContent.GlobalRoundNumber or JoshuaContent.GlobalRoundNumber)
             {
                 var before=state.Profile.Gold;
-                var entering=session.PrepareNumbers(definition);
-                passed&=session.LeviticusComplete&&entering.Profile.Gold==before;
-                revision=store.Commit(entering,revision,"numbers-entry");
+                var (completed,entering)=round switch
+                {
+                    NumbersContent.GlobalRoundNumber=>(session.LeviticusComplete,session.PrepareNumbers(definition)),
+                    DeuteronomyContent.GlobalRoundNumber=>(session.NumbersComplete,session.PrepareDeuteronomy(definition)),
+                    _=>(session.DeuteronomyComplete,session.PrepareJoshua(definition))
+                };
+                passed&=completed&&entering.Profile.Gold==before;
+                revision=store.Commit(entering,revision,"book-entry-"+round);
                 state=store.Load()!;
                 session=AdamSession.Resume(state,definition);
             }
@@ -67,7 +72,7 @@ internal static class LaterCampaignRunner
                 BattleRunner.Resolve(session,weapon);
                 passed&=session.CompleteBossSettlement();
                 if(round==18)sixthReceipt=JsonSerializer.Serialize(state.Run!.Boss);
-                else if(round<CampaignContent.LastInstalledRound)laterReceipts.Add(JsonSerializer.Serialize(state.Run!.Boss));
+                else laterReceipts.Add(JsonSerializer.Serialize(state.Run!.Boss));
             }
 
             records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases});
@@ -80,10 +85,12 @@ internal static class LaterCampaignRunner
             session=AdamSession.Resume(state,definition);
             passed&=state.Run!.RoundNumber==round+1&&previousReceipt==JsonSerializer.Serialize(state.Run.CompletedFifthBoss)&&
                 (round<=18||sixthReceipt==JsonSerializer.Serialize(state.Run.CompletedSixthBoss))&&
-                session.ContentComplete==(round==CampaignContent.LastInstalledRound);
+                session.ContentComplete==(round==CampaignContent.LastInstalledRound)&&
+                session.NumbersComplete==(round==NumbersContent.LastRound)&&session.DeuteronomyComplete==(round==DeuteronomyContent.LastRound);
             if(round>=NumbersContent.GlobalRoundNumber)
             {
-                var expected=round%3==0&&round<CampaignContent.LastInstalledRound?laterReceipts.Count-1:laterReceipts.Count;
+                // The current boss stays in Run.Boss until the next round starts.
+                var expected=round%3==0?laterReceipts.Count-1:laterReceipts.Count;
                 passed&=state.Run.LaterBossHistory!=null&&
                     laterReceipts.Take(expected).SequenceEqual(state.Run.LaterBossHistory.Select(r=>JsonSerializer.Serialize(r)));
             }

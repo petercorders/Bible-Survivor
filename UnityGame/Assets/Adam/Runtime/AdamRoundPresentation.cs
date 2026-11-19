@@ -12,6 +12,8 @@ namespace BibleSurvivor.Unity
             16=>"아론",17=>"정결의 길",18=>"속죄일",19=>"이웃 돌봄",20=>"희년",21=>"서원의 끝",
             22=>"인구 조사",23=>"광야 행진",24=>"불평의 진영",25=>"정탐꾼",26=>"긴 광야",27=>"바위의 물",
             28=>"놋뱀",29=>"모압 평야",30=>"요단 앞",
+            31=>"모세의 회고",32=>"두 돌판",33=>"기억하라",34=>"도피성",35=>"축복과 저주",36=>"느보산",
+            37=>"요단 도하",38=>"길갈의 돌",39=>"여리고 성벽",40=>"아이 성",
             _=>throw new InvalidOperationException("Round is outside installed content")
         };
         public const string ChapterHeading="창세기 완료 · 진행 저장됨";
@@ -22,20 +24,31 @@ namespace BibleSurvivor.Unity
         public const string ExodusDetail="완료 골드 +280 · 레위기는 현재 성장·장비로 계속\n새 도전 선택 시 성장·장비 초기화";
         public const string LeviticusStartCard="레위기 시작 (Enter)";
         public const string NumbersStartCard="민수기 시작 (Enter)";
+        public const string DeuteronomyStartCard="신명기 시작 (Enter)";
+        public const string JoshuaStartCard="여호수아 시작 (Enter)";
         public const string LeviticusHeading="레위기 완료 · 진행 저장됨";
         public const string NumbersHeading="민수기 완료 · 진행 저장됨";
+        public const string DeuteronomyHeading="신명기 완료 · 진행 저장됨";
+        public static readonly string CampaignEndHeading="여호수아 "+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 완료 · 진행 저장됨";
         const string ResetDetail="\n새 도전 선택 시 성장·장비 초기화";
         static readonly string LeviticusDetail="완료 골드 +"+CampaignContent.Round(LeviticusContent.LastInstalledRound).CompletionGold;
-        static readonly string NumbersDetail="완료 골드 +"+CampaignContent.Round(CampaignContent.LastInstalledRound).CompletionGold+
-            " · 진행 유지\n민수기 1–9 라운드 클리어"+ResetDetail;
-        public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false)
-            =>genesisComplete?ChapterHeading:exodusComplete?ExodusHeading:leviticusComplete?LeviticusHeading:contentComplete?NumbersHeading:ContentHeading;
-        public static string CompletionDetail(bool genesisComplete,bool exodusComplete,bool leviticusInstalled=false,bool leviticusComplete=false,bool numbersInstalled=false,bool contentComplete=false)
+        static readonly string NumbersDetail="완료 골드 +"+CampaignContent.Round(NumbersContent.LastRound).CompletionGold;
+        static readonly string DeuteronomyDetail="완료 골드 +"+CampaignContent.Round(DeuteronomyContent.LastRound).CompletionGold;
+        static readonly string CampaignEndDetail="완료 골드 +"+CampaignContent.Round(CampaignContent.LastInstalledRound).CompletionGold+
+            " · 진행 유지\n여호수아 1–"+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 라운드 클리어"+ResetDetail;
+        public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false,
+            bool numbersComplete=false,bool deuteronomyComplete=false)
+            =>genesisComplete?ChapterHeading:exodusComplete?ExodusHeading:leviticusComplete?LeviticusHeading:numbersComplete?NumbersHeading:
+                deuteronomyComplete?DeuteronomyHeading:contentComplete?CampaignEndHeading:ContentHeading;
+        public static string CompletionDetail(bool genesisComplete,bool exodusComplete,bool leviticusInstalled=false,bool leviticusComplete=false,bool numbersInstalled=false,bool contentComplete=false,
+            bool numbersComplete=false,bool deuteronomyInstalled=false,bool deuteronomyComplete=false,bool joshuaInstalled=false)
         {
             if(genesisComplete)return ChapterDetail;
             if(exodusComplete)return leviticusInstalled?ExodusDetail:ContentDetail;
             if(leviticusComplete)return LeviticusDetail+(numbersInstalled?" · 민수기는 현재 성장·장비로 계속":" · 진행 유지\n레위기 1–6 라운드 클리어")+ResetDetail;
-            return contentComplete?NumbersDetail:ContentDetail;
+            if(numbersComplete)return NumbersDetail+(deuteronomyInstalled?" · 신명기는 현재 성장·장비로 계속":" · 진행 유지\n민수기 1–9 라운드 클리어")+ResetDetail;
+            if(deuteronomyComplete)return DeuteronomyDetail+(joshuaInstalled?" · 여호수아는 현재 성장·장비로 계속":" · 진행 유지\n신명기 1–6 라운드 클리어")+ResetDetail;
+            return contentComplete?CampaignEndDetail:ContentDetail;
         }
         public static string Title(AdamHost host)=>Title(host?.Session?.RoundNumber??1);
         public static string BookLabel(int round)=>AdamBookTitle.Book(round)==0?AdamBookTitle.Name(round):AdamBookTitle.Name(round)+" "+AdamBookTitle.Local(round);
@@ -62,12 +75,13 @@ namespace BibleSurvivor.Unity
         {
             "a1"=>"fx_shadow-snake_static_20x4",
             "a2" or "b1" or "c1" or "d2" or "e1" or "e3" or "f1" or "g3" or "h1" or "i1" or "i2" or
-            "ex2" or "ex5" or "ex10" or "ex13" or "ex16" or "lv2" or "nm2"=>"fx_shadow-small_static_12x4",
+            "ex2" or "ex5" or "ex10" or "ex13" or "ex16" or "lv2" or "nm2" or "dt2" or "js2"=>"fx_shadow-small_static_12x4",
             "a3" or "b2" or "b3" or "c2" or "c3" or "d1" or "d3" or "e2" or "f2" or "f3" or "g1" or "g2" or
             "h2" or "h3" or "i3" or "ex1" or "ex3" or "ex4" or "ex6" or "ex7" or "ex8" or "ex9" or "ex11" or "ex12" or
-            "ex14" or "ex15" or "ex17" or "ex18" or "lv1" or "lv3" or "nm1" or "nm3"=>"fx_shadow-wide_static_24x6",
+            "ex14" or "ex15" or "ex17" or "ex18" or "lv1" or "lv3" or "nm1" or "nm3" or "dt1" or "dt3" or "js1" or "js3"=>"fx_shadow-wide_static_24x6",
             "nephilim_tyrant" or "sitnah_keeper" or "silver_cup_accuser" or "oppression_chariot" or "defilement_weaver" or
-            "ash_veil" or "oath_wraith" or "dust_tyrant" or "ravine_stalker" or "wilderness_warden"=>"fx_shadow-boss_static_40x8",
+            "ash_veil" or "oath_wraith" or "dust_tyrant" or "ravine_stalker" or "wilderness_warden" or
+            "oblivion_mist" or "crossroads_sentinel" or "rampart_colossus"=>"fx_shadow-boss_static_40x8",
             _=>throw new InvalidOperationException("Unknown monster "+id)
         };
     }

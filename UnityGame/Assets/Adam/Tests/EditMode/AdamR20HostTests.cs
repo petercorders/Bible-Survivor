@@ -184,7 +184,7 @@ public sealed class AdamR20HostTests
         Assert.IsTrue(partial.RequiresNewerGame);
     }
 
-    static long CompleteRound(AdamHost host,string bossId)
+    internal static long CompleteRound(AdamHost host,string bossId)
     {
         var gold=host.State.Profile.Gold;
         host.Session.Advance(180);
@@ -222,8 +222,9 @@ public sealed class AdamR20HostTests
     public void NumbersTitlesUseBookLocalRound(int round,string name)
     {
         Assert.AreEqual($"민수기 {round-21} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
-        Assert.AreEqual("민수기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        StringAssert.Contains("민수기 1–9 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        Assert.AreEqual("민수기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,numbersComplete:true));
+        StringAssert.Contains("민수기 1–9 라운드",AdamRoundPresentation.CompletionDetail(false,false,numbersComplete:true));
+        StringAssert.Contains("신명기는 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,numbersComplete:true,deuteronomyInstalled:true));
     }
 
     [TestCase(21,"서원의 망령")] [TestCase(24,"먼지의 폭군")]

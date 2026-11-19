@@ -30,7 +30,7 @@ internal static class CampaignThirtyTests
                 }
                 else Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(round));
             }
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(31));
+            Check.Throws<ArgumentOutOfRangeException>(()=>NumbersContent.Round(31));
         });
 
         test("R30 later boss content is never interpreted as a corrupt legacy primary",() =>
@@ -132,7 +132,8 @@ internal static class CampaignThirtyTests
                     state=store.Load()!;
                     session=AdamSession.Resume(state,definition);
                     Check.Equal(runId,state.Run!.RunId);
-                    Check.Equal(round==30,session.ContentComplete);
+                    Check.True(!session.ContentComplete);
+                    Check.Equal(round==30,session.NumbersComplete);
                     Check.Equal(round==21,session.LeviticusComplete);
                 }
                 Check.Equal(31,state.Run!.RoundNumber);
@@ -142,7 +143,7 @@ internal static class CampaignThirtyTests
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>n["Run"]!["RoundNumber"]=32,
+                    n=>n["Run"]!["RoundNumber"]=42,
                     n=>n["Run"]!["LaterBossHistory"]![0]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![0]!["Reward"]!["PolicyId"]="future-reward"
                 })

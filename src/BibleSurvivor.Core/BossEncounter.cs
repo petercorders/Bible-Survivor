@@ -26,9 +26,13 @@ namespace BibleSurvivor.Core
         public const string WeaverPolicy="r15-production-v1";
         public const string AshVeilPolicy="r18-production-v1";
         internal const string OathPolicy="r21-production-v1",DustPolicy="r24-production-v1",
-            RavinePolicy="r27-production-v1",WardenPolicy="r30-production-v1";
+            RavinePolicy="r27-production-v1",WardenPolicy="r30-production-v1",
+            OblivionPolicy="r33-production-v1",CrossroadsPolicy="r36-production-v1",RampartPolicy="r39-production-v1";
+        // Bosses from R21 onward are stored in the ordered later history and must match their own round.
+        internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
+            or OblivionPolicy or CrossroadsPolicy or RampartPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
-            or ChariotPolicy or WeaverPolicy or AshVeilPolicy or OathPolicy or DustPolicy or RavinePolicy or WardenPolicy;
+            or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public bool UsesChainProjectiles=>Number==9||Number>=15;
         public double ProjectileSpeed=>UsesChainProjectiles?ChainSpeed:0;
         public double ProjectileRadius=>UsesChainProjectiles?ChainRadius:0;
@@ -69,14 +73,18 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition DustBoss=new BossDefinition(24,"dust_tyrant",35500,26,680,5,22,1681,"nm1",480,15,.63,DustPolicy,.65,.30);
         private static readonly BossDefinition RavineBoss=new BossDefinition(27,"ravine_stalker",38000,27,740,5,23,1861,"nm1",540,15,.63,RavinePolicy,.65,.35);
         private static readonly BossDefinition WardenBoss=new BossDefinition(30,"wilderness_warden",41000,29,820,5,24,2041,"nm1",600,15,.63,WardenPolicy,.70,.35);
+        private static readonly BossDefinition OblivionBoss=new BossDefinition(33,"oblivion_mist",44000,30,880,5,25,2221,"dt1",660,16,.65,OblivionPolicy,.70,.35);
+        private static readonly BossDefinition CrossroadsBoss=new BossDefinition(36,"crossroads_sentinel",47500,31,940,5,26,2401,"dt1",720,16,.65,CrossroadsPolicy,.70,.40);
+        private static readonly BossDefinition RampartBoss=new BossDefinition(39,"rampart_colossus",51000,32,1000,5,27,2581,"js1",780,17,.67,RampartPolicy,.75,.40);
         internal static BossDefinition? Find(int number)=>number switch
         {
-            3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,_=>null
+            3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
+            33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal string EncounterSuffix => ":"+(Number switch
         {
-            >=NumbersContent.GlobalRoundNumber=>NumbersContent.RoundId(Number),
+            >=NumbersContent.GlobalRoundNumber=>CampaignContent.RoundId(Number),
             21=>"leviticus_06",18=>"leviticus_03",15=>"exodus_06",12=>"exodus_03",
             _=>"genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)
         })+":"+Id;

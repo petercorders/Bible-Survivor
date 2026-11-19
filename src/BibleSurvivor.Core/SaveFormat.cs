@@ -236,8 +236,7 @@ namespace BibleSurvivor.Core
                     var id=policy.InnerText;
                     if(id!=BossDefinition.LegacyPolicy&&!BossDefinition.IsProductionPolicy(id))
                         throw new UnsupportedSaveVersionException();
-                    if((id is BossDefinition.OathPolicy or BossDefinition.DustPolicy or BossDefinition.RavinePolicy or BossDefinition.WardenPolicy)
-                        &&rules?.RewardPolicy!=id)
+                    if(BossDefinition.IsExpansionPolicy(id)&&rules?.RewardPolicy!=id)
                         throw new UnsupportedSaveVersionException();
                 }
             }

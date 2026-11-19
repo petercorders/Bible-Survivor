@@ -8,17 +8,23 @@ namespace BibleSurvivor.Unity
     {
         public const string Horizon="bg_book-horizon_static_400x55",Fade="ui_band-fade_static_16x55",Crest="ui_book-crest_static_32";
         public static bool Enabled=>AdamVisualQualityArt.TryGetClip(Horizon,out _)&&AdamVisualQualityArt.TryGetClip(Fade,out _)&&AdamVisualQualityArt.TryGetClip(Crest,out _);
-        public static int Book(int? round)=>round>=NumbersContent.GlobalRoundNumber?3:round>=LeviticusContent.GlobalRoundNumber?2:round>=ExodusContent.GlobalRoundNumber?1:0;
-        public static string Name(int? round)=>Book(round) switch {3=>"민수기",2=>"레위기",1=>"출애굽기",_=>"창세기"};
+        public static int Book(int? round)=>round>=JoshuaContent.GlobalRoundNumber?5:round>=DeuteronomyContent.GlobalRoundNumber?4:
+            round>=NumbersContent.GlobalRoundNumber?3:round>=LeviticusContent.GlobalRoundNumber?2:round>=ExodusContent.GlobalRoundNumber?1:0;
+        public static string Name(int? round)=>Book(round) switch {5=>"여호수아",4=>"신명기",3=>"민수기",2=>"레위기",1=>"출애굽기",_=>"창세기"};
+        // Installed rounds per book; Joshua continues after the current campaign endpoint.
         public static int Total(int? round)=>Book(round) switch
         {
-            3=>CampaignContent.LastInstalledRound-NumbersContent.GlobalRoundNumber+1,
+            5=>CampaignContent.LastInstalledRound-JoshuaContent.GlobalRoundNumber+1,
+            4=>DeuteronomyContent.LastRound-DeuteronomyContent.GlobalRoundNumber+1,
+            3=>NumbersContent.LastRound-NumbersContent.GlobalRoundNumber+1,
             2=>LeviticusContent.LastInstalledRound-LeviticusContent.GlobalRoundNumber+1,
             1=>6,
             _=>9
         };
         public static int Local(int? round)=>round.GetValueOrDefault()-(Book(round) switch
         {
+            5=>JoshuaContent.GlobalRoundNumber-1,
+            4=>DeuteronomyContent.GlobalRoundNumber-1,
             3=>NumbersContent.GlobalRoundNumber-1,
             2=>LeviticusContent.GlobalRoundNumber-1,
             1=>9,
@@ -31,7 +37,7 @@ namespace BibleSurvivor.Unity
         public static bool Boss(int book,int index)=>index>=0 && (book switch
         {
             0 or 3=>index is 2 or 5 or 8,
-            1 or 2=>index is 2 or 5,
+            1 or 2 or 4 or 5=>index is 2 or 5,
             _=>false
         });
         public static float HorizonX(float width)=>width-800;

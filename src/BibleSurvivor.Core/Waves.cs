@@ -101,7 +101,7 @@ namespace BibleSurvivor.Core
             }
             if(number>=NumbersContent.GlobalRoundNumber&&number<=CampaignContent.LastInstalledRound)
             {
-                parts.Add(NumbersContent.SpeedContract);
+                parts.Add(CampaignContent.SpeedContract(number));
                 if(BossDefinition.Find(number) is BossDefinition boss)parts.Add(boss.FingerprintContract);
             }
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
