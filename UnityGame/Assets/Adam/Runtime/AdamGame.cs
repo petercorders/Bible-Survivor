@@ -310,20 +310,9 @@ namespace BibleSurvivor.Unity
             }
             if (Host.Error != null)
             {
-                if(Host.HasFirstSamuelEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.RuthHeading,"사무엘상 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasRuthEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.JudgesHeading,"룻기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasJudgesEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.JoshuaHeading,"사사기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasJoshuaEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.DeuteronomyHeading,"여호수아 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasDeuteronomyEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.NumbersHeading,"신명기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasNumbersEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.LeviticusHeading,"민수기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
-                else if(Host.HasLeviticusEntryRetry)
-                    Modal(width,height,AdamRoundPresentation.ExodusHeading,"레위기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                var entryRetry=AdamRoundPresentation.EntryRetryModal(Host);
+                if(entryRetry!=null)
+                    Modal(width,height,entryRetry.Value.Heading,entryRetry.Value.Body);
                 else
                     Modal(width, height, "저장 / 불러오기 중단", mobile ? Host.RequiresNewerGame ? "더 새 게임 버전이 필요한 저장입니다.\n원본과 백업은 보존했습니다. 게임을 업데이트하세요." : "저장할 수 없어 진행을 멈췄습니다.\n재시도하거나 마지막 저장을 불러오세요." : Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");
                 var previousEnabled = GUI.enabled;

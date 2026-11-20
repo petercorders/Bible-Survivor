@@ -83,6 +83,19 @@ namespace BibleSurvivor.Unity
             host.LeviticusComplete,host.NumbersInstalled,host.ContentComplete,host.NumbersComplete,host.DeuteronomyInstalled,host.DeuteronomyComplete,
             host.JoshuaInstalled,host.JoshuaComplete,host.JudgesInstalled,host.JudgesComplete,host.RuthInstalled,host.RuthComplete,
             host.FirstSamuelInstalled);
+        // Book-entry save retry: the heading keeps the finished book, the body names the book being entered. Null when no entry retry is pending.
+        public static (string Heading,string Body)? EntryRetryModal(AdamHost host)
+        {
+            static string Body(string book)=>book+" 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.";
+            if(host.HasFirstSamuelEntryRetry) return (RuthHeading,Body("사무엘상"));
+            if(host.HasRuthEntryRetry) return (JudgesHeading,Body("룻기"));
+            if(host.HasJudgesEntryRetry) return (JoshuaHeading,Body("사사기"));
+            if(host.HasJoshuaEntryRetry) return (DeuteronomyHeading,Body("여호수아"));
+            if(host.HasDeuteronomyEntryRetry) return (NumbersHeading,Body("신명기"));
+            if(host.HasNumbersEntryRetry) return (LeviticusHeading,Body("민수기"));
+            if(host.HasLeviticusEntryRetry) return (ExodusHeading,Body("레위기"));
+            return null;
+        }
         public static string StartCard(int chapter)=>chapter switch
         {
             ExodusContent.GlobalRoundNumber=>AdamChoiceText.ExodusStartCard,

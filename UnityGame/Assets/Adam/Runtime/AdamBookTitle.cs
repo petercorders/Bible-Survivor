@@ -11,10 +11,10 @@ namespace BibleSurvivor.Unity
         public static int Book(int? round)=>round>=FirstSamuelContent.GlobalRoundNumber?8:round>=RuthContent.GlobalRoundNumber?7:round>=JudgesContent.GlobalRoundNumber?6:round>=JoshuaContent.GlobalRoundNumber?5:round>=DeuteronomyContent.GlobalRoundNumber?4:
             round>=NumbersContent.GlobalRoundNumber?3:round>=LeviticusContent.GlobalRoundNumber?2:round>=ExodusContent.GlobalRoundNumber?1:0;
         public static string Name(int? round)=>Book(round) switch {8=>"사무엘상",7=>"룻기",6=>"사사기",5=>"여호수아",4=>"신명기",3=>"민수기",2=>"레위기",1=>"출애굽기",_=>"창세기"};
-        // Installed rounds per book; First Samuel ends at the current campaign endpoint.
+        // Installed rounds per book.
         public static int Total(int? round)=>Book(round) switch
         {
-            8=>CampaignContent.LastInstalledRound-FirstSamuelContent.GlobalRoundNumber+1,
+            8=>FirstSamuelContent.LastRound-FirstSamuelContent.GlobalRoundNumber+1,
             7=>RuthContent.LastRound-RuthContent.GlobalRoundNumber+1,
             6=>JudgesContent.LastRound-JudgesContent.GlobalRoundNumber+1,
             5=>JoshuaContent.LastRound-JoshuaContent.GlobalRoundNumber+1,

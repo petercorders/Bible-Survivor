@@ -136,6 +136,11 @@ internal static class CampaignSixtyTests
                             session.CanEnterFirstSamuel&&session.RuthComplete&&!session.CanEnterRuth);
                         Check.True(!session.ContentComplete&&!session.CanEnterJudges);
                         Check.Throws<InvalidOperationException>(()=>session.StartNextRound(definition));
+                        // Growth choices still pending: the previous book is complete but its entry stays closed.
+                        state.Run!.PendingLevels=1;
+                        Check.True(ruth?session.JudgesComplete&&!session.CanEnterRuth:session.RuthComplete&&!session.CanEnterFirstSamuel);
+                        Check.Throws<InvalidOperationException>(()=>_=ruth?session.PrepareRuth(definition):session.PrepareFirstSamuel(definition));
+                        state.Run.PendingLevels=0;
                         Check.Throws<ArgumentException>(()=>_=ruth?session.PrepareRuth(CampaignContent.Round(53)):session.PrepareFirstSamuel(CampaignContent.Round(56)));
                         Check.Throws<InvalidOperationException>(()=>_=ruth?session.PrepareFirstSamuel(CampaignContent.Round(55)):session.PrepareRuth(CampaignContent.Round(52)));
                         var candidate=ruth?session.PrepareRuth(definition):session.PrepareFirstSamuel(definition);
@@ -191,7 +196,7 @@ internal static class CampaignSixtyTests
                 Check.True(state.Run.LaterBossHistory!.Select(r=>r.EncounterRound).SequenceEqual(new[]{21,24,27,30,33,36,39,42,45,48,51,54,57}));
                 Check.True(receipts.SequenceEqual(state.Run.LaterBossHistory!.Select(Json)));
                 Check.True(!session.CanEnterRuth&&!session.CanEnterFirstSamuel&&!session.RuthComplete);
-                Check.Throws<InvalidOperationException>(()=>session.StartNextRound(CampaignContent.Round(60)));
+                // R61 stays closed because CampaignContent.Round(61) throws (endpoint test) and the saves below are rejected as future saves.
 
                 var checkpoint=File.ReadAllText(path);
                 var backup=File.ReadAllBytes(path+".bak");

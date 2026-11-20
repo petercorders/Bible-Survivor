@@ -286,7 +286,7 @@ namespace BibleSurvivor.Unity
             var joshua=round>=JoshuaContent.GlobalRoundNumber && round<=JoshuaContent.LastRound;
             var judges=round>=JudgesContent.GlobalRoundNumber && round<=JudgesContent.LastRound;
             var ruth=round>=RuthContent.GlobalRoundNumber && round<=RuthContent.LastRound;
-            var firstSamuel=round>=FirstSamuelContent.GlobalRoundNumber && round<=CampaignContent.LastInstalledRound;
+            var firstSamuel=round>=FirstSamuelContent.GlobalRoundNumber && round<=FirstSamuelContent.LastRound;
             var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua || judges || ruth || firstSamuel) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);

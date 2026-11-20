@@ -100,6 +100,7 @@ public sealed class AdamR60HostTests
         Assert.IsFalse(host.TryEnterRuth());
         Assert.IsTrue(host.HasRuthEntryRetry);
         Assert.IsFalse(host.HasFirstSamuelEntryRetry);
+        Assert.AreEqual((AdamRoundPresentation.JudgesHeading,"룻기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요."),AdamRoundPresentation.EntryRetryModal(host));
         Assert.IsTrue(host.Paused);
         Assert.IsTrue(host.JudgesComplete);
         Assert.IsFalse(host.TryEnterRuth());
@@ -165,6 +166,7 @@ public sealed class AdamR60HostTests
         Assert.IsFalse(host.TryEnterFirstSamuel());
         Assert.IsTrue(host.HasFirstSamuelEntryRetry);
         Assert.IsFalse(host.HasRuthEntryRetry);
+        Assert.AreEqual((AdamRoundPresentation.RuthHeading,"사무엘상 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요."),AdamRoundPresentation.EntryRetryModal(host));
         Assert.IsTrue(host.Paused);
         Assert.IsTrue(host.RuthComplete);
         host.Start("sling");host.Tick(.1);
