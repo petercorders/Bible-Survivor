@@ -9,13 +9,13 @@ using UnityEngine;
 
 public sealed class AdamR15UiTests
 {
-    [Test] public void BezalelUsesSixthExodusTitleAndR41RemainsUninstalled()
+    [Test] public void BezalelUsesSixthExodusTitleAndR51RemainsUninstalled()
     {
         Assert.AreEqual("브살렐",AdamRoundPresentation.Name(15));
         Assert.AreEqual("출애굽기 6 / 브살렐 · 3분 시제품",AdamRoundPresentation.Title(15));
         Assert.AreEqual("출애굽기 5 / 아론 · 3분 시제품",AdamRoundPresentation.Title(14));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(41));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(51));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(51));
     }
 
     [Test] public void ExplicitBookCompletionIsSeparateFromInstalledEndAndGenesisEntry()

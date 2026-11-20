@@ -199,14 +199,14 @@ namespace BibleSurvivor.Unity
         }
         public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
 
-        // Leviticus through Joshua reuse the reviewed Exodus R06 art for equivalent movement roles.
+        // Leviticus through Judges reuse the reviewed Exodus R06 art for equivalent movement roles.
         static string SourceActor(string id)
         {
             switch(id)
             {
-                case "lv1":case "nm1":case "dt1":case "js1":return "ex17";
-                case "lv2":case "nm2":case "dt2":case "js2":return "ex16";
-                case "lv3":case "nm3":case "dt3":case "js3":return "ex18";
+                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":return "ex17";
+                case "lv2":case "nm2":case "dt2":case "js2":case "jd2":return "ex16";
+                case "lv3":case "nm3":case "dt3":case "js3":case "jd3":return "ex18";
                 case "ash_veil":
                 case "oath_wraith":
                 case "dust_tyrant":
@@ -214,7 +214,10 @@ namespace BibleSurvivor.Unity
                 case "wilderness_warden":
                 case "oblivion_mist":
                 case "crossroads_sentinel":
-                case "rampart_colossus":return "defilement_weaver";
+                case "rampart_colossus":
+                case "shifting_boundary":
+                case "torrent_serpent":
+                case "ford_gatekeeper":return "defilement_weaver";
                 default:return id;
             }
         }
@@ -276,8 +279,9 @@ namespace BibleSurvivor.Unity
             var leviticus=round>=LeviticusContent.GlobalRoundNumber && round<=LeviticusContent.LastInstalledRound;
             var numbers=round>=NumbersContent.GlobalRoundNumber && round<=NumbersContent.LastRound;
             var deuteronomy=round>=DeuteronomyContent.GlobalRoundNumber && round<=DeuteronomyContent.LastRound;
-            var joshua=round>=JoshuaContent.GlobalRoundNumber && round<=CampaignContent.LastInstalledRound;
-            var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
+            var joshua=round>=JoshuaContent.GlobalRoundNumber && round<=JoshuaContent.LastRound;
+            var judges=round>=JudgesContent.GlobalRoundNumber && round<=CampaignContent.LastInstalledRound;
+            var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua || judges) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);
             var projection=new AdamWorldProjection(arena,origin);
@@ -292,6 +296,7 @@ namespace BibleSurvivor.Unity
                 if(numbers && desert)GUI.color=groundColor*new Color(.94f,.83f,.72f,1);
                 if(deuteronomy && desert)GUI.color=groundColor*new Color(.88f,.84f,.94f,1);
                 if(joshua && desert)GUI.color=groundColor*new Color(.84f,.94f,.76f,1);
+                if(judges && desert)GUI.color=groundColor*new Color(.98f,.80f,.76f,1);
                 for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
                 for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
                 {

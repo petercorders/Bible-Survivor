@@ -209,6 +209,7 @@ namespace BibleSurvivor.Unity
             else if(Host.CanEnterNumbers)EnterNumbers();
             else if(Host.CanEnterDeuteronomy)EnterDeuteronomy();
             else if(Host.CanEnterJoshua)EnterJoshua();
+            else if(Host.CanEnterJudges)EnterJudges();
             else if(Host.Paused && !Host.BookComplete)
             {commandFrame=Time.frameCount;ResumePlay();inputReleased=false;}
         }
@@ -217,6 +218,7 @@ namespace BibleSurvivor.Unity
         public void EnterNumbers() => EnterChapter(NumbersContent.GlobalRoundNumber);
         public void EnterDeuteronomy() => EnterChapter(DeuteronomyContent.GlobalRoundNumber);
         public void EnterJoshua() => EnterChapter(JoshuaContent.GlobalRoundNumber);
+        public void EnterJudges() => EnterChapter(JudgesContent.GlobalRoundNumber);
         bool CanEnterChapter(int round)=>round switch
         {
             ExodusContent.GlobalRoundNumber=>Host.CanEnterExodus,
@@ -224,6 +226,7 @@ namespace BibleSurvivor.Unity
             NumbersContent.GlobalRoundNumber=>Host.CanEnterNumbers,
             DeuteronomyContent.GlobalRoundNumber=>Host.CanEnterDeuteronomy,
             JoshuaContent.GlobalRoundNumber=>Host.CanEnterJoshua,
+            JudgesContent.GlobalRoundNumber=>Host.CanEnterJudges,
             _=>false
         };
         void EnterChapter(int round)
@@ -238,6 +241,7 @@ namespace BibleSurvivor.Unity
                 case NumbersContent.GlobalRoundNumber: Host.TryEnterNumbers(); break;
                 case DeuteronomyContent.GlobalRoundNumber: Host.TryEnterDeuteronomy(); break;
                 case JoshuaContent.GlobalRoundNumber: Host.TryEnterJoshua(); break;
+                case JudgesContent.GlobalRoundNumber: Host.TryEnterJudges(); break;
             }
             RecordSortieTransition(previous,run);
             inputReleased=false;touchStarted=false;
@@ -298,7 +302,9 @@ namespace BibleSurvivor.Unity
             }
             if (Host.Error != null)
             {
-                if(Host.HasJoshuaEntryRetry)
+                if(Host.HasJudgesEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.JoshuaHeading,"사사기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasJoshuaEntryRetry)
                     Modal(width,height,AdamRoundPresentation.DeuteronomyHeading,"여호수아 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
                 else if(Host.HasDeuteronomyEntryRetry)
                     Modal(width,height,AdamRoundPresentation.NumbersHeading,"신명기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
@@ -367,12 +373,14 @@ namespace BibleSurvivor.Unity
                     Host.ExodusComplete&&Host.LeviticusInstalled?LeviticusContent.GlobalRoundNumber:
                     Host.LeviticusComplete&&Host.NumbersInstalled?NumbersContent.GlobalRoundNumber:
                     Host.NumbersComplete&&Host.DeuteronomyInstalled?DeuteronomyContent.GlobalRoundNumber:
-                    Host.DeuteronomyComplete&&Host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:0;
+                    Host.DeuteronomyComplete&&Host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:
+                    Host.JoshuaComplete&&Host.JudgesInstalled?JudgesContent.GlobalRoundNumber:0;
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);AdamHud.Panel(art,MotionRect(panel));
                 CompletionHeader(panel,AdamRoundPresentation.CompletionHeading(genesisComplete,Host.ExodusComplete,Host.LeviticusComplete,Host.ContentComplete,
-                        Host.NumbersComplete,Host.DeuteronomyComplete),
+                        Host.NumbersComplete,Host.DeuteronomyComplete,Host.JoshuaComplete),
                     AdamRoundPresentation.CompletionDetail(genesisComplete,Host.ExodusComplete,Host.LeviticusInstalled,Host.LeviticusComplete,Host.NumbersInstalled,Host.ContentComplete,
-                        Host.NumbersComplete,Host.DeuteronomyInstalled,Host.DeuteronomyComplete,Host.JoshuaInstalled));
+                        Host.NumbersComplete,Host.DeuteronomyInstalled,Host.DeuteronomyComplete,Host.JoshuaInstalled,
+                        Host.JoshuaComplete,Host.JudgesInstalled));
                 var enabled=GUI.enabled;
                 if(nextChapter!=0)
                 {
@@ -383,7 +391,8 @@ namespace BibleSurvivor.Unity
                         LeviticusContent.GlobalRoundNumber=>AdamRoundPresentation.LeviticusStartCard,
                         NumbersContent.GlobalRoundNumber=>AdamRoundPresentation.NumbersStartCard,
                         DeuteronomyContent.GlobalRoundNumber=>AdamRoundPresentation.DeuteronomyStartCard,
-                        _=>AdamRoundPresentation.JoshuaStartCard
+                        JoshuaContent.GlobalRoundNumber=>AdamRoundPresentation.JoshuaStartCard,
+                        _=>AdamRoundPresentation.JudgesStartCard
                     };
                     if(ArtButton(AdamChoiceText.ChapterAction(panel,0),caption,button))EnterChapter(nextChapter);
                 }

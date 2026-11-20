@@ -160,7 +160,7 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR40()
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR50()
     {
         var host=CompletedGenesisForEntry("enter");
         var run=host.State.Run.RunId;
@@ -179,7 +179,7 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
-        for(var round=10;round<=40;round++)
+        for(var round=10;round<=50;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
@@ -188,19 +188,20 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(round==21,host.CanEnterNumbers);
             Assert.AreEqual(round==30,host.CanEnterDeuteronomy);
             Assert.AreEqual(round==36,host.CanEnterJoshua);
-            Assert.AreEqual(round==40,host.ContentComplete);
-            Assert.AreEqual(round!=15&&round!=21&&round!=30&&round!=36&&round!=40,host.AwaitingNextRound);
+            Assert.AreEqual(round==42,host.CanEnterJudges);
+            Assert.AreEqual(round==50,host.ContentComplete);
+            Assert.AreEqual(round!=15&&round!=21&&round!=30&&round!=36&&round!=42&&round!=50,host.AwaitingNextRound);
             revision=host.State.Revision;
             Keys();yield return null;
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(revision,host.State.Revision);
             Keys(Key.Enter);yield return null;
-            Assert.AreEqual(Math.Min(40,round+1),host.Session.RoundNumber);
-            Assert.AreEqual(revision+(round==40?0:1),host.State.Revision);
+            Assert.AreEqual(Math.Min(50,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==50?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
         }
         Assert.IsTrue(host.ContentComplete);
-        Assert.AreEqual(41,host.State.Run.RoundNumber);
+        Assert.AreEqual(51,host.State.Run.RoundNumber);
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
     {

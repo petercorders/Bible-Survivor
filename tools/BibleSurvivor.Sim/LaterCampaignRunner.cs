@@ -23,14 +23,15 @@ internal static class LaterCampaignRunner
         {
             var definition=CampaignContent.Round(round);
             var speeds=CampaignContent.SpeedsFor(round);
-            if(round is NumbersContent.GlobalRoundNumber or DeuteronomyContent.GlobalRoundNumber or JoshuaContent.GlobalRoundNumber)
+            if(round is NumbersContent.GlobalRoundNumber or DeuteronomyContent.GlobalRoundNumber or JoshuaContent.GlobalRoundNumber or JudgesContent.GlobalRoundNumber)
             {
                 var before=state.Profile.Gold;
                 var (completed,entering)=round switch
                 {
                     NumbersContent.GlobalRoundNumber=>(session.LeviticusComplete,session.PrepareNumbers(definition)),
                     DeuteronomyContent.GlobalRoundNumber=>(session.NumbersComplete,session.PrepareDeuteronomy(definition)),
-                    _=>(session.DeuteronomyComplete,session.PrepareJoshua(definition))
+                    JoshuaContent.GlobalRoundNumber=>(session.DeuteronomyComplete,session.PrepareJoshua(definition)),
+                    _=>(session.JoshuaComplete,session.PrepareJudges(definition))
                 };
                 passed&=completed&&entering.Profile.Gold==before;
                 revision=store.Commit(entering,revision,"book-entry-"+round);
@@ -86,7 +87,8 @@ internal static class LaterCampaignRunner
             passed&=state.Run!.RoundNumber==round+1&&previousReceipt==JsonSerializer.Serialize(state.Run.CompletedFifthBoss)&&
                 (round<=18||sixthReceipt==JsonSerializer.Serialize(state.Run.CompletedSixthBoss))&&
                 session.ContentComplete==(round==CampaignContent.LastInstalledRound)&&
-                session.NumbersComplete==(round==NumbersContent.LastRound)&&session.DeuteronomyComplete==(round==DeuteronomyContent.LastRound);
+                session.NumbersComplete==(round==NumbersContent.LastRound)&&session.DeuteronomyComplete==(round==DeuteronomyContent.LastRound)&&
+                session.JoshuaComplete==(round==JoshuaContent.LastRound);
             if(round>=NumbersContent.GlobalRoundNumber)
             {
                 // The current boss stays in Run.Boss until the next round starts.

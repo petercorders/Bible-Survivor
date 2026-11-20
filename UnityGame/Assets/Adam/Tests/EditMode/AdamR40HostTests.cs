@@ -102,7 +102,7 @@ public sealed class AdamR40HostTests
     }
 
     [Test]
-    public void DeuteronomyAndJoshuaKeepTheRunAcrossReloadsAndStopAtR40()
+    public void DeuteronomyAndJoshuaKeepTheRunAcrossReloadsAndContinueIntoR41()
     {
         var catalog=AdamCatalog.Load();
         var store=new SaveStore(path);
@@ -146,24 +146,23 @@ public sealed class AdamR40HostTests
             Assert.AreEqual(oldGold+definition.CompletionGold,host.State.Profile.Gold);
             Assert.AreEqual(round==36,host.DeuteronomyComplete);
             Assert.AreEqual(round==36,host.CanEnterJoshua);
-            Assert.AreEqual(round==40,host.ContentComplete);
-            Assert.AreEqual(round!=36&&round!=40,host.AwaitingNextRound);
+            Assert.IsFalse(host.ContentComplete);
+            Assert.AreEqual(round!=36,host.AwaitingNextRound);
             Assert.IsFalse(host.NumbersComplete);
             CollectionAssert.AreEqual(committed,File.ReadAllBytes(path));
             if(round!=36&&round!=40)host.SetPaused(false);
         }
-        var revision=host.State.Revision;
+        Assert.IsFalse(host.CanStartNew);
         host.SetPaused(false);host.Tick(.1);
-        Assert.AreEqual(40,host.Session.RoundNumber);
+        Assert.AreEqual(41,host.Session.RoundNumber);
         Assert.AreEqual(41,host.State.Run.RoundNumber);
-        Assert.AreEqual(revision,host.State.Revision);
-        Assert.IsTrue(host.CanStartNew);
-        Assert.IsFalse(host.CanPlay);
+        Assert.AreEqual("normal",host.State.Run.Stage);
+        Assert.AreEqual(runId,host.State.Run.RunId);
         Assert.IsFalse(host.CanEnterJoshua);
         Assert.IsFalse(host.CanEnterDeuteronomy);
         CollectionAssert.AreEqual(new[]{21,24,27,30,33,36,39},host.State.Run.LaterBossHistory.Select(x=>x.EncounterRound).ToArray());
-        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(41));
-        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=41,Stage="normal"}));
+        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(51));
+        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=51,Stage="normal"}));
     }
 
     [TestCase(31,"모세의 회고")] [TestCase(32,"두 돌판")] [TestCase(33,"기억하라")]
@@ -177,15 +176,15 @@ public sealed class AdamR40HostTests
     }
 
     [TestCase(37,"요단 도하")] [TestCase(38,"길갈의 돌")] [TestCase(39,"여리고 성벽")] [TestCase(40,"아이 성")]
-    public void JoshuaTitlesUseBookLocalRoundAndR41RemainsUninstalled(int round,string name)
+    public void JoshuaTitlesUseBookLocalRoundAndR51RemainsUninstalled(int round,string name)
     {
         Assert.AreEqual($"여호수아 {round-36} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
-        Assert.AreEqual("여호수아 4 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        var detail=AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true);
-        StringAssert.Contains("완료 골드 +"+CampaignContent.Round(40).CompletionGold,detail);
-        StringAssert.Contains("여호수아 1–4 라운드",detail);
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(41));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
+        Assert.AreEqual("여호수아 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,joshuaComplete:true));
+        var detail=AdamRoundPresentation.CompletionDetail(false,false,joshuaComplete:true);
+        StringAssert.Contains("완료 골드 +"+CampaignContent.Round(42).CompletionGold,detail);
+        StringAssert.Contains("여호수아 1–6 라운드",detail);
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(51));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(51));
     }
 
     [TestCase(33,"망각의 안개")] [TestCase(36,"갈림길의 파수꾼")] [TestCase(39,"성벽의 거상")]
