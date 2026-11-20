@@ -5,15 +5,15 @@ using NUnit.Framework;
 
 public sealed class AdamR14UiTests
 {
-    [Test] public void AaronUsesFifthExodusTitleAndR16RemainsUninstalled()
+    [Test] public void AaronUsesFifthExodusTitleAndR41RemainsUninstalled()
     {
         Assert.AreEqual("아론",AdamRoundPresentation.Name(14));
         Assert.AreEqual("출애굽기 5 / 아론 · 3분 시제품",AdamRoundPresentation.Title(14));
         Assert.AreEqual("출애굽기 4 / 미리암 · 3분 시제품",AdamRoundPresentation.Title(13));
         Assert.AreEqual("출애굽기 3 / 모세 · 3분 시제품",AdamRoundPresentation.Title(12));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(16));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(16));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(41));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
         Assert.Throws<ArgumentException>(()=>AdamBossPresentation.Name(14));
     }
 

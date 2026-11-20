@@ -9,13 +9,13 @@ using UnityEngine;
 
 public sealed class AdamR15UiTests
 {
-    [Test] public void BezalelUsesSixthExodusTitleAndR16RemainsUninstalled()
+    [Test] public void BezalelUsesSixthExodusTitleAndR41RemainsUninstalled()
     {
         Assert.AreEqual("브살렐",AdamRoundPresentation.Name(15));
         Assert.AreEqual("출애굽기 6 / 브살렐 · 3분 시제품",AdamRoundPresentation.Title(15));
         Assert.AreEqual("출애굽기 5 / 아론 · 3분 시제품",AdamRoundPresentation.Title(14));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(16));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(16));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(41));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
     }
 
     [Test] public void ExplicitBookCompletionIsSeparateFromInstalledEndAndGenesisEntry()
@@ -92,7 +92,7 @@ public sealed class AdamR15UiTests
     }
 
     // Technical timeout/direct boss damage fixture; no user save or natural-play claim.
-    static AdamHost CompletedFifteen(string path)
+    internal static AdamHost CompletedFifteen(string path)
     {
         var h=AdamR14HostTests.Start(path);
         h.Session.Advance(180);Assert.IsTrue(h.Checkpoint(),h.Error);
@@ -113,14 +113,18 @@ public sealed class AdamR15UiTests
     {using(var m=new MemoryStream()){new DataContractJsonSerializer(value.GetType()).WriteObject(m,value);return m.ToArray();}}
 
     [TestCase(0)][TestCase(1)][TestCase(2)]
-    public void CompletedLoadAndEnterKeepProgressUntilExplicitNewChallengeAndDuplicateIsConsumed(int slot)
+    public void ExodusOnlyInstallKeepsProgressUntilExplicitNewChallengeAndDuplicateIsConsumed(int slot)
     {
         var dir=Path.Combine(Path.GetTempPath(),"adam-r15-ui-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);var path=Path.Combine(dir,"save.json");
         var go=new GameObject("R15 UI commands");go.SetActive(false);
         try
         {
-            var h=CompletedFifteen(path);var saved=File.ReadAllBytes(path);
+            CompletedFifteen(path);
+            var genesis=Resources.Load<TextAsset>("genesis-catalog").text;
+            var exodus=Resources.Load<TextAsset>("exodus-catalog").text;
+            var h=new AdamHost(new AdamCatalog(genesis,exodus),new SaveStore(path));
+            var saved=File.ReadAllBytes(path);
             var run=Bytes(h.State.Run);var profile=Bytes(h.State.Profile);var id=h.State.Run.RunId;
             Assert.IsTrue(h.ExodusComplete);Assert.IsTrue(h.ContentComplete);
             Assert.IsFalse(h.Session.ChapterComplete);Assert.IsFalse(h.CanEnterExodus);

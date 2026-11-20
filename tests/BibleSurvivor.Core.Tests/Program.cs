@@ -14,6 +14,10 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r40-only")&&!name.StartsWith("R40 ",StringComparison.Ordinal))return;
+            if(args.Contains("--r30-only")&&!name.StartsWith("R30 ",StringComparison.Ordinal))return;
+            if(args.Contains("--r20-only")&&!name.StartsWith("R20 ",StringComparison.Ordinal))return;
+            if(args.Contains("--r16-only")&&!name.StartsWith("R16 ",StringComparison.Ordinal))return;
             if(args.Contains("--r15-only")&&!name.StartsWith("R15 ",StringComparison.Ordinal))return;
             if(args.Contains("--r14-only")&&!name.StartsWith("R14 ",StringComparison.Ordinal))return;
             if(args.Contains("--r13-only")&&!name.StartsWith("R13 ",StringComparison.Ordinal))return;
@@ -59,6 +63,10 @@ internal static class Program
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundThirteenTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFourteenTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFifteenTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundSixteenTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))LeviticusSeriesTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignThirtyTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignFortyTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

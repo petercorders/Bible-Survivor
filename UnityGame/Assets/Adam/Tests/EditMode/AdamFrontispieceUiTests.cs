@@ -14,11 +14,15 @@ public sealed class AdamFrontispieceUiTests
         for(var i=0;i<9;i++)Assert.Zero(AdamBookTitle.Pip(null,i));
     }
     [TestCase(3,0,3,9)][TestCase(9,0,9,9)][TestCase(10,1,1,6)][TestCase(12,1,3,6)][TestCase(15,1,6,6)]
+    [TestCase(16,2,1,6)][TestCase(18,2,3,6)][TestCase(20,2,5,6)][TestCase(21,2,6,6)]
+    [TestCase(22,3,1,9)][TestCase(24,3,3,9)][TestCase(27,3,6,9)][TestCase(30,3,9,9)]
+    [TestCase(31,4,1,6)][TestCase(33,4,3,6)][TestCase(36,4,6,6)][TestCase(37,5,1,4)][TestCase(39,5,3,4)][TestCase(40,5,4,4)]
     public void RealRoundDeterminesBookAndCurrentRoundIsNeverMarkedCleared(int round,int book,int local,int total)
     {
         Assert.AreEqual(book,AdamBookTitle.Book(round));Assert.AreEqual(local,AdamBookTitle.Local(round));Assert.AreEqual(total,AdamBookTitle.Total(round));
         for(var i=0;i<total;i++)Assert.AreEqual(i<local-1?1:i==local-1?2:0,AdamBookTitle.Pip(round,i));
-        Assert.IsTrue(AdamBookTitle.Boss(book,local==3?2:total-1));
+        for(var i=0;i<total;i++)Assert.AreEqual((i+1)%3==0,AdamBookTitle.Boss(book,i));
+        Assert.AreEqual(Math.Min(book,1),AdamBookTitle.ArtFrame(round));
     }
     [TestCase(660,-140,520,180,136)][TestCase(1100,300,960,400,150)][TestCase(1400,600,1260,550,150)]
     public void HorizonUsesRightAnchoredTwoTimesScaleAndRibbonIsCentered(float width,float origin,float focal,float ribbonX,float ribbonY)

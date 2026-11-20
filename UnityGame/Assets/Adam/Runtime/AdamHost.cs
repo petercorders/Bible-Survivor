@@ -12,7 +12,7 @@ namespace BibleSurvivor.Unity
         readonly SaveStore store;
         long revision;
         string operation;
-        GameSnapshot exodusCandidate;
+        GameSnapshot chapterCandidate;
         double sinceSave;
         bool completedCheckpoint;
         public GameSnapshot State { get; private set; }
@@ -38,11 +38,33 @@ namespace BibleSurvivor.Unity
         public bool AwaitingR13 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==13 && Session?.RoundNumber==12;
         public bool AwaitingR14 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==14 && Session?.RoundNumber==13;
         public bool AwaitingR15 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==15 && Session?.RoundNumber==14;
-        public bool AwaitingNextRound => AwaitingR02 || AwaitingR03 || AwaitingR04 || AwaitingR05 || AwaitingR06 || AwaitingR07 || AwaitingR08 || AwaitingR09 || AwaitingR11 || AwaitingR12 || AwaitingR13 || AwaitingR14 || AwaitingR15;
-        public bool CanEnterExodus => Error==null && !Suspended && operation==null && exodusCandidate==null && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
-        public bool ContentComplete => Session?.ContentComplete == true;
+        public bool AwaitingNextRound => State?.Run?.Stage=="between_rounds" && Session?.RoundNumber==State.Run.RoundNumber-1 &&
+            State.Run.RoundNumber!=ExodusContent.GlobalRoundNumber && State.Run.RoundNumber!=LeviticusContent.GlobalRoundNumber &&
+            State.Run.RoundNumber!=NumbersContent.GlobalRoundNumber && State.Run.RoundNumber!=DeuteronomyContent.GlobalRoundNumber &&
+            State.Run.RoundNumber!=JoshuaContent.GlobalRoundNumber && State.Run.RoundNumber<=catalog.LastInstalledRound;
+        bool CanEnterChapter => Error==null && !Suspended && operation==null && chapterCandidate==null;
+        public bool CanEnterExodus => CanEnterChapter && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
+        public bool LeviticusInstalled => catalog.LeviticusInstalled;
+        public bool CanEnterLeviticus => CanEnterChapter && LeviticusInstalled && Session?.CanEnterLeviticus==true;
+        public bool HasLeviticusEntryRetry => chapterCandidate?.Run?.RoundNumber==LeviticusContent.GlobalRoundNumber;
+        public bool NumbersInstalled => catalog.NumbersInstalled;
+        public bool CanEnterNumbers => CanEnterChapter && NumbersInstalled && Session?.CanEnterNumbers==true;
+        public bool HasNumbersEntryRetry => chapterCandidate?.Run?.RoundNumber==NumbersContent.GlobalRoundNumber;
+        public bool DeuteronomyInstalled => catalog.DeuteronomyInstalled;
+        public bool CanEnterDeuteronomy => CanEnterChapter && DeuteronomyInstalled && Session?.CanEnterDeuteronomy==true;
+        public bool HasDeuteronomyEntryRetry => chapterCandidate?.Run?.RoundNumber==DeuteronomyContent.GlobalRoundNumber;
+        public bool JoshuaInstalled => catalog.JoshuaInstalled;
+        public bool CanEnterJoshua => CanEnterChapter && JoshuaInstalled && Session?.CanEnterJoshua==true;
+        public bool HasJoshuaEntryRetry => chapterCandidate?.Run?.RoundNumber==JoshuaContent.GlobalRoundNumber;
+        public bool ContentComplete => Session?.ContentComplete==true || (ExodusComplete && !LeviticusInstalled);
         public bool ExodusComplete => Session?.ExodusComplete == true;
-        public bool CanStartNew => Error==null && exodusCandidate==null && State!=null && (State.Run==null || ((Session?.ChapterComplete==true || ContentComplete) && Session.PendingChoices.Count==0));
+        public bool LeviticusComplete => Session?.LeviticusComplete == true;
+        public bool NumbersComplete => Session?.NumbersComplete == true;
+        public bool DeuteronomyComplete => Session?.DeuteronomyComplete == true;
+        // Any completed book or the installed endpoint: the run is kept and a new challenge is a separate choice.
+        public bool BookComplete => Session?.ChapterComplete==true || ExodusComplete || LeviticusComplete || NumbersComplete || DeuteronomyComplete || ContentComplete;
+        public bool CanStartNew => Error==null && chapterCandidate==null && State!=null &&
+            (State.Run==null || (BookComplete && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
         public bool Reload()
@@ -54,7 +76,7 @@ namespace BibleSurvivor.Unity
                 var world = session == null || !session.IsActive ? null : loaded.Run.World == null
                     ? new BattleWorld(session, catalog.SpeedsFor(session.RoundNumber), 7) : BattleWorld.Restore(session, catalog.SpeedsFor(session.RoundNumber), loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
-                operation = null; exodusCandidate=null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
+                operation = null; chapterCandidate=null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
                 return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
@@ -68,18 +90,30 @@ namespace BibleSurvivor.Unity
             World = new BattleWorld(Session, catalog.Speeds, 7);
             Paused = false; Movement = Vector2.zero; Checkpoint();
         }
-        public bool TryEnterExodus()
+        public bool TryEnterExodus() => CanEnterExodus && TryEnterChapter(ExodusContent.GlobalRoundNumber);
+        public bool TryEnterLeviticus() => CanEnterLeviticus && TryEnterChapter(LeviticusContent.GlobalRoundNumber);
+        public bool TryEnterNumbers() => CanEnterNumbers && TryEnterChapter(NumbersContent.GlobalRoundNumber);
+        public bool TryEnterDeuteronomy() => CanEnterDeuteronomy && TryEnterChapter(DeuteronomyContent.GlobalRoundNumber);
+        public bool TryEnterJoshua() => CanEnterJoshua && TryEnterChapter(JoshuaContent.GlobalRoundNumber);
+        bool TryEnterChapter(int round)
         {
-            if(!CanEnterExodus)return false;
             try
             {
-                // Independent candidate only: the completed Genesis aggregate/session stays published until durable readback.
-                var definition=catalog.ForRound(ExodusContent.GlobalRoundNumber);
-                var candidate=Session.PrepareExodus(definition);
+                // Keep the completed book published while preparing and committing a separate candidate.
+                var definition=catalog.ForRound(round);
+                var candidate=round switch
+                {
+                    ExodusContent.GlobalRoundNumber=>Session.PrepareExodus(definition),
+                    LeviticusContent.GlobalRoundNumber=>Session.PrepareLeviticus(definition),
+                    NumbersContent.GlobalRoundNumber=>Session.PrepareNumbers(definition),
+                    DeuteronomyContent.GlobalRoundNumber=>Session.PrepareDeuteronomy(definition),
+                    JoshuaContent.GlobalRoundNumber=>Session.PrepareJoshua(definition),
+                    _=>throw new ArgumentOutOfRangeException(nameof(round))
+                };
                 var preview=AdamSession.Resume(candidate,definition);
                 candidate.Run.World=new BattleWorld(preview,catalog.SpeedsFor(definition.Number),7).Capture();
                 candidate.Validate();
-                exodusCandidate=candidate;operation=Guid.NewGuid().ToString("N");
+                chapterCandidate=candidate;operation=Guid.NewGuid().ToString("N");
                 Paused=true;Movement=Vector2.zero;
                 var accepted=RetrySave();
                 if(accepted && !Suspended)Paused=false;
@@ -183,18 +217,18 @@ namespace BibleSurvivor.Unity
             if (operation == null) return false;
             try
             {
-                if(exodusCandidate!=null)
+                if(chapterCandidate!=null)
                 {
                     // A failed or uncertain attempt retains this exact candidate, old revision and operation for retry.
-                    var committed=store.Commit(exodusCandidate,revision,operation);
-                    var loaded=store.Load() ?? throw new InvalidOperationException("Exodus entry readback is missing");
+                    var committed=store.Commit(chapterCandidate,revision,operation);
+                    var loaded=store.Load() ?? throw new InvalidOperationException("Chapter entry readback is missing");
                     if(loaded.Revision!=committed || loaded.LastOperationId!=operation)
-                        throw new InvalidOperationException("Exodus entry readback changed; reload before new input");
-                    var session=AdamSession.Resume(loaded,catalog.ForRound(ExodusContent.GlobalRoundNumber));
+                        throw new InvalidOperationException("Chapter entry readback changed; reload before new input");
+                    var session=AdamSession.Resume(loaded,catalog.ForRound(chapterCandidate.Run.RoundNumber));
                     var world=BattleWorld.Restore(session,catalog.SpeedsFor(session.RoundNumber),loaded.Run.World);
                     // Publish only after Commit, Load, validation, Resume and World reconstruction all succeed.
                     State=loaded;Session=session;World=world;revision=committed;
-                    exodusCandidate=null;operation=null;Error=null;RequiresNewerGame=false;
+                    chapterCandidate=null;operation=null;Error=null;RequiresNewerGame=false;
                     Paused=true;Movement=Vector2.zero;sinceSave=0;completedCheckpoint=false;return true;
                 }
                 revision = store.Commit(State, revision, operation);

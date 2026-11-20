@@ -94,6 +94,16 @@ namespace BibleSurvivor.Core
             if(number==13)parts.Add(ExodusContent.RoundThirteenSpeedContract);
             if(number==14)parts.Add(ExodusContent.RoundFourteenSpeedContract);
             if(number==15)parts.Add(ExodusContent.RoundFifteenContract);
+            if(number>=LeviticusContent.GlobalRoundNumber&&number<=LeviticusContent.LastInstalledRound)
+            {
+                parts.Add(LeviticusContent.SpeedContract);
+                if(BossDefinition.Find(number) is BossDefinition boss)parts.Add(boss.FingerprintContract);
+            }
+            if(number>=NumbersContent.GlobalRoundNumber&&number<=CampaignContent.LastInstalledRound)
+            {
+                parts.Add(CampaignContent.SpeedContract(number));
+                if(BossDefinition.Find(number) is BossDefinition boss)parts.Add(boss.FingerprintContract);
+            }
             if(number==9)parts.Add(BossDefinition.ForRound(9).FingerprintContract+":i1-speed0.85:i3-speed0.35");
             if(number==6)parts.Add(BossDefinition.ForRound(6).FingerprintContract+":f2-speed0.50:f3-speed0.35");
             using var hash=SHA256.Create();

@@ -39,7 +39,7 @@ namespace BibleSurvivor.Unity
         public bool StartStageAvailable=>AdamHud.PolishEnabled&&Host!=null&&Host.Error==null&&!Host.Suspended&&!DeathPresentationVisible&&
             (Host.Session==null||(!Host.Session.IsActive&&Host.Session.CurrentHealth<=0&&Host.Session.PendingChoices.Count==0&&
             Host.Session.Stage!="boss_reward"&&Host.Session.Stage!="boss_settlement"&&Host.Session.Stage!="round_settlement"&&
-            !Host.Session.ChapterComplete&&!Host.ExodusComplete&&!Host.ContentComplete&&!Host.AwaitingNextRound));
+            !Host.BookComplete&&!Host.AwaitingNextRound));
         public void MoveStartFocus(int direction){if(StartStageAvailable)startStage.Move(direction);}
         public AdamImpactAudio ImpactAudio {get;private set;}
         public AdamImpactParticles ImpactParticles {get;private set;}
@@ -205,15 +205,40 @@ namespace BibleSurvivor.Unity
             if(Host==null||Host.Error!=null||Host.Suspended||commandFrame==Time.frameCount)return;
             if(StartStageAvailable){SelectSlot(startStage.Focus);return;}
             if(Host.CanEnterExodus)EnterExodus();
-            else if(Host.Paused && Host.Session?.ChapterComplete!=true && !Host.ExodusComplete && !Host.ContentComplete)
+            else if(Host.CanEnterLeviticus)EnterLeviticus();
+            else if(Host.CanEnterNumbers)EnterNumbers();
+            else if(Host.CanEnterDeuteronomy)EnterDeuteronomy();
+            else if(Host.CanEnterJoshua)EnterJoshua();
+            else if(Host.Paused && !Host.BookComplete)
             {commandFrame=Time.frameCount;ResumePlay();inputReleased=false;}
         }
-        public void EnterExodus()
+        public void EnterExodus() => EnterChapter(ExodusContent.GlobalRoundNumber);
+        public void EnterLeviticus() => EnterChapter(LeviticusContent.GlobalRoundNumber);
+        public void EnterNumbers() => EnterChapter(NumbersContent.GlobalRoundNumber);
+        public void EnterDeuteronomy() => EnterChapter(DeuteronomyContent.GlobalRoundNumber);
+        public void EnterJoshua() => EnterChapter(JoshuaContent.GlobalRoundNumber);
+        bool CanEnterChapter(int round)=>round switch
         {
-            if(Host==null||Host.Error!=null||Host.Suspended||DeathPresentationVisible||commandFrame==Time.frameCount||!Host.CanEnterExodus)return;
+            ExodusContent.GlobalRoundNumber=>Host.CanEnterExodus,
+            LeviticusContent.GlobalRoundNumber=>Host.CanEnterLeviticus,
+            NumbersContent.GlobalRoundNumber=>Host.CanEnterNumbers,
+            DeuteronomyContent.GlobalRoundNumber=>Host.CanEnterDeuteronomy,
+            JoshuaContent.GlobalRoundNumber=>Host.CanEnterJoshua,
+            _=>false
+        };
+        void EnterChapter(int round)
+        {
+            if(Host==null||DeathPresentationVisible||commandFrame==Time.frameCount||!CanEnterChapter(round))return;
             commandFrame=Time.frameCount;
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
-            Host.TryEnterExodus();
+            switch(round)
+            {
+                case ExodusContent.GlobalRoundNumber: Host.TryEnterExodus(); break;
+                case LeviticusContent.GlobalRoundNumber: Host.TryEnterLeviticus(); break;
+                case NumbersContent.GlobalRoundNumber: Host.TryEnterNumbers(); break;
+                case DeuteronomyContent.GlobalRoundNumber: Host.TryEnterDeuteronomy(); break;
+                case JoshuaContent.GlobalRoundNumber: Host.TryEnterJoshua(); break;
+            }
             RecordSortieTransition(previous,run);
             inputReleased=false;touchStarted=false;
         }
@@ -273,7 +298,16 @@ namespace BibleSurvivor.Unity
             }
             if (Host.Error != null)
             {
-                Modal(width, height, "저장 / 불러오기 중단", mobile ? Host.RequiresNewerGame ? "더 새 게임 버전이 필요한 저장입니다.\n원본과 백업은 보존했습니다. 게임을 업데이트하세요." : "저장할 수 없어 진행을 멈췄습니다.\n재시도하거나 마지막 저장을 불러오세요." : Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");
+                if(Host.HasJoshuaEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.DeuteronomyHeading,"여호수아 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasDeuteronomyEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.NumbersHeading,"신명기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasNumbersEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.LeviticusHeading,"민수기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasLeviticusEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.ExodusHeading,"레위기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else
+                    Modal(width, height, "저장 / 불러오기 중단", mobile ? Host.RequiresNewerGame ? "더 새 게임 버전이 필요한 저장입니다.\n원본과 백업은 보존했습니다. 게임을 업데이트하세요." : "저장할 수 없어 진행을 멈췄습니다.\n재시도하거나 마지막 저장을 불러오세요." : Host.Error + "\n전투가 정지됐습니다. 다시 불러오면 미저장 진행을 버립니다.");
                 var previousEnabled = GUI.enabled;
                 GUI.enabled = previousEnabled && (!mobile || Host.HasSaveRetry);
                 if (ArtButton(mobile ? new Rect(24, height / 2 + 40, (width - 60) / 2, 66) : new Rect(width / 2 - 220, height / 2 + 40, 210, 50), mobile && !Host.HasSaveRetry ? "재시도 불가" : "같은 저장 재시도", button)) RetrySaveWithDeparture();
@@ -315,7 +349,7 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.AwaitingNextRound)
             {
-                var next=Host.AwaitingR02?"가인":Host.AwaitingR03?"노아":Host.AwaitingR04?"아브라함":Host.AwaitingR05?"롯":Host.AwaitingR06?"이삭":Host.AwaitingR07?"야곱":Host.AwaitingR08?"요셉":Host.AwaitingR09?"유다":Host.AwaitingR11?"요게벳":Host.AwaitingR12?"모세":Host.AwaitingR13?"미리암":Host.AwaitingR14?"아론":Host.AwaitingR15?"브살렐":throw new InvalidOperationException("Unsupported next round");
+                var next=AdamRoundPresentation.Name(Host.State.Run.RoundNumber);
                 Modal(width,height,$"{AdamRoundPresentation.Name(session.RoundNumber)} 완료 · {next} 라운드로 계속","성장·장비·영구 골드 유지 · 다음 라운드 진입 저장");
                 var enabled=GUI.enabled;GUI.enabled=enabled && !Host.Suspended;
                 if(ArtButton(new Rect(width/2-180,height/2+20,360,drawingMobile?66:56),next+" 라운드 계속 (Enter)",button)){ResumePlay();inputReleased=false;touchStarted=false;}
@@ -326,20 +360,36 @@ namespace BibleSurvivor.Unity
                 Modal(width,height,"보상 적용됨 · 완료 정산",AdamBossPresentation.Forms(session));
                 if(ArtButton(new Rect(width/2-150,height/2+30,300,56),"완료 정산",button)){if(session.Stage=="boss_settlement")Host.CompleteBossSettlement();else Host.CompleteNormalSettlement();}
             }
-            else if(session?.ChapterComplete==true || Host.ExodusComplete || Host.ContentComplete)
+            else if(Host.BookComplete)
             {
                 var genesisComplete=session?.ChapterComplete==true;
+                var nextChapter=genesisComplete?ExodusContent.GlobalRoundNumber:
+                    Host.ExodusComplete&&Host.LeviticusInstalled?LeviticusContent.GlobalRoundNumber:
+                    Host.LeviticusComplete&&Host.NumbersInstalled?NumbersContent.GlobalRoundNumber:
+                    Host.NumbersComplete&&Host.DeuteronomyInstalled?DeuteronomyContent.GlobalRoundNumber:
+                    Host.DeuteronomyComplete&&Host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:0;
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);AdamHud.Panel(art,MotionRect(panel));
-                CompletionHeader(panel,AdamRoundPresentation.CompletionHeading(genesisComplete,Host.ExodusComplete),AdamRoundPresentation.CompletionDetail(genesisComplete,Host.ExodusComplete));
+                CompletionHeader(panel,AdamRoundPresentation.CompletionHeading(genesisComplete,Host.ExodusComplete,Host.LeviticusComplete,Host.ContentComplete,
+                        Host.NumbersComplete,Host.DeuteronomyComplete),
+                    AdamRoundPresentation.CompletionDetail(genesisComplete,Host.ExodusComplete,Host.LeviticusInstalled,Host.LeviticusComplete,Host.NumbersInstalled,Host.ContentComplete,
+                        Host.NumbersComplete,Host.DeuteronomyInstalled,Host.DeuteronomyComplete,Host.JoshuaInstalled));
                 var enabled=GUI.enabled;
-                if(genesisComplete)
+                if(nextChapter!=0)
                 {
-                    GUI.enabled=enabled && Host.CanEnterExodus && !Host.Suspended;
-                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),AdamChoiceText.ExodusStartCard,button))EnterExodus();
+                    GUI.enabled=enabled && CanEnterChapter(nextChapter);
+                    var caption=nextChapter switch
+                    {
+                        ExodusContent.GlobalRoundNumber=>AdamChoiceText.ExodusStartCard,
+                        LeviticusContent.GlobalRoundNumber=>AdamRoundPresentation.LeviticusStartCard,
+                        NumbersContent.GlobalRoundNumber=>AdamRoundPresentation.NumbersStartCard,
+                        DeuteronomyContent.GlobalRoundNumber=>AdamRoundPresentation.DeuteronomyStartCard,
+                        _=>AdamRoundPresentation.JoshuaStartCard
+                    };
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),caption,button))EnterChapter(nextChapter);
                 }
                 GUI.enabled=enabled && !Host.Suspended;
                 for(var i=0;i<3;i++)
-                    if(ArtButton(AdamChoiceText.ChapterAction(panel,i+(genesisComplete?1:0)),AdamChoiceText.StartCard(Weapons[i],i,true),button,Weapons[i]))SelectSlot(i);
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,i+(nextChapter!=0?1:0)),AdamChoiceText.StartCard(Weapons[i],i,true),button,Weapons[i]))SelectSlot(i);
                 GUI.enabled=enabled;
             }
             else if (session == null || !session.IsActive)
@@ -404,7 +454,7 @@ namespace BibleSurvivor.Unity
             AdamHud.Fill(new Rect(surface.x,surface.y,surface.width,2),AdamHud.GuiColor(new Color32(180,124,74,255)));
             AdamHud.Fill(new Rect(surface.x,surface.yMax-2,surface.width,2),AdamHud.GuiColor(new Color32(90,56,32,255)));
             if(ArtWorld.FeedbackEnabled&&sortie.Elapsed<.2)return;
-            AdamArt.Blit(AdamVisualQualityArt.Sprite(AdamBookTitle.Crest,AdamBookTitle.Book(session.RoundNumber)),new Rect(rect.x-16,rect.y+2,64,64));
+            AdamArt.Blit(AdamVisualQualityArt.Sprite(AdamBookTitle.Crest,AdamBookTitle.ArtFrame(session.RoundNumber)),new Rect(rect.x-16,rect.y+2,64,64));
             GUI.Label(new Rect(rect.x+60,rect.y+6,rect.width-72,22),AdamBookTitle.Name(session.RoundNumber)+" "+AdamBookTitle.Local(session.RoundNumber),HudText(16,AdamHud.Lapis));
             GUI.Label(new Rect(rect.x+60,rect.y+28,rect.width-72,24),AdamRoundPresentation.Name(session.RoundNumber),title);
             var pipWidth=(AdamBookTitle.Total(session.RoundNumber)-1)*18+12;
@@ -417,7 +467,7 @@ namespace BibleSurvivor.Unity
             if(session.Stage=="boss_reward")return "reward:"+session.Boss.Reward.RewardId;
             if(session.PendingChoices.Count>0)return "growth:"+Host.State.Run.ChoiceSerial;
             if(DeathPresentationVisible)return "death_pose";
-            if(session.ExodusComplete||session.ChapterComplete||Host.ContentComplete)return "complete:"+session.RoundNumber;
+            if(Host.BookComplete)return "complete:"+session.RoundNumber;
             if(!session.IsActive&&session.CurrentHealth<=0)return "death";
             if(Host.Paused||Host.Suspended)return "pause";
             return session.Stage;
@@ -490,7 +540,7 @@ namespace BibleSurvivor.Unity
             AdamHud.Fill(new Rect(0,0,width,110),AdamHud.Ink1);
             AdamHud.Rule(art,new Rect(0,109,width,2),true);
             var body=HudText(16,AdamHud.Secondary);
-            GUI.Label(new Rect(20,8,width*.36f,24),(session.RoundNumber>=10?"출애굽기 "+(session.RoundNumber-9):"창세기")+" · "+AdamRoundPresentation.Name(session.RoundNumber),body);
+            GUI.Label(new Rect(20,8,width*.36f,24),AdamRoundPresentation.BookLabel(session.RoundNumber)+" · "+AdamRoundPresentation.Name(session.RoundNumber),body);
             var hp=AdamHud.Health(width);AdamHud.Bar(art,hp,"ui_bar-hp_tile_1x2",AdamHud.Fraction(session.CurrentHealth,Host.State.Run.MaxHealth));
             GUI.Label(new Rect(hp.x,hp.yMax+1,hp.width,24),$"체력 {session.CurrentHealth:0} / {Host.State.Run.MaxHealth:0}",body);
             GUI.Label(AdamHud.TimerRect(width),AdamHud.Timer(session,Host.World?.SimulationTime??0),HudText(36,AdamHud.Primary,true,TextAnchor.MiddleCenter));
@@ -527,7 +577,7 @@ namespace BibleSurvivor.Unity
             AdamHud.Fill(new Rect(0,0,width,110),AdamHud.Ink1);
             AdamHud.Rule(art,new Rect(0,109,width,2),true);
             var body=HudText(16,AdamHud.Secondary);
-            GUI.Label(new Rect(20,42,width*.36f,24),(session.RoundNumber>=10?"출애굽기 "+(session.RoundNumber-9):"창세기")+" · "+AdamRoundPresentation.Name(session.RoundNumber),HudText(16,AdamHud.Muted));
+            GUI.Label(new Rect(20,42,width*.36f,24),AdamRoundPresentation.BookLabel(session.RoundNumber)+" · "+AdamRoundPresentation.Name(session.RoundNumber),HudText(16,AdamHud.Muted));
             var hp=AdamHud.Health(width);AdamHud.Bar(art,hp,"ui_bar-hp_tile_1x2",AdamHud.Fraction(session.CurrentHealth,Host.State.Run.MaxHealth));
             var hpValue=AdamHud.HealthValue(width);var hpText=$"{session.CurrentHealth:0} / {Host.State.Run.MaxHealth:0}";
             var shadow=hpValue;shadow.y+=1;GUI.Label(shadow,hpText,HudText(16,AdamHud.Ink0,false,TextAnchor.MiddleRight));
@@ -694,7 +744,7 @@ namespace BibleSurvivor.Unity
                         AdamHud.Fill(rule, AdamHud.GuiColor(new Color32(180, 124, 74, 255)));
 
                     var crest = new Rect(panel.x + 16, panel.y + (tick == 6 ? 10 : 14), 64, 64);
-                    var frame = AdamBookTitle.Book(Host.Session.RoundNumber);
+                    var frame = AdamBookTitle.ArtFrame(Host.Session.RoundNumber);
                     if (ClearsCrest(crest, eyebrowArea, eyebrowStyle, eyebrow) &&
                         ClearsCrest(crest, headingArea, title, heading) &&
                         ClearsCrest(crest, detailArea, detailStyle, detail) &&

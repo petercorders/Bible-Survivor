@@ -317,6 +317,10 @@ namespace BibleSurvivor.Core
             if(session.RoundNumber==7&&(!monsterSpeeds.TryGetValue("g1",out var g1)||g1!=.65||!monsterSpeeds.TryGetValue("g2",out var g2)||g2!=.55||!monsterSpeeds.TryGetValue("g3",out var g3)||g3!=.65))throw new ArgumentException("Unsupported R07 monster speed");
             if(session.RoundNumber==8&&(!monsterSpeeds.TryGetValue("h1",out var h1)||h1!=.65||!monsterSpeeds.TryGetValue("h2",out var h2)||h2!=.4||!monsterSpeeds.TryGetValue("h3",out var h3)||h3!=.55))throw new ArgumentException("Unsupported R08 monster speed");
             if(session.RoundNumber==9&&(!monsterSpeeds.TryGetValue("i1",out var i1)||i1!=.85||!monsterSpeeds.TryGetValue("i2",out var i2)||i2!=.6||!monsterSpeeds.TryGetValue("i3",out var i3)||i3!=.35))throw new ArgumentException("Unsupported R09 monster speed");
+            if(session.RoundNumber>=LeviticusContent.GlobalRoundNumber)
+                foreach(var entry in CampaignContent.SpeedsFor(session.RoundNumber))
+                    if(!monsterSpeeds.TryGetValue(entry.Key,out var ratio)||ratio!=entry.Value)
+                        throw new ArgumentException("Unsupported Leviticus monster speed");
             if(session.RoundNumber==10||session.RoundNumber==11||session.RoundNumber==12||session.RoundNumber==13||session.RoundNumber==14||session.RoundNumber==15)foreach(var entry in ExodusContent.SpeedsFor(session.RoundNumber))
                 if(!monsterSpeeds.TryGetValue(entry.Key,out var ratio)||ratio!=entry.Value)throw new ArgumentException("Unsupported Exodus monster speed");
             speeds=monsterSpeeds.ToDictionary(x=>x.Key,x=>x.Value,StringComparer.Ordinal);
@@ -774,8 +778,8 @@ namespace BibleSurvivor.Core
         private double NextUnit()=>NextUInt()/(double)uint.MaxValue;
         public BattleSnapshot Capture()=>new BattleSnapshot{Time=SimulationTime,Remainder=remainder,PlayerX=PlayerPosition.X,PlayerY=PlayerPosition.Y,
             FacingX=facing.X,FacingY=facing.Y,RandomState=random,NextProjectileId=nextProjectile,ShotsFired=ShotsFired,Hits=Hits,Kills=Kills,
-            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber==12?5:Session.RoundNumber==9||Session.RoundNumber==15?4:Session.RoundNumber>=4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
-            HostileProjectiles=Session.RoundNumber==9||Session.RoundNumber==15?hostileProjectiles.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,NextHostileId=Session.RoundNumber==9||Session.RoundNumber==15?nextHostile:0,
+            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber==12?5:Session.BossRules?.UsesChainProjectiles==true?4:Session.RoundNumber>=4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
+            HostileProjectiles=Session.BossRules?.UsesChainProjectiles==true?hostileProjectiles.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,NextHostileId=Session.BossRules?.UsesChainProjectiles==true?nextHostile:0,
             Charges=Session.RoundNumber>=4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
             Enemies=enemies.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
             Drops=drops.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
@@ -792,7 +796,7 @@ namespace BibleSurvivor.Core
                 !snapshot.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Keys.OrderBy(x=>x))||
                 !snapshot.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.DroppedExperience.Keys.OrderBy(x=>x))||
                 snapshot.Weapons.Any(x=>!session.Inventory.Weapons.ContainsKey(x.WeaponId)||x.WeaponForm!=(session.Inventory.Forms.TryGetValue(x.WeaponId,out var f)?f:null)))throw new ArgumentException("Checkpoint does not match session");
-            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=(session.RoundNumber==12?5:session.RoundNumber==9||session.RoundNumber==15?4:3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
+            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=(session.RoundNumber==12?5:session.BossRules?.UsesChainProjectiles==true?4:3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
             world.PlayerPosition=new Vector2(snapshot.PlayerX,snapshot.PlayerY);world.facing=new Vector2(snapshot.FacingX,snapshot.FacingY);
             world.random=snapshot.RandomState;world.remainder=snapshot.Remainder;world.SimulationTime=snapshot.Time;world.nextProjectile=snapshot.NextProjectileId;
             world.BossKills=snapshot.BossKills;world.ShotsFired=snapshot.ShotsFired;world.Hits=snapshot.Hits;world.Kills=snapshot.Kills;world.Collected=snapshot.Collected;world.DamageTaken=snapshot.DamageTaken;

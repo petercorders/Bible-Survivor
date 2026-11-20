@@ -198,8 +198,37 @@ namespace BibleSurvivor.Unity
             chargeFacing.Clear();
         }
         public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+
+        // Leviticus through Joshua reuse the reviewed Exodus R06 art for equivalent movement roles.
+        static string SourceActor(string id)
+        {
+            switch(id)
+            {
+                case "lv1":case "nm1":case "dt1":case "js1":return "ex17";
+                case "lv2":case "nm2":case "dt2":case "js2":return "ex16";
+                case "lv3":case "nm3":case "dt3":case "js3":return "ex18";
+                case "ash_veil":
+                case "oath_wraith":
+                case "dust_tyrant":
+                case "ravine_stalker":
+                case "wilderness_warden":
+                case "oblivion_mist":
+                case "crossroads_sentinel":
+                case "rampart_colossus":return "defilement_weaver";
+                default:return id;
+            }
+        }
+        static bool UsesWeaverArt(BossEncounterState boss)=>SourceActor(boss?.Rules.Id)=="defilement_weaver";
+        AdamExodusR06Art ExodusR06Art()
+        {
+            if(exodusR06!=null)return exodusR06;
+            exodusR06=new AdamExodusR06Art();
+            exodusR06.PrepareHitMasks();
+            return exodusR06;
+        }
         public static string EnemyClip(string id)
         {
+            id=SourceActor(id);
             switch(id) { case "a1":return "enm_a1-small-snake_move_32"; case "a2":return "enm_a2-fruit-moth_fly_32"; case "a3":return "enm_a3-thorn-beast_walk_32";
                 case "b1":case "b2":case "b3":return AdamRoundPresentation.R02ClipId(id);
                 case "c1":case "c2":case "c3":case "nephilim_tyrant":return AdamR03Art.EnemyClip(id);
@@ -243,7 +272,12 @@ namespace BibleSurvivor.Unity
         public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null, bool bossShadowOnly = false)
         {
             if(Snapshot==null || source!=host.World) return;
-            var exodus=AdamBookGround.Exodus(host.Session.RoundNumber);
+            var round=host.Session.RoundNumber;
+            var leviticus=round>=LeviticusContent.GlobalRoundNumber && round<=LeviticusContent.LastInstalledRound;
+            var numbers=round>=NumbersContent.GlobalRoundNumber && round<=NumbersContent.LastRound;
+            var deuteronomy=round>=DeuteronomyContent.GlobalRoundNumber && round<=DeuteronomyContent.LastRound;
+            var joshua=round>=JoshuaContent.GlobalRoundNumber && round<=CampaignContent.LastInstalledRound;
+            var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);
             var projection=new AdamWorldProjection(arena,origin);
@@ -251,18 +285,27 @@ namespace BibleSurvivor.Unity
             GUI.BeginGroup(arena);
             var rx=Mathf.Min(10,arena.width/(float)pixels/2+1); var ry=Mathf.Min(5.625f,arena.height/(float)pixels/2+1);
             // Terrain is deterministic by integer coordinate, not gameplay RNG. Tiles are never rotated/flipped.
-            for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
-            for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
+            var groundColor=GUI.color;
+            try
             {
-                art.Draw(AdamBookGround.Ground(x,y,exodus),Point(x+.5f,y+.5f),scale);
-                if(PathCell(x,y)) art.Draw(AdamBookGround.Path(exodus),Point(x+.5f,y+.5f),scale,frame:PathMask(x,y));
+                if(leviticus && desert)GUI.color=groundColor*new Color(.80f,.90f,.98f,1);
+                if(numbers && desert)GUI.color=groundColor*new Color(.94f,.83f,.72f,1);
+                if(deuteronomy && desert)GUI.color=groundColor*new Color(.88f,.84f,.94f,1);
+                if(joshua && desert)GUI.color=groundColor*new Color(.84f,.94f,.76f,1);
+                for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
+                for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
+                {
+                    art.Draw(AdamBookGround.Ground(x,y,desert),Point(x+.5f,y+.5f),scale);
+                    if(PathCell(x,y)) art.Draw(AdamBookGround.Path(desert),Point(x+.5f,y+.5f),scale,frame:PathMask(x,y));
+                }
+                if(desert)AdamBookGround.Hollows(art,projection,origin,rx,ry);
+                for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
+                for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
+                    if(!PathCell(x,y) && (uint)(x*73856093^y*19349663)%5==0)
+                        art.Draw(AdamBookGround.Decor(x,y,desert),Point(x+.5f,y+.2f),scale);
             }
-            if(exodus)AdamBookGround.Hollows(art,projection,origin,rx,ry);
-            for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
-            for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
-                if(!PathCell(x,y) && (uint)(x*73856093^y*19349663)%5==0)
-                    art.Draw(AdamBookGround.Decor(x,y,exodus),Point(x+.5f,y+.2f),scale);
-            if(exodus)AdamBookGround.Edges(arena,FeedbackEnabled);
+            finally{GUI.color=groundColor;}
+            if(desert)AdamBookGround.Edges(arena,FeedbackEnabled);
             else AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
             // Optional hit smoke/chips stay below XP, actors, weapons and required telegraphs.
@@ -277,9 +320,9 @@ namespace BibleSurvivor.Unity
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
-                        var id=monster.MonsterId;
-                        if(id=="nephilim_tyrant"||id=="sitnah_keeper"||id=="silver_cup_accuser"||id=="oppression_chariot"||id=="defilement_weaver"){if(r03==null)r03=new AdamR03Art();r03.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);}
-                        else art.Draw(AdamRoundPresentation.Shadow(id),Point(enemy.X,enemy.Y),scale);
+                        var shadow=AdamRoundPresentation.Shadow(monster.MonsterId);
+                        if(shadow=="fx_shadow-boss_static_40x8"){if(r03==null)r03=new AdamR03Art();r03.Draw(shadow,Point(enemy.X,enemy.Y),scale);}
+                        else art.Draw(shadow,Point(enemy.X,enemy.Y),scale);
                     }
                 foreach(var drop in snap.Drops)
                     if(experience.TryGetValue(drop.Id,out var xp))
@@ -294,14 +337,15 @@ namespace BibleSurvivor.Unity
                         var anchor=sprite.Feet;var before=GUI.matrix;var tint=GUI.color;
                         // GUI.matrix transforms window coordinates even inside the arena group.
                         if(FeedbackEnabled && EnemyReacting(enemy.Id)){GUI.matrix=before*ReactionMatrix(anchor+arena.position,1);GUI.color=new Color(1,.55f,.35f,1);}
-                        if(AdamExodusR06Art.Enemy(monster.MonsterId))
+                        var sourceActor=SourceActor(monster.MonsterId);
+                        if(AdamExodusR06Art.Enemy(sourceActor))
                         {
-                            if(exodusR06==null){exodusR06=new AdamExodusR06Art();exodusR06.PrepareHitMasks();}
-                            var clip=EnemyClip(monster.MonsterId);var left=enemy.X>snap.PlayerX;var frame=-1;var seconds=Clock;
-                            if(monster.MonsterId=="defilement_weaver")
+                            var rig=ExodusR06Art();
+                            var clip=AdamExodusR06Art.EnemyClip(sourceActor);var left=enemy.X>snap.PlayerX;var frame=-1;var seconds=Clock;
+                            if(sourceActor=="defilement_weaver")
                             {clip=AdamExodusR06Art.BossClip(host.Session.Stage,bossVisual,snap.Time,out frame,out seconds);left=bossLeft;}
-                            exodusR06.Draw(clip,anchor,scale,seconds,left,frame);
-                            exodusR06.DrawHit(clip,anchor,scale,seconds,left,EnemyFlashOpacity(enemy.Id),frame);
+                            rig.Draw(clip,anchor,scale,seconds,left,frame);
+                            rig.DrawHit(clip,anchor,scale,seconds,left,EnemyFlashOpacity(enemy.Id),frame);
                         }
                         else if(AdamExodusR05Art.Enemy(monster.MonsterId))
                         {
@@ -409,7 +453,7 @@ namespace BibleSurvivor.Unity
             }
             if(BossDeathVisible(bossDeathAt,Clock,bossVisual))
             {
-                if(bossVisual.Rules.Number==15){if(exodusR06==null)exodusR06=new AdamExodusR06Art();exodusR06.Draw(AdamExodusR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
+                if(UsesWeaverArt(bossVisual))ExodusR06Art().Draw(AdamExodusR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);
                 else if(bossVisual.Rules.IsChariot){if(exodusR03==null)exodusR03=new AdamExodusR03Art();exodusR03.Draw(AdamExodusR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else if(bossVisual.Rules.Number==9){if(r09==null)r09=new AdamR09Art();r09.Draw(AdamR09Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
                 else if(bossVisual.Rules.Number==6){if(r06==null)r06=new AdamR06Art();r06.Draw(AdamR06Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
@@ -483,7 +527,7 @@ namespace BibleSurvivor.Unity
                     {
                         GUI.matrix=before*AdamChainWarning.ProjectileMatrix(anchor+arena.position,projectile);
                         var seconds=AdamChainWarning.ProjectileSeconds(snap,projectile);
-                        if(bossVisual?.Rules.Number==15){if(exodusR06==null)exodusR06=new AdamExodusR06Art();exodusR06.Draw(AdamExodusR06Art.Projectile,anchor,scale,seconds);}
+                        if(UsesWeaverArt(bossVisual))ExodusR06Art().Draw(AdamExodusR06Art.Projectile,anchor,scale,seconds);
                         else{if(r09==null)r09=new AdamR09Art();r09.Draw(AdamR09Art.Projectile,anchor,scale,seconds);}
                     }
                     finally{GUI.matrix=before;}
@@ -494,7 +538,7 @@ namespace BibleSurvivor.Unity
             if(AdamChariotWarning.TryBossGeometry(chariotVisual,out var chariotGeometry))chariotLane.Draw(projection,chariotGeometry);
             GUI.EndGroup();
         }
-        public static double BossDeathDuration(BossEncounterState boss)=>boss?.Rules.Number==15?AdamExodusR06Art.DeathSeconds:4d/6;
+        public static double BossDeathDuration(BossEncounterState boss)=>UsesWeaverArt(boss)?AdamExodusR06Art.DeathSeconds:4d/6;
         public static bool BossDeathVisible(double deathAt,double clock,BossEncounterState boss=null)=>deathAt>=0 && clock<deathAt+BossDeathDuration(boss);
         public static string BossClip(string stage,BossEncounterState boss,double impactAt,double clock,out int frame)
         {

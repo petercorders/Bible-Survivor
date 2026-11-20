@@ -1,0 +1,106 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using BibleSurvivor.Core;
+
+namespace BibleSurvivor.Sim;
+
+internal static class LaterCampaignRunner
+{
+    internal static int Run(AdamSession session,SaveStore store,long revision,string weapon,int seed,int lastRound)
+    {
+        var previous=store.Load()!;
+        var previousReceipt=JsonSerializer.Serialize(previous.Run!.Boss);
+        var candidate=session.PrepareLeviticus(LeviticusContent.Round(16));
+        var passed=candidate.Profile.Gold==previous.Profile.Gold && candidate.Run!.RunId==previous.Run.RunId;
+        revision=store.Commit(candidate,revision,"leviticus-entry");
+        var state=store.Load()!;
+        session=AdamSession.Resume(state,LeviticusContent.Round(16));
+        var records=new List<object>();
+        string? sixthReceipt=null;
+        var laterReceipts=new List<string>();
+        for(var round=16;round<=lastRound;round++)
+        {
+            var definition=CampaignContent.Round(round);
+            var speeds=CampaignContent.SpeedsFor(round);
+            if(round is NumbersContent.GlobalRoundNumber or DeuteronomyContent.GlobalRoundNumber or JoshuaContent.GlobalRoundNumber)
+            {
+                var before=state.Profile.Gold;
+                var (completed,entering)=round switch
+                {
+                    NumbersContent.GlobalRoundNumber=>(session.LeviticusComplete,session.PrepareNumbers(definition)),
+                    DeuteronomyContent.GlobalRoundNumber=>(session.NumbersComplete,session.PrepareDeuteronomy(definition)),
+                    _=>(session.DeuteronomyComplete,session.PrepareJoshua(definition))
+                };
+                passed&=completed&&entering.Profile.Gold==before;
+                revision=store.Commit(entering,revision,"book-entry-"+round);
+                state=store.Load()!;
+                session=AdamSession.Resume(state,definition);
+            }
+            else if(round>16)session=session.StartNextRound(definition);
+            var hasBoss=session.BossRules!=null;
+            var world=new BattleWorld(session,speeds,seed);
+            var phases=new HashSet<string>();
+            var midpoint=false;
+            for(var tick=0;tick<(hasBoss?48000:10860)&&session.IsActive;tick++)
+            {
+                BattleRunner.Resolve(session,weapon);
+                world.Advance(BattleWorld.FixedStep,BattleRunner.Movement(world));
+                BattleRunner.Resolve(session,weapon);
+                if(!session.IsActive)break;
+                var phase=!midpoint&&world.SimulationTime>=60?"midpoint":
+                    session.Stage=="boss"&&session.Boss?.Telegraphing==true?"telegraph":
+                    session.Stage=="boss"&&world.HostileProjectiles.Count>0?"projectiles":null;
+                if(phase==null||!phases.Add(phase))continue;
+                session.Capture();
+                state.Run!.World=world.Capture();
+                var geometry=JsonSerializer.Serialize(state.Run.World);
+                revision=store.Commit(state,revision,$"leviticus-{round}-{phase}");
+                state=store.Load()!;
+                session=AdamSession.Resume(state,definition);
+                world=BattleWorld.Restore(session,speeds,state.Run!.World!);
+                passed&=geometry==JsonSerializer.Serialize(world.Capture());
+                midpoint|=phase=="midpoint";
+            }
+            if(hasBoss&&world.BossKills==1)
+            {
+                if(session.Stage=="boss_reward")
+                {
+                    var choice=session.BossChoices.FirstOrDefault(x=>x.Kind=="evolution")??session.BossChoices.First();
+                    passed&=session.ChooseBossReward(session.Boss!.Reward!.RewardId,choice.Id);
+                }
+                BattleRunner.Resolve(session,weapon);
+                passed&=session.CompleteBossSettlement();
+                if(round==18)sixthReceipt=JsonSerializer.Serialize(state.Run!.Boss);
+                else laterReceipts.Add(JsonSerializer.Serialize(state.Run!.Boss));
+            }
+
+            records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases});
+            passed&=midpoint&&world.Hits>0&&world.Kills>0&&session.Stage=="between_rounds"&&
+                (!hasBoss||world.BossKills==1&&phases.Contains("telegraph")&&phases.Contains("projectiles"));
+            if(!passed)break;
+            session.Capture();
+            revision=store.Commit(state,revision,"leviticus-complete-"+round);
+            state=store.Load()!;
+            session=AdamSession.Resume(state,definition);
+            passed&=state.Run!.RoundNumber==round+1&&previousReceipt==JsonSerializer.Serialize(state.Run.CompletedFifthBoss)&&
+                (round<=18||sixthReceipt==JsonSerializer.Serialize(state.Run.CompletedSixthBoss))&&
+                session.ContentComplete==(round==CampaignContent.LastInstalledRound)&&
+                session.NumbersComplete==(round==NumbersContent.LastRound)&&session.DeuteronomyComplete==(round==DeuteronomyContent.LastRound);
+            if(round>=NumbersContent.GlobalRoundNumber)
+            {
+                // The current boss stays in Run.Boss until the next round starts.
+                var expected=round%3==0?laterReceipts.Count-1:laterReceipts.Count;
+                passed&=state.Run.LaterBossHistory!=null&&
+                    laterReceipts.Take(expected).SequenceEqual(state.Run.LaterBossHistory.Select(r=>JsonSerializer.Serialize(r)));
+            }
+            if(!passed)break;
+        }
+        System.Console.WriteLine(JsonSerializer.Serialize(new
+        {
+            status=passed?"PASS":"FAIL", kind=$"Campaign R16–R{lastRound} coordinate combat, technical equipment/health fixture",
+            records, content_complete=session.ContentComplete, next_round=state.Run?.RoundNumber
+        }));
+        return passed?0:1;
+    }
+}

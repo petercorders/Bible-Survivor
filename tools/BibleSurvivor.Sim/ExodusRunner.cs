@@ -7,7 +7,7 @@ using BibleSurvivor.Core;
 namespace BibleSurvivor.Sim;
 internal static class ExodusRunner
 {
-    internal static int Run(GameSnapshot state,AdamSession game,SaveStore store,long revision,string weapon,int seed,bool eleventh=false,bool twelfth=false,bool thirteenth=false,bool fourteenth=false,bool fifteenth=false)
+    internal static int Run(GameSnapshot state,AdamSession game,SaveStore store,long revision,string weapon,int seed,bool eleventh=false,bool twelfth=false,bool thirteenth=false,bool fourteenth=false,bool fifteenth=false,int laterRound=0)
     {
         var definition=CatalogReader.Exodus("content/exodus/catalog.json");var speeds=CatalogReader.MonsterSpeeds("content/exodus/catalog.json");
         var before=File.ReadAllBytes(store.Path);var gold=state.Profile.Gold;var health=game.CurrentHealth;var runId=state.Run!.RunId;
@@ -68,18 +68,19 @@ internal static class ExodusRunner
                 BattleRunner.Resolve(game,weapon);passed&=game.CompleteBossSettlement();
             }
             BattleRunner.Resolve(game,weapon);game.Capture();if(state.Run!=null)state.Run.World=world.Capture();
-            passed&=midpoint&&game.ContentComplete==(round==ExodusContent.LastInstalledRound)&&!game.ChapterComplete&&!game.CanEnterExodus&&state.Run?.RoundNumber==round+1&&world.Hits>0&&world.Kills>0;
+            passed&=midpoint&&!game.ContentComplete&&!game.ChapterComplete&&!game.CanEnterExodus&&state.Run?.RoundNumber==round+1&&world.Hits>0&&world.Kills>0;
             if(passed)
             {
                 var paid=state.Profile.Gold;passed&=!game.CompleteNormalSettlement()&&state.Profile.Gold==paid;
                 revision=store.Commit(state,revision,"exodus-complete-"+round);state=store.Load()!;game=AdamSession.Resume(state,definition);
-                passed&=game.ContentComplete==(round==ExodusContent.LastInstalledRound)&&state.Run!.RunId==runId&&first==JsonSerializer.Serialize(state.Run.CompletedBoss)&&second==JsonSerializer.Serialize(state.Run.CompletedSecondBoss)&&third==JsonSerializer.Serialize(state.Run.CompletedThirdBoss);
+                passed&=!game.ContentComplete&&state.Run!.RunId==runId&&first==JsonSerializer.Serialize(state.Run.CompletedBoss)&&second==JsonSerializer.Serialize(state.Run.CompletedSecondBoss)&&third==JsonSerializer.Serialize(state.Run.CompletedThirdBoss);
                 if(round==15)passed&=fourth==JsonSerializer.Serialize(state.Run!.CompletedFourthBoss)&&world.BossKills==1&&game.Boss?.EncounterRound==15&&game.ExodusComplete&&!game.CompleteBossSettlement();
                 if(round==13||round==14)passed&=fourth==JsonSerializer.Serialize(state.Run!.CompletedFourthBoss)&&world.BossKills==0&&game.Boss==null;
             }
             records.Add(new{round,midpoint_disk_restore=midpoint,boss_phase_restores=phaseRestores,coordinates,hits=world.Hits,kills=world.Kills,boss_kills=world.BossKills,seconds=world.SimulationTime,equipment});
         }
         Console.WriteLine(JsonSerializer.Serialize(new {status=passed?"PASS":"FAIL",kind="R01 through R"+(fifteenth?"15":fourteenth?"14":thirteenth?"13":twelfth?"12":eleventh?"11":"10")+" actual coordinate combat; existing equipment8/passive1 HP10000 technical fixture; no injected hits or kills; not natural completion",weapon,seed,r09_completion_checkpoint=true,exodus_entry_no_payment_or_heal=candidate.Profile.Gold==gold&&candidate.Run!.Health==health,rounds=records,three_boss_receipts_preserved=passed,four_boss_receipts_preserved=thirteenth||fourteenth||fifteenth?(bool?)passed:null,content_complete=game.ContentComplete,exodus_complete=game.ExodusComplete,chapter_complete=game.ChapterComplete,next_round=state.Run?.RoundNumber,hits=world.Hits,kills=world.Kills,seconds=world.SimulationTime,gold=state.Profile.Gold,save=store.Path,unity="NOT_RUN",mobile="NOT_RUN",balance="UNVALIDATED"},new JsonSerializerOptions{WriteIndented=true}));
+        if(passed&&laterRound>15)return LaterCampaignRunner.Run(game,store,revision,weapon,seed,laterRound);
         return passed?0:1;
     }
 }

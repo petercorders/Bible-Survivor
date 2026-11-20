@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace BibleSurvivor.Core
@@ -28,7 +29,7 @@ namespace BibleSurvivor.Core
         public string Stage => run.Stage;
         public BossEncounterState? Boss => run.Boss?.Copy();
         internal BossEncounterState? Encounter => run.Boss;
-        public BossDefinition? BossRules=>definition.Number==3||definition.Number==6||definition.Number==9||definition.Number==12||definition.Number==15?BossDefinition.ForRound(definition.Number):null;
+        public BossDefinition? BossRules=>BossDefinition.Find(definition.Number);
         public bool NeedsRewardImplementation => IsCurrent && run.Stage=="boss_reward" && run.Boss?.Reward?.PolicyId==BossDefinition.LegacyPolicy;
         public IReadOnlyList<BossRewardCandidate> BossChoices=>run.Boss?.Reward?.Candidates?.Select(x=>x.Copy()).ToList().AsReadOnly() ?? (IReadOnlyList<BossRewardCandidate>)Array.Empty<BossRewardCandidate>();
         public string WeaponForm(string weapon)=>Inventory.Forms.TryGetValue(weapon,out var form)?form:weapon;
@@ -52,7 +53,14 @@ namespace BibleSurvivor.Core
         }
         public int RoundNumber => definition.Number;
         public bool CanEnterExodus=>ChapterComplete&&run.PendingLevels==0;
-        public bool ContentComplete=>IsCurrent&&definition.Number==ExodusContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
+        public bool CanEnterLeviticus=>ExodusComplete&&run.PendingLevels==0;
+        public bool LeviticusComplete=>IsCurrent&&definition.Number==LeviticusContent.LastInstalledRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterNumbers=>LeviticusComplete&&run.PendingLevels==0;
+        public bool NumbersComplete=>IsCurrent&&definition.Number==NumbersContent.LastRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterDeuteronomy=>NumbersComplete&&run.PendingLevels==0;
+        public bool DeuteronomyComplete=>IsCurrent&&definition.Number==DeuteronomyContent.LastRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
+        public bool CanEnterJoshua=>DeuteronomyComplete&&run.PendingLevels==0;
+        public bool ContentComplete=>IsCurrent&&definition.Number==CampaignContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
         public bool ExodusComplete=>IsCurrent&&definition.Number==15&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool ChapterComplete=>IsCurrent&&definition.Number==9&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         internal int SpeciesOrdinal(int id) => Arena!.SpeciesOrdinal(id);
@@ -90,7 +98,7 @@ namespace BibleSurvivor.Core
         {
             state.Validate();
             run = state.Run ?? throw new InvalidOperationException("No run to resume");
-            if (definition.Number < 1 || definition.Number > 15 ||
+            if (definition.Number < 1 || definition.Number > CampaignContent.LastInstalledRound ||
                 (run.Stage=="between_rounds" ? run.RoundNumber!=definition.Number+1 : run.RoundNumber!=definition.Number || (run.Stage=="normal" && run.Wave==null)))
                 throw new InvalidOperationException("Round definition does not match checkpoint");
             if (run.RoundFingerprint != null && run.RoundFingerprint != definition.Fingerprint &&
@@ -98,7 +106,8 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Round catalog changed; checkpoint preserved");
             if (run.RoundFingerprint == null && definition.Number != 1)
                 throw new ArgumentException("Legacy saves support only R01 and its completion checkpoint");
-            if(definition.Number>=10)ExodusContent.Validate(definition);
+            if(definition.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(definition);
+            else if(definition.Number>=10)ExodusContent.Validate(definition);
             this.state = state; this.definition = definition;
             Inventory = EquipmentInventory.Restore(run.Weapons, run.Passives,run.Forms);
             Growth = new GrowthLedger(run.Level, run.Experience); Wave = run.Wave == null ? null : WaveDirector.Restore(definition, run.Wave);
@@ -123,27 +132,81 @@ namespace BibleSurvivor.Core
             candidate.Validate();_ = Resume(candidate,next);return candidate;
         }
 
+        // Publish only after the caller commits and resumes the candidate.
+        public GameSnapshot PrepareLeviticus(RoundDefinition next)
+        {
+            if(!CanEnterLeviticus)throw new InvalidOperationException("Explicit Leviticus entry requires completed R15");
+            if(next.Number!=LeviticusContent.GlobalRoundNumber)throw new ArgumentException("Leviticus entry requires R16");
+            LeviticusContent.Validate(next);
+            state.Validate();
+            var candidate=SaveStore.Copy(state);
+            var entering=candidate.Run!;
+            entering.CompletedFifthBoss=entering.Boss!.Copy();
+            entering.Boss=null;
+            entering.PreviousNormalRound=15;
+            entering.Stage="normal";
+            entering.RoundFingerprint=next.Fingerprint;
+            entering.NormalEndedAt=null;
+            entering.RoundCompletionApplied=false;
+            entering.Wave=new WaveDirector(next).Snapshot();
+            entering.World=null;
+            entering.Drops.Clear();
+            entering.LastHitTime=-1;
+            _ = Resume(candidate,next);
+            return candidate;
+        }
+
+        public GameSnapshot PrepareNumbers(RoundDefinition next)=>PrepareLaterBook(CanEnterNumbers,NumbersContent.GlobalRoundNumber,next,"Numbers");
+        public GameSnapshot PrepareDeuteronomy(RoundDefinition next)=>PrepareLaterBook(CanEnterDeuteronomy,DeuteronomyContent.GlobalRoundNumber,next,"Deuteronomy");
+        public GameSnapshot PrepareJoshua(RoundDefinition next)=>PrepareLaterBook(CanEnterJoshua,JoshuaContent.GlobalRoundNumber,next,"Joshua");
+
+        private GameSnapshot PrepareLaterBook(bool allowed,int first,RoundDefinition next,string book)
+        {
+            if(!allowed)throw new InvalidOperationException("Explicit "+book+" entry requires completed R"+(first-1).ToString(CultureInfo.InvariantCulture));
+            if(next.Number!=first)throw new ArgumentException(book+" entry requires R"+first.ToString(CultureInfo.InvariantCulture));
+            CampaignContent.Validate(next);
+            state.Validate();
+            var candidate=SaveStore.Copy(state);
+            BeginNextRound(candidate.Run!,next);
+            _=Resume(candidate,next);
+            return candidate;
+        }
+
         public AdamSession StartNextRound(RoundDefinition next)
         {
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
-                next.Number!=run.RoundNumber || next.Number==10 || next.Number>15 || definition.Number!=next.Number-1)
+                next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number==NumbersContent.GlobalRoundNumber || next.Number==DeuteronomyContent.GlobalRoundNumber ||
+                next.Number==JoshuaContent.GlobalRoundNumber || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
-            if(next.Number>=11)ExodusContent.Validate(next);
+            if(next.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(next);
+            else if(next.Number>=11)ExodusContent.Validate(next);
             state.Validate(); Capture();
+            BeginNextRound(run,next);
+            return Resume(state,next);
+        }
+
+        private static void BeginNextRound(RunState run,RoundDefinition next)
+        {
+            var previous=next.Number-1;
             // Construct before publishing the new arena. No reward or healing is performed on entry/retry.
             var arena=new WaveDirector(next);
             if(run.Boss!=null)
             {
-                if(definition.Number==12){run.CompletedFourthBoss=run.Boss.Copy();run.PreviousNormalRound=12;}
-                else if(definition.Number==6)run.CompletedSecondBoss=run.Boss.Copy();
+                if(previous>=21)
+                {
+                    (run.LaterBossHistory??=new List<BossEncounterState>()).Add(run.Boss.Copy());
+                    run.PreviousNormalRound=previous;
+                }
+                else if(previous==18){run.CompletedSixthBoss=run.Boss.Copy();run.PreviousNormalRound=18;}
+                else if(previous==12){run.CompletedFourthBoss=run.Boss.Copy();run.PreviousNormalRound=12;}
+                else if(previous==6)run.CompletedSecondBoss=run.Boss.Copy();
                 else run.CompletedBoss=run.Boss.Copy();
                 run.Boss=null;
             }
-            if(run.RoundCompletionApplied)run.PreviousNormalRound=definition.Number;
+            if(run.RoundCompletionApplied)run.PreviousNormalRound=previous;
             run.NormalEndedAt=null;run.RoundCompletionApplied=false;
             run.Stage="normal";run.RoundFingerprint=next.Fingerprint;run.Wave=arena.Snapshot();
             run.World=null;run.Drops.Clear();run.LastHitTime=-1;
-            return Resume(state,next);
         }
 
         public void Advance(double seconds)
@@ -263,7 +326,7 @@ namespace BibleSurvivor.Core
         private void Finish()
         {
             if (!IsActive) return;
-            if(definition.Number==3||definition.Number==6||definition.Number==9||definition.Number==12||definition.Number==15)
+            if(BossRules!=null)
             {
                 var ended=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
@@ -271,7 +334,7 @@ namespace BibleSurvivor.Core
                 run.Boss=new BossEncounterState{Version=definition.Number==12?4:BossRules!.UsesChainProjectiles?3:2,ChariotCharge=definition.Number==12?new ChariotChargeState():null,ChainDirections=BossRules!.UsesChainProjectiles?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
-            if(definition.Number==4||definition.Number==5||definition.Number==7||definition.Number==8||definition.Number==10||definition.Number==11||definition.Number==13||definition.Number==14)
+            if(UsesNormalSettlement)
             {
                 run.NormalEndedAt=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
@@ -287,9 +350,13 @@ namespace BibleSurvivor.Core
                 state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
             run.Health = run.MaxHealth; run.Stage = "between_rounds"; run.RoundNumber = definition.Number + 1;
         }
+        private bool UsesNormalSettlement=>definition.Number==4||definition.Number==5||
+            definition.Number==7||definition.Number==8||definition.Number==10||definition.Number==11||
+            definition.Number==13||definition.Number==14||definition.Number>=LeviticusContent.GlobalRoundNumber&&BossRules==null;
+
         public bool CompleteNormalSettlement()
         {
-            if(!IsCurrent||(definition.Number!=4&&definition.Number!=5&&definition.Number!=7&&definition.Number!=8&&definition.Number!=10&&definition.Number!=11&&definition.Number!=13&&definition.Number!=14)||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
+            if(!IsCurrent||!UsesNormalSettlement||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
             state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
             if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
             run.Health=run.MaxHealth;run.RoundCompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=definition.Number+1;run.World=null;Capture();return true;
