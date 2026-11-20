@@ -111,4 +111,14 @@ public sealed class AdamR12UiTests
         Assert.AreEqual("2. 새 도전 · 삼손의 턱뼈",AdamChoiceText.StartCard("jawbone",1,true));
         Assert.AreEqual("3. 새 도전 · 다윗의 물맷돌",AdamChoiceText.StartCard("sling",2,true));
     }
+    [Test]
+    public void ComposedBossHudUsesActionsInsteadOfRoundSpecificLabels()
+    {
+        Assert.AreEqual("돌진 · 사슬 3방향 예고",AdamBossPresentation.AttackPhase(
+            BossActions.Dash|BossActions.Chains,true,false,"telegraph"));
+        Assert.AreEqual("돌진 진행 · 사슬 3방향",AdamBossPresentation.AttackPhase(
+            BossActions.Dash|BossActions.Chains,false,false,"dash"));
+        Assert.AreEqual("내려치기 예고",AdamBossPresentation.AttackPhase(BossActions.Slam,true,false,null));
+        Assert.AreEqual("지원군 · 추격",AdamBossPresentation.AttackPhase(BossActions.Summon,false,true,null));
+    }
 }

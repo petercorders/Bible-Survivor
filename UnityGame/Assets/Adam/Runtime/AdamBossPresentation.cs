@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BibleSurvivor.Core;
@@ -47,7 +48,7 @@ namespace BibleSurvivor.Unity
         public static string RewardDetail(BossDefinition rules)=>Name(rules)+" · 게임 각색\n고정 골드 +"+rules.KillGold+" 적용됨 · 선택 즉시 저장";
         public static double HealthFraction(BossEncounterState boss,BossDefinition rules)=>boss.Health/rules.MaxHealth;
         public static double HealthFraction(AdamSession session)=>HealthFraction(session.Boss,session.BossRules);
-        public static bool UsesTwoLineHud(BossDefinition rules)=>rules.IsChariot||UsesShardHud(rules.Number);
+        public static bool UsesTwoLineHud(BossDefinition rules)=>rules.Number>60?rules.UsesDash||rules.UsesChainProjectiles||rules.UsesSlam:rules.IsChariot||UsesShardHud(rules.Number);
         static bool UsesShardHud(int round)=>round is 15 or 18 or 21 or 24 or 27 or 30 or 33 or 36 or 39 or 42 or 45 or 48 or 51 or 54 or 57 or 60;
         public static string AttackPhase(int round,bool telegraphing,bool support,double period)
         {
@@ -61,10 +62,22 @@ namespace BibleSurvivor.Unity
             if(round==9)return (support?"지원군 · ":"")+"사슬 "+period.ToString("0.#",CultureInfo.InvariantCulture)+"초 주기";
             return support?"분노 · 지원군":"추격";
         }
+        public static string AttackPhase(BossActions actions,bool telegraphing,bool support,string dashPhase)
+        {
+            var labels=new List<string>();
+            if((actions&BossActions.Dash)!=0)labels.Add(dashPhase=="dash"?"돌진 진행":"돌진");
+            if((actions&BossActions.Slam)!=0)labels.Add("내려치기");
+            if((actions&BossActions.Chains)!=0)labels.Add("사슬 3방향");
+            var attack=labels.Count==0?"추격":string.Join(" · ",labels)+(telegraphing?" 예고":"");
+            return (support?"지원군 · ":"")+attack;
+        }
+
         public static string Phase(AdamSession session)=>Phase(session.Stage,session.Boss,session.BossRules);
         public static string Phase(string stage,BossEncounterState boss,BossDefinition rules)
         {
             if(stage=="boss_intro")return "등장 · 피해 보호";
+            if(rules.Number>60)return AttackPhase(rules.Actions,boss?.Telegraphing==true,
+                boss?.ThresholdUsed==true,boss?.ChariotCharge?.Phase);
             if(UsesShardHud(rules.Number))return AttackPhase(rules.Number,boss?.Telegraphing==true,boss?.ThresholdUsed==true,rules.AttackPeriod)+(boss?.Telegraphing==true?" · "+rules.TelegraphDuration.ToString("0.#",CultureInfo.InvariantCulture)+"초":"");
             if(!rules.IsChariot)return AttackPhase(rules.Number,boss?.Telegraphing==true,boss?.ThresholdUsed==true,rules.AttackPeriod);
             var phase=boss?.ChariotCharge?.Phase;
