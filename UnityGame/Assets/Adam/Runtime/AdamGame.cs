@@ -368,33 +368,14 @@ namespace BibleSurvivor.Unity
             }
             else if(Host.BookComplete)
             {
-                var genesisComplete=session?.ChapterComplete==true;
-                var nextChapter=genesisComplete?ExodusContent.GlobalRoundNumber:
-                    Host.ExodusComplete&&Host.LeviticusInstalled?LeviticusContent.GlobalRoundNumber:
-                    Host.LeviticusComplete&&Host.NumbersInstalled?NumbersContent.GlobalRoundNumber:
-                    Host.NumbersComplete&&Host.DeuteronomyInstalled?DeuteronomyContent.GlobalRoundNumber:
-                    Host.DeuteronomyComplete&&Host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:
-                    Host.JoshuaComplete&&Host.JudgesInstalled?JudgesContent.GlobalRoundNumber:0;
+                var nextChapter=AdamRoundPresentation.NextChapter(Host);
                 var panel=AdamChoiceText.ChoicePanel(width,height);FillPanel(panel);AdamHud.Panel(art,MotionRect(panel));
-                CompletionHeader(panel,AdamRoundPresentation.CompletionHeading(genesisComplete,Host.ExodusComplete,Host.LeviticusComplete,Host.ContentComplete,
-                        Host.NumbersComplete,Host.DeuteronomyComplete,Host.JoshuaComplete),
-                    AdamRoundPresentation.CompletionDetail(genesisComplete,Host.ExodusComplete,Host.LeviticusInstalled,Host.LeviticusComplete,Host.NumbersInstalled,Host.ContentComplete,
-                        Host.NumbersComplete,Host.DeuteronomyInstalled,Host.DeuteronomyComplete,Host.JoshuaInstalled,
-                        Host.JoshuaComplete,Host.JudgesInstalled));
+                CompletionHeader(panel,AdamRoundPresentation.CompletionHeading(Host),AdamRoundPresentation.CompletionDetail(Host));
                 var enabled=GUI.enabled;
                 if(nextChapter!=0)
                 {
                     GUI.enabled=enabled && CanEnterChapter(nextChapter);
-                    var caption=nextChapter switch
-                    {
-                        ExodusContent.GlobalRoundNumber=>AdamChoiceText.ExodusStartCard,
-                        LeviticusContent.GlobalRoundNumber=>AdamRoundPresentation.LeviticusStartCard,
-                        NumbersContent.GlobalRoundNumber=>AdamRoundPresentation.NumbersStartCard,
-                        DeuteronomyContent.GlobalRoundNumber=>AdamRoundPresentation.DeuteronomyStartCard,
-                        JoshuaContent.GlobalRoundNumber=>AdamRoundPresentation.JoshuaStartCard,
-                        _=>AdamRoundPresentation.JudgesStartCard
-                    };
-                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),caption,button))EnterChapter(nextChapter);
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),AdamRoundPresentation.StartCard(nextChapter),button))EnterChapter(nextChapter);
                 }
                 GUI.enabled=enabled && !Host.Suspended;
                 for(var i=0;i<3;i++)

@@ -56,8 +56,10 @@ public sealed class AdamR50HostTests
         Assert.IsFalse(partial.AwaitingNextRound);
         Assert.IsFalse(partial.CanEnterJudges);
         Assert.IsFalse(partial.TryEnterJudges());
-        StringAssert.Contains("여호수아 1–6 라운드",AdamRoundPresentation.CompletionDetail(false,false,joshuaComplete:true,
-            judgesInstalled:partial.JudgesInstalled));
+        Assert.AreEqual(0,AdamRoundPresentation.NextChapter(partial));
+        Assert.AreEqual(AdamRoundPresentation.JoshuaHeading,AdamRoundPresentation.CompletionHeading(partial));
+        StringAssert.Contains("여호수아 1–6 라운드",AdamRoundPresentation.CompletionDetail(partial));
+        StringAssert.DoesNotContain("사사기",AdamRoundPresentation.CompletionDetail(partial));
 
         var callbacks=0;
         var store=new SaveStore(path,()=>
@@ -76,6 +78,10 @@ public sealed class AdamR50HostTests
         Assert.IsFalse(host.AwaitingNextRound);
         Assert.IsTrue(host.CanEnterJudges);
         Assert.IsFalse(host.CanEnterJoshua);
+        Assert.AreEqual(JudgesContent.GlobalRoundNumber,AdamRoundPresentation.NextChapter(host));
+        Assert.AreEqual(AdamRoundPresentation.JudgesStartCard,AdamRoundPresentation.StartCard(AdamRoundPresentation.NextChapter(host)));
+        Assert.AreEqual(AdamRoundPresentation.JoshuaHeading,AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("사사기는 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(host));
         Assert.IsFalse(host.TryEnterJudges());
         Assert.IsTrue(host.HasJudgesEntryRetry);
         Assert.IsTrue(host.Paused);
@@ -145,6 +151,9 @@ public sealed class AdamR50HostTests
         Assert.IsFalse(host.CanPlay);
         Assert.IsFalse(host.CanEnterJudges);
         Assert.IsFalse(host.CanEnterJoshua);
+        Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
+        Assert.AreEqual("사사기 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("사사기 1–8 라운드",AdamRoundPresentation.CompletionDetail(host));
         CollectionAssert.AreEqual(new[]{21,24,27,30,33,36,39,42,45,48},host.State.Run.LaterBossHistory.Select(x=>x.EncounterRound).ToArray());
         Assert.Throws<InvalidDataException>(()=>catalog.ForRound(51));
         Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=51,Stage="normal"}));

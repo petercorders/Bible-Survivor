@@ -56,6 +56,28 @@ namespace BibleSurvivor.Unity
             if(joshuaComplete)return JoshuaDetail+(judgesInstalled?" · 사사기는 현재 성장·장비로 계속":" · 진행 유지\n여호수아 1–6 라운드 클리어")+ResetDetail;
             return contentComplete?CampaignEndDetail:ContentDetail;
         }
+        // The book-completion panel reads these so tests exercise the same host wiring as the game.
+        public static int NextChapter(AdamHost host)=>host.Session?.ChapterComplete==true?ExodusContent.GlobalRoundNumber:
+            host.ExodusComplete&&host.LeviticusInstalled?LeviticusContent.GlobalRoundNumber:
+            host.LeviticusComplete&&host.NumbersInstalled?NumbersContent.GlobalRoundNumber:
+            host.NumbersComplete&&host.DeuteronomyInstalled?DeuteronomyContent.GlobalRoundNumber:
+            host.DeuteronomyComplete&&host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:
+            host.JoshuaComplete&&host.JudgesInstalled?JudgesContent.GlobalRoundNumber:0;
+        public static string CompletionHeading(AdamHost host)=>CompletionHeading(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusComplete,
+            host.ContentComplete,host.NumbersComplete,host.DeuteronomyComplete,host.JoshuaComplete);
+        public static string CompletionDetail(AdamHost host)=>CompletionDetail(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusInstalled,
+            host.LeviticusComplete,host.NumbersInstalled,host.ContentComplete,host.NumbersComplete,host.DeuteronomyInstalled,host.DeuteronomyComplete,
+            host.JoshuaInstalled,host.JoshuaComplete,host.JudgesInstalled);
+        public static string StartCard(int chapter)=>chapter switch
+        {
+            ExodusContent.GlobalRoundNumber=>AdamChoiceText.ExodusStartCard,
+            LeviticusContent.GlobalRoundNumber=>LeviticusStartCard,
+            NumbersContent.GlobalRoundNumber=>NumbersStartCard,
+            DeuteronomyContent.GlobalRoundNumber=>DeuteronomyStartCard,
+            JoshuaContent.GlobalRoundNumber=>JoshuaStartCard,
+            JudgesContent.GlobalRoundNumber=>JudgesStartCard,
+            _=>throw new ArgumentOutOfRangeException(nameof(chapter))
+        };
         public static string Title(AdamHost host)=>Title(host?.Session?.RoundNumber??1);
         public static string BookLabel(int round)=>AdamBookTitle.Book(round)==0?AdamBookTitle.Name(round):AdamBookTitle.Name(round)+" "+AdamBookTitle.Local(round);
         public static string Title(int round)=>BookLabel(round)+" / "+Name(round)+" · 3분 시제품";

@@ -16,20 +16,10 @@ internal static class CampaignFiftyTests
 
     public static void Register(Action<string,Action> test)
     {
-        test("R50 R01-R40 fingerprints match the R40 build",() =>
-        {
-            var lines=File.ReadAllLines(Fixtures+"r40-build-round-fingerprints.txt");
-            Check.Equal(40,lines.Length);
-            foreach(var line in lines)
-            {
-                var parts=line.Split(' ');
-                var round=int.Parse(parts[0],CultureInfo.InvariantCulture);
-                var definition=round<=9?CatalogReader.Round("content/genesis/catalog.json",round):
-                    round<=15?CatalogReader.Exodus("content/exodus/catalog.json",round):CampaignContent.Round(round);
-                Check.Equal(parts[1],definition.Id);
-                Check.Equal(parts[2],definition.Fingerprint);
-            }
-        });
+        test("R50 R01-R40 fingerprints match the R40 build",() =>MatchFingerprints("r40-build-round-fingerprints.txt",40));
+
+        // Generated from this build (c55efec) so a later stage cannot silently change R41–R50 values or boss contracts.
+        test("R50 R01-R50 fingerprints match the R50 build",() =>MatchFingerprints("r50-build-round-fingerprints.txt",50));
 
         test("R50 book cadence, waves, bosses, and installed endpoint",() =>
         {
@@ -211,6 +201,21 @@ internal static class CampaignFiftyTests
             }
             finally { Directory.Delete(dir,true); }
         });
+    }
+
+    private static void MatchFingerprints(string fixture,int rounds)
+    {
+        var lines=File.ReadAllLines(Fixtures+fixture);
+        Check.Equal(rounds,lines.Length);
+        foreach(var line in lines)
+        {
+            var parts=line.Split(' ');
+            var round=int.Parse(parts[0],CultureInfo.InvariantCulture);
+            var definition=round<=9?CatalogReader.Round("content/genesis/catalog.json",round):
+                round<=15?CatalogReader.Exodus("content/exodus/catalog.json",round):CampaignContent.Round(round);
+            Check.Equal(parts[1],definition.Id);
+            Check.Equal(parts[2],definition.Fingerprint);
+        }
     }
 
     private static string Json(object? value)=>JsonSerializer.Serialize(value);
