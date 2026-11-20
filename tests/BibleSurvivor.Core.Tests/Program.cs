@@ -14,6 +14,7 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r50-only")&&!name.StartsWith("R50 ",StringComparison.Ordinal))return;
             if(args.Contains("--r40-only")&&!name.StartsWith("R40 ",StringComparison.Ordinal))return;
             if(args.Contains("--r30-only")&&!name.StartsWith("R30 ",StringComparison.Ordinal))return;
             if(args.Contains("--r20-only")&&!name.StartsWith("R20 ",StringComparison.Ordinal))return;
