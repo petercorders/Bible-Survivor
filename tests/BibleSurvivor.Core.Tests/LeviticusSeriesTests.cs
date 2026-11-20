@@ -96,7 +96,7 @@ internal static class LeviticusSeriesTests
                 var backup=File.ReadAllText(store.Path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>n["Run"]!["RoundNumber"]=42,
+                    n=>n["Run"]!["RoundNumber"]=52,
                     n=>n["Run"]!["CompletedSixthBoss"]!["FutureExtension"]=true
                 })
                 {

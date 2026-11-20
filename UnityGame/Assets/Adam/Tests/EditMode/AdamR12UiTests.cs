@@ -5,15 +5,15 @@ using NUnit.Framework;
 
 public sealed class AdamR12UiTests
 {
-    [Test] public void MosesUsesThirdExodusTitleAndR41RemainsUninstalled()
+    [Test] public void MosesUsesThirdExodusTitleAndR51RemainsUninstalled()
     {
         Assert.AreEqual("모세",AdamRoundPresentation.Name(12));
         Assert.AreEqual("출애굽기 3 / 모세 · 3분 시제품",AdamRoundPresentation.Title(12));
         Assert.AreEqual("출애굽기 2 / 요게벳 · 3분 시제품",AdamRoundPresentation.Title(11));
         Assert.AreEqual("출애굽기 1 / 십브라·부아 · 3분 시제품",AdamRoundPresentation.Title(10));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(41));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(51));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(51));
     }
 
     [Test] public void InstalledEndShowsCompletion280WithoutWholeBookClaim()

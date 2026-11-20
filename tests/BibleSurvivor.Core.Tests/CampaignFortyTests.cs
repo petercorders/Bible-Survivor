@@ -59,11 +59,11 @@ internal static class CampaignFortyTests
             }
             Check.True(new[]{33,36,39}.Select(r=>BossDefinition.ForRound(r).Id)
                 .SequenceEqual(new[]{"oblivion_mist","crossroads_sentinel","rampart_colossus"}));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(41));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(41));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(51));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(51));
             Check.Throws<ArgumentOutOfRangeException>(()=>DeuteronomyContent.Round(37));
             Check.Throws<ArgumentOutOfRangeException>(()=>NumbersContent.Round(31));
-            Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(42));
+            Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(51));
         });
 
         test("R40 R30 build completion save enters Deuteronomy atomically without rewriting history",() =>
@@ -107,7 +107,7 @@ internal static class CampaignFortyTests
             finally { Directory.Delete(dir,true); }
         });
 
-        test("R40 progress, atomic Joshua entry, ordered boss receipts, and R41 or future save protection",() =>
+        test("R40 progress, atomic Joshua entry, ordered boss receipts, and beyond-endpoint or future save protection",() =>
         {
             var dir=Path.Combine(Path.GetTempPath(),"bible-r40-"+Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
@@ -174,7 +174,7 @@ internal static class CampaignFortyTests
                     state=store.Load()!;
                     session=AdamSession.Resume(state,definition);
                     Check.Equal(runId,state.Run!.RunId);
-                    Check.Equal(round==40,session.ContentComplete);
+                    Check.True(!session.ContentComplete);
                     Check.Equal(round==36,session.DeuteronomyComplete);
                     Check.True(!session.NumbersComplete&&!session.CanEnterDeuteronomy);
                     Check.Equal(olderHistory,OlderHistory(state));
@@ -189,8 +189,8 @@ internal static class CampaignFortyTests
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>{n["Run"]!["RoundNumber"]=41;n["Run"]!["Stage"]="normal";},
-                    n=>n["Run"]!["RoundNumber"]=42,
+                    n=>{n["Run"]!["RoundNumber"]=51;n["Run"]!["Stage"]="normal";},
+                    n=>n["Run"]!["RoundNumber"]=52,
                     n=>n["Run"]!["LaterBossHistory"]![6]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![5]!["Reward"]!["PolicyId"]="r39-production-v1",
                     n=>n["Run"]!["LaterBossHistory"]![4]!["Reward"]!["PolicyId"]="future-reward"

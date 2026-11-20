@@ -16,7 +16,8 @@ public sealed class AdamFrontispieceUiTests
     [TestCase(3,0,3,9)][TestCase(9,0,9,9)][TestCase(10,1,1,6)][TestCase(12,1,3,6)][TestCase(15,1,6,6)]
     [TestCase(16,2,1,6)][TestCase(18,2,3,6)][TestCase(20,2,5,6)][TestCase(21,2,6,6)]
     [TestCase(22,3,1,9)][TestCase(24,3,3,9)][TestCase(27,3,6,9)][TestCase(30,3,9,9)]
-    [TestCase(31,4,1,6)][TestCase(33,4,3,6)][TestCase(36,4,6,6)][TestCase(37,5,1,4)][TestCase(39,5,3,4)][TestCase(40,5,4,4)]
+    [TestCase(31,4,1,6)][TestCase(33,4,3,6)][TestCase(36,4,6,6)][TestCase(37,5,1,6)][TestCase(39,5,3,6)][TestCase(40,5,4,6)][TestCase(42,5,6,6)]
+    [TestCase(43,6,1,8)][TestCase(45,6,3,8)][TestCase(48,6,6,8)][TestCase(50,6,8,8)]
     public void RealRoundDeterminesBookAndCurrentRoundIsNeverMarkedCleared(int round,int book,int local,int total)
     {
         Assert.AreEqual(book,AdamBookTitle.Book(round));Assert.AreEqual(local,AdamBookTitle.Local(round));Assert.AreEqual(total,AdamBookTitle.Total(round));

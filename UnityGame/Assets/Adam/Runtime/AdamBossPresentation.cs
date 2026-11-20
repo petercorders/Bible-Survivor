@@ -33,6 +33,9 @@ namespace BibleSurvivor.Unity
             "oblivion_mist"=>"망각의 안개",
             "crossroads_sentinel"=>"갈림길의 파수꾼",
             "rampart_colossus"=>"성벽의 거상",
+            "shifting_boundary"=>"흔들리는 경계석",
+            "torrent_serpent"=>"급류의 뱀",
+            "ford_gatekeeper"=>"나루터의 문지기",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);
@@ -41,7 +44,7 @@ namespace BibleSurvivor.Unity
         public static double HealthFraction(BossEncounterState boss,BossDefinition rules)=>boss.Health/rules.MaxHealth;
         public static double HealthFraction(AdamSession session)=>HealthFraction(session.Boss,session.BossRules);
         public static bool UsesTwoLineHud(BossDefinition rules)=>rules.IsChariot||UsesShardHud(rules.Number);
-        static bool UsesShardHud(int round)=>round is 15 or 18 or 21 or 24 or 27 or 30 or 33 or 36 or 39;
+        static bool UsesShardHud(int round)=>round is 15 or 18 or 21 or 24 or 27 or 30 or 33 or 36 or 39 or 42 or 45 or 48;
         public static string AttackPhase(int round,bool telegraphing,bool support,double period)
         {
             if(UsesShardHud(round))

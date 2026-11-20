@@ -11,7 +11,7 @@ public sealed class AdamR10UiTests
         Assert.AreEqual("십브라·부아",AdamRoundPresentation.Name(10));
         Assert.AreEqual("창세기 / 유다 · 3분 시제품",AdamRoundPresentation.Title(9));
         Assert.AreEqual("창세기 / 아담 · 3분 시제품",AdamRoundPresentation.Title(1));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(41));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(51));
         Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(0));
         Assert.Throws<ArgumentException>(()=>AdamBossPresentation.Name(10));
     }
