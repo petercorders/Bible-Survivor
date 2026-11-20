@@ -249,11 +249,11 @@ namespace BibleSurvivor.Core
         {
             get
             {
-                var boss=Session.Boss;var charge=boss?.ChariotCharge;
-                if(charge==null||Session.Stage!="boss"||!enemies.TryGetValue(boss!.Rules.BossActorId,out var origin))return null;
-                var seconds=charge.Phase=="dash"?Math.Max(0,charge.Until-boss.BossElapsed):charge.Phase=="telegraph"?boss.Rules.DashDuration:0;
-                return new ChariotDashView(origin,new Vector2(charge.DirectionX,charge.DirectionY),charge.Phase,boss.BossElapsed,charge.Until,
-                    seconds*tuning.PlayerSpeed*boss.Rules.DashSpeedRatio,BossDefinition.Radius,tuning.PlayerRadius);
+                var boss=Session.Encounter;var charge=boss?.ChariotCharge;var rules=Session.BossRules;
+                if(charge==null||Session.Stage!="boss"||!enemies.TryGetValue(rules!.BossActorId,out var origin))return null;
+                var seconds=charge.Phase=="dash"?Math.Max(0,charge.Until-boss!.BossElapsed):charge.Phase=="telegraph"?rules.DashDuration:0;
+                return new ChariotDashView(origin,new Vector2(charge.DirectionX,charge.DirectionY),charge.Phase,boss!.BossElapsed,charge.Until,
+                    seconds*tuning.PlayerSpeed*rules.DashSpeedRatio,BossDefinition.Radius,tuning.PlayerRadius);
             }
         }
         public static string ChargeContract=>"r04-charge-v1:locked:overlap1,0:end-cooldown:"+string.Join(":",new[]{ChargeCooldown,ChargeTelegraph,ChargeDuration,ChargeSpeed,.65,.5,.6}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
@@ -310,7 +310,7 @@ namespace BibleSurvivor.Core
             this.tuning=(tuning??new BattleTuning()).Copy();this.tuning.Validate();
             if(monsterSpeeds==null||monsterSpeeds.Count==0||monsterSpeeds.Any(x=>string.IsNullOrWhiteSpace(x.Key)||
                 !BattleSnapshot.Finite(x.Value)||x.Value<=0||x.Value>10))throw new ArgumentException("Invalid monster speeds");
-            if(session.BossRules!=null&&(!monsterSpeeds.TryGetValue(session.BossRules.SupportMonster,out var supportSpeed)||supportSpeed!=session.BossRules.SupportRatio))
+            if(session.BossRules is { SummonsSupport:true } bossRules&&(!monsterSpeeds.TryGetValue(bossRules.SupportMonster,out var supportSpeed)||supportSpeed!=bossRules.SupportRatio))
                 throw new ArgumentException("Unsupported boss support speed");
             if(session.RoundNumber==4&&(!monsterSpeeds.TryGetValue("d1",out var d1)||d1!=.65||!monsterSpeeds.TryGetValue("d2",out var d2)||d2!=.5||!monsterSpeeds.TryGetValue("d3",out var d3)||d3!=.6))throw new ArgumentException("Unsupported R04 monster speed");
             if(session.RoundNumber==5&&(!monsterSpeeds.TryGetValue("e1",out var e1)||e1!=E1Speed||!monsterSpeeds.TryGetValue("e2",out var e2)||e2!=E2Speed||!monsterSpeeds.TryGetValue("e3",out var e3)||e3!=E3Speed))throw new ArgumentException("Unsupported R05 monster speed");
@@ -481,16 +481,14 @@ namespace BibleSurvivor.Core
             {
                 Synchronize();Session.Advance(FixedStep);SimulationTime=Session.CombatTime;return;
             }
+            var rules=Session.BossRules!;
             var previousBossTime=boss.BossElapsed;
+            var attackAt=boss.NextAttackAt;
             boss.BossElapsed+=FixedStep;SimulationTime=boss.CombatTime;
-            if(Session.RoundNumber!=12&&!boss.Telegraphing && boss.BossElapsed+1e-9>=boss.NextAttackAt-Session.BossRules!.TelegraphDuration)
+            if(!rules.UsesDash&&rules.HasTimedAttack&&!boss.Telegraphing&&boss.BossElapsed+1e-9>=attackAt-rules.TelegraphDuration)
             {
-                boss.Telegraphing=true;boss.TargetX=PlayerPosition.X;boss.TargetY=PlayerPosition.Y;
-                if(Session.BossRules!.UsesChainProjectiles)
-                {
-                    var offset=PlayerPosition-enemies[Session.BossRules!.BossActorId];var direction=offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX;
-                    boss.ChainDirections=Enumerable.Range(-1,3).Select(i=>{var angle=i*BossDefinition.ChainAngleDegrees*Math.PI/180;return new ChainDirectionState{X=(float)(direction.X*Math.Cos(angle)-direction.Y*Math.Sin(angle)),Y=(float)(direction.X*Math.Sin(angle)+direction.Y*Math.Cos(angle))};}).ToList();
-                }
+                var offset=PlayerPosition-enemies[rules.BossActorId];
+                BeginBossTelegraph(boss,rules,offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX);
             }
             var retaliations=MoveHostileProjectiles(previousPlayer);
             if(!Session.IsActive){ClearEnded();return;}
@@ -498,8 +496,8 @@ namespace BibleSurvivor.Core
             Synchronize();var previous=new Dictionary<int,Vector2>(enemies);
             foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
             {
-                if(pair.Key==Session.BossRules!.BossActorId&&Session.RoundNumber==12)
-                {enemies[pair.Key]=MoveChariot(pair.Value,previousBossTime,boss.BossElapsed);continue;}
+                if(pair.Key==rules.BossActorId&&rules.UsesDash)
+                {enemies[pair.Key]=MoveBossDash(boss,rules,pair.Value,previousBossTime,boss.BossElapsed);continue;}
                 if(pair.Key==Session.BossRules!.BossActorId&&boss.Telegraphing)continue;
                 var ratio=pair.Key==Session.BossRules!.BossActorId?BossDefinition.Speed:speeds[Session.BossRules!.SupportMonster];
                 var offset=PlayerPosition-pair.Value;var distance=offset.Length();
@@ -508,7 +506,7 @@ namespace BibleSurvivor.Core
             foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
             {
                 var radius=tuning.PlayerRadius+TargetRadius(pair.Key);
-                var contact=Session.RoundNumber==12&&pair.Key==Session.BossRules!.BossActorId?
+                var contact=rules.UsesDash&&pair.Key==rules.BossActorId?
                     Intersection(previous[pair.Key]-previousPlayer,pair.Value-PlayerPosition,radius).HasValue:
                     Vector2.DistanceSquared(pair.Value,PlayerPosition)<=radius*radius;
                 if(!contact)continue;
@@ -516,11 +514,14 @@ namespace BibleSurvivor.Core
                 if(!Session.IsActive){ClearEnded();return;}
                 if(Session.LastRetaliationDamage>0)retaliations++;
             }
-            if(Session.RoundNumber!=12&&boss.BossElapsed+1e-9>=boss.NextAttackAt)
+            if(rules.UsesDash?boss.NextAttackAt>attackAt:boss.BossElapsed+1e-9>=attackAt)
             {
-                boss.Telegraphing=false;boss.NextAttackAt+=Session.BossRules!.AttackPeriod;
-                if(Session.BossRules!.UsesChainProjectiles)fireChains=true;
-                else if(Vector2.DistanceSquared(PlayerPosition,new Vector2(boss.TargetX,boss.TargetY))<=Math.Pow(BossDefinition.SlamRadius+tuning.PlayerRadius,2))
+                if(!rules.UsesDash)
+                {
+                    boss.Telegraphing=false;boss.NextAttackAt+=rules.AttackPeriod;
+                }
+                fireChains=rules.UsesChainProjectiles;
+                if(rules.UsesSlam&&Vector2.DistanceSquared(PlayerPosition,new Vector2(boss.TargetX,boss.TargetY))<=Math.Pow(BossDefinition.SlamRadius+tuning.PlayerRadius,2))
                 {
                     ApplyPlayerDamage(Session.BossRules!.AttackDamage,"slam");
                     if(!Session.IsActive){ClearEnded();return;}
@@ -552,14 +553,26 @@ namespace BibleSurvivor.Core
             else {ClearEnded();weapons.Clear();}
             Session.Capture();
         }
-        private Vector2 MoveChariot(Vector2 position,double from,double to)
+        private void BeginBossTelegraph(BossEncounterState boss,BossDefinition rules,Vector2 direction)
         {
-            var boss=Session.Encounter!;var charge=boss.ChariotCharge!;var cursor=from;
+            boss.Telegraphing=true;boss.TargetX=PlayerPosition.X;boss.TargetY=PlayerPosition.Y;
+            if(!rules.UsesChainProjectiles)return;
+            boss.ChainDirections=Enumerable.Range(-1,3).Select(i=>
+            {
+                var angle=i*BossDefinition.ChainAngleDegrees*Math.PI/180;
+                return new ChainDirectionState{X=(float)(direction.X*Math.Cos(angle)-direction.Y*Math.Sin(angle)),
+                    Y=(float)(direction.X*Math.Sin(angle)+direction.Y*Math.Cos(angle))};
+            }).ToList();
+        }
+
+        private Vector2 MoveBossDash(BossEncounterState boss,BossDefinition rules,Vector2 position,double from,double to)
+        {
+            var charge=boss.ChariotCharge!;var cursor=from;
             while(cursor<to-1e-10)
             {
-                var boundary=charge.Phase=="chase"?boss.NextAttackAt-boss.Rules.TelegraphDuration:charge.Until;
+                var boundary=charge.Phase=="chase"?boss.NextAttackAt-rules.TelegraphDuration:charge.Until;
                 var end=Math.Min(to,boundary);var elapsed=Math.Max(0,end-cursor);
-                if(charge.Phase=="dash")position+=new Vector2(charge.DirectionX,charge.DirectionY)*(float)(tuning.PlayerSpeed*boss.Rules.DashSpeedRatio*elapsed);
+                if(charge.Phase=="dash")position+=new Vector2(charge.DirectionX,charge.DirectionY)*(float)(tuning.PlayerSpeed*rules.DashSpeedRatio*elapsed);
                 else if(charge.Phase=="chase")
                 {
                     var offset=PlayerPosition-position;var distance=offset.Length();
@@ -570,11 +583,12 @@ namespace BibleSurvivor.Core
                 if(charge.Phase=="chase")
                 {
                     var offset=PlayerPosition-position;var direction=offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX;
-                    charge.DirectionX=direction.X;charge.DirectionY=direction.Y;boss.TargetX=PlayerPosition.X;boss.TargetY=PlayerPosition.Y;
-                    charge.Phase="telegraph";charge.Until=boss.NextAttackAt;boss.Telegraphing=true;
+                    charge.DirectionX=direction.X;charge.DirectionY=direction.Y;
+                    charge.Phase="telegraph";charge.Until=boss.NextAttackAt;
+                    BeginBossTelegraph(boss,rules,direction);
                 }
                 else if(charge.Phase=="telegraph")
-                {charge.Phase="dash";charge.Until=boss.NextAttackAt+boss.Rules.DashDuration;boss.NextAttackAt+=boss.Rules.AttackPeriod;boss.Telegraphing=false;}
+                {charge.Phase="dash";charge.Until=boss.NextAttackAt+rules.DashDuration;boss.NextAttackAt+=rules.AttackPeriod;boss.Telegraphing=false;}
                 else {charge.Phase="chase";charge.Until=0;}
             }
             if(!BattleSnapshot.Position(position.X,position.Y))throw new InvalidOperationException("World coordinate limit exceeded");
@@ -778,7 +792,7 @@ namespace BibleSurvivor.Core
         private double NextUnit()=>NextUInt()/(double)uint.MaxValue;
         public BattleSnapshot Capture()=>new BattleSnapshot{Time=SimulationTime,Remainder=remainder,PlayerX=PlayerPosition.X,PlayerY=PlayerPosition.Y,
             FacingX=facing.X,FacingY=facing.Y,RandomState=random,NextProjectileId=nextProjectile,ShotsFired=ShotsFired,Hits=Hits,Kills=Kills,
-            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber==12?5:Session.BossRules?.UsesChainProjectiles==true?4:Session.RoundNumber>=4?3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
+            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber>=4?Session.BossRules?.WorldVersion??3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
             HostileProjectiles=Session.BossRules?.UsesChainProjectiles==true?hostileProjectiles.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,NextHostileId=Session.BossRules?.UsesChainProjectiles==true?nextHostile:0,
             Charges=Session.RoundNumber>=4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
             Enemies=enemies.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
@@ -796,7 +810,7 @@ namespace BibleSurvivor.Core
                 !snapshot.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Keys.OrderBy(x=>x))||
                 !snapshot.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.DroppedExperience.Keys.OrderBy(x=>x))||
                 snapshot.Weapons.Any(x=>!session.Inventory.Weapons.ContainsKey(x.WeaponId)||x.WeaponForm!=(session.Inventory.Forms.TryGetValue(x.WeaponId,out var f)?f:null)))throw new ArgumentException("Checkpoint does not match session");
-            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=(session.RoundNumber==12?5:session.BossRules?.UsesChainProjectiles==true?4:3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
+            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=(session.BossRules?.WorldVersion??3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
             world.PlayerPosition=new Vector2(snapshot.PlayerX,snapshot.PlayerY);world.facing=new Vector2(snapshot.FacingX,snapshot.FacingY);
             world.random=snapshot.RandomState;world.remainder=snapshot.Remainder;world.SimulationTime=snapshot.Time;world.nextProjectile=snapshot.NextProjectileId;
             world.BossKills=snapshot.BossKills;world.ShotsFired=snapshot.ShotsFired;world.Hits=snapshot.Hits;world.Kills=snapshot.Kills;world.Collected=snapshot.Collected;world.DamageTaken=snapshot.DamageTaken;
