@@ -113,7 +113,7 @@ public sealed class AdamR50HostTests
     public void JudgesKeepsTheRunAcrossReloadsThroughR50()
     {
         var catalog=AdamCatalog.Load();
-        Assert.AreEqual(60,catalog.LastInstalledRound);
+        Assert.AreEqual(CampaignContent.LastInstalledRound,catalog.LastInstalledRound);
         var store=new SaveStore(path);
         var host=CompletedJoshua(path);
         var runId=host.State.Run.RunId;

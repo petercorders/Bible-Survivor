@@ -18,7 +18,7 @@ internal static class CampaignSixtyTests
     {
         test("R60 R01-R60 fingerprints match the R60 build",() =>MatchFingerprints("r60-build-round-fingerprints.txt",60));
 
-        test("R60 book cadence, waves, bosses, and installed endpoint",() =>
+        test("R60 book cadence, waves, bosses, and First Samuel endpoint",() =>
         {
             foreach(var round in Enumerable.Range(51,10))
             {
@@ -55,19 +55,18 @@ internal static class CampaignSixtyTests
             }
             Check.True(new[]{51,54,57,60}.Select(r=>BossDefinition.ForRound(r).Id)
                 .SequenceEqual(new[]{"toppling_pillar","chaff_whirl","swarm_monarch","valley_bronze_brute"}));
-            Check.Equal(60,CampaignContent.LastInstalledRound);
-            Check.Equal(FirstSamuelContent.LastRound,CampaignContent.LastInstalledRound);
+            Check.Equal(60,FirstSamuelContent.LastRound);
             // Judges R43-R50 keep their R50-build IDs once Judges ends at its own book endpoint.
             Check.Equal("judges_08",CampaignContent.Round(50).Id);
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(61));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(CampaignContent.LastInstalledRound+1));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(CampaignContent.LastInstalledRound+1));
             Check.Throws<ArgumentOutOfRangeException>(()=>JudgesContent.Round(52));
             Check.Throws<ArgumentOutOfRangeException>(()=>RuthContent.Round(51));
             Check.Throws<ArgumentOutOfRangeException>(()=>RuthContent.Round(55));
             Check.Throws<ArgumentOutOfRangeException>(()=>FirstSamuelContent.Round(54));
             Check.Throws<ArgumentOutOfRangeException>(()=>FirstSamuelContent.Round(61));
             Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(61));
-            Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(63));
+            Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(CampaignContent.LastInstalledRound+2));
         });
 
         test("R60 R50 build completion save continues Judges without rewriting history",() =>
@@ -109,7 +108,7 @@ internal static class CampaignSixtyTests
             finally { Directory.Delete(dir,true); }
         });
 
-        test("R60 build complete save loads unchanged as the final checkpoint",() =>
+        test("R60 build complete save loads unchanged as the First Samuel endpoint",() =>
         {
             var dir=Path.Combine(Path.GetTempPath(),"bible-r60-final-"+Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
@@ -128,17 +127,16 @@ internal static class CampaignSixtyTests
                 Check.True(state.Run.Boss!.EncounterRound==60&&state.Run.Boss.CompletionApplied);
                 Check.True(state.Run.LaterBossHistory!.Select(r=>r.EncounterRound).SequenceEqual(new[]{21,24,27,30,33,36,39,42,45,48,51,54,57}));
                 var session=AdamSession.Resume(state,CampaignContent.Round(60));
-                Check.True(session.ContentComplete);
+                Check.True(!session.ContentComplete&&session.CanEnterLaterBook);
                 Check.True(!session.JudgesComplete&&!session.RuthComplete&&!session.JoshuaComplete);
                 Check.True(!session.CanEnterJudges&&!session.CanEnterRuth&&!session.CanEnterFirstSamuel);
                 Check.Throws<InvalidOperationException>(()=>session.PrepareRuth(CampaignContent.Round(52)));
                 Check.Throws<InvalidOperationException>(()=>session.PrepareFirstSamuel(CampaignContent.Round(55)));
-                Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
                 var previous=CampaignContent.Round(60);
                 var trial=new RoundDefinition(61,previous.ConcurrencyCap,previous.RawExperience,
                     previous.CompletionGold,previous.Waves,"trial_61");
                 Check.Throws<InvalidOperationException>(()=>session.StartNextRound(trial));
-                Check.True(session.ContentComplete);
+                Check.True(!session.ContentComplete&&session.CanEnterLaterBook);
                 Check.True(raw.SequenceEqual(File.ReadAllBytes(path)));
                 var gold=state.Profile.Gold;
                 var history=state.Run.LaterBossHistory!.Select(Json).ToArray();
@@ -146,13 +144,13 @@ internal static class CampaignSixtyTests
                 Check.True(!session.CompleteNormalSettlement()&&!session.CompleteBossSettlement());
                 Check.Equal(gold,state.Profile.Gold);
 
-                // Saving the checkpoint again keeps it the same terminal state.
+                // Saving the checkpoint again keeps it at the same book boundary.
                 var expected=state.Revision;
                 var revision=store.Commit(state,expected,"r60-resave");
                 Check.Equal(revision,store.Commit(state,expected,"r60-resave"));
                 state=store.Load()!;
                 session=AdamSession.Resume(state,CampaignContent.Round(60));
-                Check.True(session.ContentComplete&&!session.CanEnterFirstSamuel);
+                Check.True(!session.ContentComplete&&session.CanEnterLaterBook&&!session.CanEnterFirstSamuel);
                 Check.Equal(61,state.Run!.RoundNumber);
                 Check.Equal(gold,state.Profile.Gold);
                 Check.Equal(boss,Json(state.Run.Boss));
@@ -161,7 +159,7 @@ internal static class CampaignSixtyTests
             finally { Directory.Delete(dir,true); }
         });
 
-        test("R60 progress, atomic Ruth and First Samuel entries, ordered boss receipts, and R61 or future save protection",() =>
+        test("R60 progress, atomic Ruth and First Samuel entries, ordered boss receipts, and future save protection",() =>
         {
             var dir=Path.Combine(Path.GetTempPath(),"bible-r60-"+Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
@@ -236,7 +234,8 @@ internal static class CampaignSixtyTests
                     state=store.Load()!;
                     session=AdamSession.Resume(state,definition);
                     Check.Equal(runId,state.Run!.RunId);
-                    Check.Equal(round==60,session.ContentComplete);
+                    Check.True(!session.ContentComplete);
+                    Check.Equal(round==60,session.CanEnterLaterBook);
                     Check.Equal(round==51,session.JudgesComplete);
                     Check.Equal(round==54,session.RuthComplete);
                     Check.True(!session.JoshuaComplete&&!session.CanEnterJudges);
@@ -248,14 +247,13 @@ internal static class CampaignSixtyTests
                 Check.True(state.Run.LaterBossHistory!.Select(r=>r.EncounterRound).SequenceEqual(new[]{21,24,27,30,33,36,39,42,45,48,51,54,57}));
                 Check.True(receipts.SequenceEqual(state.Run.LaterBossHistory!.Select(Json)));
                 Check.True(!session.CanEnterRuth&&!session.CanEnterFirstSamuel&&!session.RuthComplete);
-                // R61 stays closed because CampaignContent.Round(61) throws (endpoint test) and the saves below are rejected as future saves.
 
                 var checkpoint=File.ReadAllText(path);
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>{n["Run"]!["RoundNumber"]=61;n["Run"]!["Stage"]="normal";},
-                    n=>n["Run"]!["RoundNumber"]=62,
+                    n=>{n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+1;n["Run"]!["Stage"]="normal";},
+                    n=>n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+2,
                     n=>n["Run"]!["LaterBossHistory"]![12]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![12]!["RoundNumber"]=63,
                     n=>n["Run"]!["LaterBossHistory"]![11]!["Reward"]!["PolicyId"]="r57-production-v1",
@@ -277,7 +275,7 @@ internal static class CampaignSixtyTests
         });
     }
 
-    private static void MatchFingerprints(string fixture,int rounds)
+    internal static void MatchFingerprints(string fixture,int rounds)
     {
         var lines=File.ReadAllLines(Fixtures+fixture);
         Check.Equal(rounds,lines.Length);

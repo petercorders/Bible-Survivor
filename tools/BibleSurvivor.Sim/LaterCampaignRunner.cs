@@ -24,7 +24,7 @@ internal static class LaterCampaignRunner
             var definition=CampaignContent.Round(round);
             var speeds=CampaignContent.SpeedsFor(round);
             if(round is NumbersContent.GlobalRoundNumber or DeuteronomyContent.GlobalRoundNumber or JoshuaContent.GlobalRoundNumber or JudgesContent.GlobalRoundNumber or
-                RuthContent.GlobalRoundNumber or FirstSamuelContent.GlobalRoundNumber)
+                RuthContent.GlobalRoundNumber or FirstSamuelContent.GlobalRoundNumber || LaterCampaignBooks.StartsBook(round))
             {
                 var before=state.Profile.Gold;
                 var (completed,entering)=round switch
@@ -34,7 +34,8 @@ internal static class LaterCampaignRunner
                     JoshuaContent.GlobalRoundNumber=>(session.DeuteronomyComplete,session.PrepareJoshua(definition)),
                     JudgesContent.GlobalRoundNumber=>(session.JoshuaComplete,session.PrepareJudges(definition)),
                     RuthContent.GlobalRoundNumber=>(session.JudgesComplete,session.PrepareRuth(definition)),
-                    _=>(session.RuthComplete,session.PrepareFirstSamuel(definition))
+                    FirstSamuelContent.GlobalRoundNumber=>(session.RuthComplete,session.PrepareFirstSamuel(definition)),
+                    _=>(session.CanEnterLaterBook,session.PrepareLaterBook(definition))
                 };
                 passed&=completed&&entering.Profile.Gold==before;
                 revision=store.Commit(entering,revision,"book-entry-"+round);
@@ -42,7 +43,8 @@ internal static class LaterCampaignRunner
                 session=AdamSession.Resume(state,definition);
             }
             else if(round>16)session=session.StartNextRound(definition);
-            var hasBoss=session.BossRules!=null;
+            var boss=session.BossRules;
+            var hasBoss=boss!=null;
             var world=new BattleWorld(session,speeds,seed);
             var phases=new HashSet<string>();
             var midpoint=false;
@@ -81,7 +83,9 @@ internal static class LaterCampaignRunner
 
             records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases});
             passed&=midpoint&&world.Hits>0&&world.Kills>0&&session.Stage=="between_rounds"&&
-                (!hasBoss||world.BossKills==1&&phases.Contains("telegraph")&&phases.Contains("projectiles"));
+                (boss==null||world.BossKills==1&&
+                    (!(boss.UsesDash||boss.UsesSlam||boss.UsesChainProjectiles)||phases.Contains("telegraph"))&&
+                    (!boss.UsesChainProjectiles||phases.Contains("projectiles")));
             if(!passed)break;
             session.Capture();
             revision=store.Commit(state,revision,"leviticus-complete-"+round);

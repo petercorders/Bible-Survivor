@@ -43,7 +43,7 @@ namespace BibleSurvivor.Unity
             State.Run.RoundNumber!=NumbersContent.GlobalRoundNumber && State.Run.RoundNumber!=DeuteronomyContent.GlobalRoundNumber &&
             State.Run.RoundNumber!=JoshuaContent.GlobalRoundNumber && State.Run.RoundNumber!=JudgesContent.GlobalRoundNumber &&
             State.Run.RoundNumber!=RuthContent.GlobalRoundNumber && State.Run.RoundNumber!=FirstSamuelContent.GlobalRoundNumber &&
-            State.Run.RoundNumber<=catalog.LastInstalledRound;
+            !LaterCampaignBooks.StartsBook(State.Run.RoundNumber) && State.Run.RoundNumber<=catalog.LastInstalledRound;
         bool CanEnterChapter => Error==null && !Suspended && operation==null && chapterCandidate==null;
         public bool CanEnterExodus => CanEnterChapter && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
         public bool LeviticusInstalled => catalog.LeviticusInstalled;
@@ -67,7 +67,13 @@ namespace BibleSurvivor.Unity
         public bool FirstSamuelInstalled => catalog.FirstSamuelInstalled;
         public bool CanEnterFirstSamuel => CanEnterChapter && FirstSamuelInstalled && Session?.CanEnterFirstSamuel==true;
         public bool HasFirstSamuelEntryRetry => chapterCandidate?.Run?.RoundNumber==FirstSamuelContent.GlobalRoundNumber;
-        public bool ContentComplete => Session?.ContentComplete==true || (ExodusComplete && !LeviticusInstalled);
+        public LaterCampaignBook UpcomingLaterBook => State?.Run?.Stage=="between_rounds"&&
+            State.Run.RoundNumber<=catalog.LastInstalledRound&&LaterCampaignBooks.StartsBook(State.Run.RoundNumber)
+            ?LaterCampaignBooks.Find(State.Run.RoundNumber):null;
+        public LaterCampaignBook LaterBookEntryRetry => chapterCandidate?.Run==null?null:LaterCampaignBooks.Find(chapterCandidate.Run.RoundNumber);
+        public bool CanEnterLaterBook => CanEnterChapter && UpcomingLaterBook!=null && Session?.CanEnterLaterBook==true;
+        public bool ContentComplete => Session?.ContentComplete==true || (ExodusComplete && !LeviticusInstalled) ||
+            (catalog.LastInstalledRound>=FirstSamuelContent.LastRound&&Session?.Stage=="between_rounds"&&Session.RoundNumber==catalog.LastInstalledRound);
         public bool ExodusComplete => Session?.ExodusComplete == true;
         public bool LeviticusComplete => Session?.LeviticusComplete == true;
         public bool NumbersComplete => Session?.NumbersComplete == true;
@@ -76,7 +82,7 @@ namespace BibleSurvivor.Unity
         public bool JudgesComplete => Session?.JudgesComplete == true;
         public bool RuthComplete => Session?.RuthComplete == true;
         // Any completed book or the installed endpoint: the run is kept and a new challenge is a separate choice.
-        public bool BookComplete => Session?.ChapterComplete==true || ExodusComplete || LeviticusComplete || NumbersComplete || DeuteronomyComplete || JoshuaComplete || JudgesComplete || RuthComplete || ContentComplete;
+        public bool BookComplete => Session?.ChapterComplete==true || ExodusComplete || LeviticusComplete || NumbersComplete || DeuteronomyComplete || JoshuaComplete || JudgesComplete || RuthComplete || UpcomingLaterBook!=null || ContentComplete;
         public bool CanStartNew => Error==null && chapterCandidate==null && State!=null &&
             (State.Run==null || (BookComplete && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
@@ -112,6 +118,7 @@ namespace BibleSurvivor.Unity
         public bool TryEnterJudges() => CanEnterJudges && TryEnterChapter(JudgesContent.GlobalRoundNumber);
         public bool TryEnterRuth() => CanEnterRuth && TryEnterChapter(RuthContent.GlobalRoundNumber);
         public bool TryEnterFirstSamuel() => CanEnterFirstSamuel && TryEnterChapter(FirstSamuelContent.GlobalRoundNumber);
+        public bool TryEnterLaterBook() => CanEnterLaterBook && TryEnterChapter(UpcomingLaterBook.FirstRound);
         bool TryEnterChapter(int round)
         {
             try
@@ -128,6 +135,7 @@ namespace BibleSurvivor.Unity
                     JudgesContent.GlobalRoundNumber=>Session.PrepareJudges(definition),
                     RuthContent.GlobalRoundNumber=>Session.PrepareRuth(definition),
                     FirstSamuelContent.GlobalRoundNumber=>Session.PrepareFirstSamuel(definition),
+                    _ when LaterCampaignBooks.StartsBook(round)=>Session.PrepareLaterBook(definition),
                     _=>throw new ArgumentOutOfRangeException(nameof(round))
                 };
                 var preview=AdamSession.Resume(candidate,definition);

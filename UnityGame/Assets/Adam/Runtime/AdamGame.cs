@@ -212,6 +212,7 @@ namespace BibleSurvivor.Unity
             else if(Host.CanEnterJudges)EnterJudges();
             else if(Host.CanEnterRuth)EnterRuth();
             else if(Host.CanEnterFirstSamuel)EnterFirstSamuel();
+            else if(Host.CanEnterLaterBook)EnterChapter(Host.UpcomingLaterBook.FirstRound);
             else if(Host.Paused && !Host.BookComplete)
             {commandFrame=Time.frameCount;ResumePlay();inputReleased=false;}
         }
@@ -233,7 +234,7 @@ namespace BibleSurvivor.Unity
             JudgesContent.GlobalRoundNumber=>Host.CanEnterJudges,
             RuthContent.GlobalRoundNumber=>Host.CanEnterRuth,
             FirstSamuelContent.GlobalRoundNumber=>Host.CanEnterFirstSamuel,
-            _=>false
+            _=>Host.CanEnterLaterBook && Host.UpcomingLaterBook.FirstRound==round
         };
         void EnterChapter(int round)
         {
@@ -250,6 +251,7 @@ namespace BibleSurvivor.Unity
                 case JudgesContent.GlobalRoundNumber: Host.TryEnterJudges(); break;
                 case RuthContent.GlobalRoundNumber: Host.TryEnterRuth(); break;
                 case FirstSamuelContent.GlobalRoundNumber: Host.TryEnterFirstSamuel(); break;
+                default: Host.TryEnterLaterBook(); break;
             }
             RecordSortieTransition(previous,run);
             inputReleased=false;touchStarted=false;

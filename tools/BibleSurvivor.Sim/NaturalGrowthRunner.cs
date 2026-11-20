@@ -13,6 +13,12 @@ internal static class NaturalGrowthRunner
     // Later bosses can outlast the technical fixture runner’s budget.
     private const int MaxTicksPerRound = 120000;
 
+    private static void RequireCalibrationRevision(int installedRound)
+    {
+        if (installedRound != ExperimentalRounds.CalibrationRound)
+            throw new InvalidOperationException("This experiment requires the R60 campaign revision. Run it from the natural-growth preparation commit.");
+    }
+
     internal static int Run(string[] args)
     {
         var policy = args.Length > 0 ? args[0] : "main-weapon";
@@ -22,8 +28,7 @@ internal static class NaturalGrowthRunner
         var weapon = args.Length > 1 ? args[1] : "sling";
         var seed = args.Length > 2 ? int.Parse(args[2]) : 7;
         var curve = args.Length > 3 ? args[3] : "C0";
-        if (CampaignContent.LastInstalledRound != ExperimentalRounds.CalibrationRound)
-            throw new InvalidOperationException("This experiment requires the R60 campaign revision. Run it from the natural-growth preparation commit.");
+        RequireCalibrationRevision(CampaignContent.LastInstalledRound);
         var state = GameSnapshot.New();
         var game = new AdamSession(state, Definition(1), weapon);
         // Boss reward offers are seeded with the run ID. Use the CLI seed for both sources of randomness.

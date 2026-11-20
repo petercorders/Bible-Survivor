@@ -7,7 +7,7 @@ namespace BibleSurvivor.Core
 {
     public static class CampaignContent
     {
-        public const int LastInstalledRound = 60;
+        public const int LastInstalledRound = 70;
 
         public static RoundDefinition Round(int number) => number switch
         {
@@ -17,7 +17,8 @@ namespace BibleSurvivor.Core
             < JudgesContent.GlobalRoundNumber => JoshuaContent.Round(number),
             < RuthContent.GlobalRoundNumber => JudgesContent.Round(number),
             < FirstSamuelContent.GlobalRoundNumber => RuthContent.Round(number),
-            _ => FirstSamuelContent.Round(number)
+            < LaterCampaignBooks.FirstRound => FirstSamuelContent.Round(number),
+            _ => LaterCampaignBooks.Require(number).Round(number)
         };
 
         public static IReadOnlyDictionary<string,double> SpeedsFor(int number) => number switch
@@ -28,7 +29,8 @@ namespace BibleSurvivor.Core
             < JudgesContent.GlobalRoundNumber => JoshuaContent.SpeedsFor(number),
             < RuthContent.GlobalRoundNumber => JudgesContent.SpeedsFor(number),
             < FirstSamuelContent.GlobalRoundNumber => RuthContent.SpeedsFor(number),
-            _ => FirstSamuelContent.SpeedsFor(number)
+            < LaterCampaignBooks.FirstRound => FirstSamuelContent.SpeedsFor(number),
+            _ => LaterCampaignBooks.Require(number).SpeedsFor(number)
         };
 
         // Fingerprint inputs for R22 onward; Numbers keeps its original contract text.
@@ -40,7 +42,8 @@ namespace BibleSurvivor.Core
             < JudgesContent.GlobalRoundNumber => JoshuaContent.SpeedContract,
             < RuthContent.GlobalRoundNumber => JudgesContent.SpeedContract,
             < FirstSamuelContent.GlobalRoundNumber => RuthContent.SpeedContract,
-            _ => FirstSamuelContent.SpeedContract
+            < LaterCampaignBooks.FirstRound => FirstSamuelContent.SpeedContract,
+            _ => LaterCampaignBooks.Require(number).SpeedContract(number)
         };
 
         internal static string RoundId(int number) => number switch
@@ -51,7 +54,8 @@ namespace BibleSurvivor.Core
             < JudgesContent.GlobalRoundNumber => JoshuaContent.RoundId(number),
             < RuthContent.GlobalRoundNumber => JudgesContent.RoundId(number),
             < FirstSamuelContent.GlobalRoundNumber => RuthContent.RoundId(number),
-            _ => FirstSamuelContent.RoundId(number)
+            < LaterCampaignBooks.FirstRound => FirstSamuelContent.RoundId(number),
+            _ => LaterCampaignBooks.Require(number).RoundId(number)
         };
 
         internal static void Validate(RoundDefinition definition)

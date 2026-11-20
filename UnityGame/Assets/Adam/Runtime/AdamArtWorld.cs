@@ -199,14 +199,15 @@ namespace BibleSurvivor.Unity
         }
         public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
 
-        // Leviticus through First Samuel reuse the reviewed Exodus R06 art for equivalent movement roles.
+        // Leviticus and later books reuse the reviewed Exodus R06 art for equivalent movement roles.
         static string SourceActor(string id)
         {
             switch(id)
             {
-                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":return "ex17";
-                case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":return "ex16";
-                case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":return "ex18";
+                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":case "ss1":case "fk1":
+                case "lament_ash":case "tangled_thicket":case "dry_land_ember":return "ex17";
+                case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":case "ss2":case "fk2":return "ex16";
+                case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":case "ss3":case "fk3":return "ex18";
                 case "ash_veil":
                 case "oath_wraith":
                 case "dust_tyrant":
@@ -221,10 +222,13 @@ namespace BibleSurvivor.Unity
                 case "toppling_pillar":
                 case "chaff_whirl":
                 case "swarm_monarch":
-                case "valley_bronze_brute":return "defilement_weaver";
+                case "valley_bronze_brute":
+                case "palace_roof_eye":case "lentil_field_beast":case "bethel_altar_calf":return "defilement_weaver";
                 default:return id;
             }
         }
+        public static string EnemyShadow(string id)=>AdamRoundPresentation.Shadow(SourceActor(id));
+
         static bool UsesWeaverArt(BossEncounterState boss)=>SourceActor(boss?.Rules.Id)=="defilement_weaver";
         AdamExodusR06Art ExodusR06Art()
         {
@@ -287,7 +291,8 @@ namespace BibleSurvivor.Unity
             var judges=round>=JudgesContent.GlobalRoundNumber && round<=JudgesContent.LastRound;
             var ruth=round>=RuthContent.GlobalRoundNumber && round<=RuthContent.LastRound;
             var firstSamuel=round>=FirstSamuelContent.GlobalRoundNumber && round<=FirstSamuelContent.LastRound;
-            var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua || judges || ruth || firstSamuel) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
+            var laterBook=LaterCampaignBooks.Find(round);
+            var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua || judges || ruth || firstSamuel || laterBook!=null) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
             var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
             var origin=new Vector2(snap.PlayerX,snap.PlayerY);
             var projection=new AdamWorldProjection(arena,origin);
@@ -305,6 +310,7 @@ namespace BibleSurvivor.Unity
                 if(judges && desert)GUI.color=groundColor*new Color(.98f,.80f,.76f,1);
                 if(ruth && desert)GUI.color=groundColor*new Color(1f,.94f,.70f,1);
                 if(firstSamuel && desert)GUI.color=groundColor*new Color(.78f,.86f,.96f,1);
+                if(laterBook!=null && desert)GUI.color=groundColor*(laterBook.Id=="second_samuel"?new Color(.90f,.76f,.72f,1):new Color(.91f,.87f,.72f,1));
                 for(var y=Mathf.FloorToInt(origin.y-ry);y<=Mathf.CeilToInt(origin.y+ry);y++)
                 for(var x=Mathf.FloorToInt(origin.x-rx);x<=Mathf.CeilToInt(origin.x+rx);x++)
                 {
@@ -333,7 +339,7 @@ namespace BibleSurvivor.Unity
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
                     {
-                        var shadow=AdamRoundPresentation.Shadow(monster.MonsterId);
+                        var shadow=EnemyShadow(monster.MonsterId);
                         if(shadow=="fx_shadow-boss_static_40x8"){if(r03==null)r03=new AdamR03Art();r03.Draw(shadow,Point(enemy.X,enemy.Y),scale);}
                         else art.Draw(shadow,Point(enemy.X,enemy.Y),scale);
                     }

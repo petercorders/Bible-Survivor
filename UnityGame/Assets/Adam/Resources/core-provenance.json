@@ -48,6 +48,10 @@
           "metadata": {}
         },
         {
+          "path": "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs",
+          "metadata": {}
+        },
+        {
           "path": "repo/src/BibleSurvivor.Core/LeviticusContent.cs",
           "metadata": {}
         },
@@ -118,17 +122,18 @@
       "repo/.globalconfig": null,
       "repo/src/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/.globalconfig": null,
-      "repo/src/BibleSurvivor.Core/AdamSession.cs": "98a7e242d3769ab26aa85d583e85d3c2bcf98cc79c6648bb1c2fe076a0823e77",
+      "repo/src/BibleSurvivor.Core/AdamSession.cs": "981afa0b9efed2a25b96deb56dfc5ce41ce555c78aa7d8adf48f03b4aafac845",
       "repo/src/BibleSurvivor.Core/BattleImpact.cs": "b0daa06c44bf72c31b4e75ee43167319082a110a3c261f26e80fe5b4919a906a",
-      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "41024246d51df36d47e035ace08c203ef0e7c503dffb19496ad39062c0f3565e",
-      "repo/src/BibleSurvivor.Core/BossEncounter.cs": "13b7c9fe946f08e35dbb063aa12123aba5a3788e05258a208a6d72a6a849fdc4",
+      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "ad491febb002c1ab7412ca46d6c23dcfb0fa4325d4aa4987a5bebd45efb08533",
+      "repo/src/BibleSurvivor.Core/BossEncounter.cs": "5e04e42a86b60a259f4dfae07516ea33159d6402fd12cc8981d28c2030224fe0",
       "repo/src/BibleSurvivor.Core/BossRewards.cs": "489555cfa72cfd3052a833060bf9684247e3ec9c00adb0444fa8ae23c71ec793",
-      "repo/src/BibleSurvivor.Core/CampaignContent.cs": "6a0a4883eb1aa4ddc53d8b21362374dc4f3e1b0db4ff09733199fc89b23ccc6e",
+      "repo/src/BibleSurvivor.Core/CampaignContent.cs": "814ad4034e2bfad455e69a1e73336a48e2ebffe9b6694b3a240f3abf90d967b4",
       "repo/src/BibleSurvivor.Core/Combat.cs": "4a245196515a16646f6a60e975ad9d693ea38943fd6499c819bb8498e82351fa",
       "repo/src/BibleSurvivor.Core/EvolutionRules.cs": "59c6904b398538286cf356ef5d9fbd81683666c93945a92e3b7460bd0065ec9d",
       "repo/src/BibleSurvivor.Core/ExodusContent.cs": "305f19c078dc13d12c226c050d1bb587c1f95eee9eb013f11e9ce8982e5d75f4",
       "repo/src/BibleSurvivor.Core/Growth.cs": "917bd5d8453178f8c1c6f6fe1aa1053007a8b1c8b6865e5a9e8e28711ac1b68f",
       "repo/src/BibleSurvivor.Core/HostileProjectiles.cs": "0ddb284786d00dd38077653f775dee5df405fb3ff18e562d20994283deacfe8c",
+      "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs": "4f9bae9cf6004ba756fc296452a2397ec07ff079233d890f55bcb392de384315",
       "repo/src/BibleSurvivor.Core/LeviticusContent.cs": "9a53f6d1c1c504470de968d2c2ff0658891d4fd3bc7fa65c408240cd6555ad4a",
       "repo/src/BibleSurvivor.Core/SaveFormat.cs": "a426004bdb51bf38c7edbb6197a78777590fb04b253890052446280ba55aba16",
       "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
@@ -266,7 +271,7 @@
       "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.props": "30c2b92c9dd157d211238bf502802e6a8c55dac1eab0125f1e006d456a9eb75d",
       "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.targets": "c708182482beb469a330d5865068e9af779a2a600547ae277983d2dadc37da31",
       "repo/src/BibleSurvivor.Core/BibleSurvivor.Core.csproj": "684bcc7ed4b8da36e9a25107d0f182ebcb84a69845e0096bf81498b1c11036fe",
-      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.props": "e9b6435dce72f4a413d8cee9fd6fe17aa24eda1886605b5362e2b3cf8cac61e2",
+      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.props": "ee11a1e92f37d6b78bad7ea148d12ee903a0b11b9cd136ea840eda63090422df",
       "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.targets": "b14461e0cb1be3f77fcf9fe2fdd62889325ca92523d0f606980ed59eb5c4aa1c"
     },
     "config_sha256": {
@@ -319,6 +324,10 @@
         },
         {
           "path": "repo/src/BibleSurvivor.Core/HostileProjectiles.cs",
+          "metadata": {}
+        },
+        {
+          "path": "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs",
           "metadata": {}
         },
         {
@@ -1986,29 +1995,30 @@
       "repo/.globalconfig": null,
       "repo/src/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/.globalconfig": null,
-      "repo/src/BibleSurvivor.Core/AdamSession.cs": "98a7e242d3769ab26aa85d583e85d3c2bcf98cc79c6648bb1c2fe076a0823e77",
+      "repo/src/BibleSurvivor.Core/AdamSession.cs": "981afa0b9efed2a25b96deb56dfc5ce41ce555c78aa7d8adf48f03b4aafac845",
       "repo/src/BibleSurvivor.Core/BattleImpact.cs": "b0daa06c44bf72c31b4e75ee43167319082a110a3c261f26e80fe5b4919a906a",
-      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "41024246d51df36d47e035ace08c203ef0e7c503dffb19496ad39062c0f3565e",
-      "repo/src/BibleSurvivor.Core/BossEncounter.cs": "13b7c9fe946f08e35dbb063aa12123aba5a3788e05258a208a6d72a6a849fdc4",
+      "repo/src/BibleSurvivor.Core/BattleWorld.cs": "ad491febb002c1ab7412ca46d6c23dcfb0fa4325d4aa4987a5bebd45efb08533",
+      "repo/src/BibleSurvivor.Core/BossEncounter.cs": "5e04e42a86b60a259f4dfae07516ea33159d6402fd12cc8981d28c2030224fe0",
       "repo/src/BibleSurvivor.Core/BossRewards.cs": "489555cfa72cfd3052a833060bf9684247e3ec9c00adb0444fa8ae23c71ec793",
-      "repo/src/BibleSurvivor.Core/CampaignContent.cs": "6a0a4883eb1aa4ddc53d8b21362374dc4f3e1b0db4ff09733199fc89b23ccc6e",
+      "repo/src/BibleSurvivor.Core/CampaignContent.cs": "814ad4034e2bfad455e69a1e73336a48e2ebffe9b6694b3a240f3abf90d967b4",
       "repo/src/BibleSurvivor.Core/Combat.cs": "4a245196515a16646f6a60e975ad9d693ea38943fd6499c819bb8498e82351fa",
       "repo/src/BibleSurvivor.Core/EvolutionRules.cs": "59c6904b398538286cf356ef5d9fbd81683666c93945a92e3b7460bd0065ec9d",
       "repo/src/BibleSurvivor.Core/ExodusContent.cs": "305f19c078dc13d12c226c050d1bb587c1f95eee9eb013f11e9ce8982e5d75f4",
       "repo/src/BibleSurvivor.Core/Growth.cs": "917bd5d8453178f8c1c6f6fe1aa1053007a8b1c8b6865e5a9e8e28711ac1b68f",
       "repo/src/BibleSurvivor.Core/HostileProjectiles.cs": "0ddb284786d00dd38077653f775dee5df405fb3ff18e562d20994283deacfe8c",
+      "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs": "4f9bae9cf6004ba756fc296452a2397ec07ff079233d890f55bcb392de384315",
       "repo/src/BibleSurvivor.Core/LeviticusContent.cs": "9a53f6d1c1c504470de968d2c2ff0658891d4fd3bc7fa65c408240cd6555ad4a",
       "repo/src/BibleSurvivor.Core/SaveFormat.cs": "a426004bdb51bf38c7edbb6197a78777590fb04b253890052446280ba55aba16",
       "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
       "repo/src/BibleSurvivor.Core/SaveState.cs": "3aeea48492761831bb7e38ec8ff3d0d74b00a8d7952edba29242e101e0734e56",
       "repo/src/BibleSurvivor.Core/Waves.cs": "8a9b36388fbd82ff10ea5af09d07cfe66e2e3c28d2921dff95302523bae0d80c",
       "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/.NETStandard,Version=v2.1.AssemblyAttributes.cs": "df351ab8cda38d16370d8aa74d934a81faf0e44ecc9a079bb1c5cc7a1f1575af",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "f6be565c369d2e594a4d264db231619882f818ae359278d988907826b27eea35",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "ede8fd856af1e86eae465193a3fd80e5102c2d1f662e35ec3426941d78f56458",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "f4c8f9b8ca9434a51dbaba39ed32b7388489503cd32403a0f8cb21f2a019544a"
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "80bae0282c4910fd8521aefa547b69be2765d68d88c55f42a410bc618cd65fa1",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "c5f8ca691b655b6d77f7a707cb8bbdffc949d884a9cb67394ede91d8eb19dd85",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "c5a84724213044c7c5bab2ae0cbd145bc7c21d04a1bf72ec81d60ef31fa62f7a"
     }
   },
-  "dll_sha256": "aeaf1ab0a1e282c0eb63649ed18fb967560e4d471bed2d9b8241f9f3ace8f6fa",
+  "dll_sha256": "5283f7abc97d06956a7bea3c375b14bb9ea30406a1b93edeefb4dcb1be33d733",
   "catalog_sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
   "method": "Release Rebuild; evaluated item/import/property set + post-build compiler/reference/generated inputs"
 }
