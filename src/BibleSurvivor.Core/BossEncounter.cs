@@ -64,6 +64,7 @@ namespace BibleSurvivor.Core
         public double SupportRatio {get;}
         public string RewardPolicy {get;}
         public IReadOnlyList<double> Thresholds {get;}
+        private string? experimentalRoundId;
         private BossDefinition(int number,string id,double hp,int contact,int gold,double period,int damage,int actor,string support,int supportHp,int supportDamage,double speed,string policy,params double[] thresholds)
         {Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(thresholds);}
         private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,ThresholdRatio);
@@ -93,12 +94,21 @@ namespace BibleSurvivor.Core
             51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
-        internal string EncounterSuffix => ":"+(Number switch
+        internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
+            string support,int supportHp,int supportContact,double supportSpeed,params double[] thresholds)
+        {
+            if(number<=CampaignContent.LastInstalledRound)
+                throw new ArgumentOutOfRangeException(nameof(number));
+            return new BossDefinition(number,"trial_boss",hp,contact,gold,5,damage,actor,
+                support,supportHp,supportContact,supportSpeed,ValleyPolicy,thresholds)
+                {experimentalRoundId=roundId};
+        }
+        internal string EncounterSuffix => ":"+(experimentalRoundId??(Number switch
         {
             >=NumbersContent.GlobalRoundNumber=>CampaignContent.RoundId(Number),
             21=>"leviticus_06",18=>"leviticus_03",15=>"exodus_06",12=>"exodus_03",
             _=>"genesis_"+Number.ToString("D2",CultureInfo.InvariantCulture)
-        })+":"+Id;
+        }))+":"+Id;
         public string EncounterKey(string runId)=>runId+EncounterSuffix;
         public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":UsesChainProjectiles?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,

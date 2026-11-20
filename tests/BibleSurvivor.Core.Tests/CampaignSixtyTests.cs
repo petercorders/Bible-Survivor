@@ -134,6 +134,12 @@ internal static class CampaignSixtyTests
                 Check.Throws<InvalidOperationException>(()=>session.PrepareRuth(CampaignContent.Round(52)));
                 Check.Throws<InvalidOperationException>(()=>session.PrepareFirstSamuel(CampaignContent.Round(55)));
                 Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
+                var previous=CampaignContent.Round(60);
+                var trial=new RoundDefinition(61,previous.ConcurrencyCap,previous.RawExperience,
+                    previous.CompletionGold,previous.Waves,"trial_61");
+                Check.Throws<InvalidOperationException>(()=>session.StartNextRound(trial));
+                Check.True(session.ContentComplete);
+                Check.True(raw.SequenceEqual(File.ReadAllBytes(path)));
                 var gold=state.Profile.Gold;
                 var history=state.Run.LaterBossHistory!.Select(Json).ToArray();
                 var boss=Json(state.Run.Boss);
