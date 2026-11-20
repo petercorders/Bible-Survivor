@@ -14,6 +14,7 @@ internal static class Program
         var results = new List<(string Name, Exception? Error)>();
         void Test(string name, Action action)
         {
+            if(args.Contains("--r60-only")&&!name.StartsWith("R60 ",StringComparison.Ordinal))return;
             if(args.Contains("--r50-only")&&!name.StartsWith("R50 ",StringComparison.Ordinal))return;
             if(args.Contains("--r40-only")&&!name.StartsWith("R40 ",StringComparison.Ordinal))return;
             if(args.Contains("--r30-only")&&!name.StartsWith("R30 ",StringComparison.Ordinal))return;
@@ -69,6 +70,7 @@ internal static class Program
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignThirtyTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignFortyTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignFiftyTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignSixtyTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

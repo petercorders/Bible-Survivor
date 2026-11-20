@@ -210,6 +210,8 @@ namespace BibleSurvivor.Unity
             else if(Host.CanEnterDeuteronomy)EnterDeuteronomy();
             else if(Host.CanEnterJoshua)EnterJoshua();
             else if(Host.CanEnterJudges)EnterJudges();
+            else if(Host.CanEnterRuth)EnterRuth();
+            else if(Host.CanEnterFirstSamuel)EnterFirstSamuel();
             else if(Host.Paused && !Host.BookComplete)
             {commandFrame=Time.frameCount;ResumePlay();inputReleased=false;}
         }
@@ -219,6 +221,8 @@ namespace BibleSurvivor.Unity
         public void EnterDeuteronomy() => EnterChapter(DeuteronomyContent.GlobalRoundNumber);
         public void EnterJoshua() => EnterChapter(JoshuaContent.GlobalRoundNumber);
         public void EnterJudges() => EnterChapter(JudgesContent.GlobalRoundNumber);
+        public void EnterRuth() => EnterChapter(RuthContent.GlobalRoundNumber);
+        public void EnterFirstSamuel() => EnterChapter(FirstSamuelContent.GlobalRoundNumber);
         bool CanEnterChapter(int round)=>round switch
         {
             ExodusContent.GlobalRoundNumber=>Host.CanEnterExodus,
@@ -227,6 +231,8 @@ namespace BibleSurvivor.Unity
             DeuteronomyContent.GlobalRoundNumber=>Host.CanEnterDeuteronomy,
             JoshuaContent.GlobalRoundNumber=>Host.CanEnterJoshua,
             JudgesContent.GlobalRoundNumber=>Host.CanEnterJudges,
+            RuthContent.GlobalRoundNumber=>Host.CanEnterRuth,
+            FirstSamuelContent.GlobalRoundNumber=>Host.CanEnterFirstSamuel,
             _=>false
         };
         void EnterChapter(int round)
@@ -242,6 +248,8 @@ namespace BibleSurvivor.Unity
                 case DeuteronomyContent.GlobalRoundNumber: Host.TryEnterDeuteronomy(); break;
                 case JoshuaContent.GlobalRoundNumber: Host.TryEnterJoshua(); break;
                 case JudgesContent.GlobalRoundNumber: Host.TryEnterJudges(); break;
+                case RuthContent.GlobalRoundNumber: Host.TryEnterRuth(); break;
+                case FirstSamuelContent.GlobalRoundNumber: Host.TryEnterFirstSamuel(); break;
             }
             RecordSortieTransition(previous,run);
             inputReleased=false;touchStarted=false;
@@ -302,7 +310,11 @@ namespace BibleSurvivor.Unity
             }
             if (Host.Error != null)
             {
-                if(Host.HasJudgesEntryRetry)
+                if(Host.HasFirstSamuelEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.RuthHeading,"사무엘상 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasRuthEntryRetry)
+                    Modal(width,height,AdamRoundPresentation.JudgesHeading,"룻기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
+                else if(Host.HasJudgesEntryRetry)
                     Modal(width,height,AdamRoundPresentation.JoshuaHeading,"사사기 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
                 else if(Host.HasJoshuaEntryRetry)
                     Modal(width,height,AdamRoundPresentation.DeuteronomyHeading,"여호수아 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.");
