@@ -12,8 +12,6 @@ internal static class CampaignNinetyTests
 
         test("R90 installed Chronicles boundaries, motifs, and boss compositions", () =>
         {
-            Check.Equal(90,CampaignContent.LastInstalledRound);
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(91));
             Check.Equal("second_kings",LaterCampaignBooks.Find(81)!.Id);
             Check.Equal("first_chronicles",LaterCampaignBooks.Find(82)!.Id);
             Check.Equal("second_chronicles",LaterCampaignBooks.Find(85)!.Id);
