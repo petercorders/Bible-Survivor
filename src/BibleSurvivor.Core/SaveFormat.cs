@@ -140,7 +140,14 @@ namespace BibleSurvivor.Core
                 var worldVersion=members.SingleOrDefault(x=>x.Name=="World")?.ChildNodes.OfType<XmlElement>().SingleOrDefault(x=>x.Name=="SchemaVersion")?.InnerText;
                 var r12=version==3&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")||
                     members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="13")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
-                if(worldVersion=="5"&&!r12)throw new UnsupportedSaveVersionException();
+                if(worldVersion=="5"&&!r12)
+                {
+                    var roundText=members.SingleOrDefault(x=>x.Name=="RoundNumber")?.InnerText;
+                    var betweenRounds=members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds");
+                    if(version!=3||!int.TryParse(roundText,out var worldRound)||
+                        BossDefinition.Find(worldRound-(betweenRounds?1:0))?.WorldVersion!=5)
+                        throw new UnsupportedSaveVersionException();
+                }
                 if (members.Any(x => !RunFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown run field for this save format");
                 var boss=members.SingleOrDefault(x=>x.Name=="Boss");
                 if(!r12&&boss?.ChildNodes.OfType<XmlElement>().Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")==true)throw new UnsupportedSaveVersionException();
@@ -227,8 +234,9 @@ namespace BibleSurvivor.Core
                 if(round?.InnerText=="12"&&encounter?.InnerText.EndsWith(":exodus_03:oppression_chariot",StringComparison.Ordinal)!=true)throw new UnsupportedSaveVersionException();
                 if(encounter?.GetAttribute("type")=="string"&&!encounter.InnerText.EndsWith(":genesis_03:nephilim_tyrant",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":genesis_06:sitnah_keeper",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":genesis_09:silver_cup_accuser",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":exodus_03:oppression_chariot",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":exodus_06:defilement_weaver",StringComparison.Ordinal)&&!encounter.InnerText.EndsWith(":leviticus_03:ash_veil",StringComparison.Ordinal)&&!(rules!=null&&rules.Number>=21&&encounter.InnerText.EndsWith(rules.EncounterSuffix,StringComparison.Ordinal)))throw new UnsupportedSaveVersionException();
                 var version=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Version");
-                if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var bv)||bv>(round?.InnerText=="12"?4:rules?.UsesChainProjectiles==true?3:2)))throw new UnsupportedSaveVersionException();
-                if(round?.InnerText=="12"&&version?.InnerText!="4")throw new UnsupportedSaveVersionException();
+                var maxVersion=rules?.EncounterVersion??2;
+                if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var bv)||bv>maxVersion))throw new UnsupportedSaveVersionException();
+                if(rules?.UsesDash==true&&version?.InnerText!=maxVersion.ToString(CultureInfo.InvariantCulture))throw new UnsupportedSaveVersionException();
                 var reward=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Reward");
                 var policy=reward?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="PolicyId");
                 if(policy?.GetAttribute("type")=="string")

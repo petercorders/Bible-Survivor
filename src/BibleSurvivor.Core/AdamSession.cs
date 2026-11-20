@@ -19,6 +19,7 @@ namespace BibleSurvivor.Core
             id.StartsWith(GrowthGoldChoicePrefix,StringComparison.Ordinal)&&int.TryParse(id.Substring(GrowthGoldChoicePrefix.Length),System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out var serial)&&serial>=0;
         private readonly GameSnapshot state;
         private readonly RoundDefinition definition;
+        private readonly BossDefinition? experimentalBoss;
         private RunState run;
         public IWaveView? Wave { get; private set; }
         private WaveDirector? Arena => Wave as WaveDirector;
@@ -29,7 +30,7 @@ namespace BibleSurvivor.Core
         public string Stage => run.Stage;
         public BossEncounterState? Boss => run.Boss?.Copy();
         internal BossEncounterState? Encounter => run.Boss;
-        public BossDefinition? BossRules=>BossDefinition.Find(definition.Number);
+        public BossDefinition? BossRules=>experimentalBoss??BossDefinition.Find(definition.Number);
         public bool NeedsRewardImplementation => IsCurrent && run.Stage=="boss_reward" && run.Boss?.Reward?.PolicyId==BossDefinition.LegacyPolicy;
         public IReadOnlyList<BossRewardCandidate> BossChoices=>run.Boss?.Reward?.Candidates?.Select(x=>x.Copy()).ToList().AsReadOnly() ?? (IReadOnlyList<BossRewardCandidate>)Array.Empty<BossRewardCandidate>();
         public string WeaponForm(string weapon)=>Inventory.Forms.TryGetValue(weapon,out var form)?form:weapon;
@@ -195,6 +196,26 @@ namespace BibleSurvivor.Core
             return Resume(state,next);
         }
 
+        // The simulator extends an existing run in memory. Public entry and
+        // save validation continue to enforce the installed campaign boundary.
+        internal AdamSession StartExperimentalRound(RoundDefinition next,BossDefinition? boss)
+        {
+            if(next.Number<=CampaignContent.LastInstalledRound||!IsCurrent||run.Stage!="between_rounds"||
+                run.PendingLevels!=0||next.Number!=run.RoundNumber||next.Number!=definition.Number+1||
+                (boss!=null&&boss.Number!=next.Number))
+                throw new InvalidOperationException("Experimental round requires a completed preceding round");
+            BeginNextRound(run,next);
+            return new AdamSession(this,next,boss);
+        }
+
+        private AdamSession(AdamSession previous,RoundDefinition next,BossDefinition? boss)
+        {
+            state=previous.state;run=previous.run;definition=next;experimentalBoss=boss;
+            Inventory=EquipmentInventory.Restore(run.Weapons,run.Passives,run.Forms);
+            Growth=new GrowthLedger(run.Level,run.Experience);
+            Wave=WaveDirector.Restore(definition,run.Wave!);
+        }
+
         private static void BeginNextRound(RunState run,RoundDefinition next)
         {
             var previous=next.Number-1;
@@ -341,7 +362,7 @@ namespace BibleSurvivor.Core
                 var ended=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
                 run.Drops.Clear();run.World=null;Wave=null;run.Stage="boss_intro";
-                run.Boss=new BossEncounterState{Version=definition.Number==12?4:BossRules!.UsesChainProjectiles?3:2,ChariotCharge=definition.Number==12?new ChariotChargeState():null,ChainDirections=BossRules!.UsesChainProjectiles?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
+                run.Boss=new BossEncounterState{Version=BossRules!.EncounterVersion,ChariotCharge=BossRules.UsesDash?new ChariotChargeState():null,ChainDirections=BossRules!.UsesChainProjectiles?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
             if(UsesNormalSettlement)
