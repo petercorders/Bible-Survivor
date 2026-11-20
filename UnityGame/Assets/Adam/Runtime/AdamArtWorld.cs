@@ -204,10 +204,11 @@ namespace BibleSurvivor.Unity
         {
             switch(id)
             {
-                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":case "ss1":case "fk1":case "sk1":
-                case "lament_ash":case "tangled_thicket":case "dry_land_ember":case "cave_hunter":case "starving_siege_beast":return "ex17";
-                case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":case "ss2":case "fk2":case "sk2":return "ex16";
-                case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":case "ss3":case "fk3":case "sk3":return "ex18";
+                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":case "ss1":case "fk1":case "sk1":case "fc1":case "sc1":
+                case "lament_ash":case "tangled_thicket":case "dry_land_ember":case "cave_hunter":case "starving_siege_beast":
+                case "scattered_scroll_fragments":case "endless_procession":case "tower_pride_shadow":return "ex17";
+                case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":case "ss2":case "fk2":case "sk2":case "fc2":case "sc2":return "ex16";
+                case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":case "ss3":case "fk3":case "sk3":case "fc3":case "sc3":return "ex18";
                 case "ash_veil":
                 case "oath_wraith":
                 case "dust_tyrant":
@@ -226,7 +227,8 @@ namespace BibleSurvivor.Unity
                 case "palace_roof_eye":case "lentil_field_beast":case "bethel_altar_calf":
                 case "vineyard_greed_vine":
                 case "dothan_iron_ring":
-                case "winged_bull":return "defilement_weaver";
+                case "winged_bull":
+                case "ashen_gate_lion":case "wilderness_raider_chief":case "rending_host":case "bronze_hook_chain":return "defilement_weaver";
                 default:return id;
             }
         }

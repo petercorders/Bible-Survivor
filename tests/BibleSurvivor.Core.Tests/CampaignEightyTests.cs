@@ -13,8 +13,6 @@ internal static class CampaignEightyTests
 
         test("R80 installed book boundary, new motifs, and boss compositions", () =>
         {
-            Check.Equal(80,CampaignContent.LastInstalledRound);
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(81));
             Check.Equal("first_kings",LaterCampaignBooks.Find(72)!.Id);
             Check.Equal("second_kings",LaterCampaignBooks.Find(73)!.Id);
             Check.Equal("cave_hunter",CampaignContent.Round(71).Waves[0].Groups[0].MonsterId);

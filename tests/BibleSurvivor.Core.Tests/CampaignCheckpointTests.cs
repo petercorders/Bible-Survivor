@@ -74,8 +74,9 @@ internal static class CampaignCheckpointTests
 
             Check.Equal(endRound == CampaignContent.LastInstalledRound, session.ContentComplete);
             Check.Equal(endRound + 1, state.Run!.RoundNumber);
-            Check.True(state.Run.LaterBossHistory!.TakeLast(expectedFinalBosses.Length).Select(receipt => receipt.EncounterRound)
-                .SequenceEqual(expectedFinalBosses));
+            var finalBosses = state.Run.LaterBossHistory!.Select(receipt => receipt.EncounterRound);
+            if (state.Run.Boss is { CompletionApplied: true } finalBoss) finalBosses = finalBosses.Append(finalBoss.EncounterRound);
+            Check.True(finalBosses.TakeLast(expectedFinalBosses.Length).SequenceEqual(expectedFinalBosses));
             Check.True(File.ReadAllBytes(Fixtures + $"r{endRound}-build-complete-save.json").SequenceEqual(File.ReadAllBytes(path)));
         }
         finally { directory.Delete(true); }
