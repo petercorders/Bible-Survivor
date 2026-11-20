@@ -109,6 +109,52 @@ internal static class CampaignSixtyTests
             finally { Directory.Delete(dir,true); }
         });
 
+        test("R60 build complete save loads unchanged as the final checkpoint",() =>
+        {
+            var dir=Path.Combine(Path.GetTempPath(),"bible-r60-final-"+Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                // Byte copy of the save the R60 QA app wrote after completing R60.
+                var path=Path.Combine(dir,"save.json");
+                File.Copy(Fixtures+"r60-build-complete-save.json",path);
+                var raw=File.ReadAllBytes(path);
+                var store=new SaveStore(path);
+                var state=store.Load()!;
+                Check.True(raw.SequenceEqual(File.ReadAllBytes(path)));
+                Check.Equal(61,state.Run!.RoundNumber);
+                Check.Equal("between_rounds",state.Run.Stage);
+                Check.Equal(0,state.Run.PendingLevels);
+                Check.True(state.Run.Boss!.EncounterRound==60&&state.Run.Boss.CompletionApplied);
+                Check.True(state.Run.LaterBossHistory!.Select(r=>r.EncounterRound).SequenceEqual(new[]{21,24,27,30,33,36,39,42,45,48,51,54,57}));
+                var session=AdamSession.Resume(state,CampaignContent.Round(60));
+                Check.True(session.ContentComplete);
+                Check.True(!session.JudgesComplete&&!session.RuthComplete&&!session.JoshuaComplete);
+                Check.True(!session.CanEnterJudges&&!session.CanEnterRuth&&!session.CanEnterFirstSamuel);
+                Check.Throws<InvalidOperationException>(()=>session.PrepareRuth(CampaignContent.Round(52)));
+                Check.Throws<InvalidOperationException>(()=>session.PrepareFirstSamuel(CampaignContent.Round(55)));
+                Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
+                var gold=state.Profile.Gold;
+                var history=state.Run.LaterBossHistory!.Select(Json).ToArray();
+                var boss=Json(state.Run.Boss);
+                Check.True(!session.CompleteNormalSettlement()&&!session.CompleteBossSettlement());
+                Check.Equal(gold,state.Profile.Gold);
+
+                // Saving the checkpoint again keeps it the same terminal state.
+                var expected=state.Revision;
+                var revision=store.Commit(state,expected,"r60-resave");
+                Check.Equal(revision,store.Commit(state,expected,"r60-resave"));
+                state=store.Load()!;
+                session=AdamSession.Resume(state,CampaignContent.Round(60));
+                Check.True(session.ContentComplete&&!session.CanEnterFirstSamuel);
+                Check.Equal(61,state.Run!.RoundNumber);
+                Check.Equal(gold,state.Profile.Gold);
+                Check.Equal(boss,Json(state.Run.Boss));
+                Check.True(history.SequenceEqual(state.Run.LaterBossHistory!.Select(Json)));
+            }
+            finally { Directory.Delete(dir,true); }
+        });
+
         test("R60 progress, atomic Ruth and First Samuel entries, ordered boss receipts, and R61 or future save protection",() =>
         {
             var dir=Path.Combine(Path.GetTempPath(),"bible-r60-"+Guid.NewGuid().ToString("N"));
