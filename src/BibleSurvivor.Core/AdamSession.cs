@@ -20,6 +20,7 @@ namespace BibleSurvivor.Core
         private readonly GameSnapshot state;
         private readonly RoundDefinition definition;
         private readonly BossDefinition? experimentalBoss;
+        internal bool IsExperimental {get;}
         private RunState run;
         public IWaveView? Wave { get; private set; }
         private WaveDirector? Arena => Wave as WaveDirector;
@@ -30,7 +31,7 @@ namespace BibleSurvivor.Core
         public string Stage => run.Stage;
         public BossEncounterState? Boss => run.Boss?.Copy();
         internal BossEncounterState? Encounter => run.Boss;
-        public BossDefinition? BossRules=>experimentalBoss??BossDefinition.Find(definition.Number);
+        public BossDefinition? BossRules=>IsExperimental?experimentalBoss:BossDefinition.Find(definition.Number);
         public bool NeedsRewardImplementation => IsCurrent && run.Stage=="boss_reward" && run.Boss?.Reward?.PolicyId==BossDefinition.LegacyPolicy;
         public IReadOnlyList<BossRewardCandidate> BossChoices=>run.Boss?.Reward?.Candidates?.Select(x=>x.Copy()).ToList().AsReadOnly() ?? (IReadOnlyList<BossRewardCandidate>)Array.Empty<BossRewardCandidate>();
         public string WeaponForm(string weapon)=>Inventory.Forms.TryGetValue(weapon,out var form)?form:weapon;
@@ -67,6 +68,7 @@ namespace BibleSurvivor.Core
         public bool CanEnterRuth=>JudgesComplete&&run.PendingLevels==0;
         public bool RuthComplete=>IsCurrent&&definition.Number==RuthContent.LastRound&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool CanEnterFirstSamuel=>RuthComplete&&run.PendingLevels==0;
+        public bool CanEnterLaterBook=>IsCurrent&&run.Stage=="between_rounds"&&run.PendingLevels==0&&LaterCampaignBooks.StartsBook(run.RoundNumber);
         public bool ContentComplete=>IsCurrent&&definition.Number==CampaignContent.LastInstalledRound&&run.Stage=="between_rounds"&&(run.RoundCompletionApplied||run.Boss?.CompletionApplied==true);
         public bool ExodusComplete=>IsCurrent&&definition.Number==15&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
         public bool ChapterComplete=>IsCurrent&&definition.Number==9&&run.Stage=="between_rounds"&&run.Boss?.CompletionApplied==true;
@@ -170,6 +172,12 @@ namespace BibleSurvivor.Core
         public GameSnapshot PrepareRuth(RoundDefinition next)=>PrepareLaterBook(CanEnterRuth,RuthContent.GlobalRoundNumber,next,"Ruth");
         public GameSnapshot PrepareFirstSamuel(RoundDefinition next)=>PrepareLaterBook(CanEnterFirstSamuel,FirstSamuelContent.GlobalRoundNumber,next,"First Samuel");
 
+        public GameSnapshot PrepareLaterBook(RoundDefinition next)
+        {
+            var book=LaterCampaignBooks.Require(run.RoundNumber);
+            return PrepareLaterBook(CanEnterLaterBook,book.FirstRound,next,book.Name);
+        }
+
         private GameSnapshot PrepareLaterBook(bool allowed,int first,RoundDefinition next,string book)
         {
             if(!allowed)throw new InvalidOperationException("Explicit "+book+" entry requires completed R"+(first-1).ToString(CultureInfo.InvariantCulture));
@@ -187,7 +195,7 @@ namespace BibleSurvivor.Core
             if(!IsCurrent || run.Stage!="between_rounds" || run.PendingLevels!=0 ||
                 next.Number!=run.RoundNumber || next.Number==10 || next.Number==LeviticusContent.GlobalRoundNumber || next.Number==NumbersContent.GlobalRoundNumber || next.Number==DeuteronomyContent.GlobalRoundNumber ||
                 next.Number==JoshuaContent.GlobalRoundNumber || next.Number==JudgesContent.GlobalRoundNumber ||
-                next.Number==RuthContent.GlobalRoundNumber || next.Number==FirstSamuelContent.GlobalRoundNumber || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
+                next.Number==RuthContent.GlobalRoundNumber || next.Number==FirstSamuelContent.GlobalRoundNumber || LaterCampaignBooks.StartsBook(next.Number) || next.Number>CampaignContent.LastInstalledRound || definition.Number!=next.Number-1)
                 throw new InvalidOperationException("Next round requires the previous completed round and resolved choices");
             if(next.Number>=LeviticusContent.GlobalRoundNumber)CampaignContent.Validate(next);
             else if(next.Number>=11)ExodusContent.Validate(next);
@@ -200,7 +208,7 @@ namespace BibleSurvivor.Core
         // save validation continue to enforce the installed campaign boundary.
         internal AdamSession StartExperimentalRound(RoundDefinition next,BossDefinition? boss)
         {
-            if(next.Number<=CampaignContent.LastInstalledRound||!IsCurrent||run.Stage!="between_rounds"||
+            if(next.Number<LaterCampaignBooks.FirstRound||!IsCurrent||run.Stage!="between_rounds"||
                 run.PendingLevels!=0||next.Number!=run.RoundNumber||next.Number!=definition.Number+1||
                 (boss!=null&&boss.Number!=next.Number))
                 throw new InvalidOperationException("Experimental round requires a completed preceding round");
@@ -210,7 +218,7 @@ namespace BibleSurvivor.Core
 
         private AdamSession(AdamSession previous,RoundDefinition next,BossDefinition? boss)
         {
-            state=previous.state;run=previous.run;definition=next;experimentalBoss=boss;
+            state=previous.state;run=previous.run;definition=next;experimentalBoss=boss;IsExperimental=true;
             Inventory=EquipmentInventory.Restore(run.Weapons,run.Passives,run.Forms);
             Growth=new GrowthLedger(run.Level,run.Experience);
             Wave=WaveDirector.Restore(definition,run.Wave!);

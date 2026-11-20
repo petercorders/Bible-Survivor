@@ -39,11 +39,12 @@ namespace BibleSurvivor.Core
             RavinePolicy="r27-production-v1",WardenPolicy="r30-production-v1",
             OblivionPolicy="r33-production-v1",CrossroadsPolicy="r36-production-v1",RampartPolicy="r39-production-v1",
             BoundaryPolicy="r42-production-v1",TorrentPolicy="r45-production-v1",FordPolicy="r48-production-v1",
-            PillarPolicy="r51-production-v1",ChaffPolicy="r54-production-v1",SwarmPolicy="r57-production-v1",ValleyPolicy="r60-production-v1";
+            PillarPolicy="r51-production-v1",ChaffPolicy="r54-production-v1",SwarmPolicy="r57-production-v1",ValleyPolicy="r60-production-v1",
+            PalacePolicy="r63-production-v1",FieldPolicy="r66-production-v1",AltarPolicy="r69-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
-            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy;
+            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -105,11 +106,14 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition ChaffBoss=new BossDefinition(54,"chaff_whirl",68500,37,1300,5,32,3481,"rt1",1080,19,.71,ChaffPolicy,BossActions.Chains|BossActions.Summon,.85,.50);
         private static readonly BossDefinition SwarmBoss=new BossDefinition(57,"swarm_monarch",72000,38,1360,5,33,3661,"sm1",1140,20,.73,SwarmPolicy,BossActions.Chains|BossActions.Summon,.85,.55);
         private static readonly BossDefinition ValleyBoss=new BossDefinition(60,"valley_bronze_brute",75500,39,1420,5,34,3841,"sm1",1200,20,.73,ValleyPolicy,BossActions.Chains|BossActions.Summon,.90,.55);
+        private static readonly BossDefinition PalaceBoss=new BossDefinition(63,"palace_roof_eye",79000,40,1480,5,35,4021,"",0,0,0,PalacePolicy,BossActions.Chains);
+        private static readonly BossDefinition FieldBoss=new BossDefinition(66,"lentil_field_beast",82500,41,1540,5,36,4201,"ss1",1320,21,.75,FieldPolicy,BossActions.Summon,.95,.60);
+        private static readonly BossDefinition AltarBoss=new BossDefinition(69,"bethel_altar_calf",86000,42,1600,5,37,4381,"",0,0,0,AltarPolicy,BossActions.Slam);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
             33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,
-            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,_=>null
+            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
@@ -120,7 +124,7 @@ namespace BibleSurvivor.Core
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
             string support,int supportHp,int supportContact,double supportSpeed,BossActions actions,params double[] thresholds)
         {
-            if(number<=CampaignContent.LastInstalledRound)
+            if(number<LaterCampaignBooks.FirstRound)
                 throw new ArgumentOutOfRangeException(nameof(number));
             return new BossDefinition(number,"trial_boss",hp,contact,gold,5,damage,actor,
                 support,supportHp,supportContact,supportSpeed,ValleyPolicy,actions,thresholds)

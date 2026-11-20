@@ -17,6 +17,8 @@ namespace BibleSurvivor.Unity
             43=>"옷니엘",44=>"에훗",45=>"드보라",46=>"기드온의 양털",47=>"삼백 용사",48=>"입다",49=>"마노아의 제단",50=>"삼손과 사자",
             51=>"삼손의 마지막",52=>"모압에서 돌아옴",53=>"보아스의 밭",54=>"타작마당",
             55=>"한나의 기도",56=>"실로의 부르심",57=>"빼앗긴 언약궤",58=>"사울의 기름부음",59=>"믹마스의 요나단",60=>"엘라 골짜기",
+            61=>"기브온 못가",62=>"오벧에돔의 집",63=>"나단의 책망",64=>"에브라임 수풀",65=>"아벨의 지혜로운 여인",
+            66=>"녹두밭과 베들레헴 우물",67=>"솔로몬의 성전",68=>"갈라진 왕국",69=>"벧엘의 제단",70=>"갈멜과 로뎀나무",
             _=>throw new InvalidOperationException("Round is outside installed content")
         };
         public const string ChapterHeading="창세기 완료 · 진행 저장됨";
@@ -38,7 +40,8 @@ namespace BibleSurvivor.Unity
         public const string JoshuaHeading="여호수아 완료 · 진행 저장됨";
         public const string JudgesHeading="사사기 완료 · 진행 저장됨";
         public const string RuthHeading="룻기 완료 · 진행 저장됨";
-        public static readonly string CampaignEndHeading=AdamBookTitle.Name(CampaignContent.LastInstalledRound)+" "+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 완료 · 진행 저장됨";
+        public static readonly string CampaignEndHeading=EndHeading(CampaignContent.LastInstalledRound);
+        static string EndHeading(int round)=>BookLabel(round)+" 완료 · 진행 저장됨";
         const string ResetDetail="\n새 도전 선택 시 성장·장비 초기화";
         static readonly string LeviticusDetail="완료 골드 +"+CampaignContent.Round(LeviticusContent.LastInstalledRound).CompletionGold;
         static readonly string NumbersDetail="완료 골드 +"+CampaignContent.Round(NumbersContent.LastRound).CompletionGold;
@@ -46,8 +49,9 @@ namespace BibleSurvivor.Unity
         static readonly string JoshuaDetail="완료 골드 +"+CampaignContent.Round(JoshuaContent.LastRound).CompletionGold;
         static readonly string JudgesDetail="완료 골드 +"+CampaignContent.Round(JudgesContent.LastRound).CompletionGold;
         static readonly string RuthDetail="완료 골드 +"+CampaignContent.Round(RuthContent.LastRound).CompletionGold;
-        static readonly string CampaignEndDetail="완료 골드 +"+CampaignContent.Round(CampaignContent.LastInstalledRound).CompletionGold+
-            " · 진행 유지\n"+AdamBookTitle.Name(CampaignContent.LastInstalledRound)+" 1–"+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 라운드 클리어"+ResetDetail;
+        static readonly string CampaignEndDetail=EndDetail(CampaignContent.LastInstalledRound);
+        static string EndDetail(int round)=>"완료 골드 +"+CampaignContent.Round(round).CompletionGold+
+            " · 진행 유지\n"+AdamBookTitle.Name(round)+" 1–"+AdamBookTitle.Total(round)+" 라운드 클리어"+ResetDetail;
         public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false,
             bool numbersComplete=false,bool deuteronomyComplete=false,bool joshuaComplete=false,bool judgesComplete=false,bool ruthComplete=false)
             =>genesisComplete?ChapterHeading:exodusComplete?ExodusHeading:leviticusComplete?LeviticusHeading:numbersComplete?NumbersHeading:
@@ -76,10 +80,15 @@ namespace BibleSurvivor.Unity
             host.DeuteronomyComplete&&host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:
             host.JoshuaComplete&&host.JudgesInstalled?JudgesContent.GlobalRoundNumber:
             host.JudgesComplete&&host.RuthInstalled?RuthContent.GlobalRoundNumber:
-            host.RuthComplete&&host.FirstSamuelInstalled?FirstSamuelContent.GlobalRoundNumber:0;
-        public static string CompletionHeading(AdamHost host)=>CompletionHeading(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusComplete,
+            host.RuthComplete&&host.FirstSamuelInstalled?FirstSamuelContent.GlobalRoundNumber:host.UpcomingLaterBook?.FirstRound??0;
+        public static string CompletionHeading(AdamHost host)=>host.UpcomingLaterBook!=null
+            ?AdamBookTitle.Name(host.Session.RoundNumber)+" 완료 · 진행 저장됨"
+            :host.ContentComplete&&!host.ExodusComplete?EndHeading(host.Session.RoundNumber):CompletionHeading(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusComplete,
             host.ContentComplete,host.NumbersComplete,host.DeuteronomyComplete,host.JoshuaComplete,host.JudgesComplete,host.RuthComplete);
-        public static string CompletionDetail(AdamHost host)=>CompletionDetail(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusInstalled,
+        public static string CompletionDetail(AdamHost host)=>host.UpcomingLaterBook!=null
+            ?"완료 골드 +"+CampaignContent.Round(host.Session.RoundNumber).CompletionGold+" · "+host.UpcomingLaterBook.Name+"는 현재 성장·장비로 계속"+ResetDetail
+            :host.ContentComplete&&!host.ExodusComplete?EndDetail(host.Session.RoundNumber)
+            :CompletionDetail(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusInstalled,
             host.LeviticusComplete,host.NumbersInstalled,host.ContentComplete,host.NumbersComplete,host.DeuteronomyInstalled,host.DeuteronomyComplete,
             host.JoshuaInstalled,host.JoshuaComplete,host.JudgesInstalled,host.JudgesComplete,host.RuthInstalled,host.RuthComplete,
             host.FirstSamuelInstalled);
@@ -87,6 +96,7 @@ namespace BibleSurvivor.Unity
         public static (string Heading,string Body)? EntryRetryModal(AdamHost host)
         {
             static string Body(string book)=>book+" 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.";
+            if(host.LaterBookEntryRetry!=null) return (CompletionHeading(host),Body(host.LaterBookEntryRetry.Name));
             if(host.HasFirstSamuelEntryRetry) return (RuthHeading,Body("사무엘상"));
             if(host.HasRuthEntryRetry) return (JudgesHeading,Body("룻기"));
             if(host.HasJudgesEntryRetry) return (JoshuaHeading,Body("사사기"));
@@ -106,6 +116,7 @@ namespace BibleSurvivor.Unity
             JudgesContent.GlobalRoundNumber=>JudgesStartCard,
             RuthContent.GlobalRoundNumber=>RuthStartCard,
             FirstSamuelContent.GlobalRoundNumber=>FirstSamuelStartCard,
+            _ when LaterCampaignBooks.StartsBook(chapter)=>LaterCampaignBooks.Find(chapter).Name+" 시작 (Enter)",
             _=>throw new ArgumentOutOfRangeException(nameof(chapter))
         };
         public static string Title(AdamHost host)=>Title(host?.Session?.RoundNumber??1);
