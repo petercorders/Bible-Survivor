@@ -7,6 +7,16 @@ using System.Runtime.Serialization;
 
 namespace BibleSurvivor.Core
 {
+    [Flags]
+    public enum BossActions
+    {
+        None = 0,
+        Dash = 1,
+        Slam = 2,
+        Chains = 4,
+        Summon = 8
+    }
+
     // Approved technical tuning v1; not a claim of measured gameplay balance.
     public sealed class BossDefinition
     {
@@ -36,7 +46,15 @@ namespace BibleSurvivor.Core
             or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
-        public bool UsesChainProjectiles=>Number==9||Number>=15;
+        public BossActions Actions {get;}
+        public bool UsesChainProjectiles=>(Actions&BossActions.Chains)!=0;
+        public bool UsesDash=>(Actions&BossActions.Dash)!=0;
+        public bool UsesSlam=>(Actions&BossActions.Slam)!=0;
+        public bool SummonsSupport=>(Actions&BossActions.Summon)!=0;
+        internal bool HasTimedAttack=>UsesDash||UsesSlam||UsesChainProjectiles;
+        internal int EncounterVersion=>UsesDash?4:UsesChainProjectiles?3:2;
+        // Combined geometry fits the existing World4 layout. The dash clock lives in Boss.
+        internal int WorldVersion=>UsesChainProjectiles?4:UsesDash?5:Number>=4?3:2;
         public double ProjectileSpeed=>UsesChainProjectiles?ChainSpeed:0;
         public double ProjectileRadius=>UsesChainProjectiles?ChainRadius:0;
         public double ProjectileLifetime=>UsesChainProjectiles?ChainLifetime:0;
@@ -44,12 +62,12 @@ namespace BibleSurvivor.Core
         public double ProjectileSpreadDegrees=>UsesChainProjectiles?ChainAngleDegrees:0;
         public const double ChariotDashDuration=.6, ChariotDashSpeed=1.3;
         public bool IsChariot=>Number==12;
-        public double DashDuration=>IsChariot?ChariotDashDuration:0;
-        public double DashSpeedRatio=>IsChariot?ChariotDashSpeed:0;
+        public double DashDuration=>UsesDash?ChariotDashDuration:0;
+        public double DashSpeedRatio=>UsesDash?ChariotDashSpeed:0;
         public const double ChainSpeed=1.35,ChainRadius=.16,ChainLifetime=6,ChainAngleDegrees=20;
         public const int ChainCap=12;
         public static string ChainContract=>"three-chain-v1:"+string.Join(":",new[]{ChainSpeed,ChainRadius,ChainLifetime,ChainAngleDegrees,(double)ChainCap}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+":";
-        public double TelegraphDuration=>UsesChainProjectiles?1:TelegraphSeconds;
+        public double TelegraphDuration=>UsesDash?TelegraphSeconds:UsesChainProjectiles?1:TelegraphSeconds;
         public int Number {get;}
         public string Id {get;}
         public double MaxHealth {get;}
@@ -65,28 +83,28 @@ namespace BibleSurvivor.Core
         public string RewardPolicy {get;}
         public IReadOnlyList<double> Thresholds {get;}
         private string? experimentalRoundId;
-        private BossDefinition(int number,string id,double hp,int contact,int gold,double period,int damage,int actor,string support,int supportHp,int supportDamage,double speed,string policy,params double[] thresholds)
-        {Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(thresholds);}
-        private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,ThresholdRatio);
-        private static readonly BossDefinition IsaacBoss=new BossDefinition(6,"sitnah_keeper",6500,16,200,7,18,781,"f1",80,8,.70,SitnahPolicy,.70,.35);
-        private static readonly BossDefinition JudahBoss=new BossDefinition(9,"silver_cup_accuser",16000,20,350,5,15,1141,"i2",260,11,.60,JudahPolicy,.60,.30);
-        private static readonly BossDefinition MosesBoss=new BossDefinition(12,"oppression_chariot",20000,20,400,6,0,1021,"ex8",360,14,.45,ChariotPolicy,.60,.30);
-        private static readonly BossDefinition BezalelBoss=new BossDefinition(15,"defilement_weaver",26000,22,500,5,18,1201,"ex17",400,14,.65,WeaverPolicy,.60,.30);
-        private static readonly BossDefinition AshVeilBoss=new BossDefinition(18,"ash_veil",31000,24,560,5,20,1381,"lv1",350,14,.60,AshVeilPolicy,.60,.30);
-        private static readonly BossDefinition OathBoss=new BossDefinition(21,"oath_wraith",33200,25,620,5,21,1561,"lv1",425,14,.60,OathPolicy,.60,.30);
-        private static readonly BossDefinition DustBoss=new BossDefinition(24,"dust_tyrant",35500,26,680,5,22,1681,"nm1",480,15,.63,DustPolicy,.65,.30);
-        private static readonly BossDefinition RavineBoss=new BossDefinition(27,"ravine_stalker",38000,27,740,5,23,1861,"nm1",540,15,.63,RavinePolicy,.65,.35);
-        private static readonly BossDefinition WardenBoss=new BossDefinition(30,"wilderness_warden",41000,29,820,5,24,2041,"nm1",600,15,.63,WardenPolicy,.70,.35);
-        private static readonly BossDefinition OblivionBoss=new BossDefinition(33,"oblivion_mist",44000,30,880,5,25,2221,"dt1",660,16,.65,OblivionPolicy,.70,.35);
-        private static readonly BossDefinition CrossroadsBoss=new BossDefinition(36,"crossroads_sentinel",47500,31,940,5,26,2401,"dt1",720,16,.65,CrossroadsPolicy,.70,.40);
-        private static readonly BossDefinition RampartBoss=new BossDefinition(39,"rampart_colossus",51000,32,1000,5,27,2581,"js1",780,17,.67,RampartPolicy,.75,.40);
-        private static readonly BossDefinition BoundaryBoss=new BossDefinition(42,"shifting_boundary",54500,33,1060,5,28,2761,"js1",840,17,.67,BoundaryPolicy,.75,.40);
-        private static readonly BossDefinition TorrentBoss=new BossDefinition(45,"torrent_serpent",58000,34,1120,5,29,2941,"jd1",900,18,.69,TorrentPolicy,.75,.45);
-        private static readonly BossDefinition FordBoss=new BossDefinition(48,"ford_gatekeeper",61500,35,1180,5,30,3121,"jd1",960,18,.69,FordPolicy,.80,.45);
-        private static readonly BossDefinition PillarBoss=new BossDefinition(51,"toppling_pillar",65000,36,1240,5,31,3301,"jd1",1020,18,.69,PillarPolicy,.80,.50);
-        private static readonly BossDefinition ChaffBoss=new BossDefinition(54,"chaff_whirl",68500,37,1300,5,32,3481,"rt1",1080,19,.71,ChaffPolicy,.85,.50);
-        private static readonly BossDefinition SwarmBoss=new BossDefinition(57,"swarm_monarch",72000,38,1360,5,33,3661,"sm1",1140,20,.73,SwarmPolicy,.85,.55);
-        private static readonly BossDefinition ValleyBoss=new BossDefinition(60,"valley_bronze_brute",75500,39,1420,5,34,3841,"sm1",1200,20,.73,ValleyPolicy,.90,.55);
+        private BossDefinition(int number,string id,double hp,int contact,int gold,double period,int damage,int actor,string support,int supportHp,int supportDamage,double speed,string policy,BossActions actions,params double[] thresholds)
+        {Actions=actions;Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(SummonsSupport?thresholds:Array.Empty<double>());}
+        private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,BossActions.Slam|BossActions.Summon,ThresholdRatio);
+        private static readonly BossDefinition IsaacBoss=new BossDefinition(6,"sitnah_keeper",6500,16,200,7,18,781,"f1",80,8,.70,SitnahPolicy,BossActions.Slam|BossActions.Summon,.70,.35);
+        private static readonly BossDefinition JudahBoss=new BossDefinition(9,"silver_cup_accuser",16000,20,350,5,15,1141,"i2",260,11,.60,JudahPolicy,BossActions.Chains|BossActions.Summon,.60,.30);
+        private static readonly BossDefinition MosesBoss=new BossDefinition(12,"oppression_chariot",20000,20,400,6,0,1021,"ex8",360,14,.45,ChariotPolicy,BossActions.Dash|BossActions.Summon,.60,.30);
+        private static readonly BossDefinition BezalelBoss=new BossDefinition(15,"defilement_weaver",26000,22,500,5,18,1201,"ex17",400,14,.65,WeaverPolicy,BossActions.Chains|BossActions.Summon,.60,.30);
+        private static readonly BossDefinition AshVeilBoss=new BossDefinition(18,"ash_veil",31000,24,560,5,20,1381,"lv1",350,14,.60,AshVeilPolicy,BossActions.Chains|BossActions.Summon,.60,.30);
+        private static readonly BossDefinition OathBoss=new BossDefinition(21,"oath_wraith",33200,25,620,5,21,1561,"lv1",425,14,.60,OathPolicy,BossActions.Chains|BossActions.Summon,.60,.30);
+        private static readonly BossDefinition DustBoss=new BossDefinition(24,"dust_tyrant",35500,26,680,5,22,1681,"nm1",480,15,.63,DustPolicy,BossActions.Chains|BossActions.Summon,.65,.30);
+        private static readonly BossDefinition RavineBoss=new BossDefinition(27,"ravine_stalker",38000,27,740,5,23,1861,"nm1",540,15,.63,RavinePolicy,BossActions.Chains|BossActions.Summon,.65,.35);
+        private static readonly BossDefinition WardenBoss=new BossDefinition(30,"wilderness_warden",41000,29,820,5,24,2041,"nm1",600,15,.63,WardenPolicy,BossActions.Chains|BossActions.Summon,.70,.35);
+        private static readonly BossDefinition OblivionBoss=new BossDefinition(33,"oblivion_mist",44000,30,880,5,25,2221,"dt1",660,16,.65,OblivionPolicy,BossActions.Chains|BossActions.Summon,.70,.35);
+        private static readonly BossDefinition CrossroadsBoss=new BossDefinition(36,"crossroads_sentinel",47500,31,940,5,26,2401,"dt1",720,16,.65,CrossroadsPolicy,BossActions.Chains|BossActions.Summon,.70,.40);
+        private static readonly BossDefinition RampartBoss=new BossDefinition(39,"rampart_colossus",51000,32,1000,5,27,2581,"js1",780,17,.67,RampartPolicy,BossActions.Chains|BossActions.Summon,.75,.40);
+        private static readonly BossDefinition BoundaryBoss=new BossDefinition(42,"shifting_boundary",54500,33,1060,5,28,2761,"js1",840,17,.67,BoundaryPolicy,BossActions.Chains|BossActions.Summon,.75,.40);
+        private static readonly BossDefinition TorrentBoss=new BossDefinition(45,"torrent_serpent",58000,34,1120,5,29,2941,"jd1",900,18,.69,TorrentPolicy,BossActions.Chains|BossActions.Summon,.75,.45);
+        private static readonly BossDefinition FordBoss=new BossDefinition(48,"ford_gatekeeper",61500,35,1180,5,30,3121,"jd1",960,18,.69,FordPolicy,BossActions.Chains|BossActions.Summon,.80,.45);
+        private static readonly BossDefinition PillarBoss=new BossDefinition(51,"toppling_pillar",65000,36,1240,5,31,3301,"jd1",1020,18,.69,PillarPolicy,BossActions.Chains|BossActions.Summon,.80,.50);
+        private static readonly BossDefinition ChaffBoss=new BossDefinition(54,"chaff_whirl",68500,37,1300,5,32,3481,"rt1",1080,19,.71,ChaffPolicy,BossActions.Chains|BossActions.Summon,.85,.50);
+        private static readonly BossDefinition SwarmBoss=new BossDefinition(57,"swarm_monarch",72000,38,1360,5,33,3661,"sm1",1140,20,.73,SwarmPolicy,BossActions.Chains|BossActions.Summon,.85,.55);
+        private static readonly BossDefinition ValleyBoss=new BossDefinition(60,"valley_bronze_brute",75500,39,1420,5,34,3841,"sm1",1200,20,.73,ValleyPolicy,BossActions.Chains|BossActions.Summon,.90,.55);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
@@ -96,11 +114,16 @@ namespace BibleSurvivor.Core
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
             string support,int supportHp,int supportContact,double supportSpeed,params double[] thresholds)
+            => Experimental(number,roundId,hp,contact,gold,damage,actor,support,supportHp,supportContact,supportSpeed,
+                BossActions.Chains|BossActions.Summon,thresholds);
+
+        internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
+            string support,int supportHp,int supportContact,double supportSpeed,BossActions actions,params double[] thresholds)
         {
             if(number<=CampaignContent.LastInstalledRound)
                 throw new ArgumentOutOfRangeException(nameof(number));
             return new BossDefinition(number,"trial_boss",hp,contact,gold,5,damage,actor,
-                support,supportHp,supportContact,supportSpeed,ValleyPolicy,thresholds)
+                support,supportHp,supportContact,supportSpeed,ValleyPolicy,actions,thresholds)
                 {experimentalRoundId=roundId};
         }
         internal string EncounterSuffix => ":"+(experimentalRoundId??(Number switch
@@ -112,7 +135,7 @@ namespace BibleSurvivor.Core
         public string EncounterKey(string runId)=>runId+EncounterSuffix;
         public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":UsesChainProjectiles?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
-                Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)));
+                Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+(Number>60?":actions="+((int)Actions).ToString(CultureInfo.InvariantCulture):"");
         public static string EncounterId(string runId) => runId + ":genesis_03:nephilim_tyrant";
     }
 
@@ -125,13 +148,13 @@ namespace BibleSurvivor.Core
         // Deadline is in the encounter's absolute BossElapsed clock, not world time.
         [DataMember] public double Until {get;set;}
         internal ChariotChargeState Copy()=>(ChariotChargeState)MemberwiseClone();
-        internal void Validate(BossEncounterState boss,bool combat)
+        internal void Validate(BossEncounterState boss,BossDefinition rules,bool combat)
         {
             if(Phase!="chase"&&Phase!="telegraph"&&Phase!="dash")throw new UnsupportedSaveVersionException();
             if(!BattleSnapshot.Position(DirectionX,DirectionY)||Math.Abs((double)DirectionX*DirectionX+(double)DirectionY*DirectionY-1)>.0001||!BattleSnapshot.Finite(Until))throw new InvalidDataException("Invalid chariot direction/deadline");
-            var last=boss.NextAttackAt-boss.Rules.AttackPeriod;
-            var expected=combat&&last>=6&&boss.BossElapsed<last+BossDefinition.ChariotDashDuration-1e-9?"dash":
-                combat&&boss.BossElapsed+1e-9>=boss.NextAttackAt-boss.Rules.TelegraphDuration?"telegraph":"chase";
+            var last=boss.NextAttackAt-rules.AttackPeriod;
+            var expected=combat&&last>=rules.AttackPeriod&&boss.BossElapsed<last+BossDefinition.ChariotDashDuration-1e-9?"dash":
+                combat&&boss.BossElapsed+1e-9>=boss.NextAttackAt-rules.TelegraphDuration?"telegraph":"chase";
             var deadline=expected=="dash"?last+BossDefinition.ChariotDashDuration:expected=="telegraph"?boss.NextAttackAt:0;
             if(Phase!=expected||Math.Abs(Until-deadline)>1e-7||boss.Telegraphing!=(Phase=="telegraph"))throw new InvalidDataException("Invalid absolute chariot clock");
         }
@@ -192,12 +215,15 @@ namespace BibleSurvivor.Core
         internal BossEncounterState Copy()
         {var copy=(BossEncounterState)MemberwiseClone();copy.ChariotCharge=ChariotCharge?.Copy();copy.ChainDirections=ChainDirections?.Select(x=>x.Copy()).ToList();copy.Supports=Supports.Select(x=>x.Copy()).ToList();copy.Reward=Reward?.Copy();return copy;}
         internal void Validate(RunState run)
+            => Validate(run,BossDefinition.Find(EncounterRound)??throw new UnsupportedSaveVersionException());
+
+        internal void Validate(RunState run,BossDefinition rules)
         {
             bool Finite(double n)=>BattleSnapshot.Finite(n);
-            if(Version>4||BossDefinition.Find(EncounterRound)==null)throw new UnsupportedSaveVersionException();
-            var rules=Rules;var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
+            if(Version>4||EncounterRound!=rules.Number)throw new UnsupportedSaveVersionException();
+            var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
             var used=(mask&1)+((mask>>1)&1);var maxMask=(1<<rules.Thresholds.Count)-1;
-            if((rules.IsChariot?Version!=4:Version!=1&&Version!=2&&Version!=3)||(rules.Number==6&&Version!=2)||(rules.UsesChainProjectiles&&Version!=3)||(!rules.UsesChainProjectiles&&Version==3)||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
+            if((Version!=rules.EncounterVersion&&!(rules.Number==3&&Version==1))||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
                 !Finite(IntroElapsed)||IntroElapsed<0||IntroElapsed>2||!Finite(BossElapsed)||BossElapsed<0||
                 !Finite(CombatTime)||!Finite(Health)||Health<0||Health>rules.MaxHealth||!Finite(NextAttackAt)||NextAttackAt<rules.AttackPeriod||
                 Math.Abs(NextAttackAt/rules.AttackPeriod-Math.Round(NextAttackAt/rules.AttackPeriod))>1e-7||NextAttackAt<=BossElapsed||NextAttackAt>BossElapsed+rules.AttackPeriod+1e-7||
@@ -206,7 +232,7 @@ namespace BibleSurvivor.Core
                 Supports.Select(x=>x.Id).Distinct().Count()!=Supports.Count||Supports.Any(x=>x.Id<=rules.BossActorId||x.Id>=NextActorId||x.MonsterId!=rules.SupportMonster||
                     !Finite(x.Health)||x.Health<=0||x.Health>rules.SupportHitPoints||x.ContactDamage!=rules.SupportContact||x.RawExperience!=0)||run.LastHitTime>CombatTime)
                 throw new InvalidDataException("Invalid boss encounter");
-            if(rules.IsChariot){if(ChariotCharge==null)throw new InvalidDataException("Missing chariot clock");ChariotCharge.Validate(this,run.Stage=="boss");}
+            if(rules.UsesDash){if(ChariotCharge==null)throw new InvalidDataException("Missing dash clock");ChariotCharge.Validate(this,rules,run.Stage=="boss");}
             else if(ChariotCharge!=null||Version==4)throw new UnsupportedSaveVersionException();
             if(rules.UsesChainProjectiles)
             {
@@ -219,6 +245,10 @@ namespace BibleSurvivor.Core
                         if(Math.Abs(ChainDirections[i].X-(center.X*Math.Cos(angle)-center.Y*Math.Sin(angle)))>.0001||Math.Abs(ChainDirections[i].Y-(center.X*Math.Sin(angle)+center.Y*Math.Cos(angle)))>.0001)throw new InvalidDataException("Invalid chain spread");
                     }
                 if(ChainDirections.Count!=(BossElapsed+1e-9>=rules.AttackPeriod-rules.TelegraphDuration?3:0))throw new InvalidDataException("Chain directions outside attack clock");
+                if(rules.UsesDash&&ChainDirections.Count==3&&
+                    (Math.Abs(ChainDirections[1].X-ChariotCharge!.DirectionX)>.0001||
+                     Math.Abs(ChainDirections[1].Y-ChariotCharge.DirectionY)>.0001))
+                    throw new InvalidDataException("Chain directions do not match the locked dash aim");
             }
             else if(ChainDirections!=null)throw new InvalidDataException("Chain directions outside R09");
             if(run.Stage=="boss_intro")
@@ -228,7 +258,7 @@ namespace BibleSurvivor.Core
             }
             else if(run.Stage=="boss")
             {
-                if(run.RoundNumber!=rules.Number||IntroElapsed!=2||Health<=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing!=(BossElapsed+1e-9>=NextAttackAt-rules.TelegraphDuration)||
+                if(run.RoundNumber!=rules.Number||IntroElapsed!=2||Health<=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing!=(rules.HasTimedAttack&&BossElapsed+1e-9>=NextAttackAt-rules.TelegraphDuration)||
                     rules.Thresholds.Where((ratio,index)=>((mask>>index)&1)!=(Health<=rules.MaxHealth*ratio?1:0)).Any()||
                     run.Drops.Any(x=>x.Key<=rules.BossActorId||x.Key>=NextActorId||x.Value!=0||Supports.Any(s=>s.Id==x.Key)))throw new InvalidDataException("Invalid boss combat lifecycle");
             }
@@ -240,7 +270,7 @@ namespace BibleSurvivor.Core
                     (run.Stage=="boss_reward")==Reward.Applied||CompletionApplied!=(run.Stage=="between_rounds")||
                     run.RoundNumber!=(run.Stage=="between_rounds"?rules.Number+1:rules.Number)||
                     (run.Stage=="between_rounds"&&(run.PendingLevels!=0||run.Health!=run.MaxHealth))||
-                    (Reward.PolicyId==BossDefinition.LegacyPolicy?(rules.Number!=3||Version!=1):(Version!=(rules.IsChariot?4:rules.UsesChainProjectiles?3:2)||Reward.PolicyId!=rules.RewardPolicy)))
+                    (Reward.PolicyId==BossDefinition.LegacyPolicy?(rules.Number!=3||Version!=1):(Version!=rules.EncounterVersion||Reward.PolicyId!=rules.RewardPolicy)))
                     throw new InvalidDataException("Invalid boss reward/settlement receipt");
                 BossRewards.Validate(Reward,run,CompletionApplied);
             }

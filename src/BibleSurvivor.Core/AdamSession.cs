@@ -362,7 +362,7 @@ namespace BibleSurvivor.Core
                 var ended=Wave!.Elapsed;
                 foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
                 run.Drops.Clear();run.World=null;Wave=null;run.Stage="boss_intro";
-                run.Boss=new BossEncounterState{Version=definition.Number==12?4:BossRules!.UsesChainProjectiles?3:2,ChariotCharge=definition.Number==12?new ChariotChargeState():null,ChainDirections=BossRules!.UsesChainProjectiles?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
+                run.Boss=new BossEncounterState{Version=BossRules!.EncounterVersion,ChariotCharge=BossRules.UsesDash?new ChariotChargeState():null,ChainDirections=BossRules!.UsesChainProjectiles?new List<ChainDirectionState>():null,EncounterId=BossRules!.EncounterKey(run.RunId),RoundNumber=definition.Number==3?0:definition.Number,Health=BossRules.MaxHealth,NextAttackAt=BossRules.AttackPeriod,NextActorId=BossRules.BossActorId+1,NormalEndedAt=ended};
                 return;
             }
             if(UsesNormalSettlement)

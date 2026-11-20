@@ -52,6 +52,7 @@ internal static class Program
         RoundTransitionTests.Register(Test);
         }
         if(!args.Contains("--reward-only"))BossTests.Register(Test);
+        if(!args.Contains("--reward-only"))BossActionTests.Register(Test);
         if(!args.Contains("--boss-only"))RewardEvolutionTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFourTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))RoundFiveTests.Register(Test);

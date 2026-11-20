@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="BibleSurvivor.Sim" />
+    <InternalsVisibleTo Include="BibleSurvivor.Core.Tests" />
   </ItemGroup>
 </Project>

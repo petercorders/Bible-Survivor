@@ -69,7 +69,7 @@ internal sealed class NaturalGrowthMovement(BattleWorld world, IReadOnlyDictiona
             preferred = Normalize(orbit + Math.Clamp((Vector2.Distance(player, bossPosition) - 5) / 2, -1, 1) * radial);
         }
 
-        var slam = boss is { IsChariot: false, UsesChainProjectiles: false } ? session.Boss : null;
+        var slam = boss is { UsesSlam: true } ? session.Boss : null;
         var moveSpeed = (float)(Tuning.PlayerSpeed * session.MoveSpeedMultiplier);
         var bestScore = float.NegativeInfinity;
         foreach (var candidate in Directions)

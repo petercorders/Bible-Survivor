@@ -523,7 +523,7 @@ namespace BibleSurvivor.Unity
                 for(var direction=0;direction<3;direction++)if(TryChainGeometry(snap,bossVisual,host.Session.Stage,direction,out var band))AdamVisualQualityWorld.WarningBand(projection,band,true);
                 if(AdamChariotWarning.TryBossGeometry(chariotVisual,out var bossBand))AdamVisualQualityWorld.WarningBand(projection,bossBand,true);
             }
-            if(bossVisual?.Telegraphing==true && !bossVisual.Rules.UsesChainProjectiles && !bossVisual.Rules.IsChariot && host.Session.Stage=="boss")
+            if(bossVisual?.Telegraphing==true && bossVisual.Rules.UsesSlam && host.Session.Stage=="boss")
                 danger.Draw(projection,new Vector2(bossVisual.TargetX,bossVisual.TargetY),(float)BossDefinition.SlamRadius);
             if(snap.Charges!=null)foreach(var charge in snap.Charges)
             {
