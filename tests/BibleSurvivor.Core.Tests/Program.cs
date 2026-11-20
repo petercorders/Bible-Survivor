@@ -75,6 +75,7 @@ internal static class Program
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignSeventyTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignEightyTests.Register(Test);
         if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignNinetyTests.Register(Test);
+        if(!args.Contains("--boss-only")&&!args.Contains("--reward-only"))CampaignHundredTests.Register(Test);
         var failed = results.Count(r => r.Error != null);
         Console.WriteLine($"Core checks: {results.Count - failed}/{results.Count} passed, {failed} failed");
         if (args.Length == 2 && args[0] == "--results")

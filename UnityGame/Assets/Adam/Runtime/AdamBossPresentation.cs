@@ -51,6 +51,9 @@ namespace BibleSurvivor.Unity
             "wilderness_raider_chief"=>"광야 약탈 떼의 우두머리 짐승",
             "rending_host"=>"서로 물어뜯는 군세",
             "bronze_hook_chain"=>"청동 갈고리 사슬",
+            "roadside_ambush_shadow"=>"길목의 매복 그림자",
+            "ono_whispering_trap"=>"오노 평지의 속삭이는 덫",
+            "rolling_pur_cart"=>"굴러오는 부르(제비) 수레",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);

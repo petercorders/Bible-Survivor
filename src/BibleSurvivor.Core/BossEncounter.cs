@@ -42,11 +42,12 @@ namespace BibleSurvivor.Core
             PillarPolicy="r51-production-v1",ChaffPolicy="r54-production-v1",SwarmPolicy="r57-production-v1",ValleyPolicy="r60-production-v1",
             PalacePolicy="r63-production-v1",FieldPolicy="r66-production-v1",AltarPolicy="r69-production-v1",
             VineyardPolicy="r72-production-v1",DothanPolicy="r75-production-v1",BullPolicy="r78-production-v1",
-            GateLionPolicy="r81-production-v1",RaiderPolicy="r84-production-v1",BeracahPolicy="r87-production-v1",HookPolicy="r90-production-v1";
+            GateLionPolicy="r81-production-v1",RaiderPolicy="r84-production-v1",BeracahPolicy="r87-production-v1",HookPolicy="r90-production-v1",
+            AmbushPolicy="r93-production-v1",OnoPolicy="r96-production-v1",PurPolicy="r99-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
-            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy or VineyardPolicy or DothanPolicy or BullPolicy or GateLionPolicy or RaiderPolicy or BeracahPolicy or HookPolicy;
+            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy or VineyardPolicy or DothanPolicy or BullPolicy or GateLionPolicy or RaiderPolicy or BeracahPolicy or HookPolicy or AmbushPolicy or OnoPolicy or PurPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -118,11 +119,14 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition RaiderBoss=new BossDefinition(84,"wilderness_raider_chief",103500,47,1900,5,42,5281,"fc1",1680,24,.81,RaiderPolicy,BossActions.Summon,.95,.75);
         private static readonly BossDefinition BeracahBoss=new BossDefinition(87,"rending_host",107000,48,1960,5,43,5461,"",0,0,0,BeracahPolicy,BossActions.Slam);
         private static readonly BossDefinition HookBoss=new BossDefinition(90,"bronze_hook_chain",110500,49,2020,5,44,5641,"",0,0,0,HookPolicy,BossActions.Chains);
+        private static readonly BossDefinition AmbushBoss=new BossDefinition(93,"roadside_ambush_shadow",114000,50,2080,6,0,5821,"",0,0,0,AmbushPolicy,BossActions.Dash);
+        private static readonly BossDefinition OnoBoss=new BossDefinition(96,"ono_whispering_trap",117500,51,2140,5,46,6001,"nh1",1920,27,.87,OnoPolicy,BossActions.Summon,.95,.80);
+        private static readonly BossDefinition PurBoss=new BossDefinition(99,"rolling_pur_cart",121000,52,2200,6,0,6181,"",0,0,0,PurPolicy,BossActions.Dash);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
             33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,
-            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,72=>VineyardBoss,75=>DothanBoss,78=>BullBoss,81=>GateLionBoss,84=>RaiderBoss,87=>BeracahBoss,90=>HookBoss,_=>null
+            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,72=>VineyardBoss,75=>DothanBoss,78=>BullBoss,81=>GateLionBoss,84=>RaiderBoss,87=>BeracahBoss,90=>HookBoss,93=>AmbushBoss,96=>OnoBoss,99=>PurBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
