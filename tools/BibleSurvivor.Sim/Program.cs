@@ -16,6 +16,7 @@ internal static class Program
             if(args.Length>0 && args[0]=="--r60-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:60);
             if(args.Length>0 && args[0]=="--r70-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:70);
             if(args.Length>0 && args[0]=="--r80-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:80);
+            if(args.Length>0 && args[0]=="--r90-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:90);
             if(args.Length>0 && args[0]=="--r50-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:50);
             if(args.Length>0 && args[0]=="--r40-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:40);
             if(args.Length>0 && args[0]=="--r30-series")return BossRunner.Run(args.Skip(1).ToArray(),true,true,true,true,true,true,true,true,true,true,true,true,true,true,laterRound:30);

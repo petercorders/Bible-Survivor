@@ -32,6 +32,9 @@ namespace BibleSurvivor.Core
             70=>"dry_land_ember",
             71=>"cave_hunter",
             76=>"starving_siege_beast",
+            82=>"scattered_scroll_fragments",
+            86=>"endless_procession",
+            88=>"tower_pride_shadow",
             _=>MonsterPrefix+"1"
         };
 
@@ -60,7 +63,9 @@ namespace BibleSurvivor.Core
         {
             new LaterCampaignBook(9,"second_samuel","사무엘하","ss",61,66,21,.75,1.01,.43),
             new LaterCampaignBook(10,"first_kings","열왕기상","fk",67,72,22,.77,1.03,.44),
-            new LaterCampaignBook(11,"second_kings","열왕기하","sk",73,81,23,.79,1.05,.45)
+            new LaterCampaignBook(11,"second_kings","열왕기하","sk",73,81,23,.79,1.05,.45),
+            new LaterCampaignBook(12,"first_chronicles","역대상","fc",82,84,24,.81,1.07,.46),
+            new LaterCampaignBook(13,"second_chronicles","역대하","sc",85,90,25,.83,1.09,.47)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:

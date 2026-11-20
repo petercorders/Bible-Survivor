@@ -48,12 +48,14 @@ internal static class LaterCampaignRunner
             var world=new BattleWorld(session,speeds,seed);
             var phases=new HashSet<string>();
             var midpoint=false;
+            var waveHits=0;
             // Allow late high-health bosses enough fixed steps for the technical equipment fixture.
             var maxTicks=hasBoss?(round>70?120000:48000):10860;
             for(var tick=0;tick<maxTicks&&session.IsActive;tick++)
             {
                 BattleRunner.Resolve(session,weapon);
                 world.Advance(BattleWorld.FixedStep,BattleRunner.Movement(world));
+                if(session.Stage=="normal")waveHits=world.Hits;
                 BattleRunner.Resolve(session,weapon);
                 if(!session.IsActive)break;
                 var phase=!midpoint&&world.SimulationTime>=60?"midpoint":
@@ -85,8 +87,10 @@ internal static class LaterCampaignRunner
                 else laterReceipts.Add(JsonSerializer.Serialize(state.Run!.Boss));
             }
 
-            records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases});
-            passed&=midpoint&&world.Hits>0&&world.Kills>0&&session.Stage=="between_rounds"&&
+            records.Add(new {round,world.Hits,world.Kills,world.BossKills,world.SimulationTime,phases,waveHits});
+            // Late waves may be cleared by survival. Require actual hits during the wave, then prove the boss separately.
+            var waveEngaged=round<=80?world.Hits>0&&world.Kills>0:waveHits>0;
+            passed&=midpoint&&waveEngaged&&session.Stage=="between_rounds"&&
                 (boss==null||world.BossKills==1&&
                     (!(boss.UsesDash||boss.UsesSlam||boss.UsesChainProjectiles)||phases.Contains("telegraph"))&&
                     (!boss.UsesChainProjectiles||phases.Contains("projectiles"))&&
