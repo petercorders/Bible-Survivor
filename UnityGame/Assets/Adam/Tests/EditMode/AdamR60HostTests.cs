@@ -266,14 +266,14 @@ public sealed class AdamR60HostTests
         Assert.AreEqual("룻기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,ruthComplete:true));
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(54).CompletionGold,AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true));
         StringAssert.Contains("사무엘상은 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true,firstSamuelInstalled:true));
-        Assert.AreEqual("열왕기상 4 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        StringAssert.Contains("열왕기상 1–4 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        Assert.AreEqual("열왕기하 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        StringAssert.Contains("열왕기하 1–8 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
     }
 
     [Test]
     public void InstalledActorsReuseTheReviewedSpriteAndShadowPair()
     {
-        foreach(var round in System.Linq.Enumerable.Range(61,10))
+        foreach(var round in System.Linq.Enumerable.Range(61,20))
         {
             var actorIds=CampaignContent.Round(round).Waves.SelectMany(wave=>wave.Groups)
                 .Select(group=>group.MonsterId).Distinct();
@@ -283,8 +283,21 @@ public sealed class AdamR60HostTests
                 Assert.IsNotEmpty(AdamArtWorld.EnemyShadow(id));
             }
         }
-        foreach(var round in new[]{63,66,69})
+        foreach(var round in new[]{63,66,69,72,75,78})
             Assert.AreEqual("fx_shadow-boss_static_40x8",AdamArtWorld.EnemyShadow(BossDefinition.ForRound(round).Id));
+    }
+
+    [Test]
+    public void BullKeepsItsAttackPoseUntilTheDashEnds()
+    {
+        var rules=BossDefinition.ForRound(78);
+        var boss=new BossEncounterState{RoundNumber=78,BossElapsed=6.5,NextAttackAt=12,
+            ChariotCharge=new ChariotChargeState{Phase="dash",Until=6.6}};
+        Assert.AreEqual("돌진 진행",AdamBossPresentation.Phase("boss",boss,rules));
+        Assert.AreEqual(AdamExodusR06Art.BossAttack,AdamExodusR06Art.BossClip("boss",boss,6.5,out var frame,out _));
+        Assert.AreEqual(1,frame);
+        boss.ChariotCharge.Phase="chase";
+        Assert.AreEqual(AdamExodusR06Art.BossMove,AdamExodusR06Art.BossClip("boss",boss,6.5,out _,out _));
     }
 
     [TestCase(63,"사슬 3방향 예고")]

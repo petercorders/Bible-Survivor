@@ -40,11 +40,12 @@ namespace BibleSurvivor.Core
             OblivionPolicy="r33-production-v1",CrossroadsPolicy="r36-production-v1",RampartPolicy="r39-production-v1",
             BoundaryPolicy="r42-production-v1",TorrentPolicy="r45-production-v1",FordPolicy="r48-production-v1",
             PillarPolicy="r51-production-v1",ChaffPolicy="r54-production-v1",SwarmPolicy="r57-production-v1",ValleyPolicy="r60-production-v1",
-            PalacePolicy="r63-production-v1",FieldPolicy="r66-production-v1",AltarPolicy="r69-production-v1";
+            PalacePolicy="r63-production-v1",FieldPolicy="r66-production-v1",AltarPolicy="r69-production-v1",
+            VineyardPolicy="r72-production-v1",DothanPolicy="r75-production-v1",BullPolicy="r78-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
-            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy;
+            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy or VineyardPolicy or DothanPolicy or BullPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -109,11 +110,14 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition PalaceBoss=new BossDefinition(63,"palace_roof_eye",79000,40,1480,5,35,4021,"",0,0,0,PalacePolicy,BossActions.Chains);
         private static readonly BossDefinition FieldBoss=new BossDefinition(66,"lentil_field_beast",82500,41,1540,5,36,4201,"ss1",1320,21,.75,FieldPolicy,BossActions.Summon,.95,.60);
         private static readonly BossDefinition AltarBoss=new BossDefinition(69,"bethel_altar_calf",86000,42,1600,5,37,4381,"",0,0,0,AltarPolicy,BossActions.Slam);
+        private static readonly BossDefinition VineyardBoss=new BossDefinition(72,"vineyard_greed_vine",89500,43,1660,5,38,4561,"fk1",1440,22,.77,VineyardPolicy,BossActions.Chains|BossActions.Summon,.95,.65);
+        private static readonly BossDefinition DothanBoss=new BossDefinition(75,"dothan_iron_ring",93000,44,1720,5,39,4741,"sk1",1500,23,.79,DothanPolicy,BossActions.Summon,.95,.70);
+        private static readonly BossDefinition BullBoss=new BossDefinition(78,"winged_bull",96500,45,1780,6,0,4921,"",0,0,0,BullPolicy,BossActions.Dash);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
             33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,
-            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,_=>null
+            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,72=>VineyardBoss,75=>DothanBoss,78=>BullBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
@@ -139,7 +143,10 @@ namespace BibleSurvivor.Core
         public string EncounterKey(string runId)=>runId+EncounterSuffix;
         public string FingerprintContract=>Number==3?Contract:Id+(IsChariot?":absolute-clock:fixed-direction:relative-swept:contact-only:dash0.6:speed1.3:":UsesChainProjectiles?":"+ChainContract:":point-impact-v1:")+SupportMonster+":"+SupportCount.ToString(CultureInfo.InvariantCulture)+":"+RewardPolicy+":"+EvolutionRules.Contract+":"+
             string.Join(":",new[]{MaxHealth,(double)Contact,KillGold,AttackPeriod,AttackDamage,BossActorId,SupportHitPoints,SupportContact,SupportRatio,
-                Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+(Number>60?":actions="+((int)Actions).ToString(CultureInfo.InvariantCulture):"");
+                Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+
+            (Number>60?":actions="+((int)Actions).ToString(CultureInfo.InvariantCulture):"")+
+            (Number>60&&UsesDash?":absolute-clock:fixed-direction:relative-swept:contact-only:dash"+
+                DashDuration.ToString("R",CultureInfo.InvariantCulture)+":speed"+DashSpeedRatio.ToString("R",CultureInfo.InvariantCulture):"");
         public static string EncounterId(string runId) => runId + ":genesis_03:nephilim_tyrant";
     }
 
