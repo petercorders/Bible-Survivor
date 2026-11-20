@@ -6,7 +6,7 @@ public sealed class AdamR09UiTests
 {
     [Test] public void JudahNamesAndExplicitShadowMappingsKeepEarlierRounds()
     {
-        Assert.AreEqual("유다",AdamRoundPresentation.Name(9));Assert.AreEqual("요셉",AdamRoundPresentation.Name(8));Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(51));
+        Assert.AreEqual("유다",AdamRoundPresentation.Name(9));Assert.AreEqual("요셉",AdamRoundPresentation.Name(8));Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(61));
         foreach(var id in new[]{"i1","i2","i3","silver_cup_accuser"})Assert.IsTrue(AdamRoundPresentation.R09Enemy(id));
         Assert.IsFalse(AdamRoundPresentation.R09Enemy("h1"));Assert.IsFalse(AdamRoundPresentation.R09Enemy("unknown"));
         Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("i1"));Assert.AreEqual("fx_shadow-small_static_12x4",AdamRoundPresentation.Shadow("i2"));Assert.AreEqual("fx_shadow-wide_static_24x6",AdamRoundPresentation.Shadow("i3"));Assert.AreEqual("fx_shadow-boss_static_40x8",AdamRoundPresentation.Shadow("silver_cup_accuser"));

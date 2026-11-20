@@ -28,10 +28,12 @@ namespace BibleSurvivor.Core
         internal const string OathPolicy="r21-production-v1",DustPolicy="r24-production-v1",
             RavinePolicy="r27-production-v1",WardenPolicy="r30-production-v1",
             OblivionPolicy="r33-production-v1",CrossroadsPolicy="r36-production-v1",RampartPolicy="r39-production-v1",
-            BoundaryPolicy="r42-production-v1",TorrentPolicy="r45-production-v1",FordPolicy="r48-production-v1";
+            BoundaryPolicy="r42-production-v1",TorrentPolicy="r45-production-v1",FordPolicy="r48-production-v1",
+            PillarPolicy="r51-production-v1",ChaffPolicy="r54-production-v1",SwarmPolicy="r57-production-v1",ValleyPolicy="r60-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
-            or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy;
+            or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
+            or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public bool UsesChainProjectiles=>Number==9||Number>=15;
@@ -80,10 +82,15 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition BoundaryBoss=new BossDefinition(42,"shifting_boundary",54500,33,1060,5,28,2761,"js1",840,17,.67,BoundaryPolicy,.75,.40);
         private static readonly BossDefinition TorrentBoss=new BossDefinition(45,"torrent_serpent",58000,34,1120,5,29,2941,"jd1",900,18,.69,TorrentPolicy,.75,.45);
         private static readonly BossDefinition FordBoss=new BossDefinition(48,"ford_gatekeeper",61500,35,1180,5,30,3121,"jd1",960,18,.69,FordPolicy,.80,.45);
+        private static readonly BossDefinition PillarBoss=new BossDefinition(51,"toppling_pillar",65000,36,1240,5,31,3301,"jd1",1020,18,.69,PillarPolicy,.80,.50);
+        private static readonly BossDefinition ChaffBoss=new BossDefinition(54,"chaff_whirl",68500,37,1300,5,32,3481,"rt1",1080,19,.71,ChaffPolicy,.85,.50);
+        private static readonly BossDefinition SwarmBoss=new BossDefinition(57,"swarm_monarch",72000,38,1360,5,33,3661,"sm1",1140,20,.73,SwarmPolicy,.85,.55);
+        private static readonly BossDefinition ValleyBoss=new BossDefinition(60,"valley_bronze_brute",75500,39,1420,5,34,3841,"sm1",1200,20,.73,ValleyPolicy,.90,.55);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
-            33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,_=>null
+            33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,
+            51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal string EncounterSuffix => ":"+(Number switch

@@ -110,10 +110,10 @@ public sealed class AdamR50HostTests
     }
 
     [Test]
-    public void JudgesKeepsTheRunAcrossReloadsAndStopsAtR50()
+    public void JudgesKeepsTheRunAcrossReloadsThroughR50()
     {
         var catalog=AdamCatalog.Load();
-        Assert.AreEqual(50,catalog.LastInstalledRound);
+        Assert.AreEqual(60,catalog.LastInstalledRound);
         var store=new SaveStore(path);
         var host=CompletedJoshua(path);
         var runId=host.State.Run.RunId;
@@ -135,29 +135,27 @@ public sealed class AdamR50HostTests
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(round+1,host.State.Run.RoundNumber);
             Assert.AreEqual(oldGold+definition.CompletionGold,host.State.Profile.Gold);
-            Assert.AreEqual(round==50,host.ContentComplete);
-            Assert.AreEqual(round!=50,host.AwaitingNextRound);
+            Assert.IsFalse(host.ContentComplete);
+            Assert.IsTrue(host.AwaitingNextRound);
             Assert.IsFalse(host.JoshuaComplete);
             Assert.IsFalse(host.CanEnterJudges);
             CollectionAssert.AreEqual(committed,File.ReadAllBytes(path));
             if(round!=50)host.SetPaused(false);
         }
-        var revision=host.State.Revision;
-        host.SetPaused(false);host.Tick(.1);
+        // R50 is an ordinary Judges round now: no book completion, the next round is R51.
         Assert.AreEqual(50,host.Session.RoundNumber);
         Assert.AreEqual(51,host.State.Run.RoundNumber);
-        Assert.AreEqual(revision,host.State.Revision);
-        Assert.IsTrue(host.CanStartNew);
-        Assert.IsFalse(host.CanPlay);
+        Assert.IsFalse(host.BookComplete);
+        Assert.IsFalse(host.CanStartNew);
         Assert.IsFalse(host.CanEnterJudges);
-        Assert.IsFalse(host.CanEnterJoshua);
+        Assert.IsFalse(host.CanEnterRuth);
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
-        Assert.AreEqual("사사기 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-        StringAssert.Contains("사사기 1–8 라운드",AdamRoundPresentation.CompletionDetail(host));
         CollectionAssert.AreEqual(new[]{21,24,27,30,33,36,39,42,45,48},host.State.Run.LaterBossHistory.Select(x=>x.EncounterRound).ToArray());
-        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(51));
-        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=51,Stage="normal"}));
-        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=52,Stage="between_rounds"}));
+        host.SetPaused(false);host.Tick(.1);
+        Assert.AreEqual(51,host.Session.RoundNumber);
+        Assert.AreEqual(51,host.State.Run.RoundNumber);
+        Assert.AreEqual("normal",host.State.Run.Stage);
+        Assert.AreEqual(runId,host.State.Run.RunId);
     }
 
     [TestCase(41,"기브온의 해")] [TestCase(42,"세겜 언약")]
@@ -171,17 +169,11 @@ public sealed class AdamR50HostTests
 
     [TestCase(43,"옷니엘")] [TestCase(44,"에훗")] [TestCase(45,"드보라")] [TestCase(46,"기드온의 양털")]
     [TestCase(47,"삼백 용사")] [TestCase(48,"입다")] [TestCase(49,"마노아의 제단")] [TestCase(50,"삼손과 사자")]
-    public void JudgesTitlesUseBookLocalRoundAndR51RemainsUninstalled(int round,string name)
+    public void JudgesTitlesUseBookLocalRound(int round,string name)
     {
         Assert.AreEqual($"사사기 {round-42} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
-        Assert.AreEqual(8,AdamBookTitle.Total(round));
+        Assert.AreEqual(9,AdamBookTitle.Total(round));
         Assert.AreEqual(AdamBookTitle.Boss(6,round-43),round is 45 or 48);
-        Assert.AreEqual("사사기 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        var detail=AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true);
-        StringAssert.Contains("완료 골드 +"+CampaignContent.Round(50).CompletionGold,detail);
-        StringAssert.Contains("사사기 1–8 라운드",detail);
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(51));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(51));
     }
 
     [TestCase(42,"흔들리는 경계석")] [TestCase(45,"급류의 뱀")] [TestCase(48,"나루터의 문지기")]

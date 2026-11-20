@@ -7,7 +7,7 @@ namespace BibleSurvivor.Core
 {
     public static class CampaignContent
     {
-        public const int LastInstalledRound = 50;
+        public const int LastInstalledRound = 60;
 
         public static RoundDefinition Round(int number) => number switch
         {
@@ -15,7 +15,9 @@ namespace BibleSurvivor.Core
             < DeuteronomyContent.GlobalRoundNumber => NumbersContent.Round(number),
             < JoshuaContent.GlobalRoundNumber => DeuteronomyContent.Round(number),
             < JudgesContent.GlobalRoundNumber => JoshuaContent.Round(number),
-            _ => JudgesContent.Round(number)
+            < RuthContent.GlobalRoundNumber => JudgesContent.Round(number),
+            < FirstSamuelContent.GlobalRoundNumber => RuthContent.Round(number),
+            _ => FirstSamuelContent.Round(number)
         };
 
         public static IReadOnlyDictionary<string,double> SpeedsFor(int number) => number switch
@@ -24,7 +26,9 @@ namespace BibleSurvivor.Core
             < DeuteronomyContent.GlobalRoundNumber => NumbersContent.SpeedsFor(number),
             < JoshuaContent.GlobalRoundNumber => DeuteronomyContent.SpeedsFor(number),
             < JudgesContent.GlobalRoundNumber => JoshuaContent.SpeedsFor(number),
-            _ => JudgesContent.SpeedsFor(number)
+            < RuthContent.GlobalRoundNumber => JudgesContent.SpeedsFor(number),
+            < FirstSamuelContent.GlobalRoundNumber => RuthContent.SpeedsFor(number),
+            _ => FirstSamuelContent.SpeedsFor(number)
         };
 
         // Fingerprint inputs for R22 onward; Numbers keeps its original contract text.
@@ -34,7 +38,9 @@ namespace BibleSurvivor.Core
             < DeuteronomyContent.GlobalRoundNumber => NumbersContent.SpeedContract,
             < JoshuaContent.GlobalRoundNumber => DeuteronomyContent.SpeedContract,
             < JudgesContent.GlobalRoundNumber => JoshuaContent.SpeedContract,
-            _ => JudgesContent.SpeedContract
+            < RuthContent.GlobalRoundNumber => JudgesContent.SpeedContract,
+            < FirstSamuelContent.GlobalRoundNumber => RuthContent.SpeedContract,
+            _ => FirstSamuelContent.SpeedContract
         };
 
         internal static string RoundId(int number) => number switch
@@ -43,7 +49,9 @@ namespace BibleSurvivor.Core
             < DeuteronomyContent.GlobalRoundNumber => NumbersContent.RoundId(number),
             < JoshuaContent.GlobalRoundNumber => DeuteronomyContent.RoundId(number),
             < JudgesContent.GlobalRoundNumber => JoshuaContent.RoundId(number),
-            _ => JudgesContent.RoundId(number)
+            < RuthContent.GlobalRoundNumber => JudgesContent.RoundId(number),
+            < FirstSamuelContent.GlobalRoundNumber => RuthContent.RoundId(number),
+            _ => FirstSamuelContent.RoundId(number)
         };
 
         internal static void Validate(RoundDefinition definition)
@@ -171,10 +179,10 @@ namespace BibleSurvivor.Core
         public static RoundDefinition Round(int number) => LaterBookRounds.Build(number,RoundId(number),"js1","js2","js3",17,16,21);
     }
 
-    // Judges is planned through R51; this build stops at the campaign endpoint.
     public static class JudgesContent
     {
         public const int GlobalRoundNumber = 43;
+        public const int LastRound = 51;
         internal const string SpeedContract = "jd1-speed0.69:jd2-speed0.95:jd3-speed0.40:chase-contact";
 
         private static readonly IReadOnlyDictionary<string,double> Speeds =
@@ -185,12 +193,59 @@ namespace BibleSurvivor.Core
 
         public static IReadOnlyDictionary<string,double> SpeedsFor(int number)
         {
-            _=LaterBookRounds.Local(number,GlobalRoundNumber,CampaignContent.LastInstalledRound);
+            _=LaterBookRounds.Local(number,GlobalRoundNumber,LastRound);
             return Speeds;
         }
 
-        internal static string RoundId(int number) => "judges_"+LaterBookRounds.Local(number,GlobalRoundNumber,CampaignContent.LastInstalledRound).ToString("D2",CultureInfo.InvariantCulture);
+        internal static string RoundId(int number) => "judges_"+LaterBookRounds.Local(number,GlobalRoundNumber,LastRound).ToString("D2",CultureInfo.InvariantCulture);
 
         public static RoundDefinition Round(int number) => LaterBookRounds.Build(number,RoundId(number),"jd1","jd2","jd3",18,17,22);
+    }
+
+    public static class RuthContent
+    {
+        public const int GlobalRoundNumber = 52;
+        public const int LastRound = 54;
+        internal const string SpeedContract = "rt1-speed0.71:rt2-speed0.97:rt3-speed0.41:chase-contact";
+
+        private static readonly IReadOnlyDictionary<string,double> Speeds =
+            new ReadOnlyDictionary<string,double>(new Dictionary<string,double>
+            {
+                {"rt1",.71}, {"rt2",.97}, {"rt3",.41}
+            });
+
+        public static IReadOnlyDictionary<string,double> SpeedsFor(int number)
+        {
+            _=LaterBookRounds.Local(number,GlobalRoundNumber,LastRound);
+            return Speeds;
+        }
+
+        internal static string RoundId(int number) => "ruth_"+LaterBookRounds.Local(number,GlobalRoundNumber,LastRound).ToString("D2",CultureInfo.InvariantCulture);
+
+        public static RoundDefinition Round(int number) => LaterBookRounds.Build(number,RoundId(number),"rt1","rt2","rt3",19,18,23);
+    }
+
+    // First Samuel ends at R60, which is also the current campaign endpoint.
+    public static class FirstSamuelContent
+    {
+        public const int GlobalRoundNumber = 55;
+        public const int LastRound = 60;
+        internal const string SpeedContract = "sm1-speed0.73:sm2-speed0.99:sm3-speed0.42:chase-contact";
+
+        private static readonly IReadOnlyDictionary<string,double> Speeds =
+            new ReadOnlyDictionary<string,double>(new Dictionary<string,double>
+            {
+                {"sm1",.73}, {"sm2",.99}, {"sm3",.42}
+            });
+
+        public static IReadOnlyDictionary<string,double> SpeedsFor(int number)
+        {
+            _=LaterBookRounds.Local(number,GlobalRoundNumber,LastRound);
+            return Speeds;
+        }
+
+        internal static string RoundId(int number) => "first_samuel_"+LaterBookRounds.Local(number,GlobalRoundNumber,LastRound).ToString("D2",CultureInfo.InvariantCulture);
+
+        public static RoundDefinition Round(int number) => LaterBookRounds.Build(number,RoundId(number),"sm1","sm2","sm3",20,19,24);
     }
 }

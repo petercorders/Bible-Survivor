@@ -15,6 +15,8 @@ namespace BibleSurvivor.Unity
             31=>"모세의 회고",32=>"두 돌판",33=>"기억하라",34=>"도피성",35=>"축복과 저주",36=>"느보산",
             37=>"요단 도하",38=>"길갈의 돌",39=>"여리고 성벽",40=>"아이 성",41=>"기브온의 해",42=>"세겜 언약",
             43=>"옷니엘",44=>"에훗",45=>"드보라",46=>"기드온의 양털",47=>"삼백 용사",48=>"입다",49=>"마노아의 제단",50=>"삼손과 사자",
+            51=>"삼손의 마지막",52=>"모압에서 돌아옴",53=>"보아스의 밭",54=>"타작마당",
+            55=>"한나의 기도",56=>"실로의 부르심",57=>"빼앗긴 언약궤",58=>"사울의 기름부음",59=>"믹마스의 요나단",60=>"엘라 골짜기",
             _=>throw new InvalidOperationException("Round is outside installed content")
         };
         public const string ChapterHeading="창세기 완료 · 진행 저장됨";
@@ -28,25 +30,33 @@ namespace BibleSurvivor.Unity
         public const string DeuteronomyStartCard="신명기 시작 (Enter)";
         public const string JoshuaStartCard="여호수아 시작 (Enter)";
         public const string JudgesStartCard="사사기 시작 (Enter)";
+        public const string RuthStartCard="룻기 시작 (Enter)";
+        public const string FirstSamuelStartCard="사무엘상 시작 (Enter)";
         public const string LeviticusHeading="레위기 완료 · 진행 저장됨";
         public const string NumbersHeading="민수기 완료 · 진행 저장됨";
         public const string DeuteronomyHeading="신명기 완료 · 진행 저장됨";
         public const string JoshuaHeading="여호수아 완료 · 진행 저장됨";
+        public const string JudgesHeading="사사기 완료 · 진행 저장됨";
+        public const string RuthHeading="룻기 완료 · 진행 저장됨";
         public static readonly string CampaignEndHeading=AdamBookTitle.Name(CampaignContent.LastInstalledRound)+" "+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 완료 · 진행 저장됨";
         const string ResetDetail="\n새 도전 선택 시 성장·장비 초기화";
         static readonly string LeviticusDetail="완료 골드 +"+CampaignContent.Round(LeviticusContent.LastInstalledRound).CompletionGold;
         static readonly string NumbersDetail="완료 골드 +"+CampaignContent.Round(NumbersContent.LastRound).CompletionGold;
         static readonly string DeuteronomyDetail="완료 골드 +"+CampaignContent.Round(DeuteronomyContent.LastRound).CompletionGold;
         static readonly string JoshuaDetail="완료 골드 +"+CampaignContent.Round(JoshuaContent.LastRound).CompletionGold;
+        static readonly string JudgesDetail="완료 골드 +"+CampaignContent.Round(JudgesContent.LastRound).CompletionGold;
+        static readonly string RuthDetail="완료 골드 +"+CampaignContent.Round(RuthContent.LastRound).CompletionGold;
         static readonly string CampaignEndDetail="완료 골드 +"+CampaignContent.Round(CampaignContent.LastInstalledRound).CompletionGold+
             " · 진행 유지\n"+AdamBookTitle.Name(CampaignContent.LastInstalledRound)+" 1–"+AdamBookTitle.Total(CampaignContent.LastInstalledRound)+" 라운드 클리어"+ResetDetail;
         public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false,
-            bool numbersComplete=false,bool deuteronomyComplete=false,bool joshuaComplete=false)
+            bool numbersComplete=false,bool deuteronomyComplete=false,bool joshuaComplete=false,bool judgesComplete=false,bool ruthComplete=false)
             =>genesisComplete?ChapterHeading:exodusComplete?ExodusHeading:leviticusComplete?LeviticusHeading:numbersComplete?NumbersHeading:
-                deuteronomyComplete?DeuteronomyHeading:joshuaComplete?JoshuaHeading:contentComplete?CampaignEndHeading:ContentHeading;
+                deuteronomyComplete?DeuteronomyHeading:joshuaComplete?JoshuaHeading:judgesComplete?JudgesHeading:ruthComplete?RuthHeading:
+                contentComplete?CampaignEndHeading:ContentHeading;
         public static string CompletionDetail(bool genesisComplete,bool exodusComplete,bool leviticusInstalled=false,bool leviticusComplete=false,bool numbersInstalled=false,bool contentComplete=false,
             bool numbersComplete=false,bool deuteronomyInstalled=false,bool deuteronomyComplete=false,bool joshuaInstalled=false,
-            bool joshuaComplete=false,bool judgesInstalled=false)
+            bool joshuaComplete=false,bool judgesInstalled=false,bool judgesComplete=false,bool ruthInstalled=false,bool ruthComplete=false,
+            bool firstSamuelInstalled=false)
         {
             if(genesisComplete)return ChapterDetail;
             if(exodusComplete)return leviticusInstalled?ExodusDetail:ContentDetail;
@@ -54,6 +64,8 @@ namespace BibleSurvivor.Unity
             if(numbersComplete)return NumbersDetail+(deuteronomyInstalled?" · 신명기는 현재 성장·장비로 계속":" · 진행 유지\n민수기 1–9 라운드 클리어")+ResetDetail;
             if(deuteronomyComplete)return DeuteronomyDetail+(joshuaInstalled?" · 여호수아는 현재 성장·장비로 계속":" · 진행 유지\n신명기 1–6 라운드 클리어")+ResetDetail;
             if(joshuaComplete)return JoshuaDetail+(judgesInstalled?" · 사사기는 현재 성장·장비로 계속":" · 진행 유지\n여호수아 1–6 라운드 클리어")+ResetDetail;
+            if(judgesComplete)return JudgesDetail+(ruthInstalled?" · 룻기는 현재 성장·장비로 계속":" · 진행 유지\n사사기 1–9 라운드 클리어")+ResetDetail;
+            if(ruthComplete)return RuthDetail+(firstSamuelInstalled?" · 사무엘상은 현재 성장·장비로 계속":" · 진행 유지\n룻기 1–3 라운드 클리어")+ResetDetail;
             return contentComplete?CampaignEndDetail:ContentDetail;
         }
         // The book-completion panel reads these so tests exercise the same host wiring as the game.
@@ -62,12 +74,28 @@ namespace BibleSurvivor.Unity
             host.LeviticusComplete&&host.NumbersInstalled?NumbersContent.GlobalRoundNumber:
             host.NumbersComplete&&host.DeuteronomyInstalled?DeuteronomyContent.GlobalRoundNumber:
             host.DeuteronomyComplete&&host.JoshuaInstalled?JoshuaContent.GlobalRoundNumber:
-            host.JoshuaComplete&&host.JudgesInstalled?JudgesContent.GlobalRoundNumber:0;
+            host.JoshuaComplete&&host.JudgesInstalled?JudgesContent.GlobalRoundNumber:
+            host.JudgesComplete&&host.RuthInstalled?RuthContent.GlobalRoundNumber:
+            host.RuthComplete&&host.FirstSamuelInstalled?FirstSamuelContent.GlobalRoundNumber:0;
         public static string CompletionHeading(AdamHost host)=>CompletionHeading(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusComplete,
-            host.ContentComplete,host.NumbersComplete,host.DeuteronomyComplete,host.JoshuaComplete);
+            host.ContentComplete,host.NumbersComplete,host.DeuteronomyComplete,host.JoshuaComplete,host.JudgesComplete,host.RuthComplete);
         public static string CompletionDetail(AdamHost host)=>CompletionDetail(host.Session?.ChapterComplete==true,host.ExodusComplete,host.LeviticusInstalled,
             host.LeviticusComplete,host.NumbersInstalled,host.ContentComplete,host.NumbersComplete,host.DeuteronomyInstalled,host.DeuteronomyComplete,
-            host.JoshuaInstalled,host.JoshuaComplete,host.JudgesInstalled);
+            host.JoshuaInstalled,host.JoshuaComplete,host.JudgesInstalled,host.JudgesComplete,host.RuthInstalled,host.RuthComplete,
+            host.FirstSamuelInstalled);
+        // Book-entry save retry: the heading keeps the finished book, the body names the book being entered. Null when no entry retry is pending.
+        public static (string Heading,string Body)? EntryRetryModal(AdamHost host)
+        {
+            static string Body(string book)=>book+" 진입 저장을 확인하지 못했습니다.\n같은 저장을 재시도하거나 저장 기록을 다시 불러오세요.";
+            if(host.HasFirstSamuelEntryRetry) return (RuthHeading,Body("사무엘상"));
+            if(host.HasRuthEntryRetry) return (JudgesHeading,Body("룻기"));
+            if(host.HasJudgesEntryRetry) return (JoshuaHeading,Body("사사기"));
+            if(host.HasJoshuaEntryRetry) return (DeuteronomyHeading,Body("여호수아"));
+            if(host.HasDeuteronomyEntryRetry) return (NumbersHeading,Body("신명기"));
+            if(host.HasNumbersEntryRetry) return (LeviticusHeading,Body("민수기"));
+            if(host.HasLeviticusEntryRetry) return (ExodusHeading,Body("레위기"));
+            return null;
+        }
         public static string StartCard(int chapter)=>chapter switch
         {
             ExodusContent.GlobalRoundNumber=>AdamChoiceText.ExodusStartCard,
@@ -76,6 +104,8 @@ namespace BibleSurvivor.Unity
             DeuteronomyContent.GlobalRoundNumber=>DeuteronomyStartCard,
             JoshuaContent.GlobalRoundNumber=>JoshuaStartCard,
             JudgesContent.GlobalRoundNumber=>JudgesStartCard,
+            RuthContent.GlobalRoundNumber=>RuthStartCard,
+            FirstSamuelContent.GlobalRoundNumber=>FirstSamuelStartCard,
             _=>throw new ArgumentOutOfRangeException(nameof(chapter))
         };
         public static string Title(AdamHost host)=>Title(host?.Session?.RoundNumber??1);
@@ -103,14 +133,15 @@ namespace BibleSurvivor.Unity
         {
             "a1"=>"fx_shadow-snake_static_20x4",
             "a2" or "b1" or "c1" or "d2" or "e1" or "e3" or "f1" or "g3" or "h1" or "i1" or "i2" or
-            "ex2" or "ex5" or "ex10" or "ex13" or "ex16" or "lv2" or "nm2" or "dt2" or "js2" or "jd2"=>"fx_shadow-small_static_12x4",
+            "ex2" or "ex5" or "ex10" or "ex13" or "ex16" or "lv2" or "nm2" or "dt2" or "js2" or "jd2" or "rt2" or "sm2"=>"fx_shadow-small_static_12x4",
             "a3" or "b2" or "b3" or "c2" or "c3" or "d1" or "d3" or "e2" or "f2" or "f3" or "g1" or "g2" or
             "h2" or "h3" or "i3" or "ex1" or "ex3" or "ex4" or "ex6" or "ex7" or "ex8" or "ex9" or "ex11" or "ex12" or
-            "ex14" or "ex15" or "ex17" or "ex18" or "lv1" or "lv3" or "nm1" or "nm3" or "dt1" or "dt3" or "js1" or "js3" or "jd1" or "jd3"=>"fx_shadow-wide_static_24x6",
+            "ex14" or "ex15" or "ex17" or "ex18" or "lv1" or "lv3" or "nm1" or "nm3" or "dt1" or "dt3" or "js1" or "js3" or "jd1" or "jd3" or "rt1" or "rt3" or "sm1" or "sm3"=>"fx_shadow-wide_static_24x6",
             "nephilim_tyrant" or "sitnah_keeper" or "silver_cup_accuser" or "oppression_chariot" or "defilement_weaver" or
             "ash_veil" or "oath_wraith" or "dust_tyrant" or "ravine_stalker" or "wilderness_warden" or
             "oblivion_mist" or "crossroads_sentinel" or "rampart_colossus" or
-            "shifting_boundary" or "torrent_serpent" or "ford_gatekeeper"=>"fx_shadow-boss_static_40x8",
+            "shifting_boundary" or "torrent_serpent" or "ford_gatekeeper" or
+            "toppling_pillar" or "chaff_whirl" or "swarm_monarch" or "valley_bronze_brute"=>"fx_shadow-boss_static_40x8",
             _=>throw new InvalidOperationException("Unknown monster "+id)
         };
     }

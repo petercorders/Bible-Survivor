@@ -143,7 +143,7 @@ internal static class CampaignThirtyTests
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>n["Run"]!["RoundNumber"]=52,
+                    n=>n["Run"]!["RoundNumber"]=62,
                     n=>n["Run"]!["LaterBossHistory"]![0]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![0]!["Reward"]!["PolicyId"]="future-reward"
                 })
