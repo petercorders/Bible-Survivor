@@ -44,6 +44,9 @@ namespace BibleSurvivor.Unity
             "palace_roof_eye"=>"왕궁 지붕의 엿보는 눈",
             "lentil_field_beast"=>"녹두밭을 짓밟는 무리 짐승",
             "bethel_altar_calf"=>"벧엘 제단의 금송아지 형상",
+            "vineyard_greed_vine"=>"포도원을 삼키는 탐욕 넝쿨",
+            "dothan_iron_ring"=>"도단을 조이는 쇠고리",
+            "winged_bull"=>"날개 달린 황소",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);
