@@ -24,6 +24,9 @@ namespace BibleSurvivor.Unity
             81=>"예루살렘 함락",82=>"족보 속 야베스의 기도",83=>"레위 찬양대",84=>"요단 동편 지파",
             85=>"아비야의 부르짖음",86=>"아사와 끝없는 행렬",87=>"브라가 골짜기",88=>"웃시야의 망대",
             89=>"오뎃과 돌아온 포로",90=>"므낫세의 회개",
+            91=>"귀환과 성전의 기초",92=>"다시 시작한 성전 공사",93=>"아하와 강가의 금식",
+            94=>"밤의 성벽 순찰",95=>"성벽을 쌓는 손",96=>"오노 평지의 초대",
+            97=>"왕후 에스더",98=>"이 때를 위함",99=>"뒤집힌 제비",100=>"욥의 시련",
             _=>throw new InvalidOperationException("Round is outside installed content")
         };
         public const string ChapterHeading="창세기 완료 · 진행 저장됨";
@@ -55,8 +58,13 @@ namespace BibleSurvivor.Unity
         static readonly string JudgesDetail="완료 골드 +"+CampaignContent.Round(JudgesContent.LastRound).CompletionGold;
         static readonly string RuthDetail="완료 골드 +"+CampaignContent.Round(RuthContent.LastRound).CompletionGold;
         static readonly string CampaignEndDetail=EndDetail(CampaignContent.LastInstalledRound);
-        static string EndDetail(int round)=>"완료 골드 +"+CampaignContent.Round(round).CompletionGold+
-            " · 진행 유지\n"+AdamBookTitle.Name(round)+" 1–"+AdamBookTitle.Total(round)+" 라운드 클리어"+ResetDetail;
+        static string EndDetail(int round)
+        {
+            var total=AdamBookTitle.Total(round);
+            var completed=total==1?"1":"1–"+total;
+            return "완료 골드 +"+CampaignContent.Round(round).CompletionGold+
+                " · 진행 유지\n"+AdamBookTitle.Name(round)+" "+completed+" 라운드 클리어"+ResetDetail;
+        }
         public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false,
             bool numbersComplete=false,bool deuteronomyComplete=false,bool joshuaComplete=false,bool judgesComplete=false,bool ruthComplete=false)
             =>genesisComplete?ChapterHeading:exodusComplete?ExodusHeading:leviticusComplete?LeviticusHeading:numbersComplete?NumbersHeading:
