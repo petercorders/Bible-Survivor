@@ -47,6 +47,10 @@ namespace BibleSurvivor.Unity
             "vineyard_greed_vine"=>"포도원을 삼키는 탐욕 넝쿨",
             "dothan_iron_ring"=>"도단을 조이는 쇠고리",
             "winged_bull"=>"날개 달린 황소",
+            "ashen_gate_lion"=>"잿빛 성문 사자",
+            "wilderness_raider_chief"=>"광야 약탈 떼의 우두머리 짐승",
+            "rending_host"=>"서로 물어뜯는 군세",
+            "bronze_hook_chain"=>"청동 갈고리 사슬",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);

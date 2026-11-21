@@ -266,14 +266,14 @@ public sealed class AdamR60HostTests
         Assert.AreEqual("룻기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,ruthComplete:true));
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(54).CompletionGold,AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true));
         StringAssert.Contains("사무엘상은 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true,firstSamuelInstalled:true));
-        Assert.AreEqual("열왕기하 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        StringAssert.Contains("열왕기하 1–8 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        Assert.AreEqual("역대하 6 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        StringAssert.Contains("역대하 1–6 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
     }
 
     [Test]
     public void InstalledActorsReuseTheReviewedSpriteAndShadowPair()
     {
-        foreach(var round in System.Linq.Enumerable.Range(61,20))
+        foreach(var round in System.Linq.Enumerable.Range(61,30))
         {
             var actorIds=CampaignContent.Round(round).Waves.SelectMany(wave=>wave.Groups)
                 .Select(group=>group.MonsterId).Distinct();
@@ -283,8 +283,27 @@ public sealed class AdamR60HostTests
                 Assert.IsNotEmpty(AdamArtWorld.EnemyShadow(id));
             }
         }
-        foreach(var round in new[]{63,66,69,72,75,78})
+        foreach(var round in new[]{63,66,69,72,75,78,81,84,87,90})
             Assert.AreEqual("fx_shadow-boss_static_40x8",AdamArtWorld.EnemyShadow(BossDefinition.ForRound(round).Id));
+    }
+
+    [Test]
+    public void GateLionDisplaysBothLiveWarningsTogether()
+    {
+        var fixture=Path.GetFullPath(Path.Combine(Application.dataPath,"..","..","tests",
+            "BibleSurvivor.Core.Tests","Fixtures","r80-build-complete-save.json"));
+        var state=new SaveStore(fixture).Load();
+        var session=AdamSession.Resume(state,CampaignContent.Round(80)).StartNextRound(CampaignContent.Round(81));
+        session.Advance(180);
+        var world=new BattleWorld(session,CampaignContent.SpeedsFor(81),7);
+        world.Advance(7,System.Numerics.Vector2.Zero);
+        Assert.IsTrue(session.Boss.Telegraphing);
+        Assert.AreEqual("돌진 · 사슬 3방향 예고",AdamBossPresentation.Phase(session));
+        Assert.IsTrue(AdamChariotWarning.TryBossGeometry(world.ChariotDash,out _));
+        using var art=new AdamArtWorld();
+        var snapshot=world.Capture();
+        for(var direction=0;direction<3;direction++)
+            Assert.IsTrue(art.TryChainGeometry(snapshot,session.Boss,session.Stage,direction,out _));
     }
 
     [Test]
