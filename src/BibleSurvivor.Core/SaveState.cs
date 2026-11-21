@@ -107,7 +107,10 @@ namespace BibleSurvivor.Core
             var r18=laterCampaign&&normalRound==18;
             var r06=Run.RoundNumber==6&&Run.Stage!="between_rounds"||Run.RoundNumber==7&&Run.Stage=="between_rounds";
             var r09=!r10&&(Run.RoundNumber==9&&Run.Stage!="between_rounds"||Run.RoundNumber==10);
-            var chainWorld=r09||r15||r18||expansionBoss;
+            var roundBoss=BossDefinition.Find(normalRound);
+            var chainWorld=roundBoss?.UsesChainProjectiles==true;
+            var dashWorld=roundBoss?.UsesDash==true;
+            var attackPeriod=roundBoss?.AttackPeriod??0;
             var fourthHistory=r10&&(normalRound>=13);
             var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10&&!r12&&!r15&&!r18&&!expansionBoss;
             if(lateNormal)
@@ -179,18 +182,18 @@ namespace BibleSurvivor.Core
                         Health=Run.MaxHealth,MaxHealth=Run.MaxHealth,Weapons=Run.Weapons,Passives=Run.Passives,Forms=Run.Forms,LastHitTime=-1});
                 }
             }
-            if(chainWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=5&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
-            if(r12&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>0&&Run.World==null)throw new InvalidDataException("R12 combat requires live geometry");
+            if(chainWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=attackPeriod&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
+            if(dashWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>0&&Run.World==null)throw new InvalidDataException("R12 combat requires live geometry");
             Run.World?.Validate();
             if(Run.World!=null)
             {
                 if(chainWorld)
                 {
-                    if(Run.World.HostileProjectiles==null||Run.World.NextHostileId<1||Run.World.NextHostileId>1+3*Math.Floor(((Run.Boss?.BossElapsed??0)+1e-7)/5)||
-                        (Run.Stage!="boss"&&Run.World.HostileProjectiles.Count!=0)||Run.World.HostileProjectiles.Any(p=>p.BornAt<(Run.Boss?.NormalEndedAt??180)+2+5-1e-7||Math.Abs((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/5-Math.Round((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/5))>1e-6))throw new InvalidDataException("Hostile checkpoint outside R09 attack lifecycle");
+                    if(Run.World.HostileProjectiles==null||Run.World.NextHostileId<1||Run.World.NextHostileId>1+3*Math.Floor(((Run.Boss?.BossElapsed??0)+1e-7)/attackPeriod)||
+                        (Run.Stage!="boss"&&Run.World.HostileProjectiles.Count!=0)||Run.World.HostileProjectiles.Any(p=>p.BornAt<(Run.Boss?.NormalEndedAt??180)+2+attackPeriod-1e-7||Math.Abs((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/attackPeriod-Math.Round((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/attackPeriod))>1e-6))throw new InvalidDataException("Hostile checkpoint outside R09 attack lifecycle");
                 }
                 else if(Run.World.HostileProjectiles!=null||Run.World.NextHostileId!=0)throw new InvalidDataException("Hostile checkpoint outside R09");
-                if(Run.Boss!=null && (Run.World.SchemaVersion!=(r12?5:chainWorld?4:r06?3:2)||Math.Abs(Run.World.Time-Run.Boss.CombatTime)>1e-7||
+                if(Run.Boss!=null && (Run.World.SchemaVersion!=Run.Boss.Rules.WorldVersion||Math.Abs(Run.World.Time-Run.Boss.CombatTime)>1e-7||
                     !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Boss.Health==0?Array.Empty<int>():
                         Run.Boss.Supports.Select(x=>x.Id).Append(Run.Boss.Rules.BossActorId)).OrderBy(x=>x))||
                     (Run.Boss.Health==0&&(Run.World.Projectiles.Count!=0||Run.World.Weapons.Count!=0))||
@@ -199,7 +202,7 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World checkpoint does not match boss lifecycle");
                 if(Run.Boss!=null && (Run.World.Projectiles.Any(p=>p.HitIds.Any(id=>id<Run.Boss.Rules.BossActorId||id>=Run.Boss.NextActorId))||
                     Run.World.Weapons.Any(w=>w.OrbitHits.Any(hit=>hit.Id<Run.Boss.Rules.BossActorId||hit.Id>=Run.Boss.NextActorId))||
-                    !Run.World.MonsterSpeeds.Any(x=>x.MonsterId==Run.Boss.Rules.SupportMonster&&x.Ratio==Run.Boss.Rules.SupportRatio)))
+                    Run.Boss.Rules.SummonsSupport&&!Run.World.MonsterSpeeds.Any(x=>x.MonsterId==Run.Boss.Rules.SupportMonster&&x.Ratio==Run.Boss.Rules.SupportRatio)))
                     throw new InvalidDataException("Invalid boss target ledger or support speed");
                 var lastActor=Run.Boss!=null?Run.Boss.NextActorId-1:Run.Wave?.Cursor??int.MaxValue;
                 var firstActor=Run.Boss?.Rules.BossActorId??1;
@@ -208,8 +211,8 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Evolution ledger target outside issued actors");
                 if(Run.World.Weapons.Any(w=>w.WeaponForm!=(Run.Forms!=null&&Run.Forms.TryGetValue(w.WeaponId,out var form)?form:null)))
                     throw new InvalidDataException("World weapon form does not match inventory");
-                if(Run.Boss==null && (Run.World.SchemaVersion!=(r12?5:chainWorld?4:lateNormal||r06?3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
-                if((r06||chainWorld||r12&&Run.Boss!=null)&&(Run.World.Charges==null||Run.World.Charges.Count!=0))throw new InvalidDataException("R06 cannot inherit D3 charges");
+                if(Run.Boss==null && (Run.World.SchemaVersion!=(normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
+                if((r06||chainWorld||dashWorld&&Run.Boss!=null)&&(Run.World.Charges==null||Run.World.Charges.Count!=0))throw new InvalidDataException("R06 cannot inherit D3 charges");
                 if((normalRound==5||normalRound==7||normalRound==8||r10&&!r12)&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
                 if((lateNormal||r12&&Run.Stage=="normal") && (Run.World.Charges==null||!Run.World.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Wave?.Active??new List<SpawnedEnemy>()).Where(x=>BattleWorld.UsesNormalCharge(normalRound,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))||
                     (Run.NormalEndedAt.HasValue&&Math.Abs(Run.World.Time-Run.NormalEndedAt.Value)>1e-7)))throw new InvalidDataException("R04 charge world does not match round");

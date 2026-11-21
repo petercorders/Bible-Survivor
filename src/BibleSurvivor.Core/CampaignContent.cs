@@ -110,9 +110,9 @@ namespace BibleSurvivor.Core
     // Later books continue the Numbers formula with the campaign-wide offset from R22. Initial values, not measured balance.
     internal static class LaterBookRounds
     {
-        internal static RoundDefinition Build(int number,string id,string steady,string fast,string heavy,int steadyContact,int fastContact,int heavyContact)
+        internal static RoundDefinition Build(int number,string id,string steady,string fast,string heavy,int steadyContact,int fastContact,int heavyContact,int? tuningOffset=null)
         {
-            var offset=number-NumbersContent.GlobalRoundNumber;
+            var offset=tuningOffset??number-NumbersContent.GlobalRoundNumber;
             var cohort=offset%3;
             var steadyHealth=440+20*offset;
             var fastHealth=295+14*offset;
