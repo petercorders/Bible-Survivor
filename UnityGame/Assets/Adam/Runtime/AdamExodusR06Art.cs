@@ -92,7 +92,13 @@ namespace BibleSurvivor.Unity
                 frame=Mathf.Clamp((int)Math.Floor(seconds/boss.Rules.TelegraphDuration*3+1e-8),0,2);return BossWindup;
             }
             var rules=boss.Rules;
-            if(!rules.UsesDash&&!rules.UsesSlam&&!rules.UsesChainProjectiles)return BossMove;
+            if(rules.UsesDash&&boss.ChariotCharge?.Phase=="dash")
+            {
+                seconds=Math.Max(0,rules.DashDuration-(boss.ChariotCharge.Until-boss.BossElapsed));
+                frame=AdamChariotWarning.WindupFrame(seconds,rules.DashDuration,2);
+                return BossAttack;
+            }
+            if(!rules.UsesSlam&&!rules.UsesChainProjectiles)return BossMove;
             var emission=boss.NextAttackAt-rules.AttackPeriod;
             var elapsed=boss.BossElapsed-emission;
             if(emission>0 && elapsed>=-1e-8 && elapsed<AttackSeconds-1e-9)

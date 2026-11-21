@@ -48,7 +48,9 @@ internal static class LaterCampaignRunner
             var world=new BattleWorld(session,speeds,seed);
             var phases=new HashSet<string>();
             var midpoint=false;
-            for(var tick=0;tick<(hasBoss?48000:10860)&&session.IsActive;tick++)
+            // Allow late high-health bosses enough fixed steps for the technical equipment fixture.
+            var maxTicks=hasBoss?(round>70?120000:48000):10860;
+            for(var tick=0;tick<maxTicks&&session.IsActive;tick++)
             {
                 BattleRunner.Resolve(session,weapon);
                 world.Advance(BattleWorld.FixedStep,BattleRunner.Movement(world));
@@ -56,7 +58,9 @@ internal static class LaterCampaignRunner
                 if(!session.IsActive)break;
                 var phase=!midpoint&&world.SimulationTime>=60?"midpoint":
                     session.Stage=="boss"&&session.Boss?.Telegraphing==true?"telegraph":
-                    session.Stage=="boss"&&world.HostileProjectiles.Count>0?"projectiles":null;
+                    session.Stage=="boss"&&session.Boss?.ChariotCharge?.Phase=="dash"?"dash":
+                    session.Stage=="boss"&&world.HostileProjectiles.Count>0&& !phases.Contains("projectiles")?"projectiles":
+                    round>=LaterCampaignBooks.FirstRound&&session.Stage=="boss"&&session.Boss?.ThresholdUsed==true?"support":null;
                 if(phase==null||!phases.Add(phase))continue;
                 session.Capture();
                 state.Run!.World=world.Capture();
@@ -85,7 +89,9 @@ internal static class LaterCampaignRunner
             passed&=midpoint&&world.Hits>0&&world.Kills>0&&session.Stage=="between_rounds"&&
                 (boss==null||world.BossKills==1&&
                     (!(boss.UsesDash||boss.UsesSlam||boss.UsesChainProjectiles)||phases.Contains("telegraph"))&&
-                    (!boss.UsesChainProjectiles||phases.Contains("projectiles")));
+                    (!boss.UsesChainProjectiles||phases.Contains("projectiles"))&&
+                    (!boss.UsesDash||phases.Contains("dash"))&&
+                    (round<LaterCampaignBooks.FirstRound||!boss.SummonsSupport||phases.Contains("support")));
             if(!passed)break;
             session.Capture();
             revision=store.Commit(state,revision,"leviticus-complete-"+round);
