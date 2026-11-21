@@ -54,8 +54,8 @@ internal static class CampaignFiftyTests
                 .SequenceEqual(new[]{"shifting_boundary","torrent_serpent","ford_gatekeeper"}));
             Check.Equal(.69,JudgesContent.SpeedsFor(43)["jd1"]);
             Check.Equal(.67,JoshuaContent.SpeedsFor(42)["js1"]);
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(61));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(CampaignContent.LastInstalledRound+1));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(CampaignContent.LastInstalledRound+1));
             Check.Throws<ArgumentOutOfRangeException>(()=>JoshuaContent.Round(43));
             Check.Throws<ArgumentOutOfRangeException>(()=>JudgesContent.Round(42));
             Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(61));
@@ -181,8 +181,8 @@ internal static class CampaignFiftyTests
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>{n["Run"]!["RoundNumber"]=61;n["Run"]!["Stage"]="normal";},
-                    n=>n["Run"]!["RoundNumber"]=62,
+                    n=>{n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+1;n["Run"]!["Stage"]="normal";},
+                    n=>n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+2,
                     n=>n["Run"]!["LaterBossHistory"]![9]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![9]!["RoundNumber"]=63,
                     n=>n["Run"]!["LaterBossHistory"]![8]!["Reward"]!["PolicyId"]="r48-production-v1",

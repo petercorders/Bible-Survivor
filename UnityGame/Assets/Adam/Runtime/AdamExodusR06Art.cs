@@ -91,7 +91,9 @@ namespace BibleSurvivor.Unity
                 seconds=Math.Max(0,boss.BossElapsed-(boss.NextAttackAt-boss.Rules.TelegraphDuration));
                 frame=Mathf.Clamp((int)Math.Floor(seconds/boss.Rules.TelegraphDuration*3+1e-8),0,2);return BossWindup;
             }
-            var emission=boss.NextAttackAt-boss.Rules.AttackPeriod;
+            var rules=boss.Rules;
+            if(!rules.UsesDash&&!rules.UsesSlam&&!rules.UsesChainProjectiles)return BossMove;
+            var emission=boss.NextAttackAt-rules.AttackPeriod;
             var elapsed=boss.BossElapsed-emission;
             if(emission>0 && elapsed>=-1e-8 && elapsed<AttackSeconds-1e-9)
             {seconds=Math.Max(0,elapsed);frame=Mathf.Clamp((int)Math.Floor(seconds*12+1e-8),0,1);return BossAttack;}

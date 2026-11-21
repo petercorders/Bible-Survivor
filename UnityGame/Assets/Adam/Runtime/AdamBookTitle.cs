@@ -8,11 +8,11 @@ namespace BibleSurvivor.Unity
     {
         public const string Horizon="bg_book-horizon_static_400x55",Fade="ui_band-fade_static_16x55",Crest="ui_book-crest_static_32";
         public static bool Enabled=>AdamVisualQualityArt.TryGetClip(Horizon,out _)&&AdamVisualQualityArt.TryGetClip(Fade,out _)&&AdamVisualQualityArt.TryGetClip(Crest,out _);
-        public static int Book(int? round)=>round>=FirstSamuelContent.GlobalRoundNumber?8:round>=RuthContent.GlobalRoundNumber?7:round>=JudgesContent.GlobalRoundNumber?6:round>=JoshuaContent.GlobalRoundNumber?5:round>=DeuteronomyContent.GlobalRoundNumber?4:
+        public static int Book(int? round)=>LaterCampaignBooks.Find(round.GetValueOrDefault()) is LaterCampaignBook book?book.Index:round>=FirstSamuelContent.GlobalRoundNumber?8:round>=RuthContent.GlobalRoundNumber?7:round>=JudgesContent.GlobalRoundNumber?6:round>=JoshuaContent.GlobalRoundNumber?5:round>=DeuteronomyContent.GlobalRoundNumber?4:
             round>=NumbersContent.GlobalRoundNumber?3:round>=LeviticusContent.GlobalRoundNumber?2:round>=ExodusContent.GlobalRoundNumber?1:0;
-        public static string Name(int? round)=>Book(round) switch {8=>"사무엘상",7=>"룻기",6=>"사사기",5=>"여호수아",4=>"신명기",3=>"민수기",2=>"레위기",1=>"출애굽기",_=>"창세기"};
+        public static string Name(int? round)=>LaterCampaignBooks.Find(round.GetValueOrDefault())?.Name??(Book(round) switch {8=>"사무엘상",7=>"룻기",6=>"사사기",5=>"여호수아",4=>"신명기",3=>"민수기",2=>"레위기",1=>"출애굽기",_=>"창세기"});
         // Installed rounds per book.
-        public static int Total(int? round)=>Book(round) switch
+        public static int Total(int? round)=>LaterCampaignBooks.Find(round.GetValueOrDefault()) is LaterCampaignBook book?Math.Min(book.LastRound,CampaignContent.LastInstalledRound)-book.FirstRound+1:Book(round) switch
         {
             8=>FirstSamuelContent.LastRound-FirstSamuelContent.GlobalRoundNumber+1,
             7=>RuthContent.LastRound-RuthContent.GlobalRoundNumber+1,
@@ -24,7 +24,7 @@ namespace BibleSurvivor.Unity
             1=>6,
             _=>9
         };
-        public static int Local(int? round)=>round.GetValueOrDefault()-(Book(round) switch
+        public static int Local(int? round)=>LaterCampaignBooks.Find(round.GetValueOrDefault()) is LaterCampaignBook book?round.Value-book.FirstRound+1:round.GetValueOrDefault()-(Book(round) switch
         {
             8=>FirstSamuelContent.GlobalRoundNumber-1,
             7=>RuthContent.GlobalRoundNumber-1,
@@ -45,6 +45,7 @@ namespace BibleSurvivor.Unity
             0 or 3 or 6=>index is 2 or 5 or 8,
             1 or 2 or 4 or 5 or 8=>index is 2 or 5,
             7=>index is 2,
+            >=9=>index%3==2,
             _=>false
         });
         public static float HorizonX(float width)=>width-800;

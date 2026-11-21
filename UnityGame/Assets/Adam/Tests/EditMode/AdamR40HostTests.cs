@@ -161,8 +161,8 @@ public sealed class AdamR40HostTests
         Assert.IsFalse(host.CanEnterJoshua);
         Assert.IsFalse(host.CanEnterDeuteronomy);
         CollectionAssert.AreEqual(new[]{21,24,27,30,33,36,39},host.State.Run.LaterBossHistory.Select(x=>x.EncounterRound).ToArray());
-        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(61));
-        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=61,Stage="normal"}));
+        Assert.Throws<InvalidDataException>(()=>catalog.ForRound(CampaignContent.LastInstalledRound+1));
+        Assert.Throws<UnsupportedSaveVersionException>(()=>catalog.ForCheckpoint(new RunState{RoundNumber=CampaignContent.LastInstalledRound+1,Stage="normal"}));
     }
 
     [TestCase(31,"모세의 회고")] [TestCase(32,"두 돌판")] [TestCase(33,"기억하라")]
@@ -183,8 +183,8 @@ public sealed class AdamR40HostTests
         var detail=AdamRoundPresentation.CompletionDetail(false,false,joshuaComplete:true);
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(42).CompletionGold,detail);
         StringAssert.Contains("여호수아 1–6 라운드",detail);
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(61));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(61));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(CampaignContent.LastInstalledRound+1));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(CampaignContent.LastInstalledRound+1));
     }
 
     [TestCase(33,"망각의 안개")] [TestCase(36,"갈림길의 파수꾼")] [TestCase(39,"성벽의 거상")]

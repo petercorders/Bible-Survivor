@@ -190,9 +190,9 @@ public sealed class AdamR60HostTests
     }
 
     [Test]
-    public void FirstSamuelKeepsTheRunAcrossReloadsAndStopsAtR60()
+    public void PartialFirstSamuelInstallKeepsTheRunAcrossReloadsAndStopsAtR60()
     {
-        var catalog=AdamCatalog.Load();
+        var catalog=Partial(true,true);
         Assert.AreEqual(60,catalog.LastInstalledRound);
         var store=new SaveStore(path);
         var host=CompletedRuth(path);
@@ -248,13 +248,13 @@ public sealed class AdamR60HostTests
     [TestCase(52,"룻기",1,3,"모압에서 돌아옴")] [TestCase(53,"룻기",2,3,"보아스의 밭")] [TestCase(54,"룻기",3,3,"타작마당")]
     [TestCase(55,"사무엘상",1,6,"한나의 기도")] [TestCase(56,"사무엘상",2,6,"실로의 부르심")] [TestCase(57,"사무엘상",3,6,"빼앗긴 언약궤")]
     [TestCase(58,"사무엘상",4,6,"사울의 기름부음")] [TestCase(59,"사무엘상",5,6,"믹마스의 요나단")] [TestCase(60,"사무엘상",6,6,"엘라 골짜기")]
-    public void LaterTitlesUseBookLocalRoundAndR61RemainsUninstalled(int round,string book,int local,int total,string name)
+    public void LaterTitlesUseBookLocalRoundAndFutureRoundsRemainUninstalled(int round,string book,int local,int total,string name)
     {
         Assert.AreEqual($"{book} {local} / {name} · 3분 시제품",AdamRoundPresentation.Title(round));
         Assert.AreEqual(total,AdamBookTitle.Total(round));
         Assert.AreEqual(AdamBookTitle.Boss(AdamBookTitle.Book(round),local-1),round is 51 or 54 or 57 or 60);
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(61));
-        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(61));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Name(CampaignContent.LastInstalledRound+1));
+        Assert.Throws<InvalidOperationException>(()=>AdamRoundPresentation.Title(CampaignContent.LastInstalledRound+1));
     }
 
     [Test]
@@ -266,8 +266,39 @@ public sealed class AdamR60HostTests
         Assert.AreEqual("룻기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,ruthComplete:true));
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(54).CompletionGold,AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true));
         StringAssert.Contains("사무엘상은 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true,firstSamuelInstalled:true));
-        Assert.AreEqual("사무엘상 6 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        StringAssert.Contains("사무엘상 1–6 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        Assert.AreEqual("열왕기상 4 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        StringAssert.Contains("열왕기상 1–4 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+    }
+
+    [Test]
+    public void InstalledActorsReuseTheReviewedSpriteAndShadowPair()
+    {
+        foreach(var round in System.Linq.Enumerable.Range(61,10))
+        {
+            var actorIds=CampaignContent.Round(round).Waves.SelectMany(wave=>wave.Groups)
+                .Select(group=>group.MonsterId).Distinct();
+            foreach(var id in actorIds)
+            {
+                Assert.IsNotEmpty(AdamArtWorld.EnemyClip(id));
+                Assert.IsNotEmpty(AdamArtWorld.EnemyShadow(id));
+            }
+        }
+        foreach(var round in new[]{63,66,69})
+            Assert.AreEqual("fx_shadow-boss_static_40x8",AdamArtWorld.EnemyShadow(BossDefinition.ForRound(round).Id));
+    }
+
+    [TestCase(63,"사슬 3방향 예고")]
+    [TestCase(66,"지원군 · 추격")]
+    [TestCase(69,"내려치기 예고")]
+    public void InstalledBossesUseTheirOwnActionsInHudAndAnimation(int round,string expected)
+    {
+        var rules=BossDefinition.ForRound(round);
+        var boss=new BossEncounterState{RoundNumber=round,BossElapsed=5,NextAttackAt=10,
+            Telegraphing=rules.UsesChainProjectiles||rules.UsesSlam,ThresholdUsed=rules.SummonsSupport};
+        StringAssert.Contains(expected,AdamBossPresentation.Phase("boss",boss,rules));
+        boss.Telegraphing=false;
+        Assert.AreEqual(rules.SummonsSupport?AdamExodusR06Art.BossMove:AdamExodusR06Art.BossAttack,
+            AdamExodusR06Art.BossClip("boss",boss,5,out _,out _));
     }
 
     [TestCase(51,"무너지는 기둥")] [TestCase(54,"타작마당의 겨바람")] [TestCase(57,"무리의 군주")] [TestCase(60,"골짜기의 청동 짐승")]

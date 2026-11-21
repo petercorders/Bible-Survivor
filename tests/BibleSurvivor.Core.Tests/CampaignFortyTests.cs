@@ -59,8 +59,8 @@ internal static class CampaignFortyTests
             }
             Check.True(new[]{33,36,39}.Select(r=>BossDefinition.ForRound(r).Id)
                 .SequenceEqual(new[]{"oblivion_mist","crossroads_sentinel","rampart_colossus"}));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(61));
-            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(61));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.Round(CampaignContent.LastInstalledRound+1));
+            Check.Throws<ArgumentOutOfRangeException>(()=>CampaignContent.SpeedsFor(CampaignContent.LastInstalledRound+1));
             Check.Throws<ArgumentOutOfRangeException>(()=>DeuteronomyContent.Round(37));
             Check.Throws<ArgumentOutOfRangeException>(()=>NumbersContent.Round(31));
             Check.Throws<ArgumentException>(()=>BossDefinition.ForRound(61));
@@ -189,8 +189,8 @@ internal static class CampaignFortyTests
                 var backup=File.ReadAllBytes(path+".bak");
                 foreach(var change in new Action<JsonNode>[]
                 {
-                    n=>{n["Run"]!["RoundNumber"]=61;n["Run"]!["Stage"]="normal";},
-                    n=>n["Run"]!["RoundNumber"]=62,
+                    n=>{n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+1;n["Run"]!["Stage"]="normal";},
+                    n=>n["Run"]!["RoundNumber"]=CampaignContent.LastInstalledRound+2,
                     n=>n["Run"]!["LaterBossHistory"]![6]!["FutureExtension"]=true,
                     n=>n["Run"]!["LaterBossHistory"]![5]!["Reward"]!["PolicyId"]="r39-production-v1",
                     n=>n["Run"]!["LaterBossHistory"]![4]!["Reward"]!["PolicyId"]="future-reward"
