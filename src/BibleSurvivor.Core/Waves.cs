@@ -21,11 +21,17 @@ namespace BibleSurvivor.Core
         public int Count { get; }
         public int Health { get; }
         public int ContactDamage { get; }
+        internal double SpawnTimePower { get; }
         public SpawnGroup(string monsterId, int count, int health, int contactDamage)
+            : this(monsterId, count, health, contactDamage, 1) { }
+        internal SpawnGroup(string monsterId, int count, int health, int contactDamage, double spawnTimePower)
         {
             if (string.IsNullOrWhiteSpace(monsterId) || count <= 0 || health <= 0 || contactDamage <= 0)
                 throw new ArgumentException("Invalid spawn group");
+            if (!(spawnTimePower > 0 && spawnTimePower <= 1))
+                throw new ArgumentOutOfRangeException(nameof(spawnTimePower));
             MonsterId = monsterId; Count = count; Health = health; ContactDamage = contactDamage;
+            SpawnTimePower = spawnTimePower;
         }
     }
 
@@ -75,8 +81,11 @@ namespace BibleSurvivor.Core
             {
                 parts.Add(wave.Start.ToString("R",CultureInfo.InvariantCulture));parts.Add(wave.End.ToString("R",CultureInfo.InvariantCulture));
                 foreach(var group in wave.Groups)
+                {
                     parts.Add(string.Join(",",group.MonsterId,group.Count.ToString(CultureInfo.InvariantCulture),
                         group.Health.ToString(CultureInfo.InvariantCulture),group.ContactDamage.ToString(CultureInfo.InvariantCulture)));
+                    if(group.SpawnTimePower!=1)parts.Add("spawn-power:"+group.SpawnTimePower.ToString("R",CultureInfo.InvariantCulture));
+                }
             }
             if(number==3)
             {
@@ -171,10 +180,20 @@ namespace BibleSurvivor.Core
                 var entries = wave.Groups.SelectMany((group, groupIndex) => Enumerable.Range(0, group.Count)
                     .Select(index => new { Group = group, Fraction = (index + 0.5) / group.Count, GroupIndex = groupIndex }))
                     .OrderBy(x => x.Fraction).ThenBy(x => x.GroupIndex).ToArray();
-                for (var i = 0; i < entries.Length; i++)
+                var slots = entries.Select((entry, index) => new
                 {
-                    var group = entries[i].Group;
-                    schedule.Add(new PlannedSpawn { At = wave.Start + (i + 1.0) / entries.Length * (wave.End - wave.Start),
+                    entry.Group,
+                    Index = index,
+                    Fraction = entry.Group.SpawnTimePower == 1 ? (index + 1.0) / entries.Length :
+                        Math.Pow((index + 1.0) / entries.Length, entry.Group.SpawnTimePower)
+                });
+                // Only opted-in groups move off their evenly interleaved slots.
+                if (wave.Groups.Any(group => group.SpawnTimePower != 1))
+                    slots = slots.OrderBy(x => x.Fraction).ThenBy(x => x.Index);
+                foreach (var slot in slots)
+                {
+                    var group = slot.Group;
+                    schedule.Add(new PlannedSpawn { At = wave.Start + slot.Fraction * (wave.End - wave.Start),
                         Enemy = new SpawnedEnemy { Id = schedule.Count + 1, MonsterId = group.MonsterId, Health = group.Health, ContactDamage = group.ContactDamage } });
                 }
             }

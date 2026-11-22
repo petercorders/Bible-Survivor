@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using BibleSurvivor.Core;
@@ -12,23 +13,26 @@ internal static class NaturalGrowthRunner
     private const string ExodusCatalog = "content/exodus/catalog.json";
     // Later bosses can outlast the technical fixture runner’s budget.
     private const int MaxTicksPerRound = 120000;
+    private const double MinimumKillRate = .3374;
+    private const double FinalBossLimit = 900;
 
     private static void RequireCalibrationRevision(int installedRound)
     {
         if (installedRound != ExperimentalRounds.CalibrationRound)
-            throw new InvalidOperationException("This experiment requires the R60 campaign revision. Run it from the natural-growth preparation commit.");
+            throw new InvalidOperationException("This experiment requires installed R01–R100. Run it from the R180 natural-growth preparation revision.");
     }
 
     internal static int Run(string[] args)
     {
         var policy = args.Length > 0 ? args[0] : "main-weapon";
         if (policy is not ("main-weapon" or "balanced") || args.Length > 4 ||
-            (args.Length == 4 && args[3] is not ("C0" or "C1")))
-            throw new ArgumentException("Usage: --natural-growth [main-weapon|balanced] [weapon] [seed] [C0|C1]");
+            (args.Length == 4 && args[3] is not ("C0" or "C1" or "C3" or "C4" or "C5" or "C6" or "C7")))
+            throw new ArgumentException("Usage: --natural-growth [main-weapon|balanced] [weapon] [seed] [C0|C1|C3|C4|C5|C6|C7]");
         var weapon = args.Length > 1 ? args[1] : "sling";
         var seed = args.Length > 2 ? int.Parse(args[2]) : 7;
         var curve = args.Length > 3 ? args[3] : "C0";
         RequireCalibrationRevision(CampaignContent.LastInstalledRound);
+        var elapsed = Stopwatch.StartNew();
         var state = GameSnapshot.New();
         var game = new AdamSession(state, Definition(1), weapon);
         // Boss reward offers are seeded with the run ID. Use the CLI seed for both sources of randomness.
@@ -52,27 +56,28 @@ internal static class NaturalGrowthRunner
                 game = game.StartExperimentalRound(trial.Definition, trial.Boss);
                 speeds = trial.Speeds;
             }
-            var row = Measure(state, game, speeds, policy, weapon, seed);
+            var row = Measure(state, game, speeds, policy, weapon, seed, curve is "C5" or "C6" or "C7");
             rows.Add(row);
-            Console.Error.WriteLine($"R{row.Round:D2} {row.Outcome}: {row.Killed}/{row.Spawned}, damage {row.DamageTaken}");
+            Console.Error.WriteLine($"R{row.Round:D2} {row.Outcome}: {row.Killed}/{row.Spawned}, damage {row.DamageTaken}, boss {row.BossKillSeconds:F2}s");
             if (row.Outcome != "complete")
                 break;
         }
 
-        var baselineRuns = rows.Where(row => row.Round is >= 31 and <= 60 && row.Round % 3 != 0).ToArray();
-        var laterRuns = rows.Where(row => row.Round > 60 && row.Round % 3 != 0).ToArray();
-        var baseline = rows.Any(row => row.Round == 60 && row.Outcome == "complete")
-            ? baselineRuns.Average(row => row.KillRate) : null;
+        var laterRuns = rows.Where(row => row.Round > ExperimentalRounds.CalibrationRound && !row.IsBossRound).ToArray();
+        var lowestLaterRate = laterRuns.Length == 0 ? null : laterRuns.Min(row => row.KillRate);
+        var finalBossSeconds = rows[^1].Round == ExperimentalRounds.LastRound ? rows[^1].BossKillSeconds : null;
         var completed = rows[^1].Round == ExperimentalRounds.LastRound && rows[^1].Outcome == "complete";
         Console.WriteLine(JsonSerializer.Serialize(new
         {
             policy, weapon, seed, curve, rows, completed,
             deathRound = rows.FirstOrDefault(row => row.Outcome == "dead")?.Round,
             timedOutShare = rows.Average(row => row.TimedOut ? 1.0 : 0.0),
-            baseline, minimumRequired = baseline / 2,
-            lowestLaterRate = laterRuns.Length == 0 ? null : laterRuns.Min(row => row.KillRate),
-            meetsCriterion = policy == "main-weapon" && baseline.HasValue && completed &&
-                laterRuns.All(row => row.KillRate >= baseline / 2),
+            minimumRequired = MinimumKillRate, lowestLaterRate,
+            finalBossLimit = FinalBossLimit, finalBossSeconds,
+            recordedSimulationSeconds = rows.Sum(row => row.SimulationSeconds),
+            elapsedWallSeconds = elapsed.Elapsed.TotalSeconds,
+            meetsCriterion = policy == "main-weapon" && completed && lowestLaterRate >= MinimumKillRate &&
+                laterRuns.All(row => row.KillRate >= MinimumKillRate) && finalBossSeconds <= FinalBossLimit,
         }, new JsonSerializerOptions { WriteIndented = true }));
         return rows[^1].Outcome == "tick-limit" ? 1 : 0;
     }
@@ -93,17 +98,20 @@ internal static class NaturalGrowthRunner
             case JudgesContent.GlobalRoundNumber: state = game.PrepareJudges(next); break;
             case RuthContent.GlobalRoundNumber: state = game.PrepareRuth(next); break;
             case FirstSamuelContent.GlobalRoundNumber: state = game.PrepareFirstSamuel(next); break;
-            default: return game.StartNextRound(next);
+            default:
+                if (!game.CanEnterLaterBook) return game.StartNextRound(next);
+                state = game.PrepareLaterBook(next);
+                break;
         }
         return AdamSession.Resume(state, next);
     }
 
     private static RoundMetrics Measure(GameSnapshot state, AdamSession game,
-        IReadOnlyDictionary<string, double> speeds, string policy, string weapon, int seed)
+        IReadOnlyDictionary<string, double> speeds, string policy, string weapon, int seed, bool lethalEscape)
     {
         var wave = game.Wave ?? throw new InvalidOperationException("Missing normal wave");
         var world = new BattleWorld(game, speeds, seed);
-        var movement = new NaturalGrowthMovement(world, speeds);
+        var movement = new NaturalGrowthMovement(world, speeds, lethalEscape);
         var normalKills = 0;
         for (var tick = 0; tick < MaxTicksPerRound && game.IsActive; tick++)
         {
@@ -134,10 +142,10 @@ internal static class NaturalGrowthRunner
         }
 
         var outcome = state.Run == null ? "dead" : game.Stage == "between_rounds" ? "complete" : "tick-limit";
-        return new RoundMetrics(game.RoundNumber, normalKills, wave.SpawnedCount,
+        return new RoundMetrics(game.RoundNumber, game.BossRules != null, normalKills, wave.SpawnedCount,
             wave.SpawnedCount == 0 ? null : (double)normalKills / wave.SpawnedCount,
             wave.Elapsed >= 180, world.DamageTaken,
-            world.BossKills == 1 ? game.Boss!.BossElapsed : null, outcome);
+            world.BossKills == 1 ? game.Boss!.BossElapsed : null, world.SimulationTime, outcome);
     }
 
     private static void ResolveChoices(AdamSession game, string policy, string weapon)
@@ -160,6 +168,6 @@ internal static class NaturalGrowthRunner
         return game.Inventory.Weapons.GetValueOrDefault(choice) + game.Inventory.Passives.GetValueOrDefault(choice);
     }
 
-    private sealed record RoundMetrics(int Round, int Killed, int Spawned, double? KillRate,
-        bool TimedOut, int DamageTaken, double? BossKillSeconds, string Outcome);
+    private sealed record RoundMetrics(int Round, bool IsBossRound, int Killed, int Spawned, double? KillRate,
+        bool TimedOut, int DamageTaken, double? BossKillSeconds, double SimulationSeconds, string Outcome);
 }
