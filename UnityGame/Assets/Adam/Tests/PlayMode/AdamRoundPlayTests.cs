@@ -160,7 +160,7 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR130()
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR140()
     {
         var host=CompletedGenesisForEntry("enter");
         var run=host.State.Run.RunId;
@@ -179,7 +179,7 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
-        for(var round=10;round<=130;round++)
+        for(var round=10;round<=140;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
@@ -191,8 +191,8 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(round==42,host.CanEnterJudges);
             Assert.AreEqual(round==51,host.CanEnterRuth);
             Assert.AreEqual(round==54,host.CanEnterFirstSamuel);
-            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129,host.CanEnterLaterBook);
-            Assert.AreEqual(round==130,host.ContentComplete);
+            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 138,host.CanEnterLaterBook);
+            Assert.AreEqual(round==140,host.ContentComplete);
             if(round==99)
             {
                 Assert.AreEqual("에스더 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
@@ -202,7 +202,7 @@ public sealed class AdamRoundPlayTests
             var laterEntry=round switch
             {
                 102=>("욥기","시편"),111=>("시편","잠언"),114=>("잠언","전도서"),117=>("전도서","아가"),
-                120=>("아가","이사야"),129=>("이사야","예레미야"),
+                120=>("아가","이사야"),129=>("이사야","예레미야"),138=>("예레미야","예레미야애가"),
                 _=>(null,null)
             };
             if(laterEntry.Item1!=null)
@@ -211,20 +211,20 @@ public sealed class AdamRoundPlayTests
                 Assert.AreEqual(round+1,AdamRoundPresentation.NextChapter(host));
                 Assert.AreEqual(laterEntry.Item2+" 시작 (Enter)",AdamRoundPresentation.StartCard(round+1));
             }
-            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 130),host.AwaitingNextRound);
+            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 138 or 140),host.AwaitingNextRound);
             revision=host.State.Revision;
             Keys();yield return null;
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(revision,host.State.Revision);
             Keys(Key.Enter);yield return null;
-            Assert.AreEqual(Math.Min(130,round+1),host.Session.RoundNumber);
-            Assert.AreEqual(revision+(round==130?0:1),host.State.Revision);
+            Assert.AreEqual(Math.Min(140,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==140?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
         }
         Assert.IsTrue(host.ContentComplete);
-        Assert.AreEqual(131,host.State.Run.RoundNumber);
-        Assert.AreEqual("예레미야 1 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-        StringAssert.Contains("예레미야 1 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
+        Assert.AreEqual(141,host.State.Run.RoundNumber);
+        Assert.AreEqual("예레미야애가 2 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("예레미야애가 1–2 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
