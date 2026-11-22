@@ -160,7 +160,7 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR110()
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR120()
     {
         var host=CompletedGenesisForEntry("enter");
         var run=host.State.Run.RunId;
@@ -179,7 +179,7 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
-        for(var round=10;round<=110;round++)
+        for(var round=10;round<=120;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
@@ -191,34 +191,39 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(round==42,host.CanEnterJudges);
             Assert.AreEqual(round==51,host.CanEnterRuth);
             Assert.AreEqual(round==54,host.CanEnterFirstSamuel);
-            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102,host.CanEnterLaterBook);
-            Assert.AreEqual(round==110,host.ContentComplete);
+            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117,host.CanEnterLaterBook);
+            Assert.AreEqual(round==120,host.ContentComplete);
             if(round==99)
             {
                 Assert.AreEqual("에스더 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
                 Assert.AreEqual(100,AdamRoundPresentation.NextChapter(host));
                 Assert.AreEqual("욥기 시작 (Enter)",AdamRoundPresentation.StartCard(100));
             }
-            if(round==102)
+            var laterEntry=round switch
             {
-                Assert.AreEqual("욥기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-                Assert.AreEqual(103,AdamRoundPresentation.NextChapter(host));
-                Assert.AreEqual("시편 시작 (Enter)",AdamRoundPresentation.StartCard(103));
+                102=>("욥기","시편"),111=>("시편","잠언"),114=>("잠언","전도서"),117=>("전도서","아가"),
+                _=>(null,null)
+            };
+            if(laterEntry.Item1!=null)
+            {
+                Assert.AreEqual(laterEntry.Item1+" 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+                Assert.AreEqual(round+1,AdamRoundPresentation.NextChapter(host));
+                Assert.AreEqual(laterEntry.Item2+" 시작 (Enter)",AdamRoundPresentation.StartCard(round+1));
             }
-            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 110),host.AwaitingNextRound);
+            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120),host.AwaitingNextRound);
             revision=host.State.Revision;
             Keys();yield return null;
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(revision,host.State.Revision);
             Keys(Key.Enter);yield return null;
-            Assert.AreEqual(Math.Min(110,round+1),host.Session.RoundNumber);
-            Assert.AreEqual(revision+(round==110?0:1),host.State.Revision);
+            Assert.AreEqual(Math.Min(120,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==120?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
         }
         Assert.IsTrue(host.ContentComplete);
-        Assert.AreEqual(111,host.State.Run.RoundNumber);
-        Assert.AreEqual("시편 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-        StringAssert.Contains("시편 1–8 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
+        Assert.AreEqual(121,host.State.Run.RoundNumber);
+        Assert.AreEqual("아가 3 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("아가 1–3 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
