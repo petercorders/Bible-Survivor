@@ -113,7 +113,7 @@ public sealed class AdamR15UiTests
     {using(var m=new MemoryStream()){new DataContractJsonSerializer(value.GetType()).WriteObject(m,value);return m.ToArray();}}
 
     [TestCase(0)][TestCase(1)][TestCase(2)]
-    public void ExodusOnlyInstallKeepsProgressUntilExplicitNewChallengeAndDuplicateIsConsumed(int slot)
+    public void ExodusOnlyInstallIgnoresNumberKeysBeforeAndAfterSuspension(int slot)
     {
         var dir=Path.Combine(Path.GetTempPath(),"adam-r15-ui-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);var path=Path.Combine(dir,"save.json");
@@ -135,19 +135,21 @@ public sealed class AdamR15UiTests
             game.EnterCommand();game.EnterCommand();game.EnterExodus();h.Tick(30);
             Assert.IsFalse(h.TryEnterExodus());CollectionAssert.AreEqual(run,Bytes(h.State.Run));
             CollectionAssert.AreEqual(saved,File.ReadAllBytes(path));
-            game.SetLifecycle(false,true);game.SelectSlot(slot);game.EnterCommand();
+            game.SetLifecycle(false,true);
+            var suspendedSave=File.ReadAllBytes(path);
+            game.SelectSlot(slot);game.EnterCommand();
             CollectionAssert.AreEqual(run,Bytes(h.State.Run));
-            game.SetLifecycle(true,false);game.SelectSlot(slot);var newId=h.State.Run.RunId;
-            Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreEqual(2,h.State.SchemaVersion);
-            Assert.AreNotEqual(id,newId);Assert.IsTrue(h.Session.Inventory.Weapons.ContainsKey(AdamGame.Weapons[slot]));
-            CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));Assert.IsFalse(h.ExodusComplete);
-            game.SelectSlot((slot+1)%3);game.EnterCommand();Assert.AreEqual(newId,h.State.Run.RunId);
+            game.SetLifecycle(true,false);game.SelectSlot(slot);
+            Assert.AreEqual(15,h.Session.RoundNumber);
+            Assert.AreEqual(id,h.State.Run.RunId);
+            CollectionAssert.AreEqual(suspendedSave,File.ReadAllBytes(path));
+            CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));Assert.IsTrue(h.ExodusComplete);
         }
         finally{UnityEngine.Object.DestroyImmediate(go);Directory.Delete(dir,true);}
     }
 
     [TestCase(false)][TestCase(true)]
-    public void GenesisEnterAndNewChallengeStillShareOneCommandPerFrame(bool newChallengeFirst)
+    public void GenesisEnterKeepsTheExistingRunDespiteNumberKey(bool numberFirst)
     {
         var dir=Path.Combine(Path.GetTempPath(),"adam-r15-genesis-ui-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);var go=new GameObject("Genesis explicit entry");go.SetActive(false);
@@ -156,16 +158,9 @@ public sealed class AdamR15UiTests
             var h=AdamR10HostTests.CompletedGenesis(Path.Combine(dir,"save.json"));var id=h.State.Run.RunId;
             var game=go.AddComponent<AdamGame>();game.AutoInitialize=false;game.enabled=false;
             game.Initialize(h);game.SetLifecycle(true,false);
-            if(newChallengeFirst)
-            {
-                game.SelectSlot(0);game.EnterCommand();
-                Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreNotEqual(id,h.State.Run.RunId);
-            }
-            else
-            {
-                game.EnterCommand();game.EnterCommand();game.SelectSlot(0);
-                Assert.AreEqual(10,h.Session.RoundNumber);Assert.AreEqual(id,h.State.Run.RunId);
-            }
+            if(numberFirst)game.SelectSlot(0);
+            game.EnterCommand();game.EnterCommand();game.SelectSlot(0);
+            Assert.AreEqual(10,h.Session.RoundNumber);Assert.AreEqual(id,h.State.Run.RunId);
             Assert.IsFalse(h.ExodusComplete);Assert.IsNull(h.Error);
         }
         finally{UnityEngine.Object.DestroyImmediate(go);Directory.Delete(dir,true);}

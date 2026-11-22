@@ -209,7 +209,7 @@ public class AdamPlayTests
             var start=AdamMobileLayout.StartButton(603,500,2);
             click(start.center*2);Assert.IsNotNull(game.Host.State.Run);Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("sling"));
             yield return null;game.SetLifecycle(true,false);
-            click(new Vector2((603-100)*2,(54+33)*2));Assert.IsTrue(game.Host.Paused);
+            click(AdamMobileLayout.HudPause(603).center*2);Assert.IsTrue(game.Host.Paused);
             var time=game.Host.World.SimulationTime;yield return null;Assert.AreEqual(time,game.Host.World.SimulationTime);
             game.SetLifecycle(true,false);click(new Vector2(603,(250+20+33)*2));Assert.IsFalse(game.Host.Paused);
             yield return new WaitForSecondsRealtime(.08f);Assert.Greater(game.Host.World.SimulationTime,time);

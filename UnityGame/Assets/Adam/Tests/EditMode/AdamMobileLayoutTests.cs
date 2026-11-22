@@ -18,9 +18,72 @@ public sealed class AdamMobileLayoutTests
             foreach(var r in new[]{panel,choices,AdamMobileLayout.StartButton(w,h,0),AdamMobileLayout.StartButton(w,h,2),AdamMobileLayout.ChoiceCard(choices,2)})
             {Assert.IsTrue(bounds.Contains(r.min));Assert.IsTrue(bounds.Contains(r.max));}
             Assert.GreaterOrEqual(AdamMobileLayout.StartButton(w,h,0).height*scale/3,44);
-            Assert.GreaterOrEqual(66*scale/3,44);
+            Assert.GreaterOrEqual(AdamMobileLayout.HudPause(w).height*scale/3,44);
         }
     }
+
+    [TestCase(1206, 2622, 0, 102, 1206, 2310)]
+    [TestCase(2622, 1206, 186, 63, 2250, 1143)]
+    [TestCase(390, 812, 0, 48, 390, 730)]
+    public void WorldFrameIncludesPhysicalEdgesOutsideTheSafeArea(float width, float height, float x, float y, float safeWidth, float safeHeight)
+    {
+        var physical = new Rect(0, 0, width, height);
+        var safe = new Rect(x, y, safeWidth, safeHeight);
+        var frame = AdamMobileLayout.FullFrame(safe, physical);
+        var scale = AdamMobileLayout.Scale(safe);
+        Assert.AreEqual(physical.min, safe.position + frame.min * scale);
+        Assert.AreEqual(physical.max, safe.position + frame.max * scale);
+        Assert.Less(frame.yMin, 0);
+    }
+
+    [TestCase(390)]
+    [TestCase(603)]
+    [TestCase(1125)]
+    public void PauseAndProgressUseSeparateRowsWithoutCoveringAnyHudTarget(float width)
+    {
+        var rects = new[] { AdamMobileLayout.HudHealth(width), AdamMobileLayout.HudTimer(width),
+            AdamMobileLayout.HudPause(width), AdamMobileLayout.HudExperience(width), AdamMobileLayout.HudExperienceValue(width) };
+        for (var i = 0; i < rects.Length; i++)
+        {
+            Assert.GreaterOrEqual(rects[i].xMin, 0);
+            Assert.GreaterOrEqual(rects[i].yMin, 0);
+            Assert.LessOrEqual(rects[i].xMax, width);
+            Assert.LessOrEqual(rects[i].yMax, 116);
+            for (var j = i + 1; j < rects.Length; j++)
+                Assert.IsFalse(rects[i].Overlaps(rects[j]), $"{rects[i]} overlaps {rects[j]} at {width}");
+        }
+        Assert.LessOrEqual(rects[2].yMax, 72);
+        Assert.GreaterOrEqual(rects[3].yMin, 94);
+        Assert.GreaterOrEqual(rects[4].yMin, 92);
+        Assert.GreaterOrEqual(rects[4].height, 22);
+    }
+
+    [TestCase(390, 812)]
+    [TestCase(603, 1167)]
+    [TestCase(1125, 569)]
+    [TestCase(800, 390)]
+    public void ChoiceCardsAndFourActionRowsStayInsideTheirCenteredPanel(float width, float height)
+    {
+        var panel = AdamMobileLayout.ChoicePanel(width, height);
+        Assert.LessOrEqual(Mathf.Abs(width / 2 - panel.center.x), 1);
+        Assert.LessOrEqual(Mathf.Abs(height / 2 - panel.center.y), 1);
+        var cards = Enumerable.Range(0, 3).Select(slot => AdamMobileLayout.ChoiceCard(panel, slot));
+        var actions = Enumerable.Range(0, 4).Select(slot => AdamMobileLayout.Action(panel, slot, 4));
+        foreach (var group in new[] { cards, actions })
+        {
+            var previousBottom = panel.yMin;
+            foreach (var rect in group)
+            {
+                Assert.IsTrue(panel.Contains(rect.min));
+                Assert.IsTrue(panel.Contains(rect.max));
+                Assert.Greater(rect.height, 0);
+                Assert.Greater(rect.yMin, previousBottom);
+                previousBottom = rect.yMax;
+            }
+            Assert.GreaterOrEqual(panel.yMax - previousBottom, 32);
+        }
+    }
+
     [Test] public void NotchHomeAndOutsideSafeAreaNeverStartMovement()
     {
         var safe=new Rect(180,90,2200,1020);
