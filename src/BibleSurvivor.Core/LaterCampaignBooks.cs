@@ -45,6 +45,12 @@ namespace BibleSurvivor.Core
             108=>"hidden_place_shadow",
             109=>"fowlers_snare",
             110=>"song_demand_mockery",
+            112=>"poverty_like_a_robber",
+            113=>"clamorous_folly",
+            115=>"elusive_wind",
+            116=>"ointment_flies",
+            118=>"scorching_sunlight",
+            119=>"little_vineyard_foxes",
             _=>MonsterPrefix+"1"
         };
 
@@ -73,6 +79,7 @@ namespace BibleSurvivor.Core
     public static class LaterCampaignBooks
     {
         public const int FirstRound = 61;
+        internal const double ProverbsSteadySpeed = .91 + .02 * 2;
 
         private static readonly LaterCampaignBook[] Books =
         {
@@ -85,7 +92,10 @@ namespace BibleSurvivor.Core
             new LaterCampaignBook(15,"nehemiah","느헤미야","nh",94,96,27,.87,1.13,.49),
             new LaterCampaignBook(16,"esther","에스더","es",97,99,28,.89,1.15,.50),
             new LaterCampaignBook(17,"job","욥기","jb",100,102,29,.91,1.17,.51),
-            new LaterCampaignBook(18,"psalms","시편","ps",103,110,30,.93,1.19,.52)
+            new LaterCampaignBook(18,"psalms","시편","ps",103,111,30,.93,1.19,.52),
+            new LaterCampaignBook(19,"proverbs","잠언","pv",112,114,31,ProverbsSteadySpeed,1.21,.53),
+            new LaterCampaignBook(20,"ecclesiastes","전도서","ec",115,117,32,.97,1.23,.54),
+            new LaterCampaignBook(21,"song_of_songs","아가","sg",118,120,33,.99,1.25,.55)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:
