@@ -32,6 +32,8 @@ namespace BibleSurvivor.Unity
         readonly AdamChargeLane chariotLane=new AdamChargeLane();
         readonly Dictionary<int,bool> chargeFacing=new Dictionary<int,bool>();
         readonly AdamDangerRing danger=new AdamDangerRing();
+        readonly AdamDangerRing damageZone=new AdamDangerRing();
+        readonly AdamDangerRing aimedProjectile=new AdamDangerRing();
         BossEncounterState bossVisual;
         Vector2 bossFeet;
         bool bossLeft;
@@ -197,7 +199,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();damageZone.Dispose();aimedProjectile.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
 
         // Leviticus and later books reuse the reviewed Exodus R06 art for equivalent movement roles.
         static string SourceActor(string id)
@@ -561,8 +563,42 @@ namespace BibleSurvivor.Unity
                 if(TryChainGeometry(snap,bossVisual,host.Session.Stage,direction,out var chain))AdamChainWarning.Draw(projection,chain);
             // Mandatory chariot lane shares the existing outlined arrows, above all optional FX and below HUD.
             if(AdamChariotWarning.TryBossGeometry(chariotVisual,out var chariotGeometry))chariotLane.Draw(projection,chariotGeometry);
+            if (host.Session.Stage == "boss" && bossVisual != null && host.Session.BossRules is { } rules)
+                DrawBossHazards(projection, snap, bossVisual, rules);
             GUI.EndGroup();
         }
+
+        private void DrawBossHazards(AdamWorldProjection projection, BattleSnapshot snapshot, BossEncounterState boss, BossDefinition rules)
+        {
+            var activeZone = boss.HasActiveDamageZone(rules, "boss");
+            if (rules.UsesDamageZone && (boss.Telegraphing || activeZone))
+            {
+                var center = new Vector2(boss.TargetX, boss.TargetY);
+                damageZone.Draw(projection, center, (float)(BossDefinition.DamageZoneRadius + snapshot.Tuning.PlayerRadius),
+                    activeZone ? new Color(.86f, .2f, .12f, .45f) : (Color?)null);
+            }
+            if (boss.AimedShot is not { } shot) return;
+            if (!boss.Telegraphing)
+            {
+                var position = shot.PositionAt(boss.SecondsSinceAttack(rules));
+                aimedProjectile.Draw(projection, new Vector2(position.X, position.Y), (float)BossDefinition.AimedShotRadius,
+                    new Color(1f, .55f, .16f));
+                return;
+            }
+
+            var start = projection.Point(shot.OriginX, shot.OriginY);
+            var endpoint = shot.PositionAt(BossDefinition.AimedShotLifetime);
+            var end = projection.Point(endpoint.X, endpoint.Y);
+            const int segments = 16;
+            for (var i = 0; i < segments; i++)
+            {
+                var from = Vector2.Lerp(start, end, (float)i / segments);
+                var to = Vector2.Lerp(start, end, (i + .65f) / segments);
+                AdamVisualQualityWorld.Line(projection.Arena, from, to, 4 * projection.Scale, new Color32(27, 20, 36, 255));
+                AdamVisualQualityWorld.Line(projection.Arena, from, to, 2 * projection.Scale, Color.white);
+            }
+        }
+
         public static double BossDeathDuration(BossEncounterState boss)=>UsesWeaverArt(boss)?AdamExodusR06Art.DeathSeconds:4d/6;
         public static bool BossDeathVisible(double deathAt,double clock,BossEncounterState boss=null)=>deathAt>=0 && clock<deathAt+BossDeathDuration(boss);
         public static string BossClip(string stage,BossEncounterState boss,double impactAt,double clock,out int frame)

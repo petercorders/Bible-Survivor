@@ -184,6 +184,9 @@ namespace BibleSurvivor.Core
             }
             if(chainWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>=attackPeriod&&Run.World==null)throw new InvalidDataException("R09 attack checkpoint requires hostile geometry");
             if(dashWorld&&Run.Stage=="boss"&&Run.Boss!.BossElapsed>0&&Run.World==null)throw new InvalidDataException("R12 combat requires live geometry");
+            if(roundBoss is { } hazardRules && (hazardRules.UsesAimedShot || hazardRules.UsesDamageZone) &&
+                Run.Stage=="boss" && Run.Boss!.BossElapsed>0 && Run.World==null)
+                throw new InvalidDataException("Boss hazard combat requires live geometry");
             Run.World?.Validate();
             if(Run.World!=null)
             {

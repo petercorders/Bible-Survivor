@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.IO;
 using System.Globalization;
 using System.Runtime.Serialization;
@@ -14,7 +15,9 @@ namespace BibleSurvivor.Core
         Dash = 1,
         Slam = 2,
         Chains = 4,
-        Summon = 8
+        Summon = 8,
+        AimedShot = 16,
+        DamageZone = 32
     }
 
     // Approved technical tuning v1; not a claim of measured gameplay balance.
@@ -55,8 +58,13 @@ namespace BibleSurvivor.Core
         public bool UsesDash=>(Actions&BossActions.Dash)!=0;
         public bool UsesSlam=>(Actions&BossActions.Slam)!=0;
         public bool SummonsSupport=>(Actions&BossActions.Summon)!=0;
-        internal bool HasTimedAttack=>UsesDash||UsesSlam||UsesChainProjectiles;
-        internal int EncounterVersion=>UsesDash?4:UsesChainProjectiles?3:2;
+        public bool UsesAimedShot => (Actions & BossActions.AimedShot) != 0;
+        public bool UsesDamageZone => (Actions & BossActions.DamageZone) != 0;
+        public const double AimedShotSpeed = 6, AimedShotRadius = .18, AimedShotLifetime = 2;
+        public const double DamageZoneRadius = 1.5, DamageZoneLifetime = 2;
+        internal bool HasTimedAttack=>UsesDash||UsesSlam||UsesChainProjectiles||UsesAimedShot||UsesDamageZone;
+        internal const int LatestEncounterVersion = 5;
+        internal int EncounterVersion=>UsesAimedShot||UsesDamageZone?LatestEncounterVersion:UsesDash?4:UsesChainProjectiles?3:2;
         // Combined geometry fits the existing World4 layout. The dash clock lives in Boss.
         internal int WorldVersion=>UsesChainProjectiles?4:UsesDash?5:Number>=4?3:2;
         public double ProjectileSpeed=>UsesChainProjectiles?ChainSpeed:0;
@@ -71,7 +79,7 @@ namespace BibleSurvivor.Core
         public const double ChainSpeed=1.35,ChainRadius=.16,ChainLifetime=6,ChainAngleDegrees=20;
         public const int ChainCap=12;
         public static string ChainContract=>"three-chain-v1:"+string.Join(":",new[]{ChainSpeed,ChainRadius,ChainLifetime,ChainAngleDegrees,(double)ChainCap}.Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+":";
-        public double TelegraphDuration=>UsesDash?TelegraphSeconds:UsesChainProjectiles?1:TelegraphSeconds;
+        public double TelegraphDuration=>UsesChainProjectiles&&!UsesDash&&!UsesAimedShot&&!UsesDamageZone?1:TelegraphSeconds;
         public int Number {get;}
         public string Id {get;}
         public double MaxHealth {get;}
@@ -88,7 +96,12 @@ namespace BibleSurvivor.Core
         public IReadOnlyList<double> Thresholds {get;}
         private string? experimentalRoundId;
         private BossDefinition(int number,string id,double hp,int contact,int gold,double period,int damage,int actor,string support,int supportHp,int supportDamage,double speed,string policy,BossActions actions,params double[] thresholds)
-        {Actions=actions;Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(SummonsSupport?thresholds:Array.Empty<double>());}
+        {
+            Actions=actions;
+            if ((UsesAimedShot && period - TelegraphDuration <= AimedShotLifetime) ||
+                (UsesDamageZone && period - TelegraphDuration <= DamageZoneLifetime))
+                throw new ArgumentOutOfRangeException(nameof(period), "Hazards must expire before the next warning.");
+            Number=number;Id=id;MaxHealth=hp;Contact=contact;KillGold=gold;AttackPeriod=period;AttackDamage=damage;BossActorId=actor;SupportMonster=support;SupportHitPoints=supportHp;SupportContact=supportDamage;SupportRatio=speed;RewardPolicy=policy;Thresholds=Array.AsReadOnly(SummonsSupport?thresholds:Array.Empty<double>());}
         private static readonly BossDefinition AdamBoss=new BossDefinition(3,"nephilim_tyrant",Health,ContactDamage,Gold,Period,SlamDamage,ActorId,"c1",SupportHealth,SupportDamage,SupportSpeed,Policy,BossActions.Slam|BossActions.Summon,ThresholdRatio);
         private static readonly BossDefinition IsaacBoss=new BossDefinition(6,"sitnah_keeper",6500,16,200,7,18,781,"f1",80,8,.70,SitnahPolicy,BossActions.Slam|BossActions.Summon,.70,.35);
         private static readonly BossDefinition JudahBoss=new BossDefinition(9,"silver_cup_accuser",16000,20,350,5,15,1141,"i2",260,11,.60,JudahPolicy,BossActions.Chains|BossActions.Summon,.60,.30);
@@ -155,7 +168,11 @@ namespace BibleSurvivor.Core
                 Speed,Radius,IntroSeconds,IntroOffset,TelegraphDuration,SlamRadius,SupportRadius,0,12}.Concat(Thresholds).Select(x=>x.ToString("R",CultureInfo.InvariantCulture)))+
             (Number>60?":actions="+((int)Actions).ToString(CultureInfo.InvariantCulture):"")+
             (Number>60&&UsesDash?":absolute-clock:fixed-direction:relative-swept:contact-only:dash"+
-                DashDuration.ToString("R",CultureInfo.InvariantCulture)+":speed"+DashSpeedRatio.ToString("R",CultureInfo.InvariantCulture):"");
+                DashDuration.ToString("R",CultureInfo.InvariantCulture)+":speed"+DashSpeedRatio.ToString("R",CultureInfo.InvariantCulture):"")+
+            (UsesAimedShot?":aimed-v1:"+HazardContract(AimedShotSpeed,AimedShotRadius,AimedShotLifetime):"")+
+            (UsesDamageZone?":zone-v1:"+HazardContract(DamageZoneRadius,DamageZoneLifetime):"");
+        private static string HazardContract(params double[] values)
+            => string.Join(":", values.Select(x => x.ToString("R", CultureInfo.InvariantCulture)));
         public static string EncounterId(string runId) => runId + ":genesis_03:nephilim_tyrant";
     }
 
@@ -205,6 +222,27 @@ namespace BibleSurvivor.Core
     }
 
     [DataContract]
+    public sealed class BossAimedShotState
+    {
+        [DataMember] public float OriginX { get; set; }
+        [DataMember] public float OriginY { get; set; }
+        [DataMember] public float DirectionX { get; set; }
+        [DataMember] public float DirectionY { get; set; }
+
+        public Vector2 Origin => new Vector2(OriginX, OriginY);
+        public Vector2 Direction => new Vector2(DirectionX, DirectionY);
+        public Vector2 PositionAt(double age) => Origin + Direction * (float)(BossDefinition.AimedShotSpeed * age);
+        internal BossAimedShotState Copy() => (BossAimedShotState)MemberwiseClone();
+
+        internal void Validate()
+        {
+            if (!BattleSnapshot.Position(OriginX, OriginY) || !BattleSnapshot.Position(DirectionX, DirectionY) ||
+                Math.Abs(Direction.LengthSquared() - 1) > .0001)
+                throw new InvalidDataException("Invalid aimed shot geometry");
+        }
+    }
+
+    [DataContract]
     public sealed class BossEncounterState
     {
         [DataMember] public int Version {get;set;}=2;
@@ -224,6 +262,11 @@ namespace BibleSurvivor.Core
         [DataMember] public float TargetY {get;set;}
         [DataMember(EmitDefaultValue=false)] public List<ChainDirectionState>? ChainDirections {get;set;}
         [DataMember(EmitDefaultValue=false)] public ChariotChargeState? ChariotCharge {get;set;}
+        [DataMember(EmitDefaultValue=false)] public BossAimedShotState? AimedShot { get; set; }
+        public double SecondsSinceAttack(BossDefinition rules) => BossElapsed - (NextAttackAt - rules.AttackPeriod);
+        public bool HasActiveDamageZone(BossDefinition rules, string stage)
+            => rules.UsesDamageZone && stage == "boss" && !Telegraphing &&
+                NextAttackAt > rules.AttackPeriod && SecondsSinceAttack(rules) < BossDefinition.DamageZoneLifetime - 1e-9;
         [DataMember] public bool ThresholdUsed {get;set;}
         [DataMember] public int Summoned {get;set;}
         [DataMember] public int NextActorId {get;set;}=482;
@@ -233,14 +276,14 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public bool CompletionApplied {get;set;}
         public double CombatTime=>NormalEndedAt+IntroElapsed+BossElapsed;
         internal BossEncounterState Copy()
-        {var copy=(BossEncounterState)MemberwiseClone();copy.ChariotCharge=ChariotCharge?.Copy();copy.ChainDirections=ChainDirections?.Select(x=>x.Copy()).ToList();copy.Supports=Supports.Select(x=>x.Copy()).ToList();copy.Reward=Reward?.Copy();return copy;}
+        {var copy=(BossEncounterState)MemberwiseClone();copy.ChariotCharge=ChariotCharge?.Copy();copy.AimedShot=AimedShot?.Copy();copy.ChainDirections=ChainDirections?.Select(x=>x.Copy()).ToList();copy.Supports=Supports.Select(x=>x.Copy()).ToList();copy.Reward=Reward?.Copy();return copy;}
         internal void Validate(RunState run)
             => Validate(run,BossDefinition.Find(EncounterRound)??throw new UnsupportedSaveVersionException());
 
         internal void Validate(RunState run,BossDefinition rules)
         {
             bool Finite(double n)=>BattleSnapshot.Finite(n);
-            if(Version>4||EncounterRound!=rules.Number)throw new UnsupportedSaveVersionException();
+            if(Version>BossDefinition.LatestEncounterVersion||EncounterRound!=rules.Number)throw new UnsupportedSaveVersionException();
             var mask=rules.Number==3?(ThresholdUsed?1:0):SummonMask;
             var used=(mask&1)+((mask>>1)&1);var maxMask=(1<<rules.Thresholds.Count)-1;
             if((Version!=rules.EncounterVersion&&!(rules.Number==3&&Version==1))||EncounterId!=rules.EncounterKey(run.RunId)||!Finite(NormalEndedAt)||NormalEndedAt<0||NormalEndedAt>180||
@@ -271,6 +314,15 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Chain directions do not match the locked dash aim");
             }
             else if(ChainDirections!=null)throw new InvalidDataException("Chain directions outside R09");
+            var needsAim = rules.UsesAimedShot && run.Stage == "boss" && Telegraphing;
+            var mayHaveShot = rules.UsesAimedShot && run.Stage == "boss" &&
+                NextAttackAt > rules.AttackPeriod && SecondsSinceAttack(rules) < BossDefinition.AimedShotLifetime - 1e-9;
+            if (AimedShot == null ? needsAim : !needsAim && !mayHaveShot)
+                throw new InvalidDataException("Aimed shot outside attack clock");
+            AimedShot?.Validate();
+            if (needsAim && ChariotCharge != null &&
+                Vector2.DistanceSquared(AimedShot!.Direction, new Vector2(ChariotCharge.DirectionX, ChariotCharge.DirectionY)) > 1e-8)
+                throw new InvalidDataException("Aimed shot does not match the locked dash aim");
             if(run.Stage=="boss_intro")
             {
                 if(run.RoundNumber!=rules.Number||TargetX!=0||TargetY!=0||IntroElapsed>=2||BossElapsed!=0||Health!=rules.MaxHealth||Summoned!=0||CompletionApplied||BossGoldApplied||Reward!=null||Telegraphing||NextAttackAt!=rules.AttackPeriod||run.Drops.Count!=0)
