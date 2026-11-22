@@ -57,6 +57,8 @@ namespace BibleSurvivor.Unity
             "king_of_terrors"=>"공포의 왕","roaring_waters"=>"뛰노는 바닷물","terror_by_night"=>"밤의 공포",
             "veiling_darkness"=>"덮으려는 흑암","clamoring_leech"=>"‘다오 다오’ 하는 거머리",
             "clouds_of_trouble"=>"곤고한 날의 먹구름","leopard_of_the_peaks"=>"표범 산의 표범",
+            "night_beast_of_ruins"=>"폐허에 깃드는 밤 짐승","leviathan_shadow"=>"날랜 뱀 리워야단의 그림자",
+            "viper_eggs_and_web"=>"독사의 알과 거미줄",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);

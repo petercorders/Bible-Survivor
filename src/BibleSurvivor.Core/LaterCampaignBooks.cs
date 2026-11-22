@@ -51,6 +51,12 @@ namespace BibleSurvivor.Core
             116=>"ointment_flies",
             118=>"scorching_sunlight",
             119=>"little_vineyard_foxes",
+            122=>"smoldering_firebrand_stump",
+            124=>"unending_night",
+            125=>"veil_over_nations",
+            127=>"false_refuge",
+            128=>"wooden_idol",
+            130=>"fear_of_faces",
             _=>MonsterPrefix+"1"
         };
 
@@ -71,8 +77,10 @@ namespace BibleSurvivor.Core
         {
             var offset=number>100?78+(number-100)/2:(int?)null;
             var firstFastSpawnPower=offset%3==2?.85:1;
+            var contactLimit=number>=121?33:int.MaxValue;
             return LaterBookRounds.Build(number,RoundId(number),SteadyMonster(number),MonsterPrefix+"2",MonsterPrefix+"3",
-                contact,contact-1,contact+4,offset,firstFastSpawnPower);
+                Math.Min(contact,contactLimit),Math.Min(contact-1,contactLimit),Math.Min(contact+4,contactLimit),
+                offset,firstFastSpawnPower);
         }
     }
 
@@ -95,7 +103,9 @@ namespace BibleSurvivor.Core
             new LaterCampaignBook(18,"psalms","시편","ps",103,111,30,.93,1.19,.52),
             new LaterCampaignBook(19,"proverbs","잠언","pv",112,114,31,ProverbsSteadySpeed,1.21,.53),
             new LaterCampaignBook(20,"ecclesiastes","전도서","ec",115,117,32,.97,1.23,.54),
-            new LaterCampaignBook(21,"song_of_songs","아가","sg",118,120,33,.99,1.25,.55)
+            new LaterCampaignBook(21,"song_of_songs","아가","sg",118,120,33,.99,1.25,.55),
+            new LaterCampaignBook(22,"isaiah","이사야","isa",121,129,34,1.01,1.27,.56),
+            new LaterCampaignBook(23,"jeremiah","예레미야","jer",130,130,35,1.03,1.29,.51+.01*6)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:
