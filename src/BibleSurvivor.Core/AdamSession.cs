@@ -351,13 +351,14 @@ namespace BibleSurvivor.Core
             if(run.Stage=="round_settlement"&&run.PendingLevels==0)CompleteNormalSettlement();
             Capture(); return true;
         }
+        internal int EffectiveContactDamage(int incoming) =>
+            Math.Max(1,incoming-(PermanentRules.Rank(run.PermanentSnapshot,"armor")+Passive("seal")));
         public void Damage(int incoming)
         {
             LastRetaliationDamage=0;
             if (incoming < 0) throw new ArgumentOutOfRangeException(nameof(incoming));
             if (incoming == 0 || !CanAttack || CombatTime - run.LastHitTime < (run.Boss==null?0.5:0.5-1e-9)) return;
-            var armor = PermanentRules.Rank(run.PermanentSnapshot,"armor") + Passive("seal");
-            run.Health -= Math.Max(1, incoming - armor); run.LastHitTime = CombatTime;
+            run.Health -= EffectiveContactDamage(incoming); run.LastHitTime = CombatTime;
             LastRetaliationDamage=5*Passive("crown")*DamageMultiplier;
             if (run.Health <= 0) { state.Run = null; Wave = null; return; }
             Capture();
