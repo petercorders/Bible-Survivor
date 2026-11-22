@@ -54,6 +54,13 @@ namespace BibleSurvivor.Core
     }
 
     [DataContract]
+    public sealed class OldTestamentClear
+    {
+        [DataMember(IsRequired=true)] public string RunId { get; set; } = "";
+        [DataMember(IsRequired=true)] public long CompletedAtUnixMilliseconds { get; set; }
+    }
+
+    [DataContract]
     public sealed class GameSnapshot
     {
         [DataMember] public int SchemaVersion { get; set; } = SaveFormat.GenesisVersion;
@@ -61,6 +68,7 @@ namespace BibleSurvivor.Core
         [DataMember] public string LastOperationId { get; set; } = "";
         [DataMember] public ProfileState Profile { get; set; } = new ProfileState();
         [DataMember] public RunState? Run { get; set; }
+        [DataMember(EmitDefaultValue=false)] public OldTestamentClear? OldTestamentClear { get; set; }
         public static GameSnapshot New() => new GameSnapshot();
 
         public void Validate()
@@ -70,11 +78,18 @@ namespace BibleSurvivor.Core
                 Profile.Upgrades == null || Profile.UnlockedWeapons == null || Profile.UnlockedWeapons.Distinct().Count() != Profile.UnlockedWeapons.Count ||
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
             PermanentRules.Validate(Profile.Upgrades);
+            if (OldTestamentClear is { } clear &&
+                (string.IsNullOrWhiteSpace(clear.RunId) || clear.CompletedAtUnixMilliseconds <= 0 ||
+                 clear.CompletedAtUnixMilliseconds > DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()))
+                throw new InvalidDataException("Invalid Old Testament clear receipt");
             if (Run == null) return;
             var r10 = SchemaVersion == 3;
             if(r10 && !SaveFormat.SupportedChapterLifecycle(Run.RoundNumber,Run.Stage))
                 throw new UnsupportedSaveVersionException();
             var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
+            var finalBossDefeated=normalRound==CampaignContent.OldTestamentFinalRound && Run.Boss?.Health==0;
+            if (finalBossDefeated != (OldTestamentClear != null && OldTestamentClear.RunId == Run.RunId))
+                throw new InvalidDataException("Old Testament clear receipt does not match the current run");
             var laterCampaign=r10&&normalRound>=LeviticusContent.GlobalRoundNumber;
             var expansion=r10&&normalRound>=21;
             var expansionBoss=expansion&&BossDefinition.Find(normalRound)!=null;

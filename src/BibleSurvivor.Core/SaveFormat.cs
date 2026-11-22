@@ -18,7 +18,7 @@ namespace BibleSurvivor.Core
         private const int CurrentWorldVersion = 5;
         internal const int MaximumBytes = 4 * 1024 * 1024;
         private static readonly HashSet<string> EnvelopeFields = new HashSet<string> {
-            "SchemaVersion", "Revision", "LastOperationId", "Profile", "Run" };
+            "SchemaVersion", "Revision", "LastOperationId", "Profile", "Run", "OldTestamentClear" };
         private static readonly HashSet<string> RunFields = new HashSet<string> {
             "RunId", "RoundNumber", "Stage", "Health", "MaxHealth", "Level", "Experience", "KillRemainder",
             "LastHitTime", "PermanentSnapshot", "Weapons", "Passives", "Wave", "Drops", "PendingLevels",
@@ -60,7 +60,8 @@ namespace BibleSurvivor.Core
                 ("AimedShot",Object("OriginX OriginY DirectionX DirectionY")),("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
                 ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("CompletedFourthBoss",boss),("CompletedFifthBoss",boss),("CompletedSixthBoss",boss),("LaterBossHistory",Array(boss)),("Forms",integerMap));
-            return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run));
+            return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
+                ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));
         }
 
         private static void CheckSupportedContent(XmlElement element, ContentShape shape)

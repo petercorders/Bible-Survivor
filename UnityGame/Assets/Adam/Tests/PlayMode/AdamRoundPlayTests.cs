@@ -160,7 +160,7 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR170()
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR180()
     {
         var host=CompletedGenesisForEntry("enter");
         var run=host.State.Run.RunId;
@@ -179,7 +179,7 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
-        for(var round=10;round<=170;round++)
+        for(var round=10;round<=180;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
@@ -192,7 +192,7 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(round==51,host.CanEnterRuth);
             Assert.AreEqual(round==54,host.CanEnterFirstSamuel);
             Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 138 or 141 or 150 or 159,host.CanEnterLaterBook);
-            Assert.AreEqual(round==170,host.ContentComplete);
+            Assert.AreEqual(round==180,host.ContentComplete);
             if(round==99)
             {
                 Assert.AreEqual("에스더 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
@@ -212,21 +212,30 @@ public sealed class AdamRoundPlayTests
                 Assert.AreEqual(round+1,AdamRoundPresentation.NextChapter(host));
                 Assert.AreEqual(laterEntry.Item2+" 시작 (Enter)",AdamRoundPresentation.StartCard(round+1));
             }
-            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 138 or 141 or 150 or 159 or 170),host.AwaitingNextRound);
+            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 111 or 114 or 117 or 120 or 129 or 138 or 141 or 150 or 159 or 180),host.AwaitingNextRound);
             revision=host.State.Revision;
             Keys();yield return null;
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(revision,host.State.Revision);
             Keys(Key.Enter);yield return null;
-            Assert.AreEqual(Math.Min(170,round+1),host.Session.RoundNumber);
-            Assert.AreEqual(revision+(round==170?0:1),host.State.Revision);
+            Assert.AreEqual(Math.Min(180,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==180?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
         }
         Assert.IsTrue(host.ContentComplete);
-        Assert.AreEqual(171,host.State.Run.RoundNumber);
-        Assert.AreEqual("열두 예언서 11 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-        StringAssert.Contains("열두 예언서 1–11 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
+        Assert.AreEqual(181,host.State.Run.RoundNumber);
+        Assert.AreEqual(run,host.State.OldTestamentClear.RunId);
+        Assert.Greater(host.State.OldTestamentClear.CompletedAtUnixMilliseconds,0);
+        Assert.AreEqual("구약 완주 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("말라기 최종 보스 ‘삼키는 자’ 처치",AdamRoundPresentation.CompletionDetail(host));
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
+        var completedAt=host.State.OldTestamentClear.CompletedAtUnixMilliseconds;
+        host.Start("sling");
+        Assert.IsTrue(host.Reload(),host.Error);
+        Assert.AreEqual(1,host.State.Run.RoundNumber);
+        Assert.AreNotEqual(run,host.State.Run.RunId);
+        Assert.AreEqual(run,host.State.OldTestamentClear.RunId);
+        Assert.AreEqual(completedAt,host.State.OldTestamentClear.CompletedAtUnixMilliseconds);
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
     {

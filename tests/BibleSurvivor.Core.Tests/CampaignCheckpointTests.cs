@@ -9,6 +9,7 @@ namespace BibleSurvivor.Core.Tests;
 internal static class CampaignCheckpointTests
 {
     private const string Fixtures = "tests/BibleSurvivor.Core.Tests/Fixtures/";
+    internal static readonly DateTimeOffset ClearFixtureTime = new(2026,1,1,0,0,0,TimeSpan.Zero);
 
     internal static void MatchReplay(int startRound,int endRound,params int[] expectedFinalBosses)
     {
@@ -58,7 +59,31 @@ internal static class CampaignCheckpointTests
                 if (session.BossRules is BossDefinition boss)
                 {
                     session.Advance(2);
-                    session.Hit(boss.BossActorId, boss.MaxHealth);
+                    if (round == CampaignContent.OldTestamentFinalRound)
+                    {
+                        session.Hit(boss.BossActorId, 1);
+                        Check.True(state.OldTestamentClear == null);
+                        store.Commit(state, state.Revision, "final-boss-live");
+                        state = store.Load()!;
+                        session = AdamSession.Resume(state, definition);
+
+                        session.Hit(boss.BossActorId, boss.MaxHealth, ClearFixtureTime);
+                        Check.Equal(runId, state.OldTestamentClear!.RunId);
+                        Check.Equal(ClearFixtureTime.ToUnixTimeMilliseconds(), state.OldTestamentClear.CompletedAtUnixMilliseconds);
+                        var before = File.ReadAllBytes(path);
+                        var revision = state.Revision;
+                        const string operation = "final-boss-defeated";
+                        var failingStore = new SaveStore(path, () => throw new IOException("before replace"));
+                        Check.Throws<IOException>(() => failingStore.Commit(state, revision, operation));
+                        Check.True(before.SequenceEqual(File.ReadAllBytes(path)));
+                        Check.True(store.Load()!.OldTestamentClear == null);
+                        var accepted = store.Commit(state, revision, operation);
+                        Check.Equal(accepted, store.Commit(state, revision, operation));
+                        state = store.Load()!;
+                        Check.Equal(ClearFixtureTime.ToUnixTimeMilliseconds(), state.OldTestamentClear!.CompletedAtUnixMilliseconds);
+                        session = AdamSession.Resume(state, definition);
+                    }
+                    else session.Hit(boss.BossActorId, boss.MaxHealth);
                     if (session.Stage == "boss_reward")
                         Check.True(session.ChooseBossReward(session.Boss!.Reward!.RewardId,
                             session.BossChoices.First(choice => choice.Kind == "gold").Id));

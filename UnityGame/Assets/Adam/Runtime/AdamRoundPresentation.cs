@@ -51,6 +51,10 @@ namespace BibleSurvivor.Unity
             163=>"요엘 · 영을 부어 주심",164=>"아모스 · 정의를 물 같이",165=>"오바댜 · 에돔의 교만",
             166=>"요나 · 물고기 배 속의 기도",167=>"요나 · 니느웨의 회개",168=>"요나 · 박넝쿨 그늘",
             169=>"미가 · 침상에서 꾀하는 악",170=>"미가 · 죄를 깊은 바다에 던지심",
+            171=>"나훔 · 니느웨의 함락",172=>"하박국 · 어느 때까지리이까",173=>"하박국 · 파수대와 믿음",
+            174=>"하박국 · 그럴지라도",175=>"스바냐 · 기쁨을 이기지 못하시는 하나님",
+            176=>"학개 · 너희의 행위를 살필지니라",177=>"스가랴 · 책망받는 고발자",
+            178=>"스가랴 · 힘으로 되지 아니하며",179=>"스가랴 · 죄와 더러움을 씻는 샘",180=>"말라기 · 공의로운 해",
             _=>throw new InvalidOperationException("Round is outside installed content")
         };
         public const string ChapterHeading="창세기 완료 · 진행 저장됨";
@@ -73,7 +77,8 @@ namespace BibleSurvivor.Unity
         public const string JudgesHeading="사사기 완료 · 진행 저장됨";
         public const string RuthHeading="룻기 완료 · 진행 저장됨";
         public static readonly string CampaignEndHeading=EndHeading(CampaignContent.LastInstalledRound);
-        static string EndHeading(int round)=>BookLabel(round)+" 완료 · 진행 저장됨";
+        static string EndHeading(int round)=>round==CampaignContent.OldTestamentFinalRound
+            ?"구약 완주 · 진행 저장됨":BookLabel(round)+" 완료 · 진행 저장됨";
         const string ResetDetail="\n새 도전 선택 시 성장·장비 초기화";
         static readonly string LeviticusDetail="완료 골드 +"+CampaignContent.Round(LeviticusContent.LastInstalledRound).CompletionGold;
         static readonly string NumbersDetail="완료 골드 +"+CampaignContent.Round(NumbersContent.LastRound).CompletionGold;
@@ -86,8 +91,9 @@ namespace BibleSurvivor.Unity
         {
             var total=AdamBookTitle.Total(round);
             var completed=total==1?"1":"1–"+total;
-            return "완료 골드 +"+CampaignContent.Round(round).CompletionGold+
-                " · 진행 유지\n"+AdamBookTitle.Name(round)+" "+completed+" 라운드 클리어"+ResetDetail;
+            var milestone=round==CampaignContent.OldTestamentFinalRound
+                ?"말라기 최종 보스 ‘삼키는 자’ 처치":AdamBookTitle.Name(round)+" "+completed+" 라운드 클리어";
+            return "완료 골드 +"+CampaignContent.Round(round).CompletionGold+" · 진행 유지\n"+milestone+ResetDetail;
         }
         public static string CompletionHeading(bool genesisComplete,bool exodusComplete,bool leviticusComplete=false,bool contentComplete=false,
             bool numbersComplete=false,bool deuteronomyComplete=false,bool joshuaComplete=false,bool judgesComplete=false,bool ruthComplete=false)

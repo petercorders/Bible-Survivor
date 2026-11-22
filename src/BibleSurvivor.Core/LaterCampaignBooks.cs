@@ -83,6 +83,12 @@ namespace BibleSurvivor.Core
             167=>"violence_of_hands",
             169=>"evil_plotted_at_night",
             170=>"weight_of_sin",
+            172=>"evening_wolves",
+            173=>"crying_stones",
+            175=>"settled_indifference",
+            176=>"punctured_purse",
+            178=>"evil_in_the_ephah",
+            179=>"departing_unclean_spirit",
             _=>MonsterPrefix+"1"
         };
 
