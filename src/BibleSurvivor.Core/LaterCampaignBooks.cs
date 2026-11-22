@@ -76,6 +76,13 @@ namespace BibleSurvivor.Core
             157=>"little_horn",
             158=>"shadow_of_desolation",
             160=>"baal_adornments",
+            161=>"reaped_whirlwind",
+            163=>"dust_of_devastation",
+            164=>"ivory_bed_complacency",
+            166=>"entangling_seaweed",
+            167=>"violence_of_hands",
+            169=>"evil_plotted_at_night",
+            170=>"weight_of_sin",
             _=>MonsterPrefix+"1"
         };
 
