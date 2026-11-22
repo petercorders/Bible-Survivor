@@ -13,17 +13,16 @@ internal static class CampaignHundredTwentyTests
             CampaignHundredTenTests.MatchTuning(111, 120));
         test("R120 replays R110 with explicit Wisdom book entries and preserves receipts", () =>
             CampaignCheckpointTests.MatchReplay(110, 120, 108, 111, 114, 117, 120));
-        test("R120 completion blocks round 121 when loaded", () =>
+        test("R120 completion loads and allows explicit Isaiah entry", () =>
         {
-            Check.Equal(120, CampaignContent.LastInstalledRound);
             Check.True(LaterCampaignBooks.StartsBook(112));
             Check.True(LaterCampaignBooks.StartsBook(115));
             Check.True(LaterCampaignBooks.StartsBook(118));
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(121));
+            Check.Equal("isaiah_01", CampaignContent.Round(121).Id);
             const string path = "tests/BibleSurvivor.Core.Tests/Fixtures/r120-build-complete-save.json";
             var saved = new SaveStore(path).Load()!;
             var session = AdamSession.Resume(saved, CampaignContent.Round(120));
-            Check.True(session.ContentComplete && !session.CanEnterLaterBook);
+            Check.True(!session.ContentComplete && session.CanEnterLaterBook);
             Check.Equal(121, saved.Run!.RoundNumber);
             Check.True(saved.Run.Boss!.CompletionApplied);
         });

@@ -49,13 +49,15 @@ namespace BibleSurvivor.Core
             AmbushPolicy="r93-production-v1",OnoPolicy="r96-production-v1",PurPolicy="r99-production-v1",
             TerrorKingPolicy="r102-production-v1",RoaringWatersPolicy="r105-production-v1",NightTerrorPolicy="r108-production-v1",
             VeilingDarknessPolicy="r111-production-v1",LeechPolicy="r114-production-v1",
-            TroubleCloudsPolicy="r117-production-v1",LeopardPeaksPolicy="r120-production-v1";
+            TroubleCloudsPolicy="r117-production-v1",LeopardPeaksPolicy="r120-production-v1",
+            RuinsBeastPolicy="r123-production-v1",LeviathanShadowPolicy="r126-production-v1",ViperWebPolicy="r129-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
             or PillarPolicy or ChaffPolicy or SwarmPolicy or ValleyPolicy or PalacePolicy or FieldPolicy or AltarPolicy or VineyardPolicy or DothanPolicy or BullPolicy or GateLionPolicy or RaiderPolicy or BeracahPolicy or HookPolicy or AmbushPolicy or OnoPolicy or PurPolicy
             or TerrorKingPolicy or RoaringWatersPolicy or NightTerrorPolicy
-            or VeilingDarknessPolicy or LeechPolicy or TroubleCloudsPolicy or LeopardPeaksPolicy;
+            or VeilingDarknessPolicy or LeechPolicy or TroubleCloudsPolicy or LeopardPeaksPolicy
+            or RuinsBeastPolicy or LeviathanShadowPolicy or ViperWebPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -147,13 +149,17 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition LeechBoss=new BossDefinition(114,"clamoring_leech",129750,57,2500,5,52,7081,"pv1",2140,31,LaterCampaignBooks.ProverbsSteadySpeed,LeechPolicy,BossActions.Dash|BossActions.Summon,.95,.90);
         private static readonly BossDefinition TroubleCloudsBoss=new BossDefinition(117,"clouds_of_trouble",131500,58,2560,5,53,7261,"",0,0,0,TroubleCloudsPolicy,BossActions.Slam|BossActions.Chains);
         private static readonly BossDefinition LeopardPeaksBoss=new BossDefinition(120,"leopard_of_the_peaks",133250,59,2620,5,54,7441,"",0,0,0,LeopardPeaksPolicy,BossActions.Dash|BossActions.AimedShot);
+        private static readonly BossDefinition RuinsBeastBoss=new BossDefinition(123,"night_beast_of_ruins",135000,60,2680,5,55,7621,"isa1",2220,34,1.01,RuinsBeastPolicy,BossActions.Summon|BossActions.Chains,.95,.90);
+        private static readonly BossDefinition LeviathanShadowBoss=new BossDefinition(126,"leviathan_shadow",136750,61,2740,5,56,7801,"",0,0,0,LeviathanShadowPolicy,BossActions.Dash|BossActions.Chains|BossActions.DamageZone);
+        private static readonly BossDefinition ViperWebBoss=new BossDefinition(129,"viper_eggs_and_web",138500,62,2800,5,57,7981,"",0,0,0,ViperWebPolicy,BossActions.Chains|BossActions.DamageZone);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
             33=>OblivionBoss,36=>CrossroadsBoss,39=>RampartBoss,42=>BoundaryBoss,45=>TorrentBoss,48=>FordBoss,
             51=>PillarBoss,54=>ChaffBoss,57=>SwarmBoss,60=>ValleyBoss,63=>PalaceBoss,66=>FieldBoss,69=>AltarBoss,72=>VineyardBoss,75=>DothanBoss,78=>BullBoss,81=>GateLionBoss,84=>RaiderBoss,87=>BeracahBoss,90=>HookBoss,93=>AmbushBoss,96=>OnoBoss,99=>PurBoss,
             102=>TerrorKingBoss,105=>RoaringWatersBoss,108=>NightTerrorBoss,
-            111=>VeilingDarknessBoss,114=>LeechBoss,117=>TroubleCloudsBoss,120=>LeopardPeaksBoss,_=>null
+            111=>VeilingDarknessBoss,114=>LeechBoss,117=>TroubleCloudsBoss,120=>LeopardPeaksBoss,
+            123=>RuinsBeastBoss,126=>LeviathanShadowBoss,129=>ViperWebBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,

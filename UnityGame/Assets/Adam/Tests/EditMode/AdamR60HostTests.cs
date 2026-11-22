@@ -266,8 +266,8 @@ public sealed class AdamR60HostTests
         Assert.AreEqual("룻기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,ruthComplete:true));
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(54).CompletionGold,AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true));
         StringAssert.Contains("사무엘상은 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true,firstSamuelInstalled:true));
-        Assert.AreEqual("아가 3 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
-        StringAssert.Contains("아가 1–3 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        Assert.AreEqual("예레미야 1 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        StringAssert.Contains("예레미야 1 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
     }
 
     [Test]
@@ -283,7 +283,7 @@ public sealed class AdamR60HostTests
                 Assert.IsNotEmpty(AdamArtWorld.EnemyShadow(id));
             }
         }
-        foreach(var round in new[]{63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,114,117,120})
+        foreach(var round in new[]{63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,114,117,120,123,126,129})
             Assert.AreEqual("fx_shadow-boss_static_40x8",AdamArtWorld.EnemyShadow(BossDefinition.ForRound(round).Id));
     }
 
