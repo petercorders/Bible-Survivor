@@ -313,10 +313,15 @@ namespace BibleSurvivor.Unity
             }
             return latest;
         }
-        public void Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null, bool bossShadowOnly = false)
+        public void DrawBackdrop(AdamArt art, Rect frame, int round)
         {
-            if(Snapshot==null || source!=host.World) return;
-            var round=host.Session.RoundNumber;
+            GUI.BeginGroup(frame);
+            DrawTerrain(art, new AdamWorldProjection(frame, Vector2.zero), round, true);
+            GUI.EndGroup();
+        }
+
+        void DrawTerrain(AdamArt art, AdamWorldProjection projection, int round, bool coverFrame)
+        {
             var leviticus=round>=LeviticusContent.GlobalRoundNumber && round<=LeviticusContent.LastInstalledRound;
             var numbers=round>=NumbersContent.GlobalRoundNumber && round<=NumbersContent.LastRound;
             var deuteronomy=round>=DeuteronomyContent.GlobalRoundNumber && round<=DeuteronomyContent.LastRound;
@@ -326,12 +331,14 @@ namespace BibleSurvivor.Unity
             var firstSamuel=round>=FirstSamuelContent.GlobalRoundNumber && round<=FirstSamuelContent.LastRound;
             var laterBook=LaterCampaignBooks.Find(round);
             var desert=AdamBookGround.Exodus(round) || ((leviticus || numbers || deuteronomy || joshua || judges || ruth || firstSamuel || laterBook!=null) && AdamVisualQualityArt.TryGetClip(AdamBookGround.Sand,out _));
-            var snap=Snapshot; var scale=PixelScale(arena); var pixels=32*scale;
-            var origin=new Vector2(snap.PlayerX,snap.PlayerY);
-            var projection=new AdamWorldProjection(arena,origin);
-            Vector2 Point(float x,float y) => projection.Point(x,y);
-            GUI.BeginGroup(arena);
-            var rx=Mathf.Min(10,arena.width/(float)pixels/2+1); var ry=Mathf.Min(5.625f,arena.height/(float)pixels/2+1);
+            var arena = projection.Arena;
+            var scale = projection.Scale;
+            var pixels = 32 * scale;
+            var origin = projection.Origin;
+            Vector2 Point(float x, float y) => projection.Point(x,y);
+            var rx = arena.width / pixels / 2 + 1;
+            var ry = arena.height / pixels / 2 + 1;
+            if (!coverFrame) { rx = Mathf.Min(10, rx); ry = Mathf.Min(5.625f, ry); }
             // Terrain is deterministic by integer coordinate, not gameplay RNG. Tiles are never rotated/flipped.
             var groundColor=GUI.color;
             try
@@ -359,6 +366,18 @@ namespace BibleSurvivor.Unity
             finally{GUI.color=groundColor;}
             if(desert)AdamBookGround.Edges(arena,FeedbackEnabled);
             else AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
+        }
+
+        public bool Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null, bool bossShadowOnly = false, bool coverFrame = false)
+        {
+            if(Snapshot==null || source!=host.World) return false;
+            var round=host.Session.RoundNumber;
+            var snap = Snapshot;
+            var projection = new AdamWorldProjection(arena, new Vector2(snap.PlayerX, snap.PlayerY));
+            var scale = projection.Scale;
+            Vector2 Point(float x, float y) => projection.Point(x,y);
+            GUI.BeginGroup(arena);
+            DrawTerrain(art, projection, round, coverFrame);
             art.Draw("fx_shadow_static_16x6",Point(snap.PlayerX,snap.PlayerY),scale);
             // Optional hit smoke/chips stay below XP, actors, weapons and required telegraphs.
             particles?.Draw(projection);
@@ -520,7 +539,7 @@ namespace BibleSurvivor.Unity
             foreach(var layer in art.Index.layers)
                 art.Draw("chr_player_layer-"+layer.Replace('_','-')+"_"+PlayerMotion+"_32",feet,scale,PlayerSeconds);
             GUI.color=playerTint;GUI.matrix=matrix;
-            if(!host.Session.IsActive) {GUI.EndGroup();return;}
+            if(!host.Session.IsActive) {GUI.EndGroup();return true;}
             foreach(var p in snap.Projectiles)
             {
                 VisualQuality.AfterStones(art,projection,p,Clock,FeedbackEnabled);
@@ -591,6 +610,7 @@ namespace BibleSurvivor.Unity
             if (host.Session.Stage == "boss" && bossVisual != null && host.Session.BossRules is { } rules)
                 DrawBossHazards(projection, snap, bossVisual, rules);
             GUI.EndGroup();
+            return true;
         }
 
         private void DrawBossHazards(AdamWorldProjection projection, BattleSnapshot snapshot, BossEncounterState boss, BossDefinition rules)

@@ -160,6 +160,56 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
+    [UnityTest] public IEnumerator CompletedBookRejectsNumberKeysAndCancelsWithoutChangingTheSave()
+    {
+        var host=CompletedGenesisForEntry("cancel-new");
+        var old=host.State.Run.RunId;var path=Path.Combine(directory,"cancel-new.json");
+        var bytes=File.ReadAllBytes(path);
+        game.Initialize(host);game.SetLifecycle(true,false);
+        yield return null;
+
+        Keys(Key.Digit1);yield return null;
+        Assert.AreEqual(old,host.State.Run.RunId);
+        Keys();yield return null;
+        Keys(Key.DownArrow);yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsTrue(game.NewChallengeOpen);
+        Keys(Key.Digit2);yield return null;
+        Assert.AreEqual(old,host.State.Run.RunId);
+        Keys(Key.Escape);yield return null;
+        Assert.IsFalse(game.NewChallengeOpen);
+        CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+
+        Keys(Key.Enter);yield return null;
+        Assert.AreEqual(10,host.Session.RoundNumber);
+        Assert.AreEqual(old,host.State.Run.RunId);
+    }
+
+    [UnityTest] public IEnumerator CompletedBookNewChallengeRequiresSeparateConfirmationAndDoesNotRepeat()
+    {
+        var host=CompletedGenesisForEntry("confirm-new");
+        var old=host.State.Run.RunId;
+        game.Initialize(host);game.SetLifecycle(true,false);
+        yield return null;
+
+        game.OpenNewChallenge();
+        game.ConfirmNewChallenge(1);
+        Assert.AreEqual(old,host.State.Run.RunId,"the modal-opening frame cannot confirm");
+        yield return null;
+        game.SelectSlot(1);
+        Assert.AreEqual(old,host.State.Run.RunId,"the old growth shortcut cannot confirm a new challenge");
+        Keys(Key.DownArrow);yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsFalse(game.NewChallengeOpen);
+        Assert.AreEqual(1,host.Session.RoundNumber);
+        Assert.AreNotEqual(old,host.State.Run.RunId);
+        Assert.IsTrue(host.Session.Inventory.Weapons.ContainsKey("bible"));
+        var committed=host.State.Run.RunId;
+        game.ConfirmNewChallenge(2);game.SelectSlot(2);
+        yield return null;
+        Assert.AreEqual(committed,host.State.Run.RunId);
+    }
+
     [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR180()
     {
         var host=CompletedGenesisForEntry("enter");
@@ -280,11 +330,11 @@ public sealed class AdamRoundPlayTests
         }
         finally{window.Close();}
     }
-    [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameUseExplicitNewChallengeOnly()
+    [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameContinueWithoutReset()
     {
         var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(host.State.Profile);game.Initialize(host);game.SetLifecycle(true,false);yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
-        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(2,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+        Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(old,host.State.Run.RunId);Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
     }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}
