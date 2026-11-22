@@ -37,6 +37,14 @@ namespace BibleSurvivor.Core
             88=>"tower_pride_shadow",
             92=>"accusation_cloud",
             100=>"accusing_shadow",
+            101=>"night_vision_whisper",
+            103=>"windblown_chaff",
+            104=>"valley_shadow",
+            106=>"poisoned_word_arrows",
+            107=>"prosperity_mirage",
+            108=>"hidden_place_shadow",
+            109=>"fowlers_snare",
+            110=>"song_demand_mockery",
             _=>MonsterPrefix+"1"
         };
 
@@ -53,8 +61,13 @@ namespace BibleSurvivor.Core
             .Select(pair=>pair.Key+"-speed"+pair.Value.ToString("R",CultureInfo.InvariantCulture)))+":chase-contact";
 
         internal string RoundId(int number)=>Id+"_"+(number-FirstRound+1).ToString("D2",CultureInfo.InvariantCulture);
-        internal RoundDefinition Round(int number)=>LaterBookRounds.Build(number,RoundId(number),
-            SteadyMonster(number),MonsterPrefix+"2",MonsterPrefix+"3",contact,contact-1,contact+4);
+        internal RoundDefinition Round(int number)
+        {
+            var offset=number>100?78+(number-100)/2:(int?)null;
+            var firstFastSpawnPower=offset%3==2?.85:1;
+            return LaterBookRounds.Build(number,RoundId(number),SteadyMonster(number),MonsterPrefix+"2",MonsterPrefix+"3",
+                contact,contact-1,contact+4,offset,firstFastSpawnPower);
+        }
     }
 
     public static class LaterCampaignBooks
@@ -71,7 +84,8 @@ namespace BibleSurvivor.Core
             new LaterCampaignBook(14,"ezra","에스라","ez",91,93,26,.85,1.11,.48),
             new LaterCampaignBook(15,"nehemiah","느헤미야","nh",94,96,27,.87,1.13,.49),
             new LaterCampaignBook(16,"esther","에스더","es",97,99,28,.89,1.15,.50),
-            new LaterCampaignBook(17,"job","욥기","jb",100,100,29,.91,1.17,.51)
+            new LaterCampaignBook(17,"job","욥기","jb",100,102,29,.91,1.17,.51),
+            new LaterCampaignBook(18,"psalms","시편","ps",103,110,30,.93,1.19,.52)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:
