@@ -222,7 +222,9 @@ namespace BibleSurvivor.Unity
                 case "royal_delicacies":case "iron_and_clay_feet":case "shadow_of_the_vessel_feast":case "hungry_lion_pride":
                 case "little_horn":case "shadow_of_desolation":case "baal_adornments":
                 case "reaped_whirlwind":case "dust_of_devastation":case "ivory_bed_complacency":
-                case "entangling_seaweed":case "violence_of_hands":case "evil_plotted_at_night":case "weight_of_sin":return "ex17";
+                case "entangling_seaweed":case "violence_of_hands":case "evil_plotted_at_night":case "weight_of_sin":
+                case "evening_wolves":case "crying_stones":case "settled_indifference":case "punctured_purse":
+                case "evil_in_the_ephah":case "departing_unclean_spirit":return "ex17";
                 case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":case "ss2":case "fk2":case "sk2":case "fc2":case "sc2":case "ez2":case "nh2":case "es2":case "jb2":case "ps2":case "pv2":case "ec2":case "sg2":case "isa2":case "jer2":case "lam2":case "eze2":case "dan2":case "mp2":return "ex16";
                 case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":case "ss3":case "fk3":case "sk3":case "fc3":case "sc3":case "ez3":case "nh3":case "es3":case "jb3":case "ps3":case "pv3":case "ec3":case "sg3":case "isa3":case "jer3":case "lam3":case "eze3":case "dan3":case "mp3":return "ex18";
                 case "ash_veil":
@@ -252,7 +254,9 @@ namespace BibleSurvivor.Unity
                 case "terror_all_around":case "cistern_mud":case "destroying_mountain":
                 case "wormwood_and_gall":case "soul_snaring_band":case "proud_high_cedar":case "gog_host_from_the_north":
                 case "golden_image_of_dura":case "ten_horned_fourth_beast":case "spiritual_prince_of_persia":
-                case "death_and_sheol":case "eagle_of_high_crags":case "lingering_anger":return "defilement_weaver";
+                case "death_and_sheol":case "eagle_of_high_crags":case "lingering_anger":
+                case "lightning_torch_chariot":case "famine_of_the_empty_fold":case "rebuked_accusing_shadow":
+                case "malachi_devourer":return "defilement_weaver";
                 default:return id;
             }
         }

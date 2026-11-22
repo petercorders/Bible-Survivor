@@ -276,7 +276,9 @@ namespace BibleSurvivor.Core
         }
         public void Pause(bool paused) { if(!IsActive)return; if(run.Boss!=null)run.Boss.Paused=paused; else if(Arena!=null)Arena.Paused=paused; Capture(); }
 
-        public void Hit(int id,double damage)
+        public void Hit(int id,double damage) => Hit(id,damage,null);
+
+        internal void Hit(int id,double damage,DateTimeOffset? clearTime)
         {
             Guard.NonNegative(damage,nameof(damage));
             if(run.Boss!=null)
@@ -285,7 +287,7 @@ namespace BibleSurvivor.Core
                 if(id==BossRules!.BossActorId)
                 {
                     run.Boss.Health=Math.Max(0,run.Boss.Health-damage);
-                    if(run.Boss.Health==0) BossDefeated();
+                    if(run.Boss.Health==0) BossDefeated(clearTime);
                     else
                     {
                         var rules=BossRules!;
@@ -443,7 +445,7 @@ namespace BibleSurvivor.Core
         }
         private void CreditKill()
         { if (++run.KillRemainder == 5) { state.Profile.Gold = checked(state.Profile.Gold + 1); run.KillRemainder = 0; } }
-        private void BossDefeated()
+        private void BossDefeated(DateTimeOffset? clearTime)
         {
             var boss=run.Boss!;
             if(!boss.BossGoldApplied){state.Profile.Gold=checked(state.Profile.Gold+BossRules!.KillGold);boss.BossGoldApplied=true;}
@@ -453,6 +455,12 @@ namespace BibleSurvivor.Core
                 Passives=Inventory.Passives.ToDictionary(x=>x.Key,x=>x.Value),Forms=Inventory.Forms.Count==0?null:Inventory.Forms.ToDictionary(x=>x.Key,x=>x.Value),
                 UnlockedWeapons=state.Profile.UnlockedWeapons.OrderBy(x=>x,StringComparer.Ordinal).ToList(),EligibleEvolutions=EvolutionRules.Eligibility(Inventory.Weapons,Inventory.Passives,Inventory.Forms)};
             boss.Reward.Candidates=BossRewards.Generate(boss.Reward);
+            if (!IsExperimental && definition.Number==CampaignContent.OldTestamentFinalRound)
+                state.OldTestamentClear = new OldTestamentClear
+                {
+                    RunId=run.RunId,
+                    CompletedAtUnixMilliseconds=(clearTime ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds()
+                };
             AutoApplyGoldOnly();
         }
         public void Purchase(string key, int displayedPrice)

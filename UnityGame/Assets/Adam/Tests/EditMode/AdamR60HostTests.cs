@@ -266,15 +266,17 @@ public sealed class AdamR60HostTests
         Assert.AreEqual("룻기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,ruthComplete:true));
         StringAssert.Contains("완료 골드 +"+CampaignContent.Round(54).CompletionGold,AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true));
         StringAssert.Contains("사무엘상은 현재 성장·장비로 계속",AdamRoundPresentation.CompletionDetail(false,false,ruthComplete:true,firstSamuelInstalled:true));
-        Assert.AreEqual("열두 예언서 11 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
+        Assert.AreEqual("구약 완주 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(false,false,contentComplete:true));
         Assert.AreEqual("호세아 · 다시 찾은 아내",AdamRoundPresentation.Name(160));
         foreach(var (round,prophet) in new[]{(161,"호세아"),(162,"호세아"),(163,"요엘"),(164,"아모스"),(165,"오바댜"),
-            (166,"요나"),(167,"요나"),(168,"요나"),(169,"미가"),(170,"미가")})
+            (166,"요나"),(167,"요나"),(168,"요나"),(169,"미가"),(170,"미가"),
+            (171,"나훔"),(172,"하박국"),(173,"하박국"),(174,"하박국"),(175,"스바냐"),
+            (176,"학개"),(177,"스가랴"),(178,"스가랴"),(179,"스가랴"),(180,"말라기")})
         {
             StringAssert.StartsWith(prophet+" · ",AdamRoundPresentation.Name(round));
             Assert.AreEqual("열두 예언서",AdamBookTitle.Name(round));
         }
-        StringAssert.Contains("열두 예언서 1–11 라운드",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
+        StringAssert.Contains("말라기 최종 보스 ‘삼키는 자’ 처치",AdamRoundPresentation.CompletionDetail(false,false,contentComplete:true));
     }
 
     [Test]
@@ -290,7 +292,7 @@ public sealed class AdamR60HostTests
                 Assert.IsNotEmpty(AdamArtWorld.EnemyShadow(id));
             }
         }
-        foreach(var round in new[]{63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,114,117,120,123,126,129,132,135,138,141,144,147,150,153,156,159,162,165,168})
+        foreach(var round in new[]{63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,114,117,120,123,126,129,132,135,138,141,144,147,150,153,156,159,162,165,168,171,174,177,180})
             Assert.AreEqual("fx_shadow-boss_static_40x8",AdamArtWorld.EnemyShadow(BossDefinition.ForRound(round).Id));
     }
 

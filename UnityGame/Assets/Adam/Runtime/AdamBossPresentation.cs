@@ -65,6 +65,8 @@ namespace BibleSurvivor.Unity
             "golden_image_of_dura"=>"두라 평지의 금 신상","ten_horned_fourth_beast"=>"열 뿔 가진 넷째 짐승",
             "spiritual_prince_of_persia"=>"바사 왕국의 군주",
             "death_and_sheol"=>"사망과 스올","eagle_of_high_crags"=>"바위 틈 높은 곳의 독수리","lingering_anger"=>"식지 않는 성냄",
+            "lightning_torch_chariot"=>"번개 같은 횃불 병거","famine_of_the_empty_fold"=>"빈 외양간의 기근",
+            "rebuked_accusing_shadow"=>"고발하는 그림자","malachi_devourer"=>"삼키는 자",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);

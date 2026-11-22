@@ -7,7 +7,8 @@ namespace BibleSurvivor.Core
 {
     public static class CampaignContent
     {
-        public const int LastInstalledRound = 170;
+        public const int OldTestamentFinalRound = 180;
+        public const int LastInstalledRound = OldTestamentFinalRound;
 
         public static RoundDefinition Round(int number) => number switch
         {

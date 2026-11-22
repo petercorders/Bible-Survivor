@@ -55,7 +55,9 @@ namespace BibleSurvivor.Core
             WormwoodGallPolicy="r141-production-v1",SoulSnarePolicy="r144-production-v1",
             HighCedarPolicy="r147-production-v1",GogHostPolicy="r150-production-v1",
             DuraImagePolicy="r153-production-v1",FourthBeastPolicy="r156-production-v1",PersianPrincePolicy="r159-production-v1",
-            DeathSheolPolicy="r162-production-v1",HighEaglePolicy="r165-production-v1",LingeringAngerPolicy="r168-production-v1";
+            DeathSheolPolicy="r162-production-v1",HighEaglePolicy="r165-production-v1",LingeringAngerPolicy="r168-production-v1",
+            TorchChariotPolicy="r171-production-v1",EmptyFoldPolicy="r174-production-v1",
+            AccusingShadowPolicy="r177-production-v1",DevourerPolicy="r180-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
@@ -66,7 +68,8 @@ namespace BibleSurvivor.Core
             or SurroundingTerrorPolicy or CisternMudPolicy or DestroyingMountainPolicy
             or WormwoodGallPolicy or SoulSnarePolicy or HighCedarPolicy or GogHostPolicy
             or DuraImagePolicy or FourthBeastPolicy or PersianPrincePolicy
-            or DeathSheolPolicy or HighEaglePolicy or LingeringAngerPolicy;
+            or DeathSheolPolicy or HighEaglePolicy or LingeringAngerPolicy
+            or TorchChariotPolicy or EmptyFoldPolicy or AccusingShadowPolicy or DevourerPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -174,6 +177,11 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition DeathSheolBoss=new BossDefinition(162,"death_and_sheol",157750,73,3460,5,68,9961,"mp1",2620,39,1.11,DeathSheolPolicy,BossActions.DamageZone|BossActions.Summon,.95,.90);
         private static readonly BossDefinition HighEagleBoss=new BossDefinition(165,"eagle_of_high_crags",159500,74,3520,5,69,10141,"",0,0,0,HighEaglePolicy,BossActions.Dash|BossActions.AimedShot);
         private static readonly BossDefinition LingeringAngerBoss=new BossDefinition(168,"lingering_anger",161250,75,3580,5,70,10321,"",0,0,0,LingeringAngerPolicy,BossActions.Slam|BossActions.Chains);
+        private static readonly BossDefinition TorchChariotBoss=new BossDefinition(171,"lightning_torch_chariot",163000,76,3640,5,71,10501,"",0,0,0,TorchChariotPolicy,BossActions.Dash|BossActions.DamageZone);
+        private static readonly BossDefinition EmptyFoldBoss=new BossDefinition(174,"famine_of_the_empty_fold",164750,77,3700,5,72,10681,"mp1",2740,39,1.11,EmptyFoldPolicy,BossActions.Summon|BossActions.DamageZone,.95,.90);
+        private static readonly BossDefinition AccusingShadowBoss=new BossDefinition(177,"rebuked_accusing_shadow",166500,78,3760,5,73,10861,"mp1",2760,39,1.11,AccusingShadowPolicy,BossActions.Chains|BossActions.AimedShot|BossActions.Summon,.95,.90);
+        private static readonly BossDefinition DevourerBoss=new BossDefinition(CampaignContent.OldTestamentFinalRound,"malachi_devourer",140000,79,3820,5,74,11041,"mp1",2800,39,1.11,DevourerPolicy,
+            BossActions.Dash|BossActions.Slam|BossActions.Chains|BossActions.Summon|BossActions.AimedShot|BossActions.DamageZone,.95,.90);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
@@ -185,7 +193,8 @@ namespace BibleSurvivor.Core
             132=>SurroundingTerrorBoss,135=>CisternMudBoss,138=>DestroyingMountainBoss,
             141=>WormwoodGallBoss,144=>SoulSnareBoss,147=>HighCedarBoss,150=>GogHostBoss,
             153=>DuraImageBoss,156=>FourthBeastBoss,159=>PersianPrinceBoss,
-            162=>DeathSheolBoss,165=>HighEagleBoss,168=>LingeringAngerBoss,_=>null
+            162=>DeathSheolBoss,165=>HighEagleBoss,168=>LingeringAngerBoss,
+            171=>TorchChariotBoss,174=>EmptyFoldBoss,177=>AccusingShadowBoss,CampaignContent.OldTestamentFinalRound=>DevourerBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,
