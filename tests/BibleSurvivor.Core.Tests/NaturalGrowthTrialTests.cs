@@ -10,7 +10,7 @@ internal static class NaturalGrowthTrialTests
 {
     internal static void Register(Action<string, Action> test)
     {
-        test("R180 trials start from an installed R100 checkpoint without installing R101", () =>
+        test("R180 trials branch experimentally from the installed R100 checkpoint", () =>
         {
             const string path = "tests/BibleSurvivor.Core.Tests/Fixtures/r100-build-complete-save.json";
             var originalBytes = File.ReadAllBytes(path);
@@ -18,7 +18,7 @@ internal static class NaturalGrowthTrialTests
             var game = AdamSession.Resume(state, CampaignContent.Round(100));
             var trial = ExperimentalRounds.Create(101, "C0");
             Check.Equal("trial_job_02", trial.Definition.Id);
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(101));
+            Check.Equal("job_02", CampaignContent.Round(101).Id);
             Check.Throws<ArgumentOutOfRangeException>(() => ExperimentalRounds.Create(100, "C0"));
             Check.Throws<ArgumentOutOfRangeException>(() => ExperimentalRounds.Create(181, "C0"));
 

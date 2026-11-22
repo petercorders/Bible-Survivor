@@ -160,7 +160,7 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR100()
+    [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR110()
     {
         var host=CompletedGenesisForEntry("enter");
         var run=host.State.Run.RunId;
@@ -179,7 +179,7 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
-        for(var round=10;round<=100;round++)
+        for(var round=10;round<=110;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
@@ -191,28 +191,34 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(round==42,host.CanEnterJudges);
             Assert.AreEqual(round==51,host.CanEnterRuth);
             Assert.AreEqual(round==54,host.CanEnterFirstSamuel);
-            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99,host.CanEnterLaterBook);
-            Assert.AreEqual(round==100,host.ContentComplete);
+            Assert.AreEqual(round is 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102,host.CanEnterLaterBook);
+            Assert.AreEqual(round==110,host.ContentComplete);
             if(round==99)
             {
                 Assert.AreEqual("에스더 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
                 Assert.AreEqual(100,AdamRoundPresentation.NextChapter(host));
                 Assert.AreEqual("욥기 시작 (Enter)",AdamRoundPresentation.StartCard(100));
             }
-            Assert.AreEqual(round!=15&&round!=21&&round!=30&&round!=36&&round!=42&&round!=51&&round!=54&&round!=60&&round!=66&&round!=72&&round!=81&&round!=84&&round!=90&&round!=93&&round!=96&&round!=99&&round!=100,host.AwaitingNextRound);
+            if(round==102)
+            {
+                Assert.AreEqual("욥기 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+                Assert.AreEqual(103,AdamRoundPresentation.NextChapter(host));
+                Assert.AreEqual("시편 시작 (Enter)",AdamRoundPresentation.StartCard(103));
+            }
+            Assert.AreEqual(!(round is 15 or 21 or 30 or 36 or 42 or 51 or 54 or 60 or 66 or 72 or 81 or 84 or 90 or 93 or 96 or 99 or 102 or 110),host.AwaitingNextRound);
             revision=host.State.Revision;
             Keys();yield return null;
             Assert.AreEqual(round,host.Session.RoundNumber);
             Assert.AreEqual(revision,host.State.Revision);
             Keys(Key.Enter);yield return null;
-            Assert.AreEqual(Math.Min(100,round+1),host.Session.RoundNumber);
-            Assert.AreEqual(revision+(round==100?0:1),host.State.Revision);
+            Assert.AreEqual(Math.Min(110,round+1),host.Session.RoundNumber);
+            Assert.AreEqual(revision+(round==110?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
         }
         Assert.IsTrue(host.ContentComplete);
-        Assert.AreEqual(101,host.State.Run.RoundNumber);
-        Assert.AreEqual("욥기 1 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
-        StringAssert.Contains("욥기 1 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
+        Assert.AreEqual(111,host.State.Run.RoundNumber);
+        Assert.AreEqual("시편 8 완료 · 진행 저장됨",AdamRoundPresentation.CompletionHeading(host));
+        StringAssert.Contains("시편 1–8 라운드 클리어",AdamRoundPresentation.CompletionDetail(host));
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
     }
     [UnityTest]public IEnumerator R11ContinueClickEntersSavedNextRoundWithoutRepaying180()
