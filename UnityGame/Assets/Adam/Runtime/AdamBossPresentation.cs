@@ -60,6 +60,8 @@ namespace BibleSurvivor.Unity
             "night_beast_of_ruins"=>"폐허에 깃드는 밤 짐승","leviathan_shadow"=>"날랜 뱀 리워야단의 그림자",
             "viper_eggs_and_web"=>"독사의 알과 거미줄",
             "terror_all_around"=>"사방의 두려움","cistern_mud"=>"웅덩이의 진흙","destroying_mountain"=>"온 세계를 멸하는 멸망의 산",
+            "wormwood_and_gall"=>"쑥과 담즙","soul_snaring_band"=>"영혼을 사냥하는 부적 띠",
+            "proud_high_cedar"=>"하늘에 닿은 교만한 백향목","gog_host_from_the_north"=>"북쪽 끝에서 오는 곡의 군세",
             _=>throw new ArgumentException("Unsupported boss ID")
         };
         public static string Name(AdamSession session)=>Name(session.BossRules);

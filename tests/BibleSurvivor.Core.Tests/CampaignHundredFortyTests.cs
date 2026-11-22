@@ -13,15 +13,14 @@ internal static class CampaignHundredFortyTests
             CampaignHundredTenTests.MatchTuning(131, 140));
         test("R140 replays R130 with explicit Lamentations entry and preserves receipts", () =>
             CampaignCheckpointTests.MatchReplay(130, 140, 129, 132, 135, 138));
-        test("R140 completion blocks round 141 when loaded", () =>
+        test("R140 completion loads and continues Lamentations", () =>
         {
-            Check.Equal(140, CampaignContent.LastInstalledRound);
             Check.True(LaterCampaignBooks.StartsBook(139));
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(141));
+            Check.Equal("lamentations_03", CampaignContent.Round(141).Id);
             const string path = "tests/BibleSurvivor.Core.Tests/Fixtures/r140-build-complete-save.json";
             var saved = new SaveStore(path).Load()!;
             var session = AdamSession.Resume(saved, CampaignContent.Round(140));
-            Check.True(session.ContentComplete && !session.CanEnterLaterBook);
+            Check.True(!session.ContentComplete && !session.CanEnterLaterBook);
             Check.Equal(141, saved.Run!.RoundNumber);
         });
     }

@@ -63,6 +63,12 @@ namespace BibleSurvivor.Core
             137=>"surging_nile_host",
             139=>"tears_without_comfort",
             140=>"gnashing_mockery",
+            142=>"briers_and_scorpions",
+            143=>"carved_creeping_things",
+            145=>"broken_breach",
+            146=>"sinking_proud_ship",
+            148=>"beast_of_scattered_sheep",
+            149=>"dry_wind_without_hope",
             _=>MonsterPrefix+"1"
         };
 
@@ -112,7 +118,8 @@ namespace BibleSurvivor.Core
             new LaterCampaignBook(21,"song_of_songs","아가","sg",118,120,33,.99,1.25,.55),
             new LaterCampaignBook(22,"isaiah","이사야","isa",121,129,34,1.01,1.27,.56),
             new LaterCampaignBook(23,"jeremiah","예레미야","jer",130,138,35,1.03,1.29,.51+.01*6),
-            new LaterCampaignBook(24,"lamentations","예레미야애가","lam",139,140,36,1.05,1.31,.51+.01*7)
+            new LaterCampaignBook(24,"lamentations","예레미야애가","lam",139,141,36,1.05,1.31,.51+.01*7),
+            new LaterCampaignBook(25,"ezekiel","에스겔","eze",142,150,37,1.07,1.17+.02*8,.59)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:
