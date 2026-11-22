@@ -54,7 +54,8 @@ namespace BibleSurvivor.Core
             SurroundingTerrorPolicy="r132-production-v1",CisternMudPolicy="r135-production-v1",DestroyingMountainPolicy="r138-production-v1",
             WormwoodGallPolicy="r141-production-v1",SoulSnarePolicy="r144-production-v1",
             HighCedarPolicy="r147-production-v1",GogHostPolicy="r150-production-v1",
-            DuraImagePolicy="r153-production-v1",FourthBeastPolicy="r156-production-v1",PersianPrincePolicy="r159-production-v1";
+            DuraImagePolicy="r153-production-v1",FourthBeastPolicy="r156-production-v1",PersianPrincePolicy="r159-production-v1",
+            DeathSheolPolicy="r162-production-v1",HighEaglePolicy="r165-production-v1",LingeringAngerPolicy="r168-production-v1";
         // Bosses from R21 onward are stored in the ordered later history and must match their own round.
         internal static bool IsExpansionPolicy(string policy) => policy is OathPolicy or DustPolicy or RavinePolicy or WardenPolicy
             or OblivionPolicy or CrossroadsPolicy or RampartPolicy or BoundaryPolicy or TorrentPolicy or FordPolicy
@@ -64,7 +65,8 @@ namespace BibleSurvivor.Core
             or RuinsBeastPolicy or LeviathanShadowPolicy or ViperWebPolicy
             or SurroundingTerrorPolicy or CisternMudPolicy or DestroyingMountainPolicy
             or WormwoodGallPolicy or SoulSnarePolicy or HighCedarPolicy or GogHostPolicy
-            or DuraImagePolicy or FourthBeastPolicy or PersianPrincePolicy;
+            or DuraImagePolicy or FourthBeastPolicy or PersianPrincePolicy
+            or DeathSheolPolicy or HighEaglePolicy or LingeringAngerPolicy;
         internal static bool IsProductionPolicy(string policy) => policy is Policy or SitnahPolicy or JudahPolicy
             or ChariotPolicy or WeaverPolicy or AshVeilPolicy || IsExpansionPolicy(policy);
         public BossActions Actions {get;}
@@ -169,6 +171,9 @@ namespace BibleSurvivor.Core
         private static readonly BossDefinition DuraImageBoss=new BossDefinition(153,"golden_image_of_dura",152500,70,3280,5,65,9421,"",0,0,0,DuraImagePolicy,BossActions.Slam|BossActions.DamageZone);
         private static readonly BossDefinition FourthBeastBoss=new BossDefinition(156,"ten_horned_fourth_beast",154250,71,3340,5,66,9601,"",0,0,0,FourthBeastPolicy,BossActions.Dash|BossActions.Chains|BossActions.Slam);
         private static readonly BossDefinition PersianPrinceBoss=new BossDefinition(159,"spiritual_prince_of_persia",156000,72,3400,5,67,9781,"dan1",2580,38,1.09,PersianPrincePolicy,BossActions.AimedShot|BossActions.Summon|BossActions.DamageZone,.95,.90);
+        private static readonly BossDefinition DeathSheolBoss=new BossDefinition(162,"death_and_sheol",157750,73,3460,5,68,9961,"mp1",2620,39,1.11,DeathSheolPolicy,BossActions.DamageZone|BossActions.Summon,.95,.90);
+        private static readonly BossDefinition HighEagleBoss=new BossDefinition(165,"eagle_of_high_crags",159500,74,3520,5,69,10141,"",0,0,0,HighEaglePolicy,BossActions.Dash|BossActions.AimedShot);
+        private static readonly BossDefinition LingeringAngerBoss=new BossDefinition(168,"lingering_anger",161250,75,3580,5,70,10321,"",0,0,0,LingeringAngerPolicy,BossActions.Slam|BossActions.Chains);
         internal static BossDefinition? Find(int number)=>number switch
         {
             3=>AdamBoss,6=>IsaacBoss,9=>JudahBoss,12=>MosesBoss,15=>BezalelBoss,18=>AshVeilBoss,21=>OathBoss,24=>DustBoss,27=>RavineBoss,30=>WardenBoss,
@@ -179,7 +184,8 @@ namespace BibleSurvivor.Core
             123=>RuinsBeastBoss,126=>LeviathanShadowBoss,129=>ViperWebBoss,
             132=>SurroundingTerrorBoss,135=>CisternMudBoss,138=>DestroyingMountainBoss,
             141=>WormwoodGallBoss,144=>SoulSnareBoss,147=>HighCedarBoss,150=>GogHostBoss,
-            153=>DuraImageBoss,156=>FourthBeastBoss,159=>PersianPrinceBoss,_=>null
+            153=>DuraImageBoss,156=>FourthBeastBoss,159=>PersianPrinceBoss,
+            162=>DeathSheolBoss,165=>HighEagleBoss,168=>LingeringAngerBoss,_=>null
         };
         public static BossDefinition ForRound(int number)=>Find(number)??throw new ArgumentException("No implemented boss for round");
         internal static BossDefinition Experimental(int number,string roundId,double hp,int contact,int gold,int damage,int actor,

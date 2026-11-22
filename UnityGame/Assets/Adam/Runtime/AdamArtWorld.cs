@@ -206,7 +206,7 @@ namespace BibleSurvivor.Unity
         {
             switch(id)
             {
-                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":case "ss1":case "fk1":case "sk1":case "fc1":case "sc1":case "ez1":case "nh1":case "es1":case "jb1":case "ps1":case "pv1":case "ec1":case "sg1":case "isa1":case "jer1":case "lam1":case "eze1":case "dan1":
+                case "lv1":case "nm1":case "dt1":case "js1":case "jd1":case "rt1":case "sm1":case "ss1":case "fk1":case "sk1":case "fc1":case "sc1":case "ez1":case "nh1":case "es1":case "jb1":case "ps1":case "pv1":case "ec1":case "sg1":case "isa1":case "jer1":case "lam1":case "eze1":case "dan1":case "mp1":
                 case "lament_ash":case "tangled_thicket":case "dry_land_ember":case "cave_hunter":case "starving_siege_beast":
                 case "scattered_scroll_fragments":case "endless_procession":case "tower_pride_shadow":case "accusation_cloud":case "accusing_shadow":
                 case "night_vision_whisper":case "windblown_chaff":case "valley_shadow":case "poisoned_word_arrows":
@@ -220,7 +220,9 @@ namespace BibleSurvivor.Unity
                 case "briers_and_scorpions":case "carved_creeping_things":case "broken_breach":
                 case "sinking_proud_ship":case "beast_of_scattered_sheep":case "dry_wind_without_hope":
                 case "royal_delicacies":case "iron_and_clay_feet":case "shadow_of_the_vessel_feast":case "hungry_lion_pride":
-                case "little_horn":case "shadow_of_desolation":case "baal_adornments":return "ex17";
+                case "little_horn":case "shadow_of_desolation":case "baal_adornments":
+                case "reaped_whirlwind":case "dust_of_devastation":case "ivory_bed_complacency":
+                case "entangling_seaweed":case "violence_of_hands":case "evil_plotted_at_night":case "weight_of_sin":return "ex17";
                 case "lv2":case "nm2":case "dt2":case "js2":case "jd2":case "rt2":case "sm2":case "ss2":case "fk2":case "sk2":case "fc2":case "sc2":case "ez2":case "nh2":case "es2":case "jb2":case "ps2":case "pv2":case "ec2":case "sg2":case "isa2":case "jer2":case "lam2":case "eze2":case "dan2":case "mp2":return "ex16";
                 case "lv3":case "nm3":case "dt3":case "js3":case "jd3":case "rt3":case "sm3":case "ss3":case "fk3":case "sk3":case "fc3":case "sc3":case "ez3":case "nh3":case "es3":case "jb3":case "ps3":case "pv3":case "ec3":case "sg3":case "isa3":case "jer3":case "lam3":case "eze3":case "dan3":case "mp3":return "ex18";
                 case "ash_veil":
@@ -249,7 +251,8 @@ namespace BibleSurvivor.Unity
                 case "night_beast_of_ruins":case "leviathan_shadow":case "viper_eggs_and_web":
                 case "terror_all_around":case "cistern_mud":case "destroying_mountain":
                 case "wormwood_and_gall":case "soul_snaring_band":case "proud_high_cedar":case "gog_host_from_the_north":
-                case "golden_image_of_dura":case "ten_horned_fourth_beast":case "spiritual_prince_of_persia":return "defilement_weaver";
+                case "golden_image_of_dura":case "ten_horned_fourth_beast":case "spiritual_prince_of_persia":
+                case "death_and_sheol":case "eagle_of_high_crags":case "lingering_anger":return "defilement_weaver";
                 default:return id;
             }
         }
