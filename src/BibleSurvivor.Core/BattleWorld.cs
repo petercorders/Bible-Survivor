@@ -485,12 +485,15 @@ namespace BibleSurvivor.Core
             var previousBossTime=boss.BossElapsed;
             var attackAt=boss.NextAttackAt;
             boss.BossElapsed+=FixedStep;SimulationTime=boss.CombatTime;
+            var hazardRetaliations = MoveBossHazards(boss, rules, previousPlayer);
+            if(!Session.IsActive){ClearEnded();return;}
             if(!rules.UsesDash&&rules.HasTimedAttack&&!boss.Telegraphing&&boss.BossElapsed+1e-9>=attackAt-rules.TelegraphDuration)
             {
-                var offset=PlayerPosition-enemies[rules.BossActorId];
-                BeginBossTelegraph(boss,rules,offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX);
+                var origin=enemies[rules.BossActorId];
+                var offset=PlayerPosition-origin;
+                BeginBossTelegraph(boss,rules,origin,offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX);
             }
-            var retaliations=MoveHostileProjectiles(previousPlayer);
+            var retaliations=hazardRetaliations+MoveHostileProjectiles(previousPlayer);
             if(!Session.IsActive){ClearEnded();return;}
             var fireChains=false;
             Synchronize();var previous=new Dictionary<int,Vector2>(enemies);
@@ -553,9 +556,13 @@ namespace BibleSurvivor.Core
             else {ClearEnded();weapons.Clear();}
             Session.Capture();
         }
-        private void BeginBossTelegraph(BossEncounterState boss,BossDefinition rules,Vector2 direction)
+        private void BeginBossTelegraph(BossEncounterState boss,BossDefinition rules,Vector2 origin,Vector2 direction)
         {
             boss.Telegraphing=true;boss.TargetX=PlayerPosition.X;boss.TargetY=PlayerPosition.Y;
+            if (rules.UsesAimedShot)
+                boss.AimedShot = new BossAimedShotState {
+                    OriginX = origin.X, OriginY = origin.Y, DirectionX = direction.X, DirectionY = direction.Y
+                };
             if(!rules.UsesChainProjectiles)return;
             boss.ChainDirections=Enumerable.Range(-1,3).Select(i=>
             {
@@ -585,7 +592,7 @@ namespace BibleSurvivor.Core
                     var offset=PlayerPosition-position;var direction=offset.LengthSquared()>1e-12?Vector2.Normalize(offset):Vector2.UnitX;
                     charge.DirectionX=direction.X;charge.DirectionY=direction.Y;
                     charge.Phase="telegraph";charge.Until=boss.NextAttackAt;
-                    BeginBossTelegraph(boss,rules,direction);
+                    BeginBossTelegraph(boss,rules,position,direction);
                 }
                 else if(charge.Phase=="telegraph")
                 {charge.Phase="dash";charge.Until=boss.NextAttackAt+rules.DashDuration;boss.NextAttackAt+=rules.AttackPeriod;boss.Telegraphing=false;}
@@ -593,6 +600,42 @@ namespace BibleSurvivor.Core
             }
             if(!BattleSnapshot.Position(position.X,position.Y))throw new InvalidOperationException("World coordinate limit exceeded");
             return position;
+        }
+        private int MoveBossHazards(BossEncounterState boss, BossDefinition rules, Vector2 previousPlayer)
+        {
+            if ((!rules.UsesAimedShot && !rules.UsesDamageZone) || boss.Telegraphing ||
+                boss.NextAttackAt <= rules.AttackPeriod) return 0;
+
+            var age = boss.SecondsSinceAttack(rules);
+            var start = Math.Max(0, age - FixedStep);
+            var retaliations = 0;
+            if (boss.AimedShot is { } shot)
+            {
+                var end = Math.Min(age, BossDefinition.AimedShotLifetime);
+                var endPlayer = Vector2.Lerp(previousPlayer, PlayerPosition, (float)((end - start) / FixedStep));
+                if (Intersection(shot.PositionAt(start) - previousPlayer, shot.PositionAt(end) - endPlayer,
+                    BossDefinition.AimedShotRadius + tuning.PlayerRadius).HasValue)
+                {
+                    boss.AimedShot = null;
+                    ApplyPlayerDamage(rules.AttackDamage, "aimed_shot");
+                    if (!Session.IsActive) return 0;
+                    if (Session.LastRetaliationDamage > 0) retaliations++;
+                }
+                else if (age >= BossDefinition.AimedShotLifetime - 1e-9) boss.AimedShot = null;
+            }
+            if (rules.UsesDamageZone && start < BossDefinition.DamageZoneLifetime - 1e-9)
+            {
+                var center = new Vector2(boss.TargetX, boss.TargetY);
+                var end = Math.Min(age, BossDefinition.DamageZoneLifetime);
+                var endPlayer = Vector2.Lerp(previousPlayer, PlayerPosition, (float)((end - start) / FixedStep));
+                if (Intersection(previousPlayer - center, endPlayer - center,
+                    BossDefinition.DamageZoneRadius + tuning.PlayerRadius).HasValue)
+                {
+                    ApplyPlayerDamage(rules.AttackDamage, "damage_zone");
+                    if (Session.LastRetaliationDamage > 0) retaliations++;
+                }
+            }
+            return retaliations;
         }
         private int MoveHostileProjectiles(Vector2 previousPlayer)
         {

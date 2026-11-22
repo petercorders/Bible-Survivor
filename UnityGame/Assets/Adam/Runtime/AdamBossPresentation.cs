@@ -61,7 +61,7 @@ namespace BibleSurvivor.Unity
         public static string RewardDetail(BossDefinition rules)=>Name(rules)+" · 게임 각색\n고정 골드 +"+rules.KillGold+" 적용됨 · 선택 즉시 저장";
         public static double HealthFraction(BossEncounterState boss,BossDefinition rules)=>boss.Health/rules.MaxHealth;
         public static double HealthFraction(AdamSession session)=>HealthFraction(session.Boss,session.BossRules);
-        public static bool UsesTwoLineHud(BossDefinition rules)=>rules.Number>60?rules.UsesDash||rules.UsesChainProjectiles||rules.UsesSlam:rules.IsChariot||UsesShardHud(rules.Number);
+        public static bool UsesTwoLineHud(BossDefinition rules)=>rules.Number>60?rules.UsesDash||rules.UsesChainProjectiles||rules.UsesSlam||rules.UsesAimedShot||rules.UsesDamageZone:rules.IsChariot||UsesShardHud(rules.Number);
         static bool UsesShardHud(int round)=>round is 15 or 18 or 21 or 24 or 27 or 30 or 33 or 36 or 39 or 42 or 45 or 48 or 51 or 54 or 57 or 60;
         public static string AttackPhase(int round,bool telegraphing,bool support,double period)
         {
@@ -81,6 +81,8 @@ namespace BibleSurvivor.Unity
             if((actions&BossActions.Dash)!=0)labels.Add(dashPhase=="dash"?"돌진 진행":"돌진");
             if((actions&BossActions.Slam)!=0)labels.Add("내려치기");
             if((actions&BossActions.Chains)!=0)labels.Add("사슬 3방향");
+            if ((actions & BossActions.AimedShot) != 0) labels.Add("조준 사격");
+            if ((actions & BossActions.DamageZone) != 0) labels.Add("피해 지대");
             var attack=labels.Count==0?"추격":string.Join(" · ",labels)+(telegraphing?" 예고":"");
             return (support?"지원군 · ":"")+attack;
         }

@@ -447,7 +447,7 @@ namespace BibleSurvivor.Core
             var boss=run.Boss!;
             if(!boss.BossGoldApplied){state.Profile.Gold=checked(state.Profile.Gold+BossRules!.KillGold);boss.BossGoldApplied=true;}
             foreach(var xp in run.Drops.OrderBy(x=>x.Key).Select(x=>x.Value))AwardExperience(xp);
-            run.Drops.Clear();boss.Supports.Clear();boss.Telegraphing=false;if(boss.ChariotCharge!=null){boss.ChariotCharge.Phase="chase";boss.ChariotCharge.Until=0;}run.World=null;run.Stage="boss_reward";
+            run.Drops.Clear();boss.Supports.Clear();boss.Telegraphing=false;boss.AimedShot=null;if(boss.ChariotCharge!=null){boss.ChariotCharge.Phase="chase";boss.ChariotCharge.Until=0;}run.World=null;run.Stage="boss_reward";
             boss.Reward=new BossRewardState{PolicyId=BossRules!.RewardPolicy,RewardId=boss.EncounterId+":reward",Weapons=Inventory.Weapons.ToDictionary(x=>x.Key,x=>x.Value),
                 Passives=Inventory.Passives.ToDictionary(x=>x.Key,x=>x.Value),Forms=Inventory.Forms.Count==0?null:Inventory.Forms.ToDictionary(x=>x.Key,x=>x.Value),
                 UnlockedWeapons=state.Profile.UnlockedWeapons.OrderBy(x=>x,StringComparer.Ordinal).ToList(),EligibleEvolutions=EvolutionRules.Eligibility(Inventory.Weapons,Inventory.Passives,Inventory.Forms)};

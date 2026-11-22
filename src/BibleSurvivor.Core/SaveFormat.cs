@@ -57,7 +57,7 @@ namespace BibleSurvivor.Core
                 ("MonsterSpeeds", Array(Object("MonsterId Ratio"))),("HostileProjectiles",Array(Object("Version Id BornAt StartX StartY X Y DirectionX DirectionY Lifetime"))),("Charges",Array(Object("Version Id Phase NextAt Until TargetX TargetY DirectionX DirectionY"))));
             var reward = Object("RewardId PolicyId EligibleEvolutions Applied UnlockedWeapons SelectedId PromotedFrom GoldApplied",("Weapons",integerMap),("Passives",integerMap),("Forms",integerMap),("Candidates",Array(Object("Id Kind ItemId Level Gold"))));
             var boss = Object("Version EncounterId NormalEndedAt IntroElapsed BossElapsed Health Paused NextAttackAt Telegraphing TargetX TargetY ThresholdUsed Summoned NextActorId BossGoldApplied CompletionApplied RoundNumber SummonMask",
-                ("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
+                ("AimedShot",Object("OriginX OriginY DirectionX DirectionY")),("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
                 ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("CompletedFourthBoss",boss),("CompletedFifthBoss",boss),("CompletedSixthBoss",boss),("LaterBossHistory",Array(boss)),("Forms",integerMap));
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run));
@@ -165,7 +165,7 @@ namespace BibleSurvivor.Core
                     if(bossFields.Select(x=>x.Name).Distinct().Count()!=bossFields.Length)throw new InvalidDataException("Duplicate boss field");
                     var bossVersion=bossFields.SingleOrDefault(x=>x.Name=="Version");
                     if(bossVersion!=null && bossVersion.GetAttribute("type")=="number" &&
-                        (!int.TryParse(bossVersion.InnerText,out var bv)||bv>4))throw new UnsupportedSaveVersionException();
+                        (!int.TryParse(bossVersion.InnerText,out var bv)||bv>BossDefinition.LatestEncounterVersion))throw new UnsupportedSaveVersionException();
                     var reward=bossFields.SingleOrDefault(x=>x.Name=="Reward");
                     var rewardFields=reward?.ChildNodes.OfType<XmlElement>().ToArray()??System.Array.Empty<XmlElement>();
                     if(rewardFields.Select(x=>x.Name).Distinct().Count()!=rewardFields.Length)throw new InvalidDataException("Duplicate reward field");
