@@ -7,7 +7,7 @@ namespace BibleSurvivor.Core
 {
     public static class CampaignContent
     {
-        public const int LastInstalledRound = 150;
+        public const int LastInstalledRound = 160;
 
         public static RoundDefinition Round(int number) => number switch
         {
@@ -114,13 +114,13 @@ namespace BibleSurvivor.Core
     // Later books continue the Numbers formula with the campaign-wide offset from R22. Initial values, not measured balance.
     internal static class LaterBookRounds
     {
-        internal static RoundDefinition Build(int number,string id,string steady,string fast,string heavy,int steadyContact,int fastContact,int heavyContact,int? tuningOffset=null,double firstFastSpawnPower=1)
+        internal static RoundDefinition Build(int number,string id,string steady,string fast,string heavy,int steadyContact,int fastContact,int heavyContact,int? tuningOffset=null,double firstFastSpawnPower=1,int enemyHealthPercent=100)
         {
             var offset=tuningOffset??number-NumbersContent.GlobalRoundNumber;
             var cohort=offset%3;
-            var steadyHealth=440+20*offset;
-            var fastHealth=295+14*offset;
-            var heavyHealth=1070+35*offset;
+            var steadyHealth=(440+20*offset)*enemyHealthPercent/100;
+            var fastHealth=(295+14*offset)*enemyHealthPercent/100;
+            var heavyHealth=(1070+35*offset)*enemyHealthPercent/100;
             return new RoundDefinition(number,120,7200+200*offset,420+20*offset,new[]
             {
                 new WaveDefinition(0,60,new[]{new SpawnGroup(steady,300,steadyHealth,steadyContact),new SpawnGroup(fast,120+18*cohort,fastHealth,fastContact,firstFastSpawnPower)}),

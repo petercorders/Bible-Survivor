@@ -13,15 +13,14 @@ internal static class CampaignHundredFiftyTests
             CampaignHundredTenTests.MatchTuning(141, 150));
         test("R150 replays R140 with explicit Ezekiel entry and preserves receipts", () =>
             CampaignCheckpointTests.MatchReplay(140, 150, 138, 141, 144, 147, 150));
-        test("R150 completion blocks round 151 when loaded", () =>
+        test("R150 completion loads and allows explicit Daniel entry", () =>
         {
-            Check.Equal(150, CampaignContent.LastInstalledRound);
             Check.True(LaterCampaignBooks.StartsBook(142));
-            Check.Throws<ArgumentOutOfRangeException>(() => CampaignContent.Round(151));
+            Check.Equal("daniel_01", CampaignContent.Round(151).Id);
             const string path = "tests/BibleSurvivor.Core.Tests/Fixtures/r150-build-complete-save.json";
             var saved = new SaveStore(path).Load()!;
             var session = AdamSession.Resume(saved, CampaignContent.Round(150));
-            Check.True(session.ContentComplete && !session.CanEnterLaterBook);
+            Check.True(!session.ContentComplete && session.CanEnterLaterBook);
             Check.Equal(151, saved.Run!.RoundNumber);
             Check.True(saved.Run.Boss!.CompletionApplied);
         });

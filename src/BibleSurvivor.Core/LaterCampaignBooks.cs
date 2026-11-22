@@ -69,6 +69,13 @@ namespace BibleSurvivor.Core
             146=>"sinking_proud_ship",
             148=>"beast_of_scattered_sheep",
             149=>"dry_wind_without_hope",
+            151=>"royal_delicacies",
+            152=>"iron_and_clay_feet",
+            154=>"shadow_of_the_vessel_feast",
+            155=>"hungry_lion_pride",
+            157=>"little_horn",
+            158=>"shadow_of_desolation",
+            160=>"baal_adornments",
             _=>MonsterPrefix+"1"
         };
 
@@ -88,11 +95,12 @@ namespace BibleSurvivor.Core
         internal RoundDefinition Round(int number)
         {
             var offset=number>100?78+(number-100)/2:(int?)null;
-            var firstFastSpawnPower=offset%3==2?.85:1;
+            var minorProphets=number>=160;
+            var firstFastSpawnPower=minorProphets?.65:offset%3==2?.85:1;
             var contactLimit=number>=121?33:int.MaxValue;
             return LaterBookRounds.Build(number,RoundId(number),SteadyMonster(number),MonsterPrefix+"2",MonsterPrefix+"3",
                 Math.Min(contact,contactLimit),Math.Min(contact-1,contactLimit),Math.Min(contact+4,contactLimit),
-                offset,firstFastSpawnPower);
+                offset,firstFastSpawnPower,minorProphets?80:100);
         }
     }
 
@@ -119,7 +127,9 @@ namespace BibleSurvivor.Core
             new LaterCampaignBook(22,"isaiah","이사야","isa",121,129,34,1.01,1.27,.56),
             new LaterCampaignBook(23,"jeremiah","예레미야","jer",130,138,35,1.03,1.29,.51+.01*6),
             new LaterCampaignBook(24,"lamentations","예레미야애가","lam",139,141,36,1.05,1.31,.51+.01*7),
-            new LaterCampaignBook(25,"ezekiel","에스겔","eze",142,150,37,1.07,1.17+.02*8,.59)
+            new LaterCampaignBook(25,"ezekiel","에스겔","eze",142,150,37,1.07,1.17+.02*8,.59),
+            new LaterCampaignBook(26,"daniel","다니엘","dan",151,159,38,1.09,1.17+.02*9,.60),
+            new LaterCampaignBook(27,"minor_prophets","열두 예언서","mp",160,180,39,1.11,1.17+.02*10,.61)
         };
 
         public static LaterCampaignBook? Find(int round)=>round>CampaignContent.LastInstalledRound?null:
