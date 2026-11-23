@@ -29,12 +29,13 @@ namespace BibleSurvivor.Core
         public bool WidenEvolvedClaw { get; }
         public bool FollowUpLeapKill { get; }
         public bool WidenCommonArea { get; }
+        public bool WidenDamageRegion { get; }
 
         public ExpandedDanielLionRankOptions(bool prioritizeElite = false, bool extendLeash = false,
             bool spreadNormalTargets = false, bool staggerFirstBossClaw = false, bool empowerLeap = false,
             bool addPackRoar = false, bool widenRoar = false, bool strengthenRoarKnockback = false,
             bool hastenClawsAfterRoar = false, bool staggerPackRoar = false, bool widenEvolvedClaw = false,
-            bool followUpLeapKill = false, bool widenCommonArea = false)
+            bool followUpLeapKill = false, bool widenCommonArea = false, bool widenDamageRegion = false)
         {
             PrioritizeElite = prioritizeElite;
             ExtendLeash = extendLeash;
@@ -49,6 +50,7 @@ namespace BibleSurvivor.Core
             WidenEvolvedClaw = widenEvolvedClaw;
             FollowUpLeapKill = followUpLeapKill;
             WidenCommonArea = widenCommonArea;
+            WidenDamageRegion = widenDamageRegion;
         }
 
         public static ExpandedDanielLionRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -58,12 +60,12 @@ namespace BibleSurvivor.Core
             return new ExpandedDanielLionRankOptions(Has("weapon.daniel_lion.a.01"), Has("weapon.daniel_lion.a.02"),
                 Has("weapon.daniel_lion.b.01"), Has("weapon.daniel_lion.b.02"), Has("weapon.daniel_lion.e.01"),
                 Has("weapon.daniel_lion.c.01"), Has("weapon.daniel_lion.c.02"), Has("weapon.daniel_lion.c.03"),
-                Has("weapon.daniel_lion.c.04"), Has("weapon.daniel_lion.c.05"), Has("weapon.daniel_lion.e.03"), Has("weapon.daniel_lion.e.02"), Has("common.area.01"));
+                Has("weapon.daniel_lion.c.04"), Has("weapon.daniel_lion.c.05"), Has("weapon.daniel_lion.e.03"), Has("weapon.daniel_lion.e.02"), Has("common.area.01"), Has("common.area.09"));
         }
 
         public double RoarRadius(bool guardian) =>
             (guardian ? ExpandedDanielLion.GuardianRoarRadius : ExpandedDanielLion.PackRoarRadius) *
-            (1 + (WidenRoar ? .15 : 0) + (WidenCommonArea ? .04 : 0));
+            (1 + (WidenRoar ? .15 : 0) + (WidenCommonArea ? .04 : 0) + (WidenDamageRegion ? .06 : 0));
     }
 
     public readonly struct ExpandedDanielLionHit

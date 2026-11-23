@@ -22,11 +22,12 @@ namespace BibleSurvivor.Core
         public bool EmpowerLaneEdge { get; }
         public bool ExtendLane { get; }
         public bool WidenSupportShape { get; }
+        public bool WidenDamageRegion { get; }
         public double ResidualDurationBonus { get; }
 
         public ExpandedMosesStaffRankOptions(bool widenWave = false, bool widenFan = false, bool prioritizeElite = false,
             bool increaseKnockback = false, bool widenLane = false, bool empowerLaneEdge = false, bool extendLane = false,
-            bool widenSupportShape = false, double residualDurationBonus = 0)
+            bool widenSupportShape = false, double residualDurationBonus = 0, bool widenDamageRegion = false)
         {
             if (!ExpandedWeaponRules.ValidResidualDurationBonus(residualDurationBonus))
                 throw new ArgumentOutOfRangeException(nameof(residualDurationBonus));
@@ -38,6 +39,7 @@ namespace BibleSurvivor.Core
             EmpowerLaneEdge = empowerLaneEdge;
             ExtendLane = extendLane;
             WidenSupportShape = widenSupportShape;
+            WidenDamageRegion = widenDamageRegion;
             ResidualDurationBonus = residualDurationBonus;
         }
 
@@ -49,7 +51,7 @@ namespace BibleSurvivor.Core
                 Has("weapon.moses_staff.a.01"), Has("weapon.moses_staff.a.02"), Has("weapon.moses_staff.a.03"),
                 Has("weapon.moses_staff.b.01"), Has("weapon.moses_staff.e.01"), Has("weapon.moses_staff.e.02"),
                 Has("weapon.moses_staff.e.03"), Has("common.area.01"),
-                ExpandedWeaponRules.ResidualDurationBonus(ranks, true));
+                ExpandedWeaponRules.ResidualDurationBonus(ranks, true), Has("common.area.09"));
         }
     }
 
@@ -110,6 +112,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool EmpoweredLaneEdge { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedLane { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WiderDamageRegion { get; set; }
         [DataMember(EmitDefaultValue = false)] public double ResidualDurationBonus { get; set; }
         [DataMember(IsRequired = true)] public List<int> HitIds { get; set; } = new List<int>();
 
@@ -120,7 +123,7 @@ namespace BibleSurvivor.Core
         public bool HasLane => MakesLane && LaneTicks <= LaneTickCount;
         public double LaneLength => HasLane ? Math.Min(Distance, ExpandedMosesStaff.MaximumLaneLength) : 0;
         public double LaneWidth => ExpandedMosesStaff.BaseLaneWidth *
-            (1 + (WidenedLane ? .15 : 0) + (WidenedSupportShape ? .04 : 0));
+            (1 + (WidenedLane ? .15 : 0) + (WidenedSupportShape ? .04 : 0) + (WiderDamageRegion ? .06 : 0));
         public double LaneDuration => ExpandedMosesStaff.BaseLaneDuration *
             (1 + (ExtendedLane ? .20 : 0) + ResidualDurationBonus);
         internal int LaneTickCount => (int)Math.Ceiling(LaneDuration / ExpandedMosesStaff.LaneInterval);
@@ -206,7 +209,7 @@ namespace BibleSurvivor.Core
                 if (!wave.MakesLane)
                 {
                     if (wave.LaneStartedAt.HasValue || wave.LaneTicks != 0 || wave.WidenedLane ||
-                        wave.EmpoweredLaneEdge || wave.ExtendedLane || wave.WidenedSupportShape || wave.ResidualDurationBonus != 0)
+                        wave.EmpoweredLaneEdge || wave.ExtendedLane || wave.WidenedSupportShape || wave.WiderDamageRegion || wave.ResidualDurationBonus != 0)
                         throw new ArgumentException("Unexpected expanded staff lane");
                 }
                 else
@@ -341,6 +344,7 @@ namespace BibleSurvivor.Core
                     EmpoweredLaneEdge = makesLane && rankOptions.EmpowerLaneEdge,
                     ExtendedLane = makesLane && rankOptions.ExtendLane,
                     WidenedSupportShape = makesLane && rankOptions.WidenSupportShape,
+                    WiderDamageRegion = makesLane && rankOptions.WidenDamageRegion,
                     ResidualDurationBonus = makesLane ? rankOptions.ResidualDurationBonus : 0,
                 });
                 state.NextWaveId = checked(state.NextWaveId + 1);

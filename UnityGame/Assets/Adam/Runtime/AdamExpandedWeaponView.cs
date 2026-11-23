@@ -21,7 +21,7 @@ namespace BibleSurvivor.Unity
         static readonly Color Chariot = new Color32(253, 226, 136, 255);
 
         readonly Texture2D[] rings = new Texture2D[3];
-        readonly List<ExpandedLightningEventState> resolvedBolts = new List<ExpandedLightningEventState>();
+        readonly List<BattleAreaEffect> actualAreas = new List<BattleAreaEffect>();
         readonly List<(double At, Vector2 Center, float Radius, Stroke Stroke)> echoes =
             new List<(double, Vector2, float, Stroke)>();
         readonly List<(double At, Vector2 Center, float Radius, bool Guardian)> roars =
@@ -29,22 +29,15 @@ namespace BibleSurvivor.Unity
 
         public void Clear()
         {
-            resolvedBolts.Clear();
+            actualAreas.Clear();
             echoes.Clear();
             roars.Clear();
         }
 
-        public void Observe(BattleSnapshot previous, BattleSnapshot next, float packRoarRadius, float guardianRoarRadius)
+        public void Observe(BattleWorld source, BattleSnapshot previous, BattleSnapshot next, float packRoarRadius, float guardianRoarRadius)
         {
+            source.ReadRecentAreaEffects(actualAreas);
             if (previous == null || next.Time <= previous.Time) return;
-            for (var i = resolvedBolts.Count - 1; i >= 0; i--)
-                if (next.Time >= resolvedBolts[i].At + MarkerLifetime) resolvedBolts.RemoveAt(i);
-            if (previous.Lightning != null && next.Lightning != null && previous.Lightning.Evolved == next.Lightning.Evolved)
-            {
-                foreach (var bolt in previous.Lightning.Pending)
-                    if (bolt.At <= next.Time && next.Time < bolt.At + MarkerLifetime) resolvedBolts.Add(bolt);
-            }
-            else resolvedBolts.Clear();
 
             for (var i = echoes.Count - 1; i >= 0; i--)
                 if (next.Time >= echoes[i].At + MarkerLifetime) echoes.RemoveAt(i);
@@ -115,8 +108,20 @@ namespace BibleSurvivor.Unity
                 Ring(projection, echo.Center, echo.Radius, Voice, echo.Stroke);
 
             if (snap.Lightning != null)
+            {
                 foreach (var bolt in snap.Lightning.Pending) DrawBolt(projection, bolt, Stroke.Dash);
-            foreach (var bolt in resolvedBolts) DrawBolt(projection, bolt, Stroke.Solid);
+                if (snap.Lightning.GroundCurrents != null)
+                    foreach (var ground in snap.Lightning.GroundCurrents)
+                        Ring(projection, V(ground.Center), (float)ground.Radius, Lightning, Stroke.Dot);
+            }
+            foreach (var area in actualAreas)
+            {
+                if (snap.Time >= area.At + MarkerLifetime) continue;
+                var isLightning = area.Kind <= BattleAreaEffectKind.LightningEliteThunder;
+                Ring(projection, V(area.Center), (float)area.Radius, isLightning ? Lightning : Cross, Stroke.Solid);
+                if (area.Kind == BattleAreaEffectKind.LightningAftershock || area.Kind == BattleAreaEffectKind.LightningEliteThunder)
+                    Ring(projection, V(area.Center), (float)area.Radius - .1f, Lightning, Stroke.Solid);
+            }
 
             if (snap.MosesStaff != null)
                 foreach (var wave in snap.MosesStaff.Waves)
@@ -136,6 +141,7 @@ namespace BibleSurvivor.Unity
                 {
                     DrawTrail(projection, shot.Thorns, (float)shot.ThornRadius, Cross, Stroke.Dash);
                     if (shot.Afterglow != null) DrawTrail(projection, shot.Afterglow, (float)shot.AfterglowRadius, Cross, Stroke.Dot);
+                    if (shot.IsSpinning) Ring(projection, new Vector2(shot.X, shot.Y), (float)shot.SpinRadius, Cross, Stroke.Solid);
                 }
 
             if (snap.ElijahChariot != null)
@@ -158,10 +164,10 @@ namespace BibleSurvivor.Unity
         public void DrawActors(AdamWorldProjection projection, BattleSnapshot snap, bool feedback)
         {
             if (Event.current.type != EventType.Repaint) return;
-            foreach (var bolt in resolvedBolts)
+            foreach (var area in actualAreas)
             {
-                if (!bolt.IsPrimary) continue;
-                var center = new Vector2(bolt.X, bolt.Y);
+                if (area.Kind != BattleAreaEffectKind.LightningStrike || snap.Time >= area.At + MarkerLifetime) continue;
+                var center = V(area.Center);
                 var elbow = center + new Vector2(-.12f, .34f);
                 Line(projection, center, elbow, Lightning);
                 Line(projection, elbow, center + new Vector2(.13f, .68f), Lightning);

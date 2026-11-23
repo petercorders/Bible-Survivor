@@ -67,6 +67,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double? LastTempoEliteKillAt { get; set; }
         [DataMember(EmitDefaultValue=false)] public bool TempoOpeningUsed { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryVoiceCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryLightningCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryLightningStrikes { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryFireCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryCrossCycle { get; set; }
     }
 
     [DataContract]
@@ -125,7 +129,8 @@ namespace BibleSurvivor.Core
             if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null ||
                 Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
                 Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
-                Run.BossEntryVoiceCycle != 0))
+                Run.BossEntryVoiceCycle != 0 || Run.BossEntryLightningCycle != 0 ||
+                Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
             foreach (var encounter in PermanentProfile.EncounterHistory(Run))
                 if (encounter.Reward is { } reward &&
@@ -196,6 +201,13 @@ namespace BibleSurvivor.Core
                         PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.a.05") == 0 &&
                         PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.e.03") == 0))
                     throw new InvalidDataException("Invalid round voice cycle at boss entry");
+                bool InvalidBossCadence(long value, string equipped) => value < 0 || value > 1201 ||
+                    value > 0 && (Run.Boss == null || !Run.Weapons.ContainsKey(equipped));
+                if (InvalidBossCadence(Run.BossEntryLightningCycle, "lightning") ||
+                    Run.BossEntryLightningStrikes < Run.BossEntryLightningCycle ||
+                    Run.BossEntryLightningStrikes > 4 * Run.BossEntryLightningCycle ||
+                    InvalidBossCadence(Run.BossEntryFireCycle, "fire_pillar") || InvalidBossCadence(Run.BossEntryCrossCycle, "cross"))
+                    throw new InvalidDataException("Invalid weapon cadence at boss entry");
                 if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
                     throw new InvalidDataException("Expanded run health does not match its starting ranks");
             }
@@ -328,14 +340,39 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Strengthened first pulse requires its round receipt");
                 if (expandedCombat && Run.World.PermanentTargetLedger().Any(id => id < firstActor || id > lastActor))
                     throw new InvalidDataException("Expanded weapon ledger refers to an unissued actor");
+                if (Run.World.Lightning is { } boltCadence && (boltCadence.Cycle < Run.BossEntryLightningCycle ||
+                    boltCadence.NextStrikeId - 1 < Run.BossEntryLightningStrikes) ||
+                    Run.World.FirePillar is { } fireCadence && fireCadence.Cycle < Run.BossEntryFireCycle ||
+                    Run.World.Cross is { } crossCadence && crossCadence.Cycle < Run.BossEntryCrossCycle)
+                    throw new InvalidDataException("World weapon cadence precedes boss entry");
                 var permanentRanks = Run.PermanentSnapshot;
                 bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
+                int WeaponNodeFlags(string prefix)
+                {
+                    var flags = 0;
+                    for (var index = 0; index < 5; index++)
+                        if (HasRank(prefix + (index + 1).ToString("D2"))) flags |= 1 << index;
+                    return flags;
+                }
+                var lightningCurrentRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.c.");
+                var lightningGroundRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.d.");
+                var lightningEvolutionRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.e.") >> 1;
+                if (Run.World.Lightning is { } lightning && (lightning.NextCurrentAt.HasValue && !HasRank("weapon.lightning.c.01") ||
+                    lightning.CurrentMarks != null && !HasRank("weapon.lightning.c.04") ||
+                    lightning.GroundCurrents != null && !HasRank("weapon.lightning.d.01") ||
+                    lightning.NextGroundLinkAt.HasValue && !HasRank("weapon.lightning.d.04") ||
+                    lightning.NextGroundBurstAt.HasValue && !HasRank("weapon.lightning.d.05") ||
+                    lightning.NextEvolutionForkAt.HasValue && !HasRank("weapon.lightning.e.02") ||
+                    (lightning.NextEliteChainMarkAt.HasValue || lightning.EliteChainDamageUntil.HasValue) && !HasRank("weapon.lightning.e.04")))
+                    throw new InvalidDataException("Lightning current history requires its frozen ranks");
                 if (Run.World.Lightning?.RecentStrikeHits != null && !HasRank("weapon.lightning.b.03"))
                     throw new InvalidDataException("Lightning repeat-strike history requires its frozen rank");
                 if (Run.World.Lightning?.Pending.Any(strike =>
                     strike.CanRetarget && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.04") == 0 ||
                     strike.UsesFarthestReuse && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.03") == 0 ||
                     strike.LongerChain && !HasRank("weapon.lightning.e.01") ||
+                    (strike.CurrentRanks & ~lightningCurrentRanks) != 0 || (strike.GroundRanks & ~lightningGroundRanks) != 0 ||
+                    (strike.EvolutionRanks & ~lightningEvolutionRanks) != 0 ||
                     strike.IsolatedDamage && !HasRank("weapon.lightning.a.05") ||
                     strike.HighHealthDamage && !HasRank("weapon.lightning.b.01") ||
                     strike.RepeatStrikeDamage && !HasRank("weapon.lightning.b.03") ||
@@ -366,23 +403,43 @@ namespace BibleSurvivor.Core
                     Run.World.Cross?.Shots.Any(shot => shot.WidenedSupportShape) == true ||
                     Run.World.ElijahChariot?.Paths.Any(path => path.WidenedSupportShape) == true))
                     throw new InvalidDataException("Expanded support geometry requires its frozen rank");
-                if (Run.World.Lightning?.Pending.Any(strike => strike.Aftershock &&
-                    strike.Radius > 1.4 * (1 + permanentArea.HitShapeBonus + permanentArea.PlacedCircleBonus) + 1e-8) == true)
+                if (!HasRank("common.area.09") && (
+                    Run.World.MosesStaff?.Waves.Any(wave => wave.WiderDamageRegion) == true ||
+                    Run.World.ElijahChariot?.Paths.Any(path => path.WiderDamageRegion) == true))
+                    throw new InvalidDataException("Expanded damage region shape requires its frozen rank");
+                if (Run.World.Lightning?.Pending.Any(strike => !strike.IsPrimary &&
+                    strike.Radius > (strike.Aftershock ? 1.4 : ExpandedLightning.EliteThunderRadius) *
+                        (1 + permanentArea.HitShapeBonus + permanentArea.PlacedCircleBonus + permanentArea.RegionShapeBonus +
+                            (strike.Aftershock && HasRank("weapon.lightning.e.03") ? .15 : 0)) + 1e-8) == true)
                     throw new InvalidDataException("Lightning aftershock radius exceeds its frozen rank allowance");
+                var groundMaximumRadius = .7 * (1 + possibleArea.HitShapeBonus + permanentArea.PlacedCircleBonus +
+                    permanentArea.RegionShapeBonus + (HasRank("weapon.lightning.d.02") ? .15 : 0));
+                var groundMaximumLifetime = 1.5 * (1 + ExpandedWeaponRules.ResidualDurationBonus(permanentRanks,
+                    Run.World.Lightning?.Evolved == true) + (HasRank("weapon.lightning.d.03") ? .20 : 0));
+                if (Run.World.Lightning?.GroundCurrents?.Any(region => region.Radius > groundMaximumRadius + 1e-8 ||
+                    region.EndsAt - region.StartedAt > groundMaximumLifetime + 1e-8) == true)
+                    throw new InvalidDataException("Lightning ground dimensions exceed frozen ranks");
                 if (Run.World.FirePillar is { } fire && (fire.NextClosingEmberAt.HasValue && !HasRank("weapon.fire_pillar.b.03") ||
                     fire.NextClosingAshAt.HasValue && !HasRank("weapon.fire_pillar.d.02") ||
-                    fire.NextCloseRangeAt.HasValue && !HasRank("weapon.fire_pillar.a.05")))
+                    fire.NextCloseRangeAt.HasValue && !HasRank("weapon.fire_pillar.a.05") ||
+                    fire.NextEliteExtensionAt.HasValue && !HasRank("weapon.fire_pillar.b.05") ||
+                    (fire.NormalBurstKills != 0 || fire.NextNormalBurstAt.HasValue) && !HasRank("weapon.fire_pillar.c.03") ||
+                    fire.NextEliteReignitionAt.HasValue && !HasRank("weapon.fire_pillar.d.04") ||
+                    fire.NextCyclePulseAt.HasValue && !HasRank("weapon.fire_pillar.d.05")))
                     throw new InvalidDataException("Fire pillar cooldowns require their frozen ranks");
                 if (Run.World.FirePillar?.Regions.Any(region =>
-                    region.Ember && region.Radius > ExpandedFirePillar.SupportRadius(region.SupportKind) * (1 + possibleArea.HitShapeBonus) + 1e-8 ||
+                    region.Ember && region.Radius > ExpandedFirePillar.SupportRadius(region.SupportKind) * (1 + possibleArea.HitShapeBonus + permanentArea.RegionShapeBonus) + 1e-8 ||
                     region.SupportKind == ExpandedFireSupportKind.ClosingEmber && !HasRank("weapon.fire_pillar.b.03") ||
                     region.SupportKind == ExpandedFireSupportKind.CloseRange && !HasRank("weapon.fire_pillar.a.05") ||
+                    region.SupportKind == ExpandedFireSupportKind.EliteReignition && !HasRank("weapon.fire_pillar.d.04") ||
+                    region.RepeatedHeat && !HasRank("weapon.fire_pillar.b.04") ||
+                    region.NativeDuration.HasValue && !HasRank("weapon.fire_pillar.b.05") ||
                     region.IncreasedCoreDamage && !HasRank("weapon.fire_pillar.b.02") ||
                     region.IncreasedIgnitionDamage && !HasRank("weapon.fire_pillar.d.01")) == true)
                     throw new InvalidDataException("Fire pillar region bonuses require their frozen ranks");
                 if (Run.World.WildernessVoice is { } voice)
                 {
-                    var maximumEchoBonus = possibleArea.HitShapeBonus +
+                    var maximumEchoBonus = possibleArea.HitShapeBonus + permanentArea.RegionShapeBonus +
                         (voice.Evolved && HasRank("weapon.wilderness_voice.e.02") ? .12 : 0);
                     if (voice.Cycle < Run.BossEntryVoiceCycle || voice.Active.Any(cast =>
                         cast.EchoRadiusBonus > maximumEchoBonus + 1e-8 ||
@@ -431,9 +488,19 @@ namespace BibleSurvivor.Core
                     wave.ExtendedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.03") == 0) == true)
                     throw new InvalidDataException("Moses staff wave bonuses require their frozen ranks");
                 if (Run.World.Cross is { } cross && (cross.NextEliteThornAt.HasValue && !HasRank("weapon.cross.d.04") ||
-                    cross.NextEliteLightAt.HasValue && !HasRank("weapon.cross.d.05")))
+                    cross.NextEliteLightAt.HasValue && !HasRank("weapon.cross.d.05") ||
+                    (cross.ExtraPassesEmitted != 0 || cross.NextExtraPassAt.HasValue) && !HasRank("weapon.cross.b.05") ||
+                    cross.NextRecoveryWaveAt.HasValue && !HasRank("weapon.cross.e.04") ||
+                    (cross.RecentTrajectories != null || cross.NextIntersectionAt.HasValue) && !HasRank("weapon.cross.c.05") ||
+                    cross.NextTurnSpinAt.HasValue && !HasRank("weapon.cross.e.05")))
                     throw new InvalidDataException("Cross cooldowns require their frozen ranks");
                 if (Run.World.Cross?.Shots.Any(shot =>
+                    shot.IsExtraPass && !HasRank("weapon.cross.b.05") ||
+                    shot.EmpoweredThornOverlap && !HasRank("weapon.cross.e.02") ||
+                    shot.WiderThornRadius && !HasRank("weapon.cross.e.03") ||
+                    shot.WavesOnRecovery && !HasRank("weapon.cross.e.04") ||
+                    (shot.SpinsAtTurn || shot.SpinEndsAt.HasValue) && !HasRank("weapon.cross.e.05") ||
+                    shot.WiderDamageRegion && !HasRank("common.area.09") ||
                     shot.LeavesAfterglow && !HasRank("weapon.cross.d.01") ||
                     shot.ExtendedAfterglow && !HasRank("weapon.cross.d.02") ||
                     shot.BoostReturningAfterglow && !HasRank("weapon.cross.d.03") ||

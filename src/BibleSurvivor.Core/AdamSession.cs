@@ -101,8 +101,10 @@ namespace BibleSurvivor.Core
         public int CombatRulesVersion => run.CombatRulesVersion ?? 1;
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
         internal double ResolveOriginalDamage(string weaponId, double damage, double originalBaseDamage,
-            int targetId, double targetHealth, double distance, int ordinal, bool firstHitOfCycle, bool hasConsecutiveMark)
+            int targetId, double targetHealth, double distance, int ordinal, bool firstHitOfCycle, bool hasConsecutiveMark,
+            out double preCriticalDamage)
         {
+            preCriticalDamage = damage;
             if (CombatRulesVersion != 2 || damage <= 0) return damage;
             var hasPower = HasExpandedSkill("common.power.02");
             var conditionalCritical = HasExpandedSkill("common.crit.03");
@@ -122,6 +124,7 @@ namespace BibleSurvivor.Core
                 var basis = originalBaseDamage > 0 ? originalBaseDamage : AttackProfile(weaponId).OriginalBaseDamage;
                 damage = PermanentOriginalHitRules.ApplyPower(run.PermanentSnapshot, context, basis, damage);
             }
+            preCriticalDamage = damage;
             var streams = run.CriticalRandomStates;
             if (streams == null) return damage;
             var profile = conditionalCritical
@@ -146,7 +149,7 @@ namespace BibleSurvivor.Core
         internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
             HasExpandedSkill("weapon.fire_pillar.a.01"),
             HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
-            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: HasExpandedSkill("common.area.01") ? .04 : 0,
+            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: StaticRegionShapeBonus(),
             predictPlacement: HasExpandedSkill("weapon.fire_pillar.a.03"),
             preferSeparatedCenters: HasExpandedSkill("weapon.fire_pillar.a.04"),
             slowInCrowds: HasExpandedSkill("weapon.fire_pillar.e.02"),
@@ -156,7 +159,14 @@ namespace BibleSurvivor.Core
             closeRangeFire: HasExpandedSkill("weapon.fire_pillar.a.05"),
             leaveClosingEmber: HasExpandedSkill("weapon.fire_pillar.b.03"),
             closingAshHit: HasExpandedSkill("weapon.fire_pillar.d.02"),
-            regionShapeBonus: HasExpandedSkill("common.area.01") ? .04 : 0);
+            regionShapeBonus: StaticRegionShapeBonus(),
+            repeatedHeat: HasExpandedSkill("weapon.fire_pillar.b.04"),
+            extendOnEliteKill: HasExpandedSkill("weapon.fire_pillar.b.05"),
+            normalKillBurst: HasExpandedSkill("weapon.fire_pillar.c.03"),
+            eliteReignition: HasExpandedSkill("weapon.fire_pillar.d.04"),
+            cyclePulse: HasExpandedSkill("weapon.fire_pillar.d.05"));
+        private double StaticRegionShapeBonus() =>
+            (HasExpandedSkill("common.area.01") ? .04 : 0) + (HasExpandedSkill("common.area.09") ? .06 : 0);
         internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
             ExpandedWildernessVoiceRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
@@ -174,6 +184,18 @@ namespace BibleSurvivor.Core
         {
             if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
                 run.BossEntryVoiceCycle = cycle;
+        }
+        internal (long Cycle, long Strikes) BossEntryLightningCadence =>
+            run.Stage == "boss" ? (run.BossEntryLightningCycle, run.BossEntryLightningStrikes) : default;
+        internal long BossEntryFireCycle => run.Stage == "boss" ? run.BossEntryFireCycle : 0;
+        internal long BossEntryCrossCycle => run.Stage == "boss" ? run.BossEntryCrossCycle : 0;
+        internal void RecordWeaponCadenceAtBossEntry(ExpandedLightningState? lightning, ExpandedFirePillarState? fire, ExpandedCrossState? cross)
+        {
+            if (CombatRulesVersion != 2) return;
+            run.BossEntryLightningCycle = lightning?.Cycle ?? 0;
+            run.BossEntryLightningStrikes = lightning == null ? 0 : lightning.NextStrikeId - 1;
+            run.BossEntryFireCycle = fire?.Cycle ?? 0;
+            run.BossEntryCrossCycle = cross?.Cycle ?? 0;
         }
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
@@ -196,6 +218,7 @@ namespace BibleSurvivor.Core
                 bonuses.AreaBonus += area.HitShapeBonus;
                 bonuses.TravelDistanceBonus = area.FlightDistanceBonus;
                 bonuses.PlacedRadiusBonus = area.PlacedCircleBonus;
+                bonuses.RegionShapeBonus = area.RegionShapeBonus;
                 bonuses.OrbitDistanceBonus = area.OrbitDistanceBonus;
                 var weaponWaitReduction = .05 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "02");
                 if (firstBibleWait) weaponWaitReduction += .25;
@@ -468,6 +491,10 @@ namespace BibleSurvivor.Core
             target.LastTempoEliteKillAt = null;
             target.TempoOpeningUsed = false;
             target.BossEntryVoiceCycle = 0;
+            target.BossEntryLightningCycle = 0;
+            target.BossEntryLightningStrikes = 0;
+            target.BossEntryFireCycle = 0;
+            target.BossEntryCrossCycle = 0;
         }
 
         public void Advance(double seconds)

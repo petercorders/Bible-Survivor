@@ -177,7 +177,7 @@ namespace BibleSurvivor.Unity
                 foreach(var id in new List<int>(reactions.Keys))
                     if(!previousPositions.ContainsKey(id) || reactions[id]<=Clock)reactions.Remove(id);
                 if(host.Session.CombatRulesVersion==2)
-                    expandedWeapons.Observe(Snapshot, next,
+                    expandedWeapons.Observe(source, Snapshot, next,
                         (float)host.Session.LionRoarRadius(false), (float)host.Session.LionRoarRadius(true));
                 Snapshot=next;
                 wasActive=active;

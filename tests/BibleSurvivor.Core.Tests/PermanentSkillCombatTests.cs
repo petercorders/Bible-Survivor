@@ -1102,6 +1102,55 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("Lightning persists wave ordinals into boss intro without replaying scheduled ground or strikes", () =>
+        {
+            WithStore(store =>
+            {
+                const string catalog = "content/genesis/catalog.json";
+                var state = ExpandedProfile(store, "weapon.lightning.d.05");
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                for (var round = 2; round <= 3; round++)
+                {
+                    session.Advance(180);
+                    while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                    session = session.StartNextRound(CatalogReader.Round(catalog, round));
+                }
+                Check.True(session.Inventory.TryChoose("lightning", false));
+                var definition = CatalogReader.Round(catalog, 3);
+                var speeds = CatalogReader.MonsterSpeeds(catalog);
+                session.Advance(175);
+                var setup = new BattleWorld(session, speeds, 7).Capture();
+                foreach (var enemy in setup.Enemies) { enemy.X = 100; enemy.Y = 0; }
+                var fixedTarget = setup.Enemies.OrderBy(enemy => enemy.Id).First();
+                fixedTarget.X = 4.5f;
+                var world = BattleWorld.Restore(session, speeds, setup);
+                world.Advance(4.8, Vector2.Zero);
+                var active = world.Capture().Lightning!;
+                Check.True(active.Cycle > 0);
+                Check.True(active.NextStrikeId > 1);
+                world.Advance(.3, Vector2.Zero);
+                Check.Equal("boss_intro", session.Stage);
+                Check.True(world.Capture().Lightning == null);
+                Check.Equal(active.Cycle, state.Run!.BossEntryLightningCycle);
+                Check.Equal(active.NextStrikeId - 1, state.Run.BossEntryLightningStrikes);
+                state.Run.World = world.Capture();
+                store.Commit(state, state.Revision, "lightning-clear-for-boss");
+                var saved = store.Load()!;
+                var restoredSession = AdamSession.Resume(saved, definition);
+                var restored = BattleWorld.Restore(restoredSession, speeds, saved.Run!.World!);
+                restored.Advance(2.1, Vector2.Zero);
+                Check.Equal("boss", restoredSession.Stage);
+                var bossLightning = restored.Capture().Lightning!;
+                Check.True(bossLightning.Cycle >= active.Cycle);
+                Check.True(bossLightning.NextStrikeId >= active.NextStrikeId);
+                Check.True(bossLightning.Pending.All(strike => strike.Id >= active.NextStrikeId));
+                Check.True(bossLightning.GroundCurrents?.All(region => region.Id >= active.NextStrikeId) != false);
+                var areaEffects = new List<BattleAreaEffect>();
+                restored.ReadRecentAreaEffects(areaEffects);
+                Check.True(areaEffects.All(effect => effect.At >= 180));
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>

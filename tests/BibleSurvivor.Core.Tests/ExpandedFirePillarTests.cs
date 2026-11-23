@@ -392,6 +392,55 @@ internal static class ExpandedFirePillarTests
             Check.True(hits.Single().IsEmber);
         });
 
+        test("Third consecutive pillar hit adds fixed base damage and a lost pulse breaks the saved streak", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(false, null, false, repeatedHeat: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedFirePillarHit>();
+            void Step(ExpandedFirePillarState current, double now) =>
+                Tick(current, now, targets, hits.Add, settings: ranks, damage: 12, level: 1);
+            Step(state, 0);
+            Step(state, .15);
+            Step(state, .65);
+            var preserved = Restore(state);
+            preserved.Validate(.65, false);
+            Step(preserved, 1.15);
+            Check.Near(12.8, hits.Last().Damage);
+
+            var interrupted = Restore(state);
+            targets[1] = Vector2.UnitX * 4;
+            Step(interrupted, 1.15);
+            Check.True(interrupted.Regions.Single().Contacts == null);
+            targets[1] = Vector2.Zero;
+            Step(interrupted, 1.65);
+            Check.Near(12, hits.Last().Damage);
+        });
+
+        test("Elite fire extension spends one shared cooldown and clamps at the native duration maximum", () =>
+        {
+            foreach (var initialDuration in new[] { 2d, 3.5 })
+            {
+                var state = new ExpandedFirePillarState();
+                var ranks = new ExpandedFirePillarSettings(false, null, false, extendOnEliteKill: true);
+                var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX * 4 };
+                void Step(ExpandedFirePillarState current, double now) =>
+                    ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 12, 3, 2, .9, initialDuration,
+                        () => targets, hit => targets.Remove(hit.TargetId), settings: ranks, level: 1, isElite: _ => true);
+                Step(state, 0);
+                var resumed = Restore(state);
+                Step(resumed, .15);
+                var regions = resumed.Regions.OrderBy(region => region.Id).ToArray();
+                var canExtend = initialDuration < 3.5;
+                Check.Equal(canExtend, regions[0].EliteExtensionUsed);
+                Check.True(!regions[1].EliteExtensionUsed);
+                Check.Near(initialDuration + (canExtend ? .35 : 0), regions[0].EndsAt);
+                Check.Near(initialDuration, regions[1].EndsAt);
+                Check.Equal(canExtend, resumed.NextEliteExtensionAt.HasValue);
+                Restore(resumed).Validate(.15, false);
+            }
+        });
+
     }
 
     private static ExpandedFirePillarState Restore(ExpandedFirePillarState state)

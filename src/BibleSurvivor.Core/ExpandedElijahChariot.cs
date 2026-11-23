@@ -21,6 +21,7 @@ namespace BibleSurvivor.Core
         public bool WidenWhirlwind { get; }
         public bool ExtendTrail { get; }
         public bool WidenSupportShape { get; }
+        public bool WidenDamageRegion { get; }
         public bool PrioritizeCrowds { get; }
         public bool PrioritizeElite { get; }
         public bool ConvergeOnBoss { get; }
@@ -31,7 +32,7 @@ namespace BibleSurvivor.Core
         public ExpandedElijahChariotRankOptions(bool extendTravel = false, bool widenFormation = false,
             bool knockBack = false, bool widenWhirlwind = false, bool extendTrail = false, bool widenSupportShape = false,
             bool prioritizeCrowds = false, bool prioritizeElite = false, bool convergeOnBoss = false,
-            bool staggerFormation = false, bool strengthenLastChariot = false, double residualDurationBonus = 0)
+            bool staggerFormation = false, bool strengthenLastChariot = false, double residualDurationBonus = 0, bool widenDamageRegion = false)
         {
             if (!ExpandedWeaponRules.ValidResidualDurationBonus(residualDurationBonus))
                 throw new ArgumentOutOfRangeException(nameof(residualDurationBonus));
@@ -41,6 +42,7 @@ namespace BibleSurvivor.Core
             WidenWhirlwind = widenWhirlwind;
             ExtendTrail = extendTrail;
             WidenSupportShape = widenSupportShape;
+            WidenDamageRegion = widenDamageRegion;
             PrioritizeCrowds = prioritizeCrowds;
             PrioritizeElite = prioritizeElite;
             ConvergeOnBoss = convergeOnBoss;
@@ -57,7 +59,7 @@ namespace BibleSurvivor.Core
                 Has("weapon.elijah_chariot.d.01"), Has("weapon.elijah_chariot.e.01"), Has("weapon.elijah_chariot.e.02"),
                 Has("common.area.01"), Has("weapon.elijah_chariot.a.02"), Has("weapon.elijah_chariot.a.03"),
                 Has("weapon.elijah_chariot.b.02"), Has("weapon.elijah_chariot.b.03"), Has("weapon.elijah_chariot.b.04"),
-                ExpandedWeaponRules.ResidualDurationBonus(ranks, true));
+                ExpandedWeaponRules.ResidualDurationBonus(ranks, true), Has("common.area.09"));
         }
     }
 
@@ -107,6 +109,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool WiderWhirlwind { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedTrail { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WiderDamageRegion { get; set; }
         [DataMember(EmitDefaultValue = false)] public double ResidualDurationBonus { get; set; }
         [DataMember(IsRequired = true)] public double Range { get; set; }
         [DataMember(IsRequired = true)] public double Speed { get; set; }
@@ -128,8 +131,9 @@ namespace BibleSurvivor.Core
         public double EndAt => MoveAt + Range / Speed;
         public bool BodyEnded => Distance >= Range;
         public double WhirlwindRadius => ExpandedElijahChariot.BaseWhirlwindRadius *
-            (1 + (WiderWhirlwind ? .15 : 0) + (WidenedSupportShape ? .04 : 0));
-        public double TrailWidth => ExpandedElijahChariot.BaseTrailWidth * (WidenedSupportShape ? 1.04 : 1);
+            (1 + (WiderWhirlwind ? .15 : 0) + (WidenedSupportShape ? .04 : 0) + (WiderDamageRegion ? .06 : 0));
+        public double TrailWidth => ExpandedElijahChariot.BaseTrailWidth *
+            (1 + (WidenedSupportShape ? .04 : 0) + (WiderDamageRegion ? .06 : 0));
         public double TrailDuration => ExpandedElijahChariot.BaseTrailDuration *
             (1 + (ExtendedTrail ? .20 : 0) + ResidualDurationBonus);
 
@@ -235,7 +239,7 @@ namespace BibleSurvivor.Core
                     path.BodyHitIds.Count + path.WhirlwindCandidateIds.Count ||
                 (path.BodyEnded || !evolved) && path.WhirlwindCandidateIds.Count != 0 ||
                 now < path.MoveAt - epsilon && (path.BodyHitCount != 0 || path.WhirlwindCandidateIds.Count != 0) ||
-                (path.SuppressedTrail || path.WiderWhirlwind || path.WidenedSupportShape) && !evolved ||
+                (path.SuppressedTrail || path.WiderWhirlwind || path.WidenedSupportShape || path.WiderDamageRegion) && !evolved ||
                 !ExpandedWeaponRules.ValidResidualDurationBonus(path.ResidualDurationBonus) ||
                 (path.ExtendedTrail || path.ResidualDurationBonus != 0) && !hasTrail ||
                 path.TrailTicksFired < 0 || path.TrailTicksFired > (hasTrail ? path.TrailTickLimit : 0))
@@ -370,6 +374,7 @@ namespace BibleSurvivor.Core
                     WiderWhirlwind = evolved && rankOptions.WidenWhirlwind,
                     ExtendedTrail = evolved && !suppressedTrail && rankOptions.ExtendTrail,
                     WidenedSupportShape = evolved && rankOptions.WidenSupportShape,
+                    WiderDamageRegion = evolved && rankOptions.WidenDamageRegion,
                     ResidualDurationBonus = evolved && !suppressedTrail ? rankOptions.ResidualDurationBonus : 0,
                     Range = pathRange,
                     Speed = speed,

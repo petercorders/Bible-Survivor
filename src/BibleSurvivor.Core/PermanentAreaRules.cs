@@ -7,6 +7,7 @@ namespace BibleSurvivor.Core
     {
         internal double HitShapeBonus { get; }
         internal double ConditionalHitShapeBonus { get; }
+        internal double RegionShapeBonus { get; }
         internal double HalfAngleBonus { get; }
         internal double FlightDistanceBonus { get; }
         internal double PlacedCircleBonus { get; }
@@ -14,10 +15,11 @@ namespace BibleSurvivor.Core
         internal double ProjectileRadiusBonus { get; }
 
         internal PermanentAreaProfile(double hitShapeBonus, double halfAngleBonus, double flightDistanceBonus,
-            double placedCircleBonus, double orbitDistanceBonus, double projectileRadiusBonus, double conditionalHitShapeBonus)
+            double placedCircleBonus, double orbitDistanceBonus, double projectileRadiusBonus, double conditionalHitShapeBonus, double regionShapeBonus)
         {
             HitShapeBonus = hitShapeBonus + conditionalHitShapeBonus;
             ConditionalHitShapeBonus = conditionalHitShapeBonus;
+            RegionShapeBonus = regionShapeBonus;
             HalfAngleBonus = halfAngleBonus;
             FlightDistanceBonus = flightDistanceBonus;
             PlacedCircleBonus = placedCircleBonus;
@@ -43,7 +45,7 @@ namespace BibleSurvivor.Core
                 Has("common.area.04") ? .05 : 0,
                 Has("common.area.05") ? .05 : 0,
                 Has("common.area.06") ? .05 : 0,
-                conditionalHitShapeBonus);
+                conditionalHitShapeBonus, Has("common.area.09") ? .06 : 0);
         }
     }
 }

@@ -16,6 +16,7 @@ namespace BibleSurvivor.Core
         internal double BurstReduction { get; set; }
         internal double TravelDistanceBonus { get; set; }
         internal double PlacedRadiusBonus { get; set; }
+        internal double RegionShapeBonus { get; set; }
         internal double OrbitDistanceBonus { get; set; }
     }
     public sealed class CombatStats
@@ -79,7 +80,7 @@ namespace BibleSurvivor.Core
             if (id == "bible" || id == "sling") bonuses.AreaBonus = 0;
             var stats = For(id, level, bonuses);
             stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + collisionBonus);
-            stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
+            stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + bonuses.RegionShapeBonus);
             if (id == "bible") stats.AreaMultiplier += bonuses.OrbitDistanceBonus;
             if (id == "sling")
             {
@@ -117,6 +118,7 @@ namespace BibleSurvivor.Core
             };
             var radiusBonus = (weapon == "cross" ? collisionBonus : bonuses.AreaBonus) + (radiusMastery ? .10 : 0);
             if (weapon == "lightning" || weapon == "fire_pillar") radiusBonus += bonuses.PlacedRadiusBonus;
+            if (weapon == "fire_pillar") radiusBonus += bonuses.RegionShapeBonus;
             var reachBonus = bonuses.AreaBonus +
                 (weapon == "wilderness_voice" ? .20 * specialization + (masteryFour ? .10 : 0) : 0);
             var widthBonus = bonuses.AreaBonus + (weapon == "elijah_chariot" && masteryFour ? .10 : 0);

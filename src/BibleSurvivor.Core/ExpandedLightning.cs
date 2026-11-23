@@ -12,6 +12,12 @@ namespace BibleSurvivor.Core
         Chain,
         Aftershock,
         EliteThunder,
+        Current,
+        CurrentShock,
+        GroundCurrent,
+        GroundLink,
+        GroundBurst,
+        EvolutionFork,
     }
 
     public readonly struct ExpandedLightningHit
@@ -54,6 +60,11 @@ namespace BibleSurvivor.Core
         public bool RepeatStrikeDamage { get; }
         public bool WiderLastStrike { get; }
         public bool EliteThunderOnFifthCycle { get; }
+        internal byte CurrentRanks { get; }
+        internal byte GroundRanks { get; }
+        internal byte EvolutionRanks { get; }
+        internal double GroundDurationBonus { get; }
+        internal double EvolvedGroundDurationBonus { get; }
         internal Func<int, bool>? IsBoss { get; }
         internal Func<int, bool>? IsElite { get; }
 
@@ -61,16 +72,26 @@ namespace BibleSurvivor.Core
             bool prioritizeCrowds = false, bool prioritizeThreats = false, bool deferPreviousTargetOnReuse = false,
             bool retargetOnce = false, bool longerChain = false, Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null,
             double aftershockRadiusBonus = 0, bool isolatedDamage = false, bool highHealthDamage = false,
-            bool repeatStrikeDamage = false, bool widerLastStrike = false, bool eliteThunderOnFifthCycle = false)
+            bool repeatStrikeDamage = false, bool widerLastStrike = false, bool eliteThunderOnFifthCycle = false,
+            bool smallCurrent = false, bool fartherCurrent = false, bool strongerCurrent = false,
+            bool markOnCurrent = false, bool fallbackShock = false, bool createsGroundCurrent = false,
+            bool widerGroundCurrent = false, bool longerGroundCurrent = false, bool linksGroundCurrents = false,
+            bool eighthStrikeGroundBurst = false, double groundDurationBonus = 0, double evolvedGroundDurationBonus = 0,
+            bool evolutionFork = false, bool widerEvolutionAftershock = false, bool eliteChainMark = false,
+            bool fifthEvolutionStorm = false)
         {
             if (!ExpandedLightning.Finite(radiusBonus) || radiusBonus < 0 ||
                 !ExpandedLightning.Finite(delayAdvance) || delayAdvance < 0 ||
-                !ExpandedLightning.Finite(aftershockRadiusBonus) || aftershockRadiusBonus < 0 || aftershockRadiusBonus > 1.5)
+                !ExpandedLightning.Finite(aftershockRadiusBonus) || aftershockRadiusBonus < 0 || aftershockRadiusBonus > 1.5 ||
+                !ExpandedLightning.Finite(groundDurationBonus) || groundDurationBonus < 0 ||
+                !ExpandedLightning.Finite(evolvedGroundDurationBonus) || evolvedGroundDurationBonus < 0)
                 throw new ArgumentException("Invalid expanded lightning bonuses");
             if (prioritizeThreats && (isBoss == null || isElite == null))
                 throw new ArgumentException("Lightning threat priority needs boss and elite classifiers");
-            if (eliteThunderOnFifthCycle && isElite == null)
-                throw new ArgumentException("Lightning elite thunder needs an elite classifier");
+            if ((eliteThunderOnFifthCycle || eliteChainMark) && isElite == null)
+                throw new ArgumentException("Lightning elite effects need an elite classifier");
+            if (fifthEvolutionStorm && isBoss == null)
+                throw new ArgumentException("Lightning evolution storm needs a boss classifier");
 
             RadiusBonus = radiusBonus;
             AftershockRadiusBonus = aftershockRadiusBonus;
@@ -85,6 +106,22 @@ namespace BibleSurvivor.Core
             RepeatStrikeDamage = repeatStrikeDamage;
             WiderLastStrike = widerLastStrike;
             EliteThunderOnFifthCycle = eliteThunderOnFifthCycle;
+            CurrentRanks = smallCurrent ? (byte)(ExpandedLightning.SmallCurrent |
+                (fartherCurrent ? ExpandedLightning.FartherCurrent : 0) |
+                (strongerCurrent ? ExpandedLightning.StrongerCurrent : 0) |
+                (markOnCurrent ? ExpandedLightning.MarkOnCurrent : 0) |
+                (fallbackShock ? ExpandedLightning.FallbackShock : 0)) : (byte)0;
+            GroundRanks = createsGroundCurrent ? (byte)(ExpandedLightning.CreatesGroundCurrent |
+                (widerGroundCurrent ? ExpandedLightning.WiderGroundCurrent : 0) |
+                (longerGroundCurrent ? ExpandedLightning.LongerGroundCurrent : 0) |
+                (linksGroundCurrents ? ExpandedLightning.LinksGroundCurrents : 0) |
+                (eighthStrikeGroundBurst ? ExpandedLightning.EighthStrikeGroundBurst : 0)) : (byte)0;
+            GroundDurationBonus = groundDurationBonus;
+            EvolvedGroundDurationBonus = evolvedGroundDurationBonus;
+            EvolutionRanks = (byte)((evolutionFork ? ExpandedLightning.EvolutionFork : 0) |
+                (widerEvolutionAftershock ? ExpandedLightning.WiderEvolutionAftershock : 0) |
+                (eliteChainMark ? ExpandedLightning.EliteChainMark : 0) |
+                (fifthEvolutionStorm ? ExpandedLightning.FifthEvolutionStorm : 0));
             IsBoss = isBoss;
             IsElite = isElite;
         }
@@ -106,9 +143,17 @@ namespace BibleSurvivor.Core
                 longerChain: Has("e.01"),
                 isBoss: isBoss,
                 isElite: isElite,
-                aftershockRadiusBonus: (HasRank("common.area.01") ? .04 : 0) + (HasRank("common.area.04") ? .05 : 0),
+                aftershockRadiusBonus: (HasRank("common.area.01") ? .04 : 0) + (HasRank("common.area.04") ? .05 : 0) +
+                    (HasRank("common.area.09") ? .06 : 0),
                 isolatedDamage: Has("a.05"), highHealthDamage: Has("b.01"), repeatStrikeDamage: Has("b.03"),
-                widerLastStrike: Has("b.04"), eliteThunderOnFifthCycle: Has("b.05"));
+                widerLastStrike: Has("b.04"), eliteThunderOnFifthCycle: Has("b.05"), smallCurrent: Has("c.01"),
+                fartherCurrent: Has("c.02"), strongerCurrent: Has("c.03"), markOnCurrent: Has("c.04"),
+                fallbackShock: Has("c.05"), createsGroundCurrent: Has("d.01"), widerGroundCurrent: Has("d.02"),
+                longerGroundCurrent: Has("d.03"), linksGroundCurrents: Has("d.04"), eighthStrikeGroundBurst: Has("d.05"),
+                groundDurationBonus: HasRank("common.duration.02") ? .05 : 0,
+                evolvedGroundDurationBonus: HasRank("common.duration.04") ? .06 : 0,
+                evolutionFork: Has("e.02"), widerEvolutionAftershock: Has("e.03"), eliteChainMark: Has("e.04"),
+                fifthEvolutionStorm: Has("e.05"));
         }
     }
 
@@ -140,6 +185,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool EliteThunderOnHit { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool EliteThunder { get; set; }
 
+        [DataMember(EmitDefaultValue = false)] public byte CurrentRanks { get; set; }
+        [DataMember(EmitDefaultValue = false)] public byte GroundRanks { get; set; }
+        [DataMember(EmitDefaultValue = false)] public byte EvolutionRanks { get; set; }
+
         public bool IsPrimary => !Aftershock && !EliteThunder;
         public ExpandedLightningHitKind HitKind => EliteThunder ? ExpandedLightningHitKind.EliteThunder
             : Aftershock ? ExpandedLightningHitKind.Aftershock : ExpandedLightningHitKind.Strike;
@@ -165,6 +214,9 @@ namespace BibleSurvivor.Core
             RepeatStrikeDamage = false;
             WiderLastStrike = false;
             EliteThunderOnHit = false;
+            CurrentRanks = 0;
+            GroundRanks = 0;
+            EvolutionRanks = 0;
         }
 
         internal ExpandedLightningEventState Copy()
@@ -173,6 +225,24 @@ namespace BibleSurvivor.Core
             copy.VisitedIds = VisitedIds == null ? null : new List<int>(VisitedIds);
             return copy;
         }
+    }
+
+    [DataContract]
+    public sealed class ExpandedLightningGroundState
+    {
+        [DataMember(IsRequired = true)] public long Id { get; set; }
+        [DataMember(IsRequired = true)] public long Cycle { get; set; }
+        [DataMember(IsRequired = true)] public float X { get; set; }
+        [DataMember(IsRequired = true)] public float Y { get; set; }
+        [DataMember(IsRequired = true)] public double StartedAt { get; set; }
+        [DataMember(IsRequired = true)] public double EndsAt { get; set; }
+        [DataMember(IsRequired = true)] public double NextPulse { get; set; }
+        [DataMember(IsRequired = true)] public double Radius { get; set; }
+        [DataMember(IsRequired = true)] public double Damage { get; set; }
+
+        public Vector2 Center => new Vector2(X, Y);
+
+        internal ExpandedLightningGroundState Copy() => (ExpandedLightningGroundState)MemberwiseClone();
     }
 
     [DataContract]
@@ -188,6 +258,19 @@ namespace BibleSurvivor.Core
 
         [DataMember(EmitDefaultValue = false)] public List<BattleHitState>? RecentStrikeHits { get; set; }
 
+        [DataMember(EmitDefaultValue = false)] public double? NextCurrentAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<BattleHitState>? CurrentMarks { get; set; }
+
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedLightningGroundState>? GroundCurrents { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextGroundLinkAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextGroundBurstAt { get; set; }
+
+        [DataMember(EmitDefaultValue = false)] public double? NextEvolutionForkAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextEliteChainMarkAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? EliteChainDamageUntil { get; set; }
+
+        public int ActiveSupportGroups => Pending.Count(attack => !attack.IsPrimary) + (GroundCurrents?.Count ?? 0);
+
         public ExpandedLightningState Copy() => new ExpandedLightningState
         {
             Evolved = Evolved,
@@ -197,6 +280,14 @@ namespace BibleSurvivor.Core
             NextCycle = NextCycle,
             Pending = Pending.Select(attack => attack.Copy()).ToList(),
             RecentStrikeHits = RecentStrikeHits?.Select(hit => hit.Copy()).ToList(),
+            NextCurrentAt = NextCurrentAt,
+            CurrentMarks = CurrentMarks?.Select(hit => hit.Copy()).ToList(),
+            GroundCurrents = GroundCurrents?.Select(region => region.Copy()).ToList(),
+            NextGroundLinkAt = NextGroundLinkAt,
+            NextGroundBurstAt = NextGroundBurstAt,
+            NextEvolutionForkAt = NextEvolutionForkAt,
+            NextEliteChainMarkAt = NextEliteChainMarkAt,
+            EliteChainDamageUntil = EliteChainDamageUntil,
         };
 
         // Call at a form change or when the encounter cancels held attacks.
@@ -209,6 +300,14 @@ namespace BibleSurvivor.Core
             NextCycle = now;
             Pending.Clear();
             RecentStrikeHits = null;
+            NextCurrentAt = null;
+            CurrentMarks = null;
+            GroundCurrents = null;
+            NextGroundLinkAt = null;
+            NextGroundBurstAt = null;
+            NextEvolutionForkAt = null;
+            NextEliteChainMarkAt = null;
+            EliteChainDamageUntil = null;
         }
 
         public void Validate(double now, bool evolved)
@@ -220,17 +319,38 @@ namespace BibleSurvivor.Core
                 NextCycle > now + ExpandedLightning.MaximumCycle + ExpandedLightning.TimeEpsilon ||
                 (WaitingForTarget && NextCycle > now + ExpandedLightning.TimeEpsilon) ||
                 Pending == null || Pending.Count > ExpandedLightning.MaximumAmount + ExpandedLightning.MaximumPendingAftershocks + 1 ||
+                NextCurrentAt.HasValue && (!ExpandedLightning.Finite(NextCurrentAt.Value) || NextCurrentAt.Value < 0 ||
+                    NextCurrentAt.Value > now + ExpandedLightning.CurrentCooldown + ExpandedLightning.TimeEpsilon) ||
+                CurrentMarks != null && (CurrentMarks.Count == 0 || CurrentMarks.Count > 120 || !NextCurrentAt.HasValue ||
+                    CurrentMarks.Any(mark => mark == null || mark.Id <= 0 || !ExpandedLightning.Finite(mark.At) ||
+                        mark.At < now - ExpandedLightning.TimeEpsilon ||
+                        mark.At > now + ExpandedLightning.CurrentMarkDuration + ExpandedLightning.TimeEpsilon) ||
+                    CurrentMarks.Select(mark => mark.Id).Distinct().Count() != CurrentMarks.Count) ||
                 RecentStrikeHits != null && (RecentStrikeHits.Count > 120 ||
                     RecentStrikeHits.Any(hit => hit == null || hit.Id <= 0 ||
                         !ExpandedLightning.Finite(hit.At) || hit.At < 0 || hit.At > now + ExpandedLightning.TimeEpsilon) ||
                     RecentStrikeHits.Select(hit => hit.Id).Distinct().Count() != RecentStrikeHits.Count))
                 throw new ArgumentException("Invalid expanded lightning clock");
 
+            ValidateGround(now);
+            if (!ValidCooldown(NextEvolutionForkAt, now, ExpandedLightning.CurrentCooldown) ||
+                !ValidCooldown(NextEliteChainMarkAt, now, ExpandedLightning.EliteChainCooldown) ||
+                !ValidCooldown(EliteChainDamageUntil, now, ExpandedLightning.EliteChainMarkDuration) ||
+                !Evolved && (NextEvolutionForkAt.HasValue || NextEliteChainMarkAt.HasValue || EliteChainDamageUntil.HasValue) ||
+                EliteChainDamageUntil.HasValue && (!NextEliteChainMarkAt.HasValue ||
+                    EliteChainDamageUntil.Value < now - ExpandedLightning.TimeEpsilon ||
+                    Math.Abs(EliteChainDamageUntil.Value - NextEliteChainMarkAt.Value -
+                        (ExpandedLightning.EliteChainMarkDuration - ExpandedLightning.EliteChainCooldown)) >
+                        ExpandedLightning.TimeEpsilon))
+                throw new ArgumentException("Invalid expanded lightning evolution clock");
+
             var ids = new HashSet<(long Id, bool EliteThunder)>();
             var shockCycles = new HashSet<long>();
             var thunderCycles = new HashSet<long>();
             var strikeCount = 0;
             double? strikeTime = null;
+            var firstStrikeId = long.MaxValue;
+            long fifthEvolutionStrikeId = 0;
             foreach (var attack in Pending)
             {
                 if (attack == null || attack.Id < 1 || attack.Id >= NextStrikeId || !ids.Add((attack.Id, attack.EliteThunder)) ||
@@ -241,7 +361,7 @@ namespace BibleSurvivor.Core
                     !ExpandedLightning.Finite(attack.Radius) || attack.Radius <= 0 ||
                     !ValidPredecessor(attack) ||
                     !ExpandedLightning.ValidOriginalBaseDamage(attack.OriginalBaseDamage, evolved, !attack.IsPrimary) ||
-                    !ValidPrimaryModifiers(attack))
+                    !ValidPrimaryModifiers(attack, evolved))
                     throw new ArgumentException("Invalid expanded lightning event");
 
                 if (attack.EliteThunder)
@@ -281,8 +401,19 @@ namespace BibleSurvivor.Core
                         attack.EliteThunderOnHit && attack.Cycle % 5 != 0)
                         throw new ArgumentException("Invalid expanded lightning strike");
                     strikeTime = attack.At;
+                    firstStrikeId = Math.Min(firstStrikeId, attack.Id);
+                    if ((attack.EvolutionRanks & ExpandedLightning.FifthEvolutionStorm) != 0)
+                    {
+                        if (fifthEvolutionStrikeId != 0 || attack.Cycle % 5 != 0)
+                            throw new ArgumentException("Invalid expanded lightning evolution storm");
+                        fifthEvolutionStrikeId = attack.Id;
+                    }
                 }
             }
+            if (fifthEvolutionStrikeId != 0 && fifthEvolutionStrikeId != firstStrikeId)
+                throw new ArgumentException("Invalid expanded lightning evolution storm");
+            if (ActiveSupportGroups > ExpandedLightning.MaximumSupportGroups)
+                throw new ArgumentException("Too many expanded lightning support groups");
             if (strikeTime.HasValue && (WaitingForTarget || shockCycles.Contains(Cycle) || thunderCycles.Contains(Cycle)))
                 throw new ArgumentException("Conflicting expanded lightning events");
 
@@ -296,9 +427,55 @@ namespace BibleSurvivor.Core
             }
         }
 
-        private static bool ValidPrimaryModifiers(ExpandedLightningEventState attack)
+        private void ValidateGround(double now)
         {
-            if (attack.IsolatedDamage || attack.HighHealthDamage || attack.RepeatStrikeDamage)
+            if (!ValidCooldown(NextGroundLinkAt, now, ExpandedLightning.GroundSupportCooldown) ||
+                !ValidCooldown(NextGroundBurstAt, now, ExpandedLightning.GroundSupportCooldown))
+                throw new ArgumentException("Invalid expanded lightning ground clock");
+            if (GroundCurrents == null) return;
+            if (GroundCurrents.Count == 0 || GroundCurrents.Count > ExpandedLightning.MaximumSupportGroups)
+                throw new ArgumentException("Invalid expanded lightning ground regions");
+            var previousId = 0L;
+            foreach (var region in GroundCurrents)
+            {
+                if (region == null || region.Id <= previousId || region.Id >= NextStrikeId ||
+                    region.Cycle < 1 || region.Cycle > Cycle ||
+                    !ExpandedLightning.ValidPosition(region.Center) ||
+                    !ExpandedLightning.Finite(region.StartedAt) || region.StartedAt < 0 ||
+                    region.StartedAt > now + ExpandedLightning.TimeEpsilon ||
+                    !ExpandedLightning.Finite(region.EndsAt) || region.EndsAt <= now + ExpandedLightning.TimeEpsilon ||
+                    region.EndsAt - region.StartedAt < ExpandedLightning.GroundDuration - ExpandedLightning.TimeEpsilon ||
+                    region.EndsAt - region.StartedAt > ExpandedLightning.GroundDuration * 1.75 + ExpandedLightning.TimeEpsilon ||
+                    !ExpandedLightning.Finite(region.Radius) || region.Radius < ExpandedLightning.GroundRadius ||
+                    region.Radius > ExpandedLightning.GroundRadius * 2.5 ||
+                    !ExpandedLightning.Finite(region.Damage) || region.Damage < ExpandedLightning.GroundDamageFactor ||
+                    region.Damage > ExpandedLightning.MaximumDamage * ExpandedLightning.GroundDamageFactor ||
+                    !ExpandedLightning.Finite(region.NextPulse) || region.NextPulse <= now + ExpandedLightning.TimeEpsilon ||
+                    region.NextPulse > now + ExpandedLightning.GroundPulseInterval + ExpandedLightning.TimeEpsilon)
+                    throw new ArgumentException("Invalid expanded lightning ground region");
+                var pulse = (region.NextPulse - region.StartedAt) / ExpandedLightning.GroundPulseInterval;
+                if (Math.Abs(pulse - Math.Round(pulse)) > ExpandedLightning.TimeEpsilon)
+                    throw new ArgumentException("Invalid expanded lightning ground pulse");
+                previousId = region.Id;
+            }
+        }
+
+        private static bool ValidCooldown(double? at, double now, double duration) => !at.HasValue ||
+            ExpandedLightning.Finite(at.Value) && at.Value >= 0 &&
+                at.Value <= now + duration + ExpandedLightning.TimeEpsilon;
+
+        private static bool ValidPrimaryModifiers(ExpandedLightningEventState attack, bool evolved)
+        {
+            if (attack.CurrentRanks != 0 && ((attack.CurrentRanks & ExpandedLightning.SmallCurrent) == 0 ||
+                (attack.CurrentRanks & ~ExpandedLightning.AllCurrentRanks) != 0))
+                return false;
+            if (attack.GroundRanks != 0 && ((attack.GroundRanks & ExpandedLightning.CreatesGroundCurrent) == 0 ||
+                (attack.GroundRanks & ~ExpandedLightning.AllGroundRanks) != 0))
+                return false;
+            if (attack.EvolutionRanks != 0 && (!evolved || (attack.EvolutionRanks & ~ExpandedLightning.AllEvolutionRanks) != 0))
+                return false;
+            if (attack.IsolatedDamage || attack.HighHealthDamage || attack.RepeatStrikeDamage ||
+                attack.CurrentRanks != 0 || attack.GroundRanks != 0 || attack.EvolutionRanks != 0)
                 return attack.IsPrimary && attack.OriginalBaseDamage > 0;
             return attack.IsPrimary || (!attack.WiderLastStrike && !attack.EliteThunderOnHit);
         }
@@ -337,6 +514,39 @@ namespace BibleSurvivor.Core
         internal const int MaximumPendingAftershocks = 4;
         private const double ChainRadius = 3;
         private const double ChainDamageFactor = .7;
+        internal const byte SmallCurrent = 1 << 0;
+        internal const byte FartherCurrent = 1 << 1;
+        internal const byte StrongerCurrent = 1 << 2;
+        internal const byte MarkOnCurrent = 1 << 3;
+        internal const byte FallbackShock = 1 << 4;
+        internal const byte AllCurrentRanks = SmallCurrent | FartherCurrent | StrongerCurrent | MarkOnCurrent | FallbackShock;
+        internal const double CurrentCooldown = 1;
+        internal const double CurrentMarkDuration = 3;
+        private const double CurrentRadius = 2.5;
+        internal const byte CreatesGroundCurrent = 1 << 0;
+        internal const byte WiderGroundCurrent = 1 << 1;
+        internal const byte LongerGroundCurrent = 1 << 2;
+        internal const byte LinksGroundCurrents = 1 << 3;
+        internal const byte EighthStrikeGroundBurst = 1 << 4;
+        internal const byte AllGroundRanks = CreatesGroundCurrent | WiderGroundCurrent | LongerGroundCurrent |
+            LinksGroundCurrents | EighthStrikeGroundBurst;
+        internal const int MaximumSupportGroups = 4;
+        internal const double GroundRadius = .7;
+        internal const double GroundDuration = 1.5;
+        internal const double GroundPulseInterval = .5;
+        internal const double GroundDamageFactor = .25;
+        internal const double GroundSupportCooldown = 3;
+        private const double GroundLinkDistance = 2.5;
+        private const double GroundLinkWidth = .5;
+        private const double GroundBurstRadius = 1.6;
+        internal const byte EvolutionFork = 1 << 0;
+        internal const byte WiderEvolutionAftershock = 1 << 1;
+        internal const byte EliteChainMark = 1 << 2;
+        internal const byte FifthEvolutionStorm = 1 << 3;
+        internal const byte AllEvolutionRanks = EvolutionFork | WiderEvolutionAftershock | EliteChainMark | FifthEvolutionStorm;
+        internal const double EliteChainCooldown = 4;
+        internal const double EliteChainMarkDuration = 5;
+        private const double EvolutionForkRadius = 2.5;
 
         // This method runs once per fixed combat step. An accepted hit may mutate the
         // live target map. The callback returns true for actual damage, including kills.
@@ -344,7 +554,10 @@ namespace BibleSurvivor.Core
             bool evolved, double damage, double cycle, int amount, double radius,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
             ExpandedLightningSettings settings = default, Func<double>? nextCycleDuration = null,
-            Func<int, double>? targetHealthRatio = null)
+            Func<int, double>? targetHealthRatio = null,
+            Func<bool>? reserveSupportRegion = null, Action? recordSupportSuppression = null,
+            Func<ExpandedLightningHit, double?>? applyOriginalHit = null, double groundShapeBonus = 0,
+            Action<ExpandedLightningEventState>? emitVisualLanding = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -353,7 +566,8 @@ namespace BibleSurvivor.Core
                 level < 1 || level > 8 || (evolved && level != 8) ||
                 !Finite(damage) || damage < 1 || damage > MaximumDamage ||
                 !Finite(cycle) || cycle < MinimumCycle || cycle > MaximumCycle ||
-                amount < 1 || amount > MaximumAmount || !Finite(radius) || radius <= 0 || radius > MaximumStrikeRadius)
+                amount < 1 || amount > MaximumAmount || !Finite(radius) || radius <= 0 || radius > MaximumStrikeRadius ||
+                !Finite(groundShapeBonus) || groundShapeBonus < 0 || groundShapeBonus > 1.5)
                 throw new ArgumentException("Invalid expanded lightning parameters");
 
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
@@ -364,7 +578,12 @@ namespace BibleSurvivor.Core
                     !live.ContainsKey(hit.Id));
                 if (state.RecentStrikeHits.Count == 0) state.RecentStrikeHits = null;
             }
-            ResolveDue(state, now, playerPosition, targets, applyHit, settings, targetHealthRatio);
+            PruneCurrentMarks(state, now, targets);
+            if (state.EliteChainDamageUntil < now - TimeEpsilon) state.EliteChainDamageUntil = null;
+            RemoveExpiredGround(state, now);
+            ResolveDue(state, now, playerPosition, targets, applyHit, settings, targetHealthRatio,
+                reserveSupportRegion, recordSupportSuppression, applyOriginalHit, groundShapeBonus, emitVisualLanding);
+            ResolveGroundPulses(state, now, targets, applyHit);
             if (state.NextCycle > now + TimeEpsilon) return;
 
             var candidates = OrderedTargets(targets(), playerPosition, settings);
@@ -382,11 +601,19 @@ namespace BibleSurvivor.Core
             state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - settings.DelayAdvance);
             var radiusBonus = Profile.AtLevel(1).Radius * settings.RadiusBonus;
+            var evolutionRanks = evolved ? settings.EvolutionRanks : (byte)0;
+            var fifthStorm = (evolutionRanks & FifthEvolutionStorm) != 0 && state.Cycle % 5 == 0;
+            var assignments = candidates;
+            if (fifthStorm)
+            {
+                var first = StormTarget(candidates, targets(), playerPosition, settings);
+                assignments = candidates.Where(candidate => candidate.Key != first.Key).Prepend(first).ToArray();
+            }
             var previous = default(KeyValuePair<int, Vector2>);
             for (var index = 0; index < amount; index++)
             {
                 var target = index >= candidates.Length && settings.DeferPreviousTargetOnReuse
-                    ? FarthestReuse(candidates, previous.Key, previous.Value) : candidates[index % candidates.Length];
+                    ? FarthestReuse(candidates, previous.Key, previous.Value) : assignments[index % assignments.Length];
                 var wider = settings.WiderLastStrike && index == amount - 1;
                 var strikeRadius = Math.Min(MaximumStrikeRadius, radius + radiusBonus +
                     (wider ? Profile.AtLevel(1).Radius * WiderLastStrikeBonus : 0));
@@ -408,6 +635,9 @@ namespace BibleSurvivor.Core
                     HighHealthDamage = settings.HighHealthDamage,
                     RepeatStrikeDamage = settings.RepeatStrikeDamage,
                     WiderLastStrike = wider,
+                    CurrentRanks = settings.CurrentRanks,
+                    GroundRanks = settings.GroundRanks,
+                    EvolutionRanks = fifthStorm && index == 0 ? evolutionRanks : (byte)(evolutionRanks & ~FifthEvolutionStorm),
                     EliteThunderOnHit = settings.EliteThunderOnFifthCycle && state.Cycle % 5 == 0,
                 };
                 if (attack.UsesFarthestReuse) attack.SetPredecessor(previous.Key, previous.Value);
@@ -427,6 +657,18 @@ namespace BibleSurvivor.Core
                     targets.Values.Count(other => InRange(other, target.Value, CrowdRadius)) : 0)
                 .ThenBy(target => DistanceSquared(target.Value, playerPosition))
                 .ThenBy(target => target.Key).ToArray();
+        }
+
+        private static KeyValuePair<int, Vector2> StormTarget(KeyValuePair<int, Vector2>[] candidates,
+            IReadOnlyDictionary<int, Vector2> targets, Vector2 playerPosition, ExpandedLightningSettings settings)
+        {
+            var bosses = candidates.Where(candidate => settings.IsBoss?.Invoke(candidate.Key) == true).ToArray();
+            if (bosses.Length == 1) return bosses[0];
+            return candidates.OrderByDescending(candidate => settings.PrioritizeThreats &&
+                    settings.IsElite?.Invoke(candidate.Key) == true)
+                .ThenByDescending(candidate => targets.Values.Count(other => InRange(other, candidate.Value, CrowdRadius)))
+                .ThenBy(candidate => DistanceSquared(candidate.Value, playerPosition))
+                .ThenBy(candidate => candidate.Key).First();
         }
 
         private static KeyValuePair<int, Vector2> FarthestReuse(KeyValuePair<int, Vector2>[] candidates,
@@ -456,6 +698,11 @@ namespace BibleSurvivor.Core
             var candidates = OrderedTargets(targets, playerPosition, settings);
             if (candidates.Length == 0) return;
 
+            if ((attack.EvolutionRanks & FifthEvolutionStorm) != 0)
+            {
+                var first = StormTarget(candidates, targets, playerPosition, settings);
+                candidates = candidates.Where(candidate => candidate.Key != first.Key).Prepend(first).ToArray();
+            }
             var replacement = candidates[0];
             if (attack.UsesFarthestReuse)
             {
@@ -478,7 +725,10 @@ namespace BibleSurvivor.Core
 
         private static void ResolveDue(ExpandedLightningState state, double now, Vector2 playerPosition,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
-            ExpandedLightningSettings settings, Func<int, double>? targetHealthRatio)
+            ExpandedLightningSettings settings, Func<int, double>? targetHealthRatio,
+            Func<bool>? reserveSupportRegion, Action? recordSupportSuppression,
+            Func<ExpandedLightningHit, double?>? applyOriginalHit, double groundShapeBonus,
+            Action<ExpandedLightningEventState>? emitVisualLanding)
         {
             if (state.Pending.Count == 0) return;
             // Retarget on the first fixed step that observes the assigned actor's death,
@@ -498,25 +748,159 @@ namespace BibleSurvivor.Core
                 if (attack.CanRetarget) TryRetarget(state, attack, playerPosition, targets(), settings, spentAssignments);
                 if (attack.UsesFarthestReuse) spentAssignments.Add((attack.Cycle, attack.AssignedTargetId));
                 state.Pending.Remove(attack);
-                var (nearest, firstElite) = HitArea(state, attack, now, targets, applyHit,
+                emitVisualLanding?.Invoke(attack.Copy());
+                var canProcCurrent = attack.CurrentRanks != 0 && (state.NextCurrentAt ?? 0) <= now + TimeEpsilon;
+                var canProcFork = (attack.EvolutionRanks & EvolutionFork) != 0 &&
+                    (state.NextEvolutionForkAt ?? 0) <= now + TimeEpsilon;
+                var (nearest, firstElite, first, originalVisited) = HitArea(state, attack, now, targets, applyHit,
                     attack.EliteThunderOnHit && !thunderCycles.Contains(attack.Cycle) ? settings.IsElite : null,
-                    targetHealthRatio);
-                if (firstElite is { } elite && thunderCycles.Add(attack.Cycle))
+                    targetHealthRatio, canProcCurrent || canProcFork, applyOriginalHit);
+                if (state.Evolved && attack.IsPrimary && nearest.HasValue)
+                {
+                    var canMarkElite = (attack.EvolutionRanks & EliteChainMark) != 0 &&
+                        (state.NextEliteChainMarkAt ?? 0) <= now + TimeEpsilon;
+                    var (visited, firstTransfer, hitElite) = Chain(attack, nearest.Value, targets, applyHit,
+                        canMarkElite ? settings.IsElite : null);
+                    originalVisited?.UnionWith(visited);
+                    if (hitElite)
+                    {
+                        state.NextEliteChainMarkAt = now + EliteChainCooldown;
+                        state.EliteChainDamageUntil = now + EliteChainMarkDuration;
+                    }
+                    if (canProcFork && firstTransfer.HasValue && originalVisited != null)
+                        TryEvolutionFork(state, attack, firstTransfer.Value, nearest.Value.Damage, originalVisited,
+                            now, targets, applyHit);
+                    // Preserve the base thunderwave's priority when only one region slot is available.
+                    if (shockCycles.Add(attack.Cycle) && ReserveSupport(state, reserveSupportRegion, recordSupportSuppression))
+                        AddAftershock(state, attack, visited, nearest.Value.Damage, settings.AftershockRadiusBonus);
+                }
+                if (firstElite is { } elite && thunderCycles.Add(attack.Cycle) &&
+                    ReserveSupport(state, reserveSupportRegion, recordSupportSuppression))
                     AddEliteThunder(state, attack, elite, settings.AftershockRadiusBonus);
-                if (!state.Evolved || !attack.IsPrimary || !nearest.HasValue) continue;
-
-                var visited = Chain(attack, nearest.Value, targets, applyHit);
-                // A cycle schedules one thunderwave, at the first landing that actually hit.
-                if (!shockCycles.Add(attack.Cycle)) continue;
-                var aftershock = attack.Copy();
-                aftershock.At += AftershockDelay;
-                aftershock.Aftershock = true;
-                aftershock.ClearPrimaryModifiers();
-                aftershock.Radius = AftershockRadius * (1 + settings.AftershockRadiusBonus);
-                aftershock.Damage *= AftershockDamageFactor;
-                aftershock.VisitedIds = visited;
-                state.Pending.Add(aftershock);
+                if (canProcCurrent && first is { } current && originalVisited != null)
+                    TryCurrent(state, attack, current, originalVisited, now, targets, applyHit);
+                if (attack.GroundRanks != 0)
+                    ResolveGroundImpact(state, attack, nearest?.Damage ?? attack.Damage, now, settings,
+                        groundShapeBonus, targets, applyHit, reserveSupportRegion, recordSupportSuppression);
             }
+            PruneCurrentMarks(state, now, targets);
+        }
+
+        private static bool ReserveSupport(ExpandedLightningState state, Func<bool>? reserve, Action? recordSuppression)
+        {
+            if (state.ActiveSupportGroups < MaximumSupportGroups && reserve?.Invoke() != false) return true;
+            recordSuppression?.Invoke();
+            return false;
+        }
+
+        private static void RemoveExpiredGround(ExpandedLightningState state, double now)
+        {
+            if (state.GroundCurrents == null) return;
+            state.GroundCurrents.RemoveAll(region => region.EndsAt <= now + TimeEpsilon);
+            if (state.GroundCurrents.Count == 0) state.GroundCurrents = null;
+        }
+
+        private static void ResolveGroundImpact(ExpandedLightningState state, ExpandedLightningEventState attack,
+            double damage, double now, ExpandedLightningSettings settings, double groundShapeBonus,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
+            Func<bool>? reserveSupportRegion, Action? recordSupportSuppression)
+        {
+            var ranks = attack.GroundRanks;
+            var areaBonus = settings.AftershockRadiusBonus + groundShapeBonus;
+            if (ReserveSupport(state, reserveSupportRegion, recordSupportSuppression))
+            {
+                var radius = GroundRadius * Math.Min(2.5, 1 + areaBonus +
+                    ((ranks & WiderGroundCurrent) != 0 ? .15 : 0));
+                var duration = GroundDuration * Math.Min(1.75, 1 + settings.GroundDurationBonus +
+                    (state.Evolved ? settings.EvolvedGroundDurationBonus : 0) +
+                    ((ranks & LongerGroundCurrent) != 0 ? .20 : 0));
+                var previous = (ranks & LinksGroundCurrents) != 0 && (state.NextGroundLinkAt ?? 0) <= now + TimeEpsilon
+                    ? state.GroundCurrents?.Find(region => InRange(region.Center, attack.Position, GroundLinkDistance)) : null;
+                state.GroundCurrents ??= new List<ExpandedLightningGroundState>();
+                state.GroundCurrents.Add(new ExpandedLightningGroundState
+                {
+                    Id = attack.Id, Cycle = attack.Cycle, X = attack.X, Y = attack.Y,
+                    StartedAt = attack.At, EndsAt = attack.At + duration, NextPulse = attack.At,
+                    Radius = radius, Damage = damage * GroundDamageFactor,
+                });
+                if (previous != null && ReserveSupport(state, reserveSupportRegion, recordSupportSuppression))
+                {
+                    var halfWidth = GroundLinkWidth * Math.Min(2.5, 1 + areaBonus) / 2;
+                    ApplyGroundImpact(attack, ExpandedLightningHitKind.GroundLink, damage * .30,
+                        position => DistanceSquaredToSegment(position, previous.Center, attack.Position) <= halfWidth * halfWidth,
+                        targets, applyHit);
+                    state.NextGroundLinkAt = now + GroundSupportCooldown;
+                }
+            }
+            if ((ranks & EighthStrikeGroundBurst) == 0 || attack.Id % 8 != 0 ||
+                (state.NextGroundBurstAt ?? 0) > now + TimeEpsilon ||
+                !ReserveSupport(state, reserveSupportRegion, recordSupportSuppression)) return;
+            var burstRadius = GroundBurstRadius * Math.Min(2.5, 1 + areaBonus);
+            ApplyGroundImpact(attack, ExpandedLightningHitKind.GroundBurst, damage * .35,
+                position => InRange(position, attack.Position, burstRadius), targets, applyHit);
+            state.NextGroundBurstAt = now + GroundSupportCooldown;
+        }
+
+        private static void ApplyGroundImpact(ExpandedLightningEventState attack, ExpandedLightningHitKind kind,
+            double damage, Func<Vector2, bool> inShape, Func<IReadOnlyDictionary<int, Vector2>> targets,
+            Func<ExpandedLightningHit, bool> applyHit)
+        {
+            var hitIds = targets().Where(target => inShape(target.Value)).Select(target => target.Key).OrderBy(id => id).ToArray();
+            foreach (var id in hitIds)
+            {
+                if (!targets().TryGetValue(id, out var position) || !inShape(position)) continue;
+                applyHit(new ExpandedLightningHit(kind, id, position, damage, attack.Id, attack.Cycle));
+            }
+        }
+
+        private static void ResolveGroundPulses(ExpandedLightningState state, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+        {
+            if (state.GroundCurrents == null) return;
+            var due = state.GroundCurrents.Where(region => region.NextPulse <= now + TimeEpsilon).ToArray();
+            if (due.Length == 0) return;
+            foreach (var region in due)
+                do { region.NextPulse += GroundPulseInterval; } while (region.NextPulse <= now + TimeEpsilon);
+
+            var hits = new List<(ExpandedLightningGroundState Region, int TargetId)>();
+            foreach (var target in targets())
+            {
+                var winner = due.Where(region => InRange(target.Value, region.Center, region.Radius))
+                    .OrderByDescending(region => region.Damage).ThenBy(region => region.Id).FirstOrDefault();
+                if (winner != null) hits.Add((winner, target.Key));
+            }
+            foreach (var (region, id) in hits.OrderBy(hit => hit.Region.Id).ThenBy(hit => hit.TargetId))
+            {
+                if (!targets().TryGetValue(id, out var position) || !InRange(position, region.Center, region.Radius)) continue;
+                applyHit(new ExpandedLightningHit(ExpandedLightningHitKind.GroundCurrent, id, position,
+                    region.Damage, region.Id, region.Cycle));
+            }
+        }
+
+        private static double DistanceSquaredToSegment(Vector2 target, Vector2 from, Vector2 to)
+        {
+            var segment = to - from;
+            var lengthSquared = (double)segment.X * segment.X + (double)segment.Y * segment.Y;
+            if (lengthSquared == 0) return DistanceSquared(target, from);
+            var offset = target - from;
+            var fraction = Math.Max(0, Math.Min(1, ((double)offset.X * segment.X + (double)offset.Y * segment.Y) / lengthSquared));
+            var x = offset.X - fraction * segment.X;
+            var y = offset.Y - fraction * segment.Y;
+            return x * x + y * y;
+        }
+
+        private static void AddAftershock(ExpandedLightningState state, ExpandedLightningEventState attack,
+            List<int> visited, double parentDamage, double areaBonus)
+        {
+            var aftershock = attack.Copy();
+            aftershock.At += AftershockDelay;
+            aftershock.Aftershock = true;
+            aftershock.ClearPrimaryModifiers();
+            var rankBonus = (attack.EvolutionRanks & WiderEvolutionAftershock) != 0 ? .15 : 0;
+            aftershock.Radius = AftershockRadius * Math.Min(2.5, 1 + areaBonus + rankBonus);
+            aftershock.Damage = parentDamage * AftershockDamageFactor;
+            aftershock.VisitedIds = visited;
+            state.Pending.Add(aftershock);
         }
 
         private static void AddEliteThunder(ExpandedLightningState state, ExpandedLightningEventState attack,
@@ -535,16 +919,24 @@ namespace BibleSurvivor.Core
             state.Pending.Add(thunder);
         }
 
-        private static (KeyValuePair<int, Vector2>? Nearest, (int TargetId, Vector2 Position, double Damage)? Elite) HitArea(
+        private static ((int TargetId, Vector2 Position, double Damage)? Nearest,
+            (int TargetId, Vector2 Position, double Damage)? Elite,
+            (int TargetId, Vector2 Position, double Damage)? First, HashSet<int>? CurrentVisited) HitArea(
             ExpandedLightningState state, ExpandedLightningEventState attack, double now,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
-            Func<int, bool>? isElite, Func<int, double>? targetHealthRatio)
+            Func<int, bool>? isElite, Func<int, double>? targetHealthRatio, bool canProcCurrent,
+            Func<ExpandedLightningHit, double?>? applyOriginalHit)
         {
-            var ids = targets().Where(target => InRange(target.Value, attack.Position, attack.Radius))
+            var snapshot = targets();
+            var ids = snapshot.Where(target => InRange(target.Value, attack.Position, attack.Radius))
                 .Select(target => target.Key).OrderBy(id => id).ToArray();
-            KeyValuePair<int, Vector2>? nearest = null;
+            var surrounding = attack.IsolatedDamage ? snapshot.Where(target =>
+                InRange(target.Value, attack.Position, IsolationRadius)).Select(target => target.Key).Take(2).ToArray() : null;
+            (int TargetId, Vector2 Position, double Damage)? nearest = null;
             var nearestDistance = double.PositiveInfinity;
             (int TargetId, Vector2 Position, double Damage)? firstElite = null;
+            (int TargetId, Vector2 Position, double Damage)? first = null;
+            var currentVisited = canProcCurrent ? new HashSet<int>() : null;
             var kind = attack.HitKind;
             var primary = attack.IsPrimary;
             var acceptedOriginalTargets = 0;
@@ -553,32 +945,108 @@ namespace BibleSurvivor.Core
                 var live = targets();
                 if (!live.TryGetValue(id, out var position) || !InRange(position, attack.Position, attack.Radius)) continue;
                 var eligibleElite = !firstElite.HasValue && isElite?.Invoke(id) == true;
-                var damage = StrikeDamage(state, attack, id, now, live, targetHealthRatio);
-                if (!applyHit(new ExpandedLightningHit(kind, id, position, damage, attack.Id, attack.Cycle,
-                        primary ? attack.OriginalBaseDamage : 0, primary ? acceptedOriginalTargets + 1 : 0)))
-                    continue;
+                var marked = (attack.CurrentRanks & MarkOnCurrent) != 0 && state.CurrentMarks?.Any(mark => mark.Id == id) == true;
+                var isolated = surrounding?.Length == 1 && surrounding[0] == id;
+                var eliteChainMarked = (attack.EvolutionRanks & EliteChainMark) != 0 && state.EliteChainDamageUntil.HasValue;
+                var damage = StrikeDamage(state, attack, id, now, isolated, marked, eliteChainMarked, targetHealthRatio);
+                var hit = new ExpandedLightningHit(kind, id, position, damage, attack.Id, attack.Cycle,
+                    primary ? attack.OriginalBaseDamage : 0, primary ? acceptedOriginalTargets + 1 : 0);
+                // The game returns the final pre-critical damage for this actual original.
+                // Never call both callbacks for the same hit or reroll its critical result.
+                var acceptedDamage = primary && applyOriginalHit != null
+                    ? applyOriginalHit(hit) : applyHit(hit) ? damage : (double?)null;
+                if (!acceptedDamage.HasValue) continue;
 
-                if (eligibleElite) firstElite = (id, position, damage);
+                if (eligibleElite) firstElite = (id, position, acceptedDamage.Value);
                 if (primary)
                 {
                     acceptedOriginalTargets++;
+                    if (eliteChainMarked) state.EliteChainDamageUntil = null;
+                    if (currentVisited != null)
+                    {
+                        first ??= (id, position, acceptedDamage.Value);
+                        currentVisited.Add(id);
+                    }
+                    if (marked)
+                    {
+                        state.CurrentMarks!.RemoveAll(mark => mark.Id == id);
+                        if (state.CurrentMarks.Count == 0) state.CurrentMarks = null;
+                    }
                     if (attack.RepeatStrikeDamage) RecordStrikeHit(state, id, now, targets().ContainsKey(id));
                 }
 
                 var distance = DistanceSquared(position, attack.Position);
                 if (distance >= nearestDistance) continue;
                 nearestDistance = distance;
-                nearest = new KeyValuePair<int, Vector2>(id, position);
+                nearest = (id, position, acceptedDamage.Value);
             }
-            return (nearest, firstElite);
+            return (nearest, firstElite, first, currentVisited);
+        }
+
+        private static void TryEvolutionFork(ExpandedLightningState state, ExpandedLightningEventState attack,
+            Vector2 firstTransfer, double parentDamage, HashSet<int> visited, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+        {
+            var target = targets().Where(candidate => !visited.Contains(candidate.Key) &&
+                    InRange(candidate.Value, firstTransfer, EvolutionForkRadius))
+                .OrderBy(candidate => DistanceSquared(candidate.Value, firstTransfer))
+                .ThenBy(candidate => candidate.Key).FirstOrDefault();
+            if (target.Key == 0) return;
+            state.NextEvolutionForkAt = now + CurrentCooldown;
+            applyHit(new ExpandedLightningHit(ExpandedLightningHitKind.EvolutionFork, target.Key, target.Value,
+                parentDamage * .30, attack.Id, attack.Cycle));
+        }
+
+        private static void TryCurrent(ExpandedLightningState state, ExpandedLightningEventState attack,
+            (int TargetId, Vector2 Position, double Damage) first, HashSet<int> visited, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+        {
+            var ranks = attack.CurrentRanks;
+            var live = targets();
+            var radius = CurrentRadius + ((ranks & FartherCurrent) != 0 ? 1 : 0);
+            // Resolve after the base evolved chain so its accepted targets are also ineligible.
+            var target = live.Where(candidate => !visited.Contains(candidate.Key) &&
+                    InRange(candidate.Value, first.Position, radius))
+                .OrderBy(candidate => DistanceSquared(candidate.Value, first.Position))
+                .ThenBy(candidate => candidate.Key).FirstOrDefault();
+            if (target.Key == 0)
+            {
+                if ((ranks & FallbackShock) == 0) return;
+                state.NextCurrentAt = now + CurrentCooldown;
+                if (live.TryGetValue(first.TargetId, out var position))
+                    applyHit(new ExpandedLightningHit(ExpandedLightningHitKind.CurrentShock, first.TargetId, position,
+                        first.Damage * .20, attack.Id, attack.Cycle));
+                return;
+            }
+            state.NextCurrentAt = now + CurrentCooldown;
+            var factor = .35 + ((ranks & StrongerCurrent) != 0 ? .15 : 0);
+            if (!applyHit(new ExpandedLightningHit(ExpandedLightningHitKind.Current, target.Key, target.Value,
+                first.Damage * factor, attack.Id, attack.Cycle)) || (ranks & MarkOnCurrent) == 0 ||
+                !targets().ContainsKey(target.Key)) return;
+            state.CurrentMarks ??= new List<BattleHitState>();
+            var mark = state.CurrentMarks.Find(candidate => candidate.Id == target.Key);
+            if (mark == null)
+                state.CurrentMarks.Add(new BattleHitState { Id = target.Key, At = now + CurrentMarkDuration });
+            else
+                mark.At = now + CurrentMarkDuration;
+        }
+
+        private static void PruneCurrentMarks(ExpandedLightningState state, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets)
+        {
+            if (state.CurrentMarks == null) return;
+            var live = targets();
+            state.CurrentMarks.RemoveAll(mark => mark.At < now - TimeEpsilon || !live.ContainsKey(mark.Id));
+            if (state.CurrentMarks.Count == 0) state.CurrentMarks = null;
         }
 
         private static double StrikeDamage(ExpandedLightningState state, ExpandedLightningEventState attack, int id,
-            double now, IReadOnlyDictionary<int, Vector2> targets, Func<int, double>? targetHealthRatio)
+            double now, bool isolated, bool marked, bool eliteChainMarked, Func<int, double>? targetHealthRatio)
         {
-            var bonus = 0d;
-            if (attack.IsolatedDamage && !targets.Any(target => target.Key != id &&
-                InRange(target.Value, attack.Position, IsolationRadius))) bonus += .10;
+            var bonus = isolated ? .10 : 0;
+            if (marked) bonus += .08;
+            if (eliteChainMarked) bonus += .10;
+            if ((attack.EvolutionRanks & FifthEvolutionStorm) != 0) bonus += .12;
             if (attack.HighHealthDamage && targetHealthRatio?.Invoke(id) >= .75) bonus += .06;
             if (attack.RepeatStrikeDamage &&
                 state.RecentStrikeHits?.Any(hit => hit.Id == id && now - hit.At <= RepeatStrikeWindow + TimeEpsilon) == true)
@@ -601,12 +1069,15 @@ namespace BibleSurvivor.Core
             else state.RecentStrikeHits.Add(new BattleHitState { Id = id, At = now });
         }
 
-        private static List<int> Chain(ExpandedLightningEventState attack, KeyValuePair<int, Vector2> anchor,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+        private static (List<int> Visited, Vector2? FirstTransfer, bool HitElite) Chain(ExpandedLightningEventState attack,
+            (int TargetId, Vector2 Position, double Damage) anchor, Func<IReadOnlyDictionary<int, Vector2>> targets,
+            Func<ExpandedLightningHit, bool> applyHit, Func<int, bool>? isElite)
         {
-            var visited = new List<int> { anchor.Key };
-            var attempted = new HashSet<int> { anchor.Key };
-            var origin = anchor.Value;
+            var visited = new List<int> { anchor.TargetId };
+            var attempted = new HashSet<int> { anchor.TargetId };
+            var origin = anchor.Position;
+            Vector2? firstTransfer = null;
+            var hitElite = false;
             var limit = ChainLimit + (attack.LongerChain ? 1 : 0);
             while (visited.Count <= limit)
             {
@@ -614,13 +1085,16 @@ namespace BibleSurvivor.Core
                     .OrderBy(target => DistanceSquared(target.Value, origin)).ThenBy(target => target.Key).FirstOrDefault();
                 if (next.Key == 0) break;
                 attempted.Add(next.Key);
+                var elite = !hitElite && isElite?.Invoke(next.Key) == true;
                 if (!applyHit(new ExpandedLightningHit(ExpandedLightningHitKind.Chain, next.Key, next.Value,
-                    attack.Damage * ChainDamageFactor, attack.Id, attack.Cycle)))
+                    anchor.Damage * ChainDamageFactor, attack.Id, attack.Cycle)))
                     continue;
                 visited.Add(next.Key);
                 origin = next.Value;
+                firstTransfer ??= next.Value;
+                hitElite |= elite;
             }
-            return visited;
+            return (visited, firstTransfer, hitElite);
         }
 
         private static bool InRange(Vector2 position, Vector2 center, double radius) =>

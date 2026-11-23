@@ -21,13 +21,19 @@ namespace BibleSurvivor.Core
         internal bool CloseRangeFire { get; }
         internal bool LeaveClosingEmber { get; }
         internal bool ClosingAshHit { get; }
+        internal bool RepeatedHeat { get; }
+        internal bool ExtendOnEliteKill { get; }
+        internal bool NormalKillBurst { get; }
+        internal bool EliteReignition { get; }
+        internal bool CyclePulse { get; }
         internal double RegionShapeBonus { get; }
 
         public ExpandedFirePillarSettings(bool preferCrowds, Func<int, bool>? isElite, bool extendedEmbers,
             double emberRadiusBonus = 0, bool predictPlacement = false, bool preferSeparatedCenters = false,
             bool slowInCrowds = false, bool increaseCoreDamage = false, bool increaseIgnitionDamage = false,
             double emberDurationBonus = 0, bool closeRangeFire = false, bool leaveClosingEmber = false,
-            bool closingAshHit = false, double regionShapeBonus = 0)
+            bool closingAshHit = false, double regionShapeBonus = 0, bool repeatedHeat = false,
+            bool extendOnEliteKill = false, bool normalKillBurst = false, bool eliteReignition = false, bool cyclePulse = false)
         {
             if (!BattleSnapshot.Finite(emberRadiusBonus) || emberRadiusBonus < 0 || emberRadiusBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(emberRadiusBonus));
@@ -46,6 +52,11 @@ namespace BibleSurvivor.Core
             CloseRangeFire = closeRangeFire;
             LeaveClosingEmber = leaveClosingEmber;
             ClosingAshHit = closingAshHit;
+            RepeatedHeat = repeatedHeat;
+            ExtendOnEliteKill = extendOnEliteKill;
+            NormalKillBurst = normalKillBurst;
+            EliteReignition = eliteReignition;
+            CyclePulse = cyclePulse;
             if (!BattleSnapshot.Finite(regionShapeBonus) || regionShapeBonus < 0 || regionShapeBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(regionShapeBonus));
             RegionShapeBonus = regionShapeBonus;
@@ -75,7 +86,17 @@ namespace BibleSurvivor.Core
         }
     }
 
-    public enum ExpandedFireSupportKind { EvolvedEmber, ClosingEmber, CloseRange }
+    public enum ExpandedFireSupportKind { EvolvedEmber, ClosingEmber, CloseRange, EliteReignition }
+
+    [DataContract]
+    public sealed class ExpandedFireContact
+    {
+        [DataMember(IsRequired = true)] public int TargetId { get; set; }
+        [DataMember(IsRequired = true)] public double LastDueAt { get; set; }
+        [DataMember(IsRequired = true)] public int ConsecutiveHits { get; set; }
+
+        internal ExpandedFireContact Copy() => (ExpandedFireContact)MemberwiseClone();
+    }
 
     [DataContract]
     public sealed class ExpandedFireRegion
@@ -96,6 +117,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double? BaseDamage { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool IncreasedCoreDamage { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool IncreasedIgnitionDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool RepeatedHeat { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedFireContact>? Contacts { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NativeDuration { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool EliteExtensionUsed { get; set; }
         [DataMember(IsRequired = true)] public double Radius { get; set; }
         [DataMember(EmitDefaultValue = false)] public int TargetId { get; set; }
         [DataMember(EmitDefaultValue = false)] public double NextTargetAt { get; set; }
@@ -103,7 +128,13 @@ namespace BibleSurvivor.Core
 
         internal Vector2 Center => new Vector2(X, Y);
         public double IgnitionAt => StartedAt + (Ember ? 0 : FirstDelay ?? ExpandedFirePillar.Profile.FirstAttackDelay);
-        internal ExpandedFireRegion Copy() => (ExpandedFireRegion)MemberwiseClone();
+        internal double Interval => ShortenedPrimaryInterval ? ExpandedFirePillar.HitInterval * .96 : ExpandedFirePillar.HitInterval;
+        internal ExpandedFireRegion Copy()
+        {
+            var copy = (ExpandedFireRegion)MemberwiseClone();
+            copy.Contacts = Contacts?.Select(contact => contact.Copy()).ToList();
+            return copy;
+        }
     }
 
     [DataContract]
@@ -119,6 +150,11 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double? NextClosingEmberAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextClosingAshAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextCloseRangeAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextEliteExtensionAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int NormalBurstKills { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextNormalBurstAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextEliteReignitionAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextCyclePulseAt { get; set; }
         [DataMember(IsRequired = true)] public List<ExpandedFireRegion> Regions { get; set; } = new List<ExpandedFireRegion>();
 
         public ExpandedFirePillarState Copy() => new ExpandedFirePillarState
@@ -126,7 +162,9 @@ namespace BibleSurvivor.Core
             Evolved = Evolved, WaitingForTarget = WaitingForTarget, SuppressedOriginal = SuppressedOriginal,
             NextId = NextId, NextCycle = NextCycle, LastStep = LastStep, Cycle = Cycle,
             NextClosingEmberAt = NextClosingEmberAt, NextClosingAshAt = NextClosingAshAt,
-            NextCloseRangeAt = NextCloseRangeAt,
+            NextCloseRangeAt = NextCloseRangeAt, NextEliteExtensionAt = NextEliteExtensionAt,
+            NormalBurstKills = NormalBurstKills, NextNormalBurstAt = NextNormalBurstAt,
+            NextEliteReignitionAt = NextEliteReignitionAt, NextCyclePulseAt = NextCyclePulseAt,
             Regions = Regions.Select(region => region.Copy()).ToList()
         };
 
@@ -148,6 +186,11 @@ namespace BibleSurvivor.Core
                 !ExpandedFirePillar.ValidCooldown(NextClosingEmberAt, now, 2) ||
                 !ExpandedFirePillar.ValidCooldown(NextClosingAshAt, now, 2) ||
                 !ExpandedFirePillar.ValidCooldown(NextCloseRangeAt, now, 4) ||
+                !ExpandedFirePillar.ValidCooldown(NextEliteExtensionAt, now, 4) ||
+                !ExpandedFirePillar.ValidCooldown(NextNormalBurstAt, now, 2) ||
+                !ExpandedFirePillar.ValidCooldown(NextEliteReignitionAt, now, 5) ||
+                !ExpandedFirePillar.ValidCooldown(NextCyclePulseAt, now, 4) ||
+                NormalBurstKills < 0 || NormalBurstKills >= 8 || NextNormalBurstAt.HasValue && NormalBurstKills != 0 ||
                 Regions.Any(region => region == null) ||
                 Regions.Count(region => region.Ember) > 16 || Regions.Count(region => !region.Ember) > 32 ||
                 Regions.Select(region => region.Id).Distinct().Count() != Regions.Count)
@@ -170,6 +213,7 @@ namespace BibleSurvivor.Core
                         region.Radius > ExpandedFirePillar.SupportRadius(region.SupportKind) * 2.5) ||
                     !BattleSnapshot.Finite(region.Damage) || region.Damage <= 0 || region.Damage > 45 ||
                     !ExpandedFirePillar.ValidDamageBasis(region) ||
+                    !ExpandedFirePillar.ValidContacts(region, now) || !ExpandedFirePillar.ValidDuration(region) ||
                     !ExpandedFirePillar.ValidOriginalBaseDamage(region, evolved) ||
                     region.TargetId < 0 || !BattleSnapshot.Finite(region.NextTargetAt) ||
                     region.NextTargetAt < 0 || region.NextTargetAt > now + .5 + epsilon ||
@@ -182,7 +226,7 @@ namespace BibleSurvivor.Core
     public static class ExpandedFirePillar
     {
         internal const double TimeEpsilon = 1e-9;
-        private const double HitInterval = .5;
+        internal const double HitInterval = .5;
         private const double MinimumDelay = .05;
         private const float MotionSpeed = 1.2f;
         private const double PredictionLead = .25;
@@ -206,7 +250,8 @@ namespace BibleSurvivor.Core
             bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null,
             IReadOnlyDictionary<int, Vector2>? previousTargets = null, int level = 0,
             Action<int>? recordOriginalSuppression = null, Action? recordSupportSuppression = null,
-            double conditionalRegionBonus = 0)
+            double conditionalRegionBonus = 0, Func<int, bool>? isElite = null,
+            Func<ExpandedFirePillarHit, double?>? applyOriginalHit = null)
         {
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (level < 0 || level > 8 || evolved && level != 0 && level != 8)
@@ -216,7 +261,7 @@ namespace BibleSurvivor.Core
                 throw new ArgumentOutOfRangeException(nameof(conditionalRegionBonus));
             var originalBaseDamage = level == 0 ? 0 : Profile.AtLevel(level).Damage;
             double? baseDamage = null;
-            if (settings.IncreaseCoreDamage || settings.IncreaseIgnitionDamage)
+            if (settings.IncreaseCoreDamage || settings.IncreaseIgnitionDamage || settings.RepeatedHeat || settings.ExtendOnEliteKill)
             {
                 if (level < 1 || level > 8) throw new ArgumentOutOfRangeException(nameof(level));
                 baseDamage = originalBaseDamage;
@@ -225,6 +270,10 @@ namespace BibleSurvivor.Core
             if (state.NextClosingEmberAt <= now + TimeEpsilon) state.NextClosingEmberAt = null;
             if (state.NextClosingAshAt <= now + TimeEpsilon) state.NextClosingAshAt = null;
             if (state.NextCloseRangeAt <= now + TimeEpsilon) state.NextCloseRangeAt = null;
+            if (state.NextEliteExtensionAt <= now + TimeEpsilon) state.NextEliteExtensionAt = null;
+            if (state.NextNormalBurstAt <= now + TimeEpsilon) state.NextNormalBurstAt = null;
+            if (state.NextEliteReignitionAt <= now + TimeEpsilon) state.NextEliteReignitionAt = null;
+            if (state.NextCyclePulseAt <= now + TimeEpsilon) state.NextCyclePulseAt = null;
             var regionShapeBonus = settings.RegionShapeBonus + conditionalRegionBonus;
             EndRegions(state, now, settings, regionShapeBonus, getTargets, hit, reserveEmber, recordSupportSuppression);
             if (evolved)
@@ -233,7 +282,8 @@ namespace BibleSurvivor.Core
                     EmberRadius * (1 + settings.EmberRadiusBonus + conditionalRegionBonus), reserveEmber, settings.SlowInCrowds,
                     recordSupportSuppression);
             state.LastStep = now;
-            ResolveDue(state, now, getTargets, hit);
+            ResolveDue(state, now, getTargets, hit, isElite, settings, regionShapeBonus,
+                reserveEmber, recordSupportSuppression, applyOriginalHit);
 
             if (state.NextCycle > now + TimeEpsilon) return 0;
             var targets = getTargets();
@@ -280,6 +330,8 @@ namespace BibleSurvivor.Core
                 region.BaseDamage = baseDamage;
                 region.IncreasedCoreDamage = settings.IncreaseCoreDamage;
                 region.IncreasedIgnitionDamage = settings.IncreaseIgnitionDamage;
+                region.RepeatedHeat = settings.RepeatedHeat;
+                region.NativeDuration = settings.ExtendOnEliteKill ? Profile.AtLevel(level).Duration : (double?)null;
                 region.NextHit = region.IgnitionAt;
             }
             if (settings.CloseRangeFire && state.Cycle % 5 == 0 && !state.NextCloseRangeAt.HasValue)
@@ -292,6 +344,17 @@ namespace BibleSurvivor.Core
                     SpawnSupport(state, nearby[0].Value, start, damage * .35,
                         ExpandedFireSupportKind.CloseRange, regionShapeBonus, settings.EmberDurationBonus);
                     state.NextCloseRangeAt = start + 4;
+                }
+            }
+            if (settings.CyclePulse && state.Cycle % 5 == 0 && !state.NextCyclePulseAt.HasValue)
+            {
+                var active = state.Regions.Where(region => !region.Ember).OrderBy(region => region.Id).Take(3).ToArray();
+                if (active.Length > 0 && ReserveSupport(state, reserveEmber, recordSupportSuppression))
+                {
+                    var used = new HashSet<int>();
+                    foreach (var region in active)
+                        HitSupportCircle(region.Center, region.Radius, region.Damage * .25, getTargets, hit, used);
+                    state.NextCyclePulseAt = now + 4;
                 }
             }
             return accepted;
@@ -358,7 +421,8 @@ namespace BibleSurvivor.Core
             return region.SupportKind switch
             {
                 ExpandedFireSupportKind.EvolvedEmber => evolved,
-                ExpandedFireSupportKind.ClosingEmber or ExpandedFireSupportKind.CloseRange => region.TargetId == 0 &&
+                ExpandedFireSupportKind.ClosingEmber or ExpandedFireSupportKind.CloseRange or
+                    ExpandedFireSupportKind.EliteReignition => region.TargetId == 0 &&
                     region.NextTargetAt == 0 && region.TravelSinceEmber == 0,
                 _ => false,
             };
@@ -447,7 +511,7 @@ namespace BibleSurvivor.Core
 
         internal static bool ValidDamageBasis(ExpandedFireRegion region)
         {
-            var hasBonus = region.IncreasedCoreDamage || region.IncreasedIgnitionDamage;
+            var hasBonus = region.IncreasedCoreDamage || region.IncreasedIgnitionDamage || region.RepeatedHeat || region.NativeDuration.HasValue;
             if (!hasBonus) return !region.BaseDamage.HasValue;
             return !region.Ember && region.BaseDamage is double basis &&
                 (basis == Profile.AtLevel(1).Damage || basis == Profile.AtLevel(4).Damage || basis == Profile.AtLevel(8).Damage) &&
@@ -463,33 +527,60 @@ namespace BibleSurvivor.Core
                     (damage == Profile.AtLevel(1).Damage || damage == Profile.AtLevel(4).Damage));
         }
 
+        internal static bool ValidContacts(ExpandedFireRegion region, double now)
+        {
+            return region.Contacts == null || region.RepeatedHeat && region.Contacts.Count > 0 && region.Contacts.Count <= 120 &&
+                region.Contacts.All(contact => contact != null && contact.TargetId > 0 && contact.ConsecutiveHits >= 1 &&
+                    contact.ConsecutiveHits <= 3 && BattleSnapshot.Finite(contact.LastDueAt) &&
+                    contact.LastDueAt >= region.IgnitionAt - TimeEpsilon && contact.LastDueAt <= now + TimeEpsilon &&
+                    contact.LastDueAt + 2 * region.Interval >= region.NextHit - TimeEpsilon) &&
+                region.Contacts.Select(contact => contact.TargetId).Distinct().Count() == region.Contacts.Count;
+        }
+
+        internal static bool ValidDuration(ExpandedFireRegion region)
+        {
+            if (region.NativeDuration is not double basis) return !region.EliteExtensionUsed;
+            return !region.Ember && (basis == Profile.AtLevel(1).Duration || basis == Profile.AtLevel(2).Duration || basis == Profile.AtLevel(8).Duration) &&
+                region.EndsAt <= region.StartedAt + basis * 1.75 + TimeEpsilon;
+        }
+
         private static void ResolveDue(ExpandedFirePillarState state, double now,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit)
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit, Func<int, bool>? isElite,
+            ExpandedFirePillarSettings settings, double regionShapeBonus, Func<bool>? reserve, Action? suppressed,
+            Func<ExpandedFirePillarHit, double?>? applyOriginalHit)
         {
             var due = state.Regions.Where(region => region.NextHit <= now + TimeEpsilon && region.NextHit < region.EndsAt)
                 .OrderBy(region => region.Id)
-                .Select(region => (Region: region, First: Math.Abs(region.IgnitionAt - region.NextHit) <= TimeEpsilon))
+                .Select(region => (Region: region, At: region.NextHit))
+                .Select(item => (item.Region, item.At, First: Math.Abs(item.Region.IgnitionAt - item.At) <= TimeEpsilon))
                 .ToArray();
             if (due.Length == 0) return;
-            foreach (var (region, _) in due) region.NextHit += region.ShortenedPrimaryInterval ? HitInterval * .96 : HitInterval;
+            foreach (var (region, _, _) in due) region.NextHit += region.Interval;
             var groups = due.Select(item => (item.Region.Ember, item.Region.SupportKind)).Distinct().ToArray();
-            var hits = new List<(ExpandedFireRegion Region, int Id, Vector2 Position, double Damage)>();
+            var hits = new List<(ExpandedFireRegion Region, int Id, Vector2 Position, double Damage, double At, int Streak)>();
             foreach (var target in targets())
             {
                 foreach (var group in groups)
                 {
                     ExpandedFireRegion? winner = null;
                     var damage = 0d;
-                    foreach (var (region, first) in due)
+                    var dueAt = 0d;
+                    var streak = 1;
+                    foreach (var (region, at, first) in due)
                     {
                         if ((region.Ember, region.SupportKind) != group ||
                             !InRange(region.Center, target.Value, region.Radius)) continue;
-                        var candidate = HitDamage(region, target.Value, first);
+                        var contact = region.Contacts?.Find(entry => entry.TargetId == target.Key);
+                        var currentStreak = contact != null && Math.Abs(contact.LastDueAt + region.Interval - at) <= TimeEpsilon
+                            ? Math.Min(3, contact.ConsecutiveHits + 1) : 1;
+                        var candidate = HitDamage(region, target.Value, first, currentStreak);
                         if (winner != null && candidate <= damage) continue;
                         winner = region;
                         damage = candidate;
+                        dueAt = at;
+                        streak = currentStreak;
                     }
-                    if (winner != null) hits.Add((winner, target.Key, target.Value, damage));
+                    if (winner != null) hits.Add((winner, target.Key, target.Value, damage, dueAt, streak));
                 }
             }
             var regionId = 0L;
@@ -503,15 +594,91 @@ namespace BibleSurvivor.Core
                     regionId = region.Id;
                     targetOrdinal = 0;
                 }
-                hit(new ExpandedFirePillarHit(candidate.Id, candidate.Position, candidate.Damage, region.Ember,
-                    region.Cycle, region.Ember ? 0 : region.OriginalBaseDamage, region.Ember ? 0 : ++targetOrdinal));
+                var trackKills = !region.Ember && (region.NativeDuration.HasValue || settings.NormalKillBurst || settings.EliteReignition);
+                var elite = trackKills && isElite?.Invoke(candidate.Id) == true;
+                var contact = new ExpandedFirePillarHit(candidate.Id, candidate.Position, candidate.Damage, region.Ember,
+                    region.Cycle, region.Ember ? 0 : region.OriginalBaseDamage, region.Ember ? 0 : targetOrdinal + 1);
+                double? acceptedDamage = contact.Damage;
+                if (!region.Ember && applyOriginalHit != null) acceptedDamage = applyOriginalHit(contact);
+                else hit(contact);
+                if (!acceptedDamage.HasValue) continue;
+                if (!region.Ember) targetOrdinal++;
+                if (targets().ContainsKey(candidate.Id))
+                {
+                    if (region.RepeatedHeat) RecordContact(region, candidate.Id, candidate.At, candidate.Streak);
+                }
+                else if (trackKills)
+                    OnOriginalKill(state, region, candidate.Position, now, elite, acceptedDamage.Value, settings,
+                        regionShapeBonus, targets, hit, reserve, suppressed);
+            }
+            foreach (var (region, at, _) in due)
+            {
+                region.Contacts?.RemoveAll(contact => contact.LastDueAt < at - TimeEpsilon ||
+                    !targets().ContainsKey(contact.TargetId));
+                if (region.Contacts?.Count == 0) region.Contacts = null;
             }
         }
 
-        private static double HitDamage(ExpandedFireRegion region, Vector2 position, bool first)
+        private static void OnOriginalKill(ExpandedFirePillarState state, ExpandedFireRegion region,
+            Vector2 position, double now, bool elite, double preCriticalDamage, ExpandedFirePillarSettings settings,
+            double regionShapeBonus, Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit,
+            Func<bool>? reserve, Action? suppressed)
+        {
+            if (elite)
+            {
+                if (region.NativeDuration.HasValue && !region.EliteExtensionUsed && !state.NextEliteExtensionAt.HasValue)
+                    ExtendForElite(state, region, now);
+                if (settings.EliteReignition && !state.NextEliteReignitionAt.HasValue && ReserveSupport(state, reserve, suppressed))
+                {
+                    SpawnSupport(state, position, now, preCriticalDamage * .35,
+                        ExpandedFireSupportKind.EliteReignition, regionShapeBonus, settings.EmberDurationBonus);
+                    state.NextEliteReignitionAt = now + 5;
+                }
+                return;
+            }
+            if (!settings.NormalKillBurst || state.NextNormalBurstAt.HasValue || ++state.NormalBurstKills < 8) return;
+            state.NormalBurstKills = 0;
+            if (!ReserveSupport(state, reserve, suppressed)) return;
+            HitSupportCircle(position, 1 + regionShapeBonus, preCriticalDamage * .25, targets, hit);
+            state.NextNormalBurstAt = now + 2;
+        }
+
+        private static void HitSupportCircle(Vector2 origin, double radius, double damage,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit, HashSet<int>? used = null)
+        {
+            var inside = targets().Where(target => InRange(target.Value, origin, radius)).OrderBy(target => target.Key).ToArray();
+            foreach (var target in inside)
+                if (targets().ContainsKey(target.Key) && (used == null || used.Add(target.Key)))
+                    hit(new ExpandedFirePillarHit(target.Key, target.Value, damage, true, 0, 0, 0));
+        }
+
+        private static void RecordContact(ExpandedFireRegion region, int id, double at, int consecutive)
+        {
+            region.Contacts ??= new List<ExpandedFireContact>();
+            var contact = region.Contacts.Find(entry => entry.TargetId == id);
+            if (contact == null)
+                region.Contacts.Add(new ExpandedFireContact { TargetId = id, LastDueAt = at, ConsecutiveHits = consecutive });
+            else
+            {
+                contact.LastDueAt = at;
+                contact.ConsecutiveHits = consecutive;
+            }
+        }
+
+        private static void ExtendForElite(ExpandedFirePillarState state, ExpandedFireRegion region, double now)
+        {
+            var end = Math.Min(region.EndsAt + .35, region.StartedAt + region.NativeDuration!.Value * 1.75);
+            if (end <= region.EndsAt + TimeEpsilon) return;
+            region.EndsAt = end;
+            region.EliteExtensionUsed = true;
+            state.NextEliteExtensionAt = now + 4;
+        }
+
+        private static double HitDamage(ExpandedFireRegion region, Vector2 position, bool first, int streak)
         {
             if (region.BaseDamage is not double basis) return region.Damage;
             var bonus = first && region.IncreasedIgnitionDamage ? IgnitionDamageBonus : 0;
+            if (region.RepeatedHeat && streak >= 3) bonus += .08;
             var innerRadius = (float)(region.Radius * InnerRadiusFraction);
             if (region.IncreasedCoreDamage && Vector2.DistanceSquared(region.Center, position) <= innerRadius * innerRadius)
                 bonus += CoreDamageBonus;

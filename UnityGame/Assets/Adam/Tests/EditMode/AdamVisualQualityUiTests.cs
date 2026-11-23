@@ -117,7 +117,7 @@ public sealed class AdamVisualQualityUiTests
 
     [Test] public void PermanentShopOffersOnlyTheLinkedCommonAndWeaponEffects()
     {
-        Assert.AreEqual(245,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
+        Assert.AreEqual(269,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
         foreach(var profile in ExpandedWeaponRules.All)
         {
             for(var rank=1;rank<=5;rank++)
@@ -136,6 +136,9 @@ public sealed class AdamVisualQualityUiTests
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.cross.d.05"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.lightning.b.05"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.fire_pillar.b.03"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.area.10"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.cross.e.05"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.lightning.e.05"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.bible.base.05"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.jawbone.base.05"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.sling.base.05"));
