@@ -54,6 +54,22 @@ public sealed class AdamGenesisStoryTests
         }
     }
 
+    [TestCase(1, 660, 440)]
+    [TestCase(3, 660, 440)]
+    [TestCase(9, 660, 440)]
+    [TestCase(1, 1920, 1080)]
+    [TestCase(3, 1920, 1080)]
+    [TestCase(9, 1920, 1080)]
+    public void WesternPropsClearTheDesktopOverlayAtSpawn(int round, int width, int height)
+    {
+        var arena = AdamGame.Arena(width, height);
+        var projection = new AdamWorldProjection(arena, Vector2.zero);
+        var west = AdamGenesisArenaArt.Bounds(projection, AdamGenesisRoundStory.Find(round).West);
+        // R01's sortie marker spans y=136–165. The legacy boss backing is taller than polished.
+        var overlayBottom = round == 1 ? 165 : AdamHud.BossBacking(width, polish: false).yMax;
+        Assert.That(arena.y + west.yMin, Is.GreaterThanOrEqualTo(overlayBottom + 2));
+    }
+
     [Test]
     public void ReviewedSpritesCanBeReusedAndUnknownDecorSelectsTheFallback()
     {
