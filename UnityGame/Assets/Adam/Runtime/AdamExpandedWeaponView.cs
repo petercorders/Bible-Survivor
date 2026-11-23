@@ -11,8 +11,6 @@ namespace BibleSurvivor.Unity
         enum Stroke { Solid, Dash, Dot }
 
         const double MarkerLifetime = .14;
-        const float CrossThornRadius = .75f / 2;
-        const float ChariotTrailWidth = .9f;
         static readonly Color Rim = new Color32(29, 26, 20, 255);
         static readonly Color Voice = new Color32(255, 242, 178, 255);
         static readonly Color Lightning = new Color32(255, 252, 225, 255);
@@ -24,18 +22,19 @@ namespace BibleSurvivor.Unity
 
         readonly Texture2D[] rings = new Texture2D[3];
         readonly List<ExpandedLightningEventState> resolvedBolts = new List<ExpandedLightningEventState>();
-        readonly List<(double At, Vector2 Center, bool Second)> echoes = new List<(double, Vector2, bool)>();
-        double roarAt = double.NegativeInfinity;
-        Vector2 roarCenter;
+        readonly List<(double At, Vector2 Center, float Radius, bool Second)> echoes =
+            new List<(double, Vector2, float, bool)>();
+        readonly List<(double At, Vector2 Center, float Radius, bool Guardian)> roars =
+            new List<(double, Vector2, float, bool)>();
 
         public void Clear()
         {
             resolvedBolts.Clear();
             echoes.Clear();
-            roarAt = double.NegativeInfinity;
+            roars.Clear();
         }
 
-        public void Observe(BattleSnapshot previous, BattleSnapshot next)
+        public void Observe(BattleSnapshot previous, BattleSnapshot next, float packRoarRadius, float guardianRoarRadius)
         {
             if (previous == null || next.Time <= previous.Time) return;
             for (var i = resolvedBolts.Count - 1; i >= 0; i--)
@@ -52,24 +51,36 @@ namespace BibleSurvivor.Unity
             if (previous.WildernessVoice?.Evolved == true && next.WildernessVoice?.Evolved == true)
                 foreach (var cast in previous.WildernessVoice.Active)
                 {
-                    CaptureEcho(next, cast.StartedAt + .5, false);
-                    CaptureEcho(next, cast.StartedAt + 1, true);
+                    CaptureEcho(next, cast.StartedAt + .5, (float)cast.FirstEchoRadius, false);
+                    CaptureEcho(next, cast.StartedAt + 1, (float)cast.SecondEchoRadius, true);
                 }
 
             var oldLion = previous.DanielLion;
             var newLion = next.DanielLion;
-            if (oldLion?.Evolved == true && newLion?.Evolved == true && newLion.Lions.Count > 0 &&
-                newLion.NextRoarAt > oldLion.NextRoarAt && newLion.LastStepAt - oldLion.NextRoarAt < BattleWorld.FixedStep)
+            roars.RemoveAll(roar => next.Time >= roar.At + MarkerLifetime);
+            if (oldLion != null && newLion != null && oldLion.Evolved == newLion.Evolved)
             {
-                roarAt = newLion.LastStepAt;
-                roarCenter = new Vector2(newLion.Lions[0].X, newLion.Lions[0].Y);
+                if (newLion.Evolved && newLion.Lions.Count > 0 && newLion.NextRoarAt > oldLion.NextRoarAt &&
+                    newLion.LastStepAt - oldLion.NextRoarAt < BattleWorld.FixedStep)
+                    Roar(newLion.Lions[0], guardianRoarRadius, true);
+                var representedLions = Math.Min(oldLion.Lions.Count, newLion.Lions.Count);
+                for (var index = 0; index < representedLions; index++)
+                {
+                    var lion = newLion.Lions[index];
+                    if (oldLion.Lions[index].NextPackRoarAt is double prior && lion.NextPackRoarAt > prior &&
+                        newLion.LastStepAt - prior < BattleWorld.FixedStep)
+                        Roar(lion, packRoarRadius, false);
+                }
             }
 
-            void CaptureEcho(BattleSnapshot snap, double due, bool second)
+            void Roar(ExpandedDanielLionActorState lion, float radius, bool guardian) =>
+                roars.Add((next.Time, new Vector2(lion.X, lion.Y), radius, guardian));
+
+            void CaptureEcho(BattleSnapshot snap, double due, float radius, bool second)
             {
                 // The current anchor is valid when this fixed step resolved the due pulse.
                 if (previous.Time < due && due <= snap.Time && snap.Time - due < BattleWorld.FixedStep)
-                    echoes.Add((snap.Time, new Vector2(snap.PlayerX, snap.PlayerY), second));
+                    echoes.Add((snap.Time, new Vector2(snap.PlayerX, snap.PlayerY), radius, second));
             }
         }
 
@@ -91,12 +102,14 @@ namespace BibleSurvivor.Unity
                     }
                     // Pulse shapes use the same live player anchor as the primary cast. These echo cues lead the due tick.
                     if (!snap.WildernessVoice.Evolved) continue;
-                    if (cast.EchoesFired == 0 && age >= .5 - MarkerLifetime) Ring(projection, player, 5, Voice, Stroke.Dash);
-                    if (cast.EchoesFired == 1 && age >= 1 - MarkerLifetime) Ring(projection, player, 5.5f, Voice, Stroke.Dot);
+                    if (cast.EchoesFired == 0 && age >= .5 - MarkerLifetime)
+                        Ring(projection, player, (float)cast.FirstEchoRadius, Voice, Stroke.Dash);
+                    if (cast.EchoesFired == 1 && age >= 1 - MarkerLifetime)
+                        Ring(projection, player, (float)cast.SecondEchoRadius, Voice, Stroke.Dot);
                 }
             }
             foreach (var echo in echoes)
-                Ring(projection, echo.Center, echo.Second ? 5.5f : 5, Voice, echo.Second ? Stroke.Dot : Stroke.Dash);
+                Ring(projection, echo.Center, echo.Radius, Voice, echo.Second ? Stroke.Dot : Stroke.Dash);
 
             if (snap.Lightning != null)
                 foreach (var bolt in snap.Lightning.Pending) DrawBolt(projection, bolt, Stroke.Dash);
@@ -116,7 +129,7 @@ namespace BibleSurvivor.Unity
                 }
 
             if (snap.Cross != null)
-                foreach (var shot in snap.Cross.Shots) DrawThorns(projection, shot.Thorns);
+                foreach (var shot in snap.Cross.Shots) DrawThorns(projection, shot.Thorns, (float)shot.ThornRadius);
 
             if (snap.ElijahChariot != null)
                 foreach (var path in snap.ElijahChariot.Paths)
@@ -129,7 +142,7 @@ namespace BibleSurvivor.Unity
                     {
                         // Core expires each point individually as the dash lays the flame strip.
                         var expired = Mathf.Clamp((float)((snap.Time - path.MoveAt - path.TrailDuration) * path.Speed), 0, (float)path.Distance);
-                        Band(projection, start + direction * expired, V(path.Position), ChariotTrailWidth, Chariot, Stroke.Dot);
+                        Band(projection, start + direction * expired, V(path.Position), (float)path.TrailWidth, Chariot, Stroke.Dot);
                     }
                 }
         }
@@ -188,7 +201,8 @@ namespace BibleSurvivor.Unity
                 }
                 if (snap.DanielLion.Leap != null)
                     Ring(projection, new Vector2(snap.DanielLion.Leap.OriginX, snap.DanielLion.Leap.OriginY), 2.5f, Lion, Stroke.Dot);
-                if (snap.Time < roarAt + MarkerLifetime) Ring(projection, roarCenter, 1.8f, Lion, Stroke.Solid);
+                foreach (var roar in roars)
+                    Ring(projection, roar.Center, roar.Radius, Lion, roar.Guardian ? Stroke.Solid : Stroke.Dash);
             }
 
             if (snap.Cross != null)
@@ -243,7 +257,7 @@ namespace BibleSurvivor.Unity
             if (bolt.Aftershock) Ring(projection, center, radius - .10f, Lightning, stroke);
         }
 
-        void DrawThorns(AdamWorldProjection projection, List<ExpandedCrossThornState> pieces)
+        void DrawThorns(AdamWorldProjection projection, List<ExpandedCrossThornState> pieces, float radius)
         {
             for (var i = 0; i < pieces.Count;)
             {
@@ -264,12 +278,12 @@ namespace BibleSurvivor.Unity
                     end = next;
                     i++;
                 }
-                Rail(projection, start, end, CrossThornRadius, Cross, Stroke.Dash);
+                Rail(projection, start, end, radius, Cross, Stroke.Dash);
                 // Endcaps close the capsule without drawing inner boundaries along a contiguous leg.
                 if (i == pieces.Count || (new Vector2(pieces[i].StartX, pieces[i].StartY) - end).sqrMagnitude > 1e-9f)
-                    Arc(projection, end, Mathf.Atan2(direction.y, direction.x), Mathf.PI / 2, CrossThornRadius, Cross, Stroke.Dash);
+                    Arc(projection, end, Mathf.Atan2(direction.y, direction.x), Mathf.PI / 2, radius, Cross, Stroke.Dash);
                 if (first == 0 || (new Vector2(pieces[first - 1].EndX, pieces[first - 1].EndY) - start).sqrMagnitude > 1e-9f)
-                    Arc(projection, start, Mathf.Atan2(-direction.y, -direction.x), Mathf.PI / 2, CrossThornRadius, Cross, Stroke.Dash);
+                    Arc(projection, start, Mathf.Atan2(-direction.y, -direction.x), Mathf.PI / 2, radius, Cross, Stroke.Dash);
             }
         }
 

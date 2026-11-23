@@ -14,6 +14,9 @@ namespace BibleSurvivor.Core
         public int ExtraAmount {get;set;}
         internal int ExtraPierce { get; set; }
         internal double BurstReduction { get; set; }
+        internal double TravelDistanceBonus { get; set; }
+        internal double PlacedRadiusBonus { get; set; }
+        internal double OrbitDistanceBonus { get; set; }
     }
     public sealed class CombatStats
     {
@@ -34,6 +37,7 @@ namespace BibleSurvivor.Core
         internal double AttackSpeed { get; private set; }
         internal double AttackTravelDistance { get; private set; }
         internal double AttackDelayAdvance { get; private set; }
+        internal double SlingTravelMultiplier { get; private set; } = 1;
         internal CombatStats Evolved(string form)
         {
             var copy=(CombatStats)MemberwiseClone();
@@ -73,8 +77,13 @@ namespace BibleSurvivor.Core
             var stats = For(id, level, bonuses);
             stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + collisionBonus);
             stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
-            if (id == "sling") stats.AreaMultiplier += collisionBonus;
-            if (id == "sling") stats.Pierce = Math.Min(8, stats.Pierce + bonuses.ExtraPierce);
+            if (id == "bible") stats.AreaMultiplier += bonuses.OrbitDistanceBonus;
+            if (id == "sling")
+            {
+                stats.AreaMultiplier += collisionBonus;
+                stats.Pierce = Math.Min(8, stats.Pierce + bonuses.ExtraPierce);
+                stats.SlingTravelMultiplier += bonuses.TravelDistanceBonus;
+            }
             // Choose the evolved sling's base volley before adding stones and specialization.
             // EvolutionRules.Evolved retains the v1 final-count maximum for older runs.
             if (form == EvolutionRules.Sling) stats.Amount = EvolutionRules.SlingMinimum + bonuses.ExtraAmount;
@@ -104,12 +113,13 @@ namespace BibleSurvivor.Core
                 _ => false,
             };
             var radiusBonus = (weapon == "cross" ? collisionBonus : bonuses.AreaBonus) + (radiusMastery ? .10 : 0);
+            if (weapon == "lightning" || weapon == "fire_pillar") radiusBonus += bonuses.PlacedRadiusBonus;
             var reachBonus = bonuses.AreaBonus +
                 (weapon == "wilderness_voice" ? .20 * specialization + (masteryFour ? .10 : 0) : 0);
             var widthBonus = bonuses.AreaBonus + (weapon == "elijah_chariot" && masteryFour ? .10 : 0);
             var speedBonus = (weapon == "daniel_lion" ? 0 : bonuses.ProjectileSpeedBonus) +
                 (weapon == "moses_staff" && masteryFive || weapon == "daniel_lion" && masteryFour ? .12 : 0);
-            var travelBonus = (weapon == "moses_staff" || weapon == "cross") && masteryFour ? .12 : 0;
+            var travelBonus = bonuses.TravelDistanceBonus + ((weapon == "moses_staff" || weapon == "cross") && masteryFour ? .12 : 0);
             var delayAdvance = masteryFive && (weapon == "wilderness_voice" || weapon == "fire_pillar" ||
                 weapon == "elijah_chariot") ? .08 : 0;
             return new CombatStats

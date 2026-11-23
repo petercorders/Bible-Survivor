@@ -18,10 +18,11 @@ namespace BibleSurvivor.Core
         public bool ExtendThorns { get; }
         public bool IncreaseSharedLegBudget { get; }
         public bool ShortenRehitInterval { get; }
+        public bool WidenSupportShape { get; }
 
         public ExpandedCrossRankOptions(bool accelerateOutbound = false, bool prioritizeElite = false,
             bool accelerateReturn = false, bool increaseLegBudget = false, bool widenCollision = false, bool extendThorns = false,
-            bool increaseSharedLegBudget = false, bool shortenRehitInterval = false)
+            bool increaseSharedLegBudget = false, bool shortenRehitInterval = false, bool widenSupportShape = false)
         {
             AccelerateOutbound = accelerateOutbound;
             PrioritizeElite = prioritizeElite;
@@ -31,6 +32,7 @@ namespace BibleSurvivor.Core
             ExtendThorns = extendThorns;
             IncreaseSharedLegBudget = increaseSharedLegBudget;
             ShortenRehitInterval = shortenRehitInterval;
+            WidenSupportShape = widenSupportShape;
         }
 
         public static ExpandedCrossRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -39,7 +41,7 @@ namespace BibleSurvivor.Core
             bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
             return new ExpandedCrossRankOptions(Has("weapon.cross.a.01"), Has("weapon.cross.a.02"),
                 Has("weapon.cross.b.01"), Has("weapon.cross.c.01"), Has("weapon.cross.c.02"), Has("weapon.cross.e.01"),
-                Has("common.shot.03"), Has("common.tempo.05"));
+                Has("common.shot.03"), Has("common.tempo.05"), Has("common.area.01"));
         }
     }
 
@@ -127,10 +129,12 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool IncreasedSharedLegBudget { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedThorns { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ShortenedRehitInterval { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
 
         public double OutboundSpeed => TrainedOutboundSpeed ?? Speed;
         public double ReturnSpeed => TrainedReturnSpeed ?? Speed;
         public double ThornDuration => ExpandedCross.BaseThornDuration * (ExtendedThorns ? 1.20 : 1);
+        public double ThornRadius => ExpandedCross.BaseThornRadius * (WidenedSupportShape ? 1.04 : 1);
         public int HitBudget(bool evolved) => Math.Min(8, (evolved ? 6 : ExpandedCross.Profile.HitsPerLeg) +
             (IncreasedLegBudget ? 1 : 0) + (IncreasedSharedLegBudget ? 1 : 0));
 
@@ -261,7 +265,7 @@ namespace BibleSurvivor.Core
 
         private static void ValidateTrail(ExpandedCrossShotState shot, double now)
         {
-            if ((!shot.LeavesThorns && (shot.NextThornAt.HasValue || shot.Thorns.Count != 0 || shot.ExtendedThorns)) ||
+            if ((!shot.LeavesThorns && (shot.NextThornAt.HasValue || shot.Thorns.Count != 0 || shot.ExtendedThorns || shot.WidenedSupportShape)) ||
                 shot.Thorns.Count > ExpandedCross.ThornPieceLimit(shot.ThornDuration) ||
                 (shot.Thorns.Count > 0 && !shot.NextThornAt.HasValue) ||
                 (shot.NextThornAt.HasValue && !ExpandedCross.Within(shot.NextThornAt.Value, now, now + ExpandedCross.ThornInterval)))
@@ -299,7 +303,7 @@ namespace BibleSurvivor.Core
         internal const double BaseThornDuration = 1.5;
         internal const double ThornInterval = .5;
         internal const double ThornDamageFactor = .35;
-        private const double ThornRadius = .75 / 2;
+        internal const double BaseThornRadius = .75 / 2;
         internal const double Epsilon = 1e-8;
 
         public static int Step(ExpandedCrossState state, double now, Vector2 playerPosition, Vector2 facing, int level,
@@ -362,6 +366,7 @@ namespace BibleSurvivor.Core
                     IncreasedSharedLegBudget = rankOptions.IncreaseSharedLegBudget,
                     ExtendedThorns = leavesThorns && rankOptions.ExtendThorns,
                     ShortenedRehitInterval = rankOptions.ShortenRehitInterval,
+                    WidenedSupportShape = leavesThorns && rankOptions.WidenSupportShape,
                 });
                 state.NextShotId = checked(state.NextShotId + 1);
                 emitted++;
@@ -493,7 +498,7 @@ namespace BibleSurvivor.Core
                     var old = previous.TryGetValue(target.Key, out var before) ? before : target.Value;
                     foreach (var piece in shot.Thorns)
                     {
-                        if (!CrossesThorn(old, target.Value, piece)) continue;
+                        if (!CrossesThorn(old, target.Value, piece, shot.ThornRadius)) continue;
                         winners.Add(target.Key, (shot, piece.Start));
                         break;
                     }
@@ -504,17 +509,17 @@ namespace BibleSurvivor.Core
                     applyHit(new ExpandedCrossHit(ExpandedCrossHitKind.Thorns, hit.Key, position, hit.Value.origin, hit.Value.shot));
         }
 
-        private static bool CrossesThorn(Vector2 from, Vector2 to, ExpandedCrossThornState piece)
+        private static bool CrossesThorn(Vector2 from, Vector2 to, ExpandedCrossThornState piece, double radius)
         {
             var start = piece.Start;
             var end = piece.End;
-            if (Math.Max(from.X, to.X) < Math.Min(start.X, end.X) - ThornRadius - Epsilon ||
-                Math.Min(from.X, to.X) > Math.Max(start.X, end.X) + ThornRadius + Epsilon ||
-                Math.Max(from.Y, to.Y) < Math.Min(start.Y, end.Y) - ThornRadius - Epsilon ||
-                Math.Min(from.Y, to.Y) > Math.Max(start.Y, end.Y) + ThornRadius + Epsilon)
+            if (Math.Max(from.X, to.X) < Math.Min(start.X, end.X) - radius - Epsilon ||
+                Math.Min(from.X, to.X) > Math.Max(start.X, end.X) + radius + Epsilon ||
+                Math.Max(from.Y, to.Y) < Math.Min(start.Y, end.Y) - radius - Epsilon ||
+                Math.Min(from.Y, to.Y) > Math.Max(start.Y, end.Y) + radius + Epsilon)
                 return false;
-            if (CircleContact(from - start, to - start, ThornRadius).HasValue ||
-                CircleContact(from - end, to - end, ThornRadius).HasValue)
+            if (CircleContact(from - start, to - start, radius).HasValue ||
+                CircleContact(from - end, to - end, radius).HasValue)
                 return true;
             var offset = end - start;
             var length = offset.Length();
@@ -525,7 +530,7 @@ namespace BibleSurvivor.Core
             to -= start;
             double lower = 0, upper = 1;
             return Clip(Vector2.Dot(from, horizontal), Vector2.Dot(to, horizontal), 0, length, ref lower, ref upper) &&
-                Clip(Vector2.Dot(from, vertical), Vector2.Dot(to, vertical), -ThornRadius, ThornRadius, ref lower, ref upper);
+                Clip(Vector2.Dot(from, vertical), Vector2.Dot(to, vertical), -radius, radius, ref lower, ref upper);
         }
 
         private static bool Clip(double from, double to, double min, double max, ref double lower, ref double upper)

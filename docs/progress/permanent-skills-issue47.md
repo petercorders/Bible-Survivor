@@ -15,12 +15,16 @@
 | 공통 투사체 | 속력·충돌 반경·유한 관통. 물맷돌과 십자가에 일관되게 연결하고 물맷돌의 비행 거리와 저장된 관통 상태를 확인 | Core PermanentSkillCombatTests |
 | 공통 공격 주기 | 최초 원본 공격, 피격, 경과 시간, 정예 처치, 무피격 누적, 보스 본체 활성, 연사 및 원본 반복 간격을 새 도전의 실제 공격 일정에 반영 | Core PermanentSkillCombatTests와 PermanentTempoRulesTests |
 | 불수레 추가 효과 | 주행 거리·평행 간격·차체 밀침과 진화 회오리 반경·불길 수명을 저장하고 Unity 경계 표시가 해당 개체의 값을 읽음 | Core ExpandedElijahChariotTests 및 PermanentSkillCombatTests |
+| 공통 공격 범위 | 타격 치수, 근접 반각, 편도 거리, 지정 위치 원형 반경, 회전 거리 및 발사체 충돌 반경을 구분. 물결·불수레에도 편도 거리를 적용하고 이동 중 생긴 잔불에는 지정 위치 보너스를 적용하지 않음 | Core 무기별 시험과 PermanentSkillCombatTests의 월드 재개 |
+| 사자 추가 효과 | 개별 포효 일정·반경·밀침·타격 대기, 진화 마지막 도약 처치의 추가 도약과 진화 할퀴기 반경을 연결 | Core ExpandedDanielLionTests 및 PermanentSkillCombatTests |
 | 전역 예약 | 원본 발사체 192칸과 보조 구역 16칸을 공유하는 경로의 일부를 상한에 맞추고, 병거 보조 슬롯 부족 시 차체를 유지 | Core ExpandedElijahChariotTests 및 ExpandedFirePillarTests |
 | 설치 캠페인 | v2에서 180개 라운드와 보스 60개를 통제 입력으로 진행. 책 진입과 대표 보스 월드·보상·R180 정산을 저장 후 복원 | Core ExpandedCampaignReplayTests |
-| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 165개 ID·187개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
-| 미완료 | 구매 미연결 255개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
+| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 178개 ID·200개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
+| 미완료 | 구매 미연결 242개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
 
 기준 Unity PlayMode는 38/40이며 #46의 두 시각 효과 단정을 같은 기준본에서 다시 확인했다. 변경 빌드의 전체 결과는 별도로 기록한다. macOS QA Player는 독립 저장 경로에서 실제 키보드로 구매·환불 확인과 각각의 취소를 시험했다. 테스트 잔액은 600 → 500 → 600이었다. 660×440 Editor 포인터 시험은 일시정지에서 진입해 선행 이동과 구매·환불의 확인과 취소를 재현했다. 기존 v1 도전은 시간과 ID를 유지하고 재개했다.
+
+`python3 tools/report_permanent_skill_coverage.py`로 442개 구매 단계의 명세·가격·상점 연결·실행 경로를 TSV로 출력한다. 상점 연결과 단계별 인수 검증은 각각 기록한다.
 
 Claude Design 담당은 UI·무기 시안 14개를 제작했다. Unity에서는 신규 무기 7종의 상태를 검증용 윤곽선으로 그린다. 실제 스프라이트 프레임 제작 방향은 #47 Q1에서 승인 대기 중이며, 픽셀 원본 제작·독립 검수·임포트가 남아 있다.
 

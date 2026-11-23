@@ -116,6 +116,34 @@ internal static class ExpandedLightningTests
             Check.Equal(0, restored.Pending.Count);
         });
 
+        test("Lightning aftershock freezes its additive common radius through restore", () =>
+        {
+            var state = new ExpandedLightningState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedLightningHit>();
+            var ranks = new Dictionary<string, int> { ["common.area.01"] = 1 };
+            Check.Near(.04, ExpandedLightningSettings.FromRanks(ranks).AftershockRadiusBonus);
+            ranks.Add("common.area.04", 1);
+            var settings = ExpandedLightningSettings.FromRanks(ranks);
+            Step(state, 0, targets, hits, evolved: true, settings: settings);
+            Check.Near(1, state.Pending.Single().Radius);
+            Step(state, .15, targets, hits, evolved: true, settings: settings);
+            Check.Near(1.526, state.Pending.Single().Radius);
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedLightningState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedLightningState)serializer.ReadObject(save)!;
+            restored.Validate(.15, true);
+            targets.Clear();
+            targets[2] = new Vector2(1.52f, 0);
+            targets[3] = new Vector2(1.53f, 0);
+            hits.Clear();
+            Step(restored, .65, targets, hits, evolved: true);
+            Check.Equal((ExpandedLightningHitKind.Aftershock, 2), (hits.Single().Kind, hits.Single().TargetId));
+        });
+
         test("Expanded lightning does not chain on rejected hits and a form change cancels pending strikes", () =>
         {
             var state = new ExpandedLightningState();

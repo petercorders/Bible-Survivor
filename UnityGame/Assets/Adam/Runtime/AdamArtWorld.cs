@@ -176,7 +176,9 @@ namespace BibleSurvivor.Unity
 
                 foreach(var id in new List<int>(reactions.Keys))
                     if(!previousPositions.ContainsKey(id) || reactions[id]<=Clock)reactions.Remove(id);
-                if(host.Session.CombatRulesVersion==2)expandedWeapons.Observe(Snapshot,next);
+                if(host.Session.CombatRulesVersion==2)
+                    expandedWeapons.Observe(Snapshot, next,
+                        (float)host.Session.LionRoarRadius(false), (float)host.Session.LionRoarRadius(true));
                 Snapshot=next;
                 wasActive=active;
             }
@@ -543,10 +545,12 @@ namespace BibleSurvivor.Unity
                 if(weapon.WeaponId=="bible" && weapon.ActiveUntil>snap.Time)
                 {
                     var profile=host.Session.AttackProfile("bible");
-                    for(var i=0;i<profile.Amount;i++)
+                    var amount = weapon.FrozenOrbitCount == 0 ? profile.Amount : weapon.FrozenOrbitCount;
+                    var radius = weapon.FrozenOrbitCount == 0
+                        ? snap.Tuning.BibleOrbitRadius * profile.AreaMultiplier : weapon.FrozenOrbitRadius;
+                    for(var i=0;i<amount;i++)
                     {
-                        var angle=snap.Time*2.5*host.Session.BibleRotationMultiplier+i*Math.PI*2/profile.Amount;
-                        var radius=snap.Tuning.BibleOrbitRadius*profile.AreaMultiplier;
+                        var angle=snap.Time*2.5*host.Session.BibleRotationMultiplier+i*Math.PI*2/amount;
                         var pos=Point(snap.PlayerX+(float)(Math.Cos(angle)*radius),snap.PlayerY+(float)(Math.Sin(angle)*radius));
                         if(FeedbackEnabled&&AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Page,out _))
                         {

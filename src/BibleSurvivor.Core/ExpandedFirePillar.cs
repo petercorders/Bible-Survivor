@@ -11,12 +11,17 @@ namespace BibleSurvivor.Core
         internal bool PreferCrowds { get; }
         internal Func<int, bool>? IsElite { get; }
         internal bool ExtendedEmbers { get; }
+        internal double EmberRadiusBonus { get; }
 
-        public ExpandedFirePillarSettings(bool preferCrowds, Func<int, bool>? isElite, bool extendedEmbers)
+        public ExpandedFirePillarSettings(bool preferCrowds, Func<int, bool>? isElite, bool extendedEmbers,
+            double emberRadiusBonus = 0)
         {
+            if (!BattleSnapshot.Finite(emberRadiusBonus) || emberRadiusBonus < 0 || emberRadiusBonus > 1.5)
+                throw new ArgumentOutOfRangeException(nameof(emberRadiusBonus));
             PreferCrowds = preferCrowds;
             IsElite = isElite;
             ExtendedEmbers = extendedEmbers;
+            EmberRadiusBonus = emberRadiusBonus;
         }
     }
 
@@ -109,6 +114,7 @@ namespace BibleSurvivor.Core
                     region.Ember && region.ShortenedPrimaryInterval ||
                     region.Ember && region.FirstDelay.HasValue ||
                     !BattleSnapshot.Finite(region.Radius) || region.Radius <= 0 || region.Radius > 2.25 ||
+                    region.Ember && (region.Radius < ExpandedFirePillar.EmberRadius || region.Radius > ExpandedFirePillar.EmberRadius * 2.5) ||
                     !BattleSnapshot.Finite(region.Damage) || region.Damage <= 0 || region.Damage > 45 ||
                     region.TargetId < 0 || !BattleSnapshot.Finite(region.NextTargetAt) ||
                     region.NextTargetAt < 0 || region.NextTargetAt > now + .5 + epsilon ||
@@ -124,7 +130,7 @@ namespace BibleSurvivor.Core
         private const double HitInterval = .5;
         private const double MinimumDelay = .05;
         private const float MotionSpeed = 1.2f;
-        private const double EmberRadius = .65;
+        internal const double EmberRadius = .65;
         private const double EmberLifetime = 1;
         private const double EmberDamage = .25;
         internal static readonly ExpandedWeaponProfile Profile = ExpandedWeaponRules.Get("fire_pillar");
@@ -138,8 +144,9 @@ namespace BibleSurvivor.Core
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
             state.Regions.RemoveAll(region => now + TimeEpsilon >= region.EndsAt);
-            if (evolved) MovePillars(state, now, getTargets(), settings.ExtendedEmbers ? 1.20 * EmberLifetime : EmberLifetime,
-                reserveEmber);
+            if (evolved)
+                MovePillars(state, now, getTargets(), settings.ExtendedEmbers ? 1.20 * EmberLifetime : EmberLifetime,
+                    EmberRadius * (1 + settings.EmberRadiusBonus), reserveEmber);
             state.LastStep = now;
             ResolveDue(state, now, getTargets(), hit);
 
@@ -192,7 +199,7 @@ namespace BibleSurvivor.Core
         }
 
         private static void MovePillars(ExpandedFirePillarState state, double now,
-            IReadOnlyDictionary<int, Vector2> targets, double emberDuration, Func<bool>? reserveEmber)
+            IReadOnlyDictionary<int, Vector2> targets, double emberDuration, double emberRadius, Func<bool>? reserveEmber)
         {
             foreach (var pillar in state.Regions.Where(region => !region.Ember).OrderBy(region => region.Id).ToArray())
             {
@@ -220,7 +227,7 @@ namespace BibleSurvivor.Core
                 {
                     if (state.Regions.Count(region => region.Ember) < 16 && reserveEmber?.Invoke() != false)
                         Create(state, from + direction * (float)offset, now, pillar.Damage * EmberDamage,
-                            EmberRadius, emberDuration, true);
+                            emberRadius, emberDuration, true);
                 }
                 pillar.TravelSinceEmber = (pillar.TravelSinceEmber + movement) % 1;
             }

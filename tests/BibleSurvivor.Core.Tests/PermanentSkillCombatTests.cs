@@ -605,6 +605,82 @@ internal static class PermanentSkillCombatTests
             Check.Near(1.11, fire.Regions.Single().NextHit);
         });
 
+        test("Common area ranks freeze separate hit, orbit, projectile and placed widths in a restored world", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.area.06", "weapon.wilderness_voice.b.01",
+                    "weapon.cross.a.01", "weapon.elijah_chariot.a.01", "weapon.jawbone.a.01",
+                    "weapon.lightning.base.01");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "bible");
+                foreach (var weapon in new[] { "sling", "wilderness_voice", "lightning", "cross", "elijah_chariot" })
+                    Check.True(session.Inventory.TryChoose(weapon, false));
+                session.Advance(2);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var entry in setup.Enemies)
+                {
+                    entry.X = 5;
+                    entry.Y = 0;
+                }
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var book = frozen.Weapons.First(weapon => weapon.WeaponId == "bible");
+                Check.Near(setup.Tuning.BibleOrbitRadius * 1.05, book.FrozenOrbitRadius);
+                Check.Near(setup.Tuning.BookRadius * 1.04, book.FrozenOrbitHitRadius);
+                Check.Equal(1, book.FrozenOrbitCount);
+                Check.Near(148, session.JawboneArcDegrees);
+                var stone = frozen.Projectiles.First();
+                Check.Near(.105, stone.Radius);
+                Check.Near(setup.Tuning.SlingLifetime * 1.05, stone.Lifetime + BattleWorld.FixedStep);
+                var shot = frozen.Cross!.Shots.First();
+                Check.Near(.28 * 1.05, shot.Radius);
+                Check.Near(5.25, shot.Range);
+                var cast = frozen.WildernessVoice!.Active.First();
+                Check.Near(57, cast.HalfAngle);
+                Check.Near(3.12, cast.Reach);
+                Check.Near(.8 * 1.09, frozen.Lightning!.Pending.First().Radius);
+                var chariot = frozen.ElijahChariot!.Paths.First();
+                Check.Near(11.7, chariot.Range);
+                Check.Near(1.2 * 1.04, chariot.Width);
+                state.Run!.World = frozen;
+                store.Commit(state, state.Revision, "frozen-area-geometry");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                var restored = BattleWorld.Restore(session, Speeds, state.Run!.World!).Capture();
+                Check.Near(book.FrozenOrbitRadius, restored.Weapons.First(weapon => weapon.WeaponId == "bible").FrozenOrbitRadius);
+                Check.Near(shot.Range, restored.Cross!.Shots.First().Range);
+                Check.Near(cast.HalfAngle, restored.WildernessVoice!.Active.First().HalfAngle);
+            });
+        });
+
+        test("Lion pack roar schedules and the expanded visual radius survive a schema 4 checkpoint", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.daniel_lion.c.05", "weapon.daniel_lion.base.03", "common.area.01");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "bible");
+                Check.True(session.Inventory.TryChoose("daniel_lion", false));
+                var world = new BattleWorld(session, Speeds, 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var lions = frozen.DanielLion!.Lions;
+                Check.Equal(2, lions.Count);
+                Check.Near(.18, lions[1].NextPackRoarAt!.Value - lions[0].NextPackRoarAt!.Value);
+                Check.Near(1.4 * 1.19, session.LionRoarRadius(false));
+                state.Run!.World = frozen;
+                store.Commit(state, state.Revision, "lion-pack-roar");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                world = BattleWorld.Restore(session, Speeds, state.Run!.World!);
+                var restoredLions = world.Capture().DanielLion!.Lions;
+                Check.Near(lions[1].NextPackRoarAt!.Value, restoredLions[1].NextPackRoarAt!.Value);
+                Check.Near(1.8 * 1.19, session.LionRoarRadius(true));
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>

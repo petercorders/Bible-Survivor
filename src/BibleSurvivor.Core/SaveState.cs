@@ -326,6 +326,20 @@ namespace BibleSurvivor.Core
                     strike.LongerChain && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.e.01") == 0) == true)
                     throw new InvalidDataException("Lightning strike flags require their frozen ranks");
                 var permanentRanks = Run.PermanentSnapshot;
+                var permanentArea = expandedCombat ? PermanentAreaRules.Evaluate(permanentRanks) : default;
+                if (Run.World.Projectiles.Any(projectile =>
+                    projectile.Lifetime > Run.World.Tuning.SlingLifetime * (1 + permanentArea.FlightDistanceBonus) + 1e-8))
+                    throw new InvalidDataException("Sling lifetime exceeds its frozen rank allowance");
+                if (permanentArea.HitShapeBonus == 0 && (
+                    Run.World.WildernessVoice?.Active.Any(cast => cast.EchoRadiusBonus != 0) == true ||
+                    Run.World.FirePillar?.Regions.Any(region => region.Ember && region.Radius > ExpandedFirePillar.EmberRadius + 1e-8) == true ||
+                    Run.World.MosesStaff?.Waves.Any(wave => wave.WidenedSupportShape) == true ||
+                    Run.World.Cross?.Shots.Any(shot => shot.WidenedSupportShape) == true ||
+                    Run.World.ElijahChariot?.Paths.Any(path => path.WidenedSupportShape) == true))
+                    throw new InvalidDataException("Expanded support geometry requires its frozen rank");
+                if (Run.World.Lightning?.Pending.Any(strike => strike.Aftershock &&
+                    strike.Radius > 1.4 * (1 + permanentArea.HitShapeBonus + permanentArea.PlacedCircleBonus) + 1e-8) == true)
+                    throw new InvalidDataException("Lightning aftershock radius exceeds its frozen rank allowance");
                 bool InvalidDelay(double? delay, string nodeId) => delay.HasValue &&
                     (Math.Abs(delay.Value - .07) > 1e-9 || PermanentRules.Rank(permanentRanks, nodeId) == 0);
                 if (Run.World.WildernessVoice?.Active.Any(cast => InvalidDelay(cast.FirstDelay, "weapon.wilderness_voice.base.05")) == true ||
@@ -362,11 +376,17 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Cross projectile bonuses require their frozen ranks");
                 if (Run.World.DanielLion is { } lion &&
                     (lion.Lions.Any(actor => actor.ExtendedLeash && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.a.02") == 0 ||
-                        actor.FirstClawPhaseResolved && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.b.02") == 0) ||
-                    lion.Leap?.EmpoweredDamage == true && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.01") == 0))
+                        actor.FirstClawPhaseResolved && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.b.02") == 0 ||
+                        actor.NextPackRoarAt.HasValue && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.c.01") == 0 ||
+                        actor.ClawHasteUntil.HasValue && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.c.04") == 0) ||
+                        lion.Leap?.EmpoweredDamage == true && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.01") == 0 ||
+                        (lion.KillLeapReadyAt.HasValue || lion.Leap?.FollowupOnKill == true) &&
+                        PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.02") == 0))
                     throw new InvalidDataException("Daniel lion bonuses require their frozen ranks");
+                var maxChariotRange = ExpandedElijahChariot.MaximumUntrainedRange * (1 + permanentArea.FlightDistanceBonus) +
+                    (PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.a.01") > 0 ? ExpandedElijahChariot.TravelBonus : 0);
                 if (Run.World.ElijahChariot?.Paths.Any(path =>
-                    path.Range > 10 + 1e-9 && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.a.01") == 0 ||
+                    path.Range > maxChariotRange + 1e-9 ||
                     path.ForwardKnockback && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.d.01") == 0 ||
                     path.WiderWhirlwind && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.01") == 0 ||
                     path.ExtendedTrail && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.02") == 0) == true)

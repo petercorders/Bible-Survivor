@@ -79,7 +79,8 @@ namespace BibleSurvivor.Core
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
         public double BibleRotationMultiplier => WeaponRules.Get("bible", Inventory.Weapons["bible"]).RotationSpeedMultiplier +
             (HasExpandedSkill("weapon.bible.a.01") ? .12 : 0);
-        public double JawboneArcDegrees => HasExpandedSkill("weapon.jawbone.a.01") ? 140 : 120;
+        public double JawboneArcDegrees =>
+            (HasExpandedSkill("weapon.jawbone.a.01") ? 140 : 120) + 2 * AreaProfile().HalfAngleBonus;
         public double MoveSpeedMultiplier => MoveSpeedAt(false);
         public double PickupRangeMultiplier => PickupRangeAt(false);
         private PermanentActionState Actions => run.PermanentActions!;
@@ -119,14 +120,17 @@ namespace BibleSurvivor.Core
         internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
             HasExpandedSkill("weapon.fire_pillar.a.01"),
             HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
-            HasExpandedSkill("weapon.fire_pillar.e.01"));
+            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: AreaProfile().HitShapeBonus);
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
             ExpandedMosesStaffRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedCrossRankOptions CrossRankOptions() => ExpandedCrossRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedDanielLionRankOptions DanielLionRankOptions() =>
             ExpandedDanielLionRankOptions.FromRanks(run.PermanentSnapshot);
+        public double LionRoarRadius(bool guardian) => DanielLionRankOptions().RoarRadius(guardian);
         internal ExpandedElijahChariotRankOptions ElijahChariotRankOptions() =>
             ExpandedElijahChariotRankOptions.FromRanks(run.PermanentSnapshot);
+        internal PermanentAreaProfile AreaProfile() => HasExpandedSkill("common.area.01")
+            ? PermanentAreaRules.Evaluate(run.PermanentSnapshot) : default;
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
         public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
@@ -142,19 +146,28 @@ namespace BibleSurvivor.Core
             if (CombatRulesVersion == 2)
             {
                 var skillPrefix = "weapon." + weaponId + ".base.";
+                var area = AreaProfile();
                 bonuses.DamageBonus += .10 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "01");
+                bonuses.AreaBonus += area.HitShapeBonus;
+                bonuses.TravelDistanceBonus = area.FlightDistanceBonus;
+                bonuses.PlacedRadiusBonus = area.PlacedCircleBonus;
+                bonuses.OrbitDistanceBonus = area.OrbitDistanceBonus;
                 var weaponWaitReduction = .05 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "02");
                 if (firstBibleWait) weaponWaitReduction += .25;
-                var tempo = PermanentTempoRules.Evaluate(run.PermanentSnapshot, TempoContext(firstTempoWait), Passive("thunder"),
-                    otherCycleReduction: weaponWaitReduction);
-                bonuses.CooldownReduction = tempo.CycleReduction;
-                bonuses.BurstReduction = tempo.BurstReduction;
+                if (HasExpandedSkill("common.tempo.02"))
+                {
+                    var tempo = PermanentTempoRules.Evaluate(run.PermanentSnapshot, TempoContext(firstTempoWait),
+                        Passive("thunder"), otherCycleReduction: weaponWaitReduction);
+                    bonuses.CooldownReduction = tempo.CycleReduction;
+                    bonuses.BurstReduction = tempo.BurstReduction;
+                }
+                else bonuses.CooldownReduction += weaponWaitReduction;
                 if (HasExpandedSkill("common.duration.01")) bonuses.DurationBonus += .05;
                 if ((weaponId == "sling" || weaponId == "cross" || weaponId == "moses_staff" || weaponId == "elijah_chariot") &&
                     HasExpandedSkill("common.shot.01")) bonuses.ProjectileSpeedBonus += .05;
                 var specialization = PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");
-                var collisionBonus = (weaponId == "sling" || weaponId == "cross") && HasExpandedSkill("common.shot.02")
-                    ? .04 : 0;
+                var collisionBonus = weaponId == "sling" || weaponId == "cross"
+                    ? area.ProjectileRadiusBonus + (HasExpandedSkill("common.shot.02") ? .04 : 0) : 0;
                 if (ExpandedWeaponRules.TryGet(weaponId, out var expanded))
                 {
                     bonuses.ExtraAmount = weaponId == "wilderness_voice" ? 0 : specialization;

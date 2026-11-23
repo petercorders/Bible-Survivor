@@ -11,6 +11,7 @@ namespace BibleSurvivor.Core
         Claw,
         Leap,
         Roar,
+        KillFollowupLeap,
     }
 
     public readonly struct ExpandedDanielLionRankOptions
@@ -20,15 +21,34 @@ namespace BibleSurvivor.Core
         public bool SpreadNormalTargets { get; }
         public bool StaggerFirstBossClaw { get; }
         public bool EmpowerLeap { get; }
+        public bool AddPackRoar { get; }
+        public bool WidenRoar { get; }
+        public bool StrengthenRoarKnockback { get; }
+        public bool HastenClawsAfterRoar { get; }
+        public bool StaggerPackRoar { get; }
+        public bool WidenEvolvedClaw { get; }
+        public bool FollowUpLeapKill { get; }
+        public bool WidenCommonArea { get; }
 
         public ExpandedDanielLionRankOptions(bool prioritizeElite = false, bool extendLeash = false,
-            bool spreadNormalTargets = false, bool staggerFirstBossClaw = false, bool empowerLeap = false)
+            bool spreadNormalTargets = false, bool staggerFirstBossClaw = false, bool empowerLeap = false,
+            bool addPackRoar = false, bool widenRoar = false, bool strengthenRoarKnockback = false,
+            bool hastenClawsAfterRoar = false, bool staggerPackRoar = false, bool widenEvolvedClaw = false,
+            bool followUpLeapKill = false, bool widenCommonArea = false)
         {
             PrioritizeElite = prioritizeElite;
             ExtendLeash = extendLeash;
             SpreadNormalTargets = spreadNormalTargets;
             StaggerFirstBossClaw = staggerFirstBossClaw;
             EmpowerLeap = empowerLeap;
+            AddPackRoar = addPackRoar;
+            WidenRoar = widenRoar;
+            StrengthenRoarKnockback = strengthenRoarKnockback;
+            HastenClawsAfterRoar = hastenClawsAfterRoar;
+            StaggerPackRoar = staggerPackRoar;
+            WidenEvolvedClaw = widenEvolvedClaw;
+            FollowUpLeapKill = followUpLeapKill;
+            WidenCommonArea = widenCommonArea;
         }
 
         public static ExpandedDanielLionRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -36,8 +56,14 @@ namespace BibleSurvivor.Core
             if (ranks == null) throw new ArgumentNullException(nameof(ranks));
             bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
             return new ExpandedDanielLionRankOptions(Has("weapon.daniel_lion.a.01"), Has("weapon.daniel_lion.a.02"),
-                Has("weapon.daniel_lion.b.01"), Has("weapon.daniel_lion.b.02"), Has("weapon.daniel_lion.e.01"));
+                Has("weapon.daniel_lion.b.01"), Has("weapon.daniel_lion.b.02"), Has("weapon.daniel_lion.e.01"),
+                Has("weapon.daniel_lion.c.01"), Has("weapon.daniel_lion.c.02"), Has("weapon.daniel_lion.c.03"),
+                Has("weapon.daniel_lion.c.04"), Has("weapon.daniel_lion.c.05"), Has("weapon.daniel_lion.e.03"), Has("weapon.daniel_lion.e.02"), Has("common.area.01"));
         }
+
+        public double RoarRadius(bool guardian) =>
+            (guardian ? ExpandedDanielLion.GuardianRoarRadius : ExpandedDanielLion.PackRoarRadius) *
+            (1 + (WidenRoar ? .15 : 0) + (WidenCommonArea ? .04 : 0));
     }
 
     public readonly struct ExpandedDanielLionHit
@@ -75,6 +101,8 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public bool WaitingForTarget { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedLeash { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool FirstClawPhaseResolved { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextPackRoarAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? ClawHasteUntil { get; set; }
 
         public Vector2 Position
         {
@@ -94,6 +122,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public double Damage { get; set; }
         [DataMember(IsRequired = true)] public List<int> VisitedIds { get; set; } = new List<int>();
         [DataMember(EmitDefaultValue = false)] public bool EmpoweredDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool FollowupOnKill { get; set; }
 
         public Vector2 Origin
         {
@@ -119,6 +148,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public List<ExpandedDanielLionActorState> Lions { get; set; } =
             new List<ExpandedDanielLionActorState>();
         [DataMember(EmitDefaultValue = false)] public ExpandedDanielLionLeapState? Leap { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? KillLeapReadyAt { get; set; }
 
         public ExpandedDanielLionState Copy() => new ExpandedDanielLionState
         {
@@ -128,6 +158,7 @@ namespace BibleSurvivor.Core
             GuardianHits = GuardianHits,
             Lions = Lions.Select(lion => lion.Copy()).ToList(),
             Leap = Leap?.Copy(),
+            KillLeapReadyAt = KillLeapReadyAt,
         };
 
         // Form change cancels reservations without moving the other permanent summons.
@@ -139,11 +170,14 @@ namespace BibleSurvivor.Core
             NextRoarAt = evolved ? now + ExpandedDanielLion.RoarInterval : 0;
             GuardianHits = 0;
             Leap = null;
+            KillLeapReadyAt = null;
             foreach (var lion in Lions)
             {
                 lion.TargetId = 0;
                 lion.NextClawAt = now;
                 lion.WaitingForTarget = false;
+                lion.NextPackRoarAt = null;
+                lion.ClawHasteUntil = null;
             }
         }
 
@@ -155,8 +189,9 @@ namespace BibleSurvivor.Core
                 Lions == null || Lions.Count > ExpandedDanielLion.MaximumAmount ||
                 GuardianHits < 0 || GuardianHits > 0 && Lions.Count == 0 ||
                 (evolved ? !BattleSnapshot.Finite(NextRoarAt) || NextRoarAt < LastStepAt - epsilon ||
-                    NextRoarAt > LastStepAt + ExpandedDanielLion.RoarInterval + epsilon :
-                    NextRoarAt != 0 || GuardianHits != 0 || Leap != null))
+                    NextRoarAt > LastStepAt + ExpandedDanielLion.RoarInterval + epsilon ||
+                    !ExpandedDanielLion.ValidFutureTime(KillLeapReadyAt, LastStepAt, ExpandedDanielLion.KillLeapCooldown) :
+                    NextRoarAt != 0 || GuardianHits != 0 || Leap != null || KillLeapReadyAt.HasValue))
                 throw new ArgumentException("Invalid Daniel lion clock");
 
             for (var index = 0; index < Lions.Count; index++)
@@ -166,7 +201,10 @@ namespace BibleSurvivor.Core
                     lion.TargetId < 0 || lion.Returning && lion.TargetId != 0 ||
                     !BattleSnapshot.Finite(lion.NextClawAt) || lion.NextClawAt < 0 ||
                     lion.NextClawAt > LastStepAt + ExpandedDanielLion.MaximumCycle + epsilon ||
-                    lion.WaitingForTarget && lion.NextClawAt > LastStepAt + epsilon)
+                    lion.WaitingForTarget && lion.NextClawAt > LastStepAt + epsilon ||
+                    !ExpandedDanielLion.ValidFutureTime(lion.NextPackRoarAt, LastStepAt,
+                        ExpandedDanielLion.RoarInterval + index * ExpandedDanielLion.PackRoarPhasePerIndex) ||
+                    !ExpandedDanielLion.ValidFutureTime(lion.ClawHasteUntil, LastStepAt, ExpandedDanielLion.ClawHasteDuration))
                     throw new ArgumentException("Invalid Daniel lion actor");
             }
 
@@ -198,9 +236,15 @@ namespace BibleSurvivor.Core
         internal const double RoarInterval = 4;
         private const double FirstBossClawPhasePerIndex = .12;
         private const double LeapRadius = 2.5;
-        private const double RoarRadius = 1.8;
-        private const double RoarDamageFactor = .35;
-        private const double RoarKnockback = .45;
+        internal const double GuardianRoarRadius = 1.8;
+        internal const double PackRoarRadius = 1.4;
+        internal const double PackRoarPhasePerIndex = .18;
+        internal const double ClawHasteDuration = 2;
+        internal const double KillLeapCooldown = 5;
+        private const double KillLeapDamageFactor = .35;
+        private const double GuardianRoarDamageFactor = .35;
+        private const double PackRoarDamageFactor = .25;
+        private const double GuardianRoarKnockback = .45;
         private const double MinimumCycle = .15;
 
         // A hit callback returns true for accepted damage, including a kill. Only accepted
@@ -229,15 +273,26 @@ namespace BibleSurvivor.Core
             SynchronizePack(state, amount, playerPosition, now, rankOptions.ExtendLeash);
             var distance = Math.Max(0, Math.Min(BattleWorld.FixedStep, now - state.LastStepAt)) * speed;
             state.LastStepAt = now;
+            if (state.KillLeapReadyAt <= now + TimeEpsilon) state.KillLeapReadyAt = null;
+            if (evolved && rankOptions.WidenEvolvedClaw)
+                radius = Math.Min(MaximumRadius, radius + Profile.AtLevel(1).Radius * .12);
+            var levelCycle = Profile.AtLevel(level).Cycle;
             var originals = 0;
             var assigned = new HashSet<int>();
             foreach (var lion in state.Lions)
             {
                 var guardian = evolved && lion.Index == 0;
+                if (lion.ClawHasteUntil <= now + TimeEpsilon) lion.ClawHasteUntil = null;
                 if (AdvanceLion(state, lion, guardian, now, playerPosition, damage, cycle, radius,
-                    distance, assigned, targets, applyHit, rankOptions, isElite, isBoss, afterClaw))
+                    distance, assigned, targets, applyHit, rankOptions, isElite, isBoss, afterClaw, levelCycle))
                     originals++;
-                if (guardian) Roar(state, lion, now, damage, targets, applyHit);
+                if (guardian && state.NextRoarAt <= now + TimeEpsilon)
+                {
+                    state.NextRoarAt += RoarInterval;
+                    Roar(lion, now, damage, true, rankOptions, targets, applyHit);
+                }
+                if (rankOptions.AddPackRoar)
+                    AdvancePackRoar(lion, now, damage, rankOptions, targets, applyHit);
             }
             return originals;
         }
@@ -260,7 +315,7 @@ namespace BibleSurvivor.Core
             bool guardian, double now, Vector2 player, double damage, double cycle, double radius,
             double distance, HashSet<int> assigned, Func<IReadOnlyDictionary<int, Vector2>> targets,
             Func<ExpandedDanielLionHit, bool> applyHit, ExpandedDanielLionRankOptions ranks,
-            Func<int, bool>? isElite, Func<int, bool>? isBoss, Func<double>? afterClaw)
+            Func<int, bool>? isElite, Func<int, bool>? isBoss, Func<double>? afterClaw, double levelCycle)
         {
             var leash = (float)(Profile.LeashDistance * (lion.ExtendedLeash ? 1.15 : 1));
             if (!Within(lion.Position, player, leash)) lion.Returning = true;
@@ -319,6 +374,11 @@ namespace BibleSurvivor.Core
             var nextWait = afterClaw?.Invoke() ?? cycle;
             if (!BattleSnapshot.Finite(nextWait) || nextWait < MinimumCycle || nextWait > MaximumCycle)
                 throw new ArgumentOutOfRangeException(nameof(afterClaw));
+            if (lion.ClawHasteUntil > now + TimeEpsilon)
+            {
+                var floor = Math.Max(MinimumCycle, levelCycle * .20);
+                nextWait = Math.Min(nextWait, Math.Max(floor, nextWait - levelCycle * .06));
+            }
             lion.NextClawAt = at + nextWait;
             lion.WaitingForTarget = false;
             lion.FirstClawPhaseResolved |= ranks.StaggerFirstBossClaw;
@@ -330,6 +390,7 @@ namespace BibleSurvivor.Core
                     Origin = target.Value,
                     VisitedIds = new List<int> { target.Key },
                     EmpoweredDamage = ranks.EmpowerLeap,
+                    FollowupOnKill = ranks.FollowUpLeapKill,
                 };
             return true;
         }
@@ -384,16 +445,24 @@ namespace BibleSurvivor.Core
             var leap = state.Leap!;
             if (leap.At > now + TimeEpsilon) return;
             var origin = leap.Origin;
-            var candidates = targets().Where(entry => !leap.VisitedIds.Contains(entry.Key) &&
-                Within(entry.Value, origin, LeapRadius) && Within(entry.Value, player, Profile.TargetSearchRadius))
-                .OrderBy(entry => DistanceSquared(entry.Value, origin)).ThenBy(entry => entry.Key).ToArray();
+            var candidates = LeapCandidates(origin, player, leap.VisitedIds, targets());
             var factor = (leap.VisitedIds.Count == 1 ? 1 : .6) + (leap.EmpoweredDamage ? .15 : 0);
             foreach (var candidate in candidates)
             {
                 if (!applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Leap, lion.Index,
                     candidate.Key, candidate.Value, origin, leap.Damage * factor))) continue;
                 lion.Position = candidate.Value;
-                if (leap.VisitedIds.Count == 2) break;
+                if (leap.VisitedIds.Count == 2)
+                {
+                    // The last natural hop can branch once. If no second natural hop can hit,
+                    // the same search has no eligible unvisited target for a bonus hop.
+                    if (leap.FollowupOnKill && !state.KillLeapReadyAt.HasValue && !targets().ContainsKey(candidate.Key))
+                    {
+                        leap.VisitedIds.Add(candidate.Key);
+                        ApplyKillFollowupLeap(state, lion, now, player, leap, targets, applyHit);
+                    }
+                    break;
+                }
                 leap.VisitedIds.Add(candidate.Key);
                 leap.Origin = candidate.Value;
                 leap.At += LeapInterval;
@@ -402,19 +471,58 @@ namespace BibleSurvivor.Core
             state.Leap = null;
         }
 
-        private static void Roar(ExpandedDanielLionState state, ExpandedDanielLionActorState lion, double now,
-            double damage, Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedDanielLionHit, bool> applyHit)
+        private static KeyValuePair<int, Vector2>[] LeapCandidates(Vector2 origin, Vector2 player, List<int> visited,
+            IReadOnlyDictionary<int, Vector2> targets) => targets.Where(entry => !visited.Contains(entry.Key) &&
+                Within(entry.Value, origin, LeapRadius) && Within(entry.Value, player, Profile.TargetSearchRadius))
+            .OrderBy(entry => DistanceSquared(entry.Value, origin)).ThenBy(entry => entry.Key).ToArray();
+
+        private static void ApplyKillFollowupLeap(ExpandedDanielLionState state, ExpandedDanielLionActorState lion,
+            double now, Vector2 player, ExpandedDanielLionLeapState leap,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedDanielLionHit, bool> applyHit)
         {
-            if (state.NextRoarAt > now + TimeEpsilon) return;
-            state.NextRoarAt += RoarInterval;
+            var origin = lion.Position;
+            foreach (var candidate in LeapCandidates(origin, player, leap.VisitedIds, targets()))
+            {
+                if (!applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.KillFollowupLeap, lion.Index,
+                    candidate.Key, candidate.Value, origin, leap.Damage * KillLeapDamageFactor))) continue;
+                lion.Position = candidate.Value;
+                state.KillLeapReadyAt = now + KillLeapCooldown;
+                return;
+            }
+        }
+
+        private static void AdvancePackRoar(ExpandedDanielLionActorState lion, double now, double damage,
+            ExpandedDanielLionRankOptions ranks, Func<IReadOnlyDictionary<int, Vector2>> targets,
+            Func<ExpandedDanielLionHit, bool> applyHit)
+        {
+            var stagger = ranks.StaggerPackRoar ? lion.Index * PackRoarPhasePerIndex : 0;
+            var due = lion.NextPackRoarAt ?? (now + RoarInterval + stagger);
+            lion.NextPackRoarAt = due;
+            if (due > now + TimeEpsilon) return;
+            lion.NextPackRoarAt = due + RoarInterval;
+            Roar(lion, now, damage, false, ranks, targets, applyHit);
+        }
+
+        private static void Roar(ExpandedDanielLionActorState lion, double now, double damage, bool guardian,
+            ExpandedDanielLionRankOptions ranks, Func<IReadOnlyDictionary<int, Vector2>> targets,
+            Func<ExpandedDanielLionHit, bool> applyHit)
+        {
+            var radius = ranks.RoarRadius(guardian);
+            var factor = guardian ? GuardianRoarDamageFactor : PackRoarDamageFactor;
+            var knockback = (guardian ? GuardianRoarKnockback : 0) + (ranks.StrengthenRoarKnockback ? .30 : 0);
             var center = lion.Position;
-            var ids = targets().Where(entry => Within(entry.Value, center, RoarRadius))
+            var ids = targets().Where(entry => Within(entry.Value, center, radius))
                 .Select(entry => entry.Key).OrderBy(id => id).ToArray();
             foreach (var id in ids)
-                if (targets().TryGetValue(id, out var position) && Within(position, center, RoarRadius))
+                if (targets().TryGetValue(id, out var position) && Within(position, center, radius))
                     applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Roar, lion.Index,
-                        id, position, center, damage * RoarDamageFactor, RoarKnockback));
+                        id, position, center, damage * factor, knockback));
+            if (ranks.HastenClawsAfterRoar) lion.ClawHasteUntil = now + ClawHasteDuration;
         }
+
+        internal static bool ValidFutureTime(double? value, double now, double horizon) => !value.HasValue ||
+            (BattleSnapshot.Finite(value.Value) && value.Value >= now - TimeEpsilon &&
+                value.Value <= now + horizon + TimeEpsilon);
 
         private static void MarkWaitingIfDue(ExpandedDanielLionActorState lion, double now)
         {

@@ -54,8 +54,12 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double KnockbackBonus { get; set; }
         [DataMember(EmitDefaultValue = false)] public double CloseKnockbackBonus { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ShortenedPrimaryInterval { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double EchoRadiusBonus { get; set; }
         [DataMember(IsRequired = true)] public int PrimaryPulses { get; set; }
         [DataMember(IsRequired = true)] public int EchoesFired { get; set; }
+
+        public double FirstEchoRadius => 5 * (1 + EchoRadiusBonus);
+        public double SecondEchoRadius => 5.5 * (1 + EchoRadiusBonus);
 
         internal double End => StartedAt + Duration;
         internal double InitialDelay => FirstDelay ?? ExpandedWildernessVoice.Profile.FirstAttackDelay;
@@ -114,6 +118,8 @@ namespace BibleSurvivor.Core
                     !ExpandedWildernessVoice.ValidCast(cast.Damage, cast.Reach, cast.Duration, cast.HalfAngle, evolved, cast.InitialDelay) ||
                     !ExpandedWildernessVoice.ValidKnockbackBonus(cast.KnockbackBonus) ||
                     !ExpandedWildernessVoice.ValidKnockbackBonus(cast.CloseKnockbackBonus) ||
+                    !ExpandedWildernessVoice.ValidEchoRadiusBonus(cast.EchoRadiusBonus) ||
+                    (!evolved && cast.EchoRadiusBonus != 0) ||
                     cast.ExpiresAt(evolved) < now - epsilon ||
                     cast.PrimaryPulses < 0 || cast.PrimaryPulses > ExpandedWildernessVoice.MaximumPrimaryPulses ||
                     cast.EchoesFired < 0 || cast.EchoesFired > (evolved ? 2 : 0))
@@ -155,7 +161,7 @@ namespace BibleSurvivor.Core
             int level, bool evolved, double damage, double cycle, double reach, double duration, double halfAngle,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit,
             double delayAdvance = 0, double knockbackBonus = 0, double closeKnockbackBonus = 0,
-            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null)
+            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null, double echoRadiusBonus = 0)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -163,6 +169,7 @@ namespace BibleSurvivor.Core
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (!ValidKnockbackBonus(knockbackBonus) || !ValidKnockbackBonus(closeKnockbackBonus))
                 throw new ArgumentException("Invalid voice knockback bonus");
+            if (!ValidEchoRadiusBonus(echoRadiusBonus)) throw new ArgumentOutOfRangeException(nameof(echoRadiusBonus));
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - delayAdvance);
             if (!BattleSnapshot.Finite(now) || now < 0 ||
                 !BattleSnapshot.Position(playerPosition.X, playerPosition.Y) || !BattleSnapshot.Position(facing.X, facing.Y) ||
@@ -191,6 +198,7 @@ namespace BibleSurvivor.Core
                 KnockbackBonus = knockbackBonus,
                 CloseKnockbackBonus = closeKnockbackBonus,
                 ShortenedPrimaryInterval = shortenedPrimaryInterval,
+                EchoRadiusBonus = evolved ? echoRadiusBonus : 0,
             });
         }
 
@@ -237,7 +245,8 @@ namespace BibleSurvivor.Core
         {
             var primary = kind == ExpandedWildernessVoiceHitKind.Primary;
             var pulseNumber = primary ? ++cast.PrimaryPulses : ++cast.EchoesFired;
-            var reach = primary ? cast.Reach : kind == ExpandedWildernessVoiceHitKind.FirstEcho ? 5.0 : 5.5;
+            var reach = primary ? cast.Reach : kind == ExpandedWildernessVoiceHitKind.FirstEcho
+                ? cast.FirstEchoRadius : cast.SecondEchoRadius;
             var damage = cast.Damage * (primary ? 1 : kind == ExpandedWildernessVoiceHitKind.FirstEcho ? .45 : .30);
             var degrees = primary && !evolved ? 2 * cast.HalfAngle : 360;
             var ids = targets().Keys.OrderBy(id => id).ToArray();
@@ -263,5 +272,6 @@ namespace BibleSurvivor.Core
             BattleSnapshot.Finite(halfAngle) && halfAngle > 0 && halfAngle <= (evolved ? 180 : 90);
 
         internal static bool ValidKnockbackBonus(double bonus) => BattleSnapshot.Finite(bonus) && bonus >= 0 && bonus <= 1;
+        internal static bool ValidEchoRadiusBonus(double bonus) => BattleSnapshot.Finite(bonus) && bonus >= 0 && bonus <= 1.5;
     }
 }

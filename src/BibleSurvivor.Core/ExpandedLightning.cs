@@ -37,6 +37,7 @@ namespace BibleSurvivor.Core
     public readonly struct ExpandedLightningSettings
     {
         public double RadiusBonus { get; }
+        public double AftershockRadiusBonus { get; }
         public double DelayAdvance { get; }
         public bool PrioritizeCrowds { get; }
         public bool PrioritizeThreats { get; }
@@ -48,15 +49,18 @@ namespace BibleSurvivor.Core
 
         public ExpandedLightningSettings(double radiusBonus = 0, double delayAdvance = 0,
             bool prioritizeCrowds = false, bool prioritizeThreats = false, bool deferPreviousTargetOnReuse = false,
-            bool retargetOnce = false, bool longerChain = false, Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null)
+            bool retargetOnce = false, bool longerChain = false, Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null,
+            double aftershockRadiusBonus = 0)
         {
             if (!ExpandedLightning.Finite(radiusBonus) || radiusBonus < 0 ||
-                !ExpandedLightning.Finite(delayAdvance) || delayAdvance < 0)
+                !ExpandedLightning.Finite(delayAdvance) || delayAdvance < 0 ||
+                !ExpandedLightning.Finite(aftershockRadiusBonus) || aftershockRadiusBonus < 0 || aftershockRadiusBonus > 1.5)
                 throw new ArgumentException("Invalid expanded lightning bonuses");
             if (prioritizeThreats && (isBoss == null || isElite == null))
                 throw new ArgumentException("Lightning threat priority needs boss and elite classifiers");
 
             RadiusBonus = radiusBonus;
+            AftershockRadiusBonus = aftershockRadiusBonus;
             DelayAdvance = delayAdvance;
             PrioritizeCrowds = prioritizeCrowds;
             PrioritizeThreats = prioritizeThreats;
@@ -71,7 +75,8 @@ namespace BibleSurvivor.Core
             Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null)
         {
             if (ranks == null) throw new ArgumentNullException(nameof(ranks));
-            bool Has(string suffix) => ranks.TryGetValue("weapon.lightning." + suffix, out var rank) && rank > 0;
+            bool HasRank(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
+            bool Has(string suffix) => HasRank("weapon.lightning." + suffix);
 
             return new ExpandedLightningSettings(
                 radiusBonus: Has("base.04") ? .10 : 0,
@@ -82,7 +87,8 @@ namespace BibleSurvivor.Core
                 retargetOnce: Has("a.04"),
                 longerChain: Has("e.01"),
                 isBoss: isBoss,
-                isElite: isElite);
+                isElite: isElite,
+                aftershockRadiusBonus: (HasRank("common.area.01") ? .04 : 0) + (HasRank("common.area.04") ? .05 : 0));
         }
     }
 
@@ -176,7 +182,7 @@ namespace BibleSurvivor.Core
                         attack.At > now + ExpandedLightning.AftershockDelay + ExpandedLightning.TimeEpsilon ||
                         attack.Damage < ExpandedLightning.AftershockDamageFactor ||
                         attack.Damage > ExpandedLightning.MaximumDamage * ExpandedLightning.AftershockDamageFactor ||
-                        attack.Radius != ExpandedLightning.AftershockRadius ||
+                        attack.Radius < ExpandedLightning.AftershockRadius || attack.Radius > ExpandedLightning.AftershockRadius * 2.5 ||
                         attack.VisitedIds == null || attack.VisitedIds.Count == 0 ||
                         attack.VisitedIds.Count > ExpandedLightning.ChainLimit + (attack.LongerChain ? 2 : 1) ||
                         attack.VisitedIds.Any(id => id < 1) ||
@@ -348,7 +354,7 @@ namespace BibleSurvivor.Core
                 aftershock.At += AftershockDelay;
                 aftershock.Aftershock = true;
                 aftershock.CanRetarget = false;
-                aftershock.Radius = AftershockRadius;
+                aftershock.Radius = AftershockRadius * (1 + settings.AftershockRadiusBonus);
                 aftershock.Damage *= AftershockDamageFactor;
                 aftershock.VisitedIds = visited;
                 state.Pending.Add(aftershock);

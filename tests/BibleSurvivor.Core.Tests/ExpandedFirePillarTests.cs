@@ -124,6 +124,37 @@ internal static class ExpandedFirePillarTests
             Check.Near(1.20, ember.EndsAt - ember.StartedAt);
         });
 
+        test("Evolved fire freezes the trained ember radius separately from the pillar radius", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var hits = new List<ExpandedFirePillarHit>();
+            const double pillarRadius = 1.206;
+            var settings = new ExpandedFirePillarSettings(false, null, false, emberRadiusBonus: .04);
+            void Tick(ExpandedFirePillarState current, double now, ExpandedFirePillarSettings ranks) =>
+                ExpandedFirePillar.Step(current, now, Vector2.Zero, true, 20, 3, 1, pillarRadius, 3,
+                    () => targets, hits.Add, settings: ranks);
+
+            Tick(state, 0, settings);
+            targets[1] = new Vector2(7, 0);
+            for (var tick = 1; tick <= 55; tick++) Tick(state, tick / 60d, settings);
+            var ember = state.Regions.Single(region => region.Ember);
+            Check.Near(pillarRadius, state.Regions.Single(region => !region.Ember).Radius);
+            Check.Near(.676, ember.Radius);
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedFirePillarState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedFirePillarState)serializer.ReadObject(save)!;
+            restored.Validate(55 / 60d, true);
+            targets[2] = new Vector2(ember.X, .67f);
+            targets[3] = new Vector2(ember.X, .68f);
+            hits.Clear();
+            Tick(restored, ember.NextHit, default);
+            Check.Equal(2, hits.Single(hit => hit.IsEmber).TargetId);
+        });
+
         test("Evolved fire does not allocate an ember when shared support regions are full", () =>
         {
             var state = new ExpandedFirePillarState();

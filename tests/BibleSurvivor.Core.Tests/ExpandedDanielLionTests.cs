@@ -270,6 +270,194 @@ internal static class ExpandedDanielLionTests
             Check.Near(37.5, leaps[1].Damage);
             Check.True(hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Claw).All(hit => hit.Damage == 50));
         });
+
+        test("Lion c.01 gives each lion its own radius-1.4 support roar on the four-second schedule", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.Zero, [2] = new Vector2(1.4f, 0), [3] = new Vector2(1.401f, 0),
+            };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = Rank("c.01");
+            Step(state, 0, enemies, hits, amount: 2, ranks: ranks);
+            var loaded = Restore(state);
+            loaded.Validate(0, false);
+            Step(loaded, 3.999, enemies, hits, amount: 2, ranks: ranks);
+            Check.Equal(0, hits.Count(hit => hit.Kind == ExpandedDanielLionHitKind.Roar));
+            Step(loaded, 4, enemies, hits, amount: 2, ranks: ranks);
+            var roars = hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Roar).ToArray();
+            Check.True(roars.Select(hit => (hit.LionIndex, hit.TargetId)).SequenceEqual(
+                new[] { (0, 1), (0, 2), (1, 1), (1, 2) }));
+            Check.True(roars.All(hit => hit.Damage == 12.5 && hit.Knockback == 0));
+            Check.True(loaded.Lions.All(lion => lion.NextPackRoarAt == 8));
+        });
+
+        test("Lion c.02 widens support and the evolved guardian roar by fifteen percent", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.Zero, [2] = new Vector2(1.61f, 0), [3] = new Vector2(1.611f, 0), [4] = new Vector2(2.07f, 0),
+            };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = new ExpandedDanielLionRankOptions(addPackRoar: true, widenRoar: true);
+            Step(state, 0, enemies, hits, evolved: true, ranks: ranks);
+            Step(state, 4, enemies, hits, evolved: true, ranks: ranks);
+            var roars = hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Roar).ToArray();
+            Check.True(roars.Where(hit => hit.Damage < 15).Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.True(roars.Where(hit => hit.Damage > 15).Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3, 4 }));
+            Check.Near(1.61, ranks.RoarRadius(false));
+            Check.Near(2.07, ranks.RoarRadius(true));
+        });
+
+        test("Lion c.03 adds .30 knockback to support and guardian roar hits while claws stay unchanged", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = new ExpandedDanielLionRankOptions(addPackRoar: true, strengthenRoarKnockback: true);
+            Step(state, 0, enemies, hits, evolved: true, ranks: ranks);
+            Step(state, 4, enemies, hits, evolved: true, ranks: ranks);
+            var roars = hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Roar).ToArray();
+            Check.Near(.30, roars.Single(hit => hit.Damage < 15).Knockback);
+            Check.Near(.75, roars.Single(hit => hit.Damage > 15).Knockback);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Claw).All(hit => hit.Knockback == 0));
+        });
+
+        test("Lion c.04 restores its two-second window and adds six points to the composed claw wait reduction", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = new ExpandedDanielLionRankOptions(addPackRoar: true, hastenClawsAfterRoar: true);
+            for (var time = 0; time <= 4; time++)
+                Step(state, time, enemies, hits, ranks: ranks);
+            Check.Near(5, state.Lions[0].NextClawAt);
+            Check.Near(6, state.Lions[0].ClawHasteUntil!.Value);
+            var restored = Restore(state);
+            restored.Validate(4, false);
+            Step(restored, 5, enemies, hits, ranks: ranks, afterClaw: () => 1.06);
+            Check.Near(6, restored.Lions[0].NextClawAt);
+            Step(restored, 6, enemies, hits, ranks: ranks, afterClaw: () => .8);
+            Check.Near(6.8, restored.Lions[0].NextClawAt);
+            Check.True(!restored.Lions[0].ClawHasteUntil.HasValue);
+
+            var floored = Restore(state);
+            Step(floored, 5, enemies, hits, ranks: ranks, afterClaw: () => .22);
+            Check.Near(5.2, floored.Lions[0].NextClawAt);
+        });
+
+        test("Lion c.05 restores index-based roar deadlines and recurs without shifting their phase", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = new ExpandedDanielLionRankOptions(addPackRoar: true, staggerPackRoar: true);
+            Step(state, 0, enemies, hits, amount: 3, ranks: ranks);
+            var loaded = Restore(state);
+            loaded.Validate(0, false);
+            Check.Near(4, loaded.Lions[0].NextPackRoarAt!.Value);
+            Check.Near(4.18, loaded.Lions[1].NextPackRoarAt!.Value);
+            Check.Near(4.36, loaded.Lions[2].NextPackRoarAt!.Value);
+            foreach (var time in new[] { 4, 4.179, 4.18, 4.359, 4.36 })
+            {
+                var prior = hits.Count(hit => hit.Kind == ExpandedDanielLionHitKind.Roar);
+                Step(loaded, time, enemies, hits, amount: 3, ranks: ranks);
+                var count = hits.Count(hit => hit.Kind == ExpandedDanielLionHitKind.Roar);
+                Check.Equal(time == 4.179 || time == 4.359 ? prior : prior + 1, count);
+                loaded.Validate(time, false);
+            }
+            Check.True(hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Roar)
+                .Select(hit => hit.LionIndex).SequenceEqual(new[] { 0, 1, 2 }));
+            Check.Near(8.18, loaded.Lions[1].NextPackRoarAt!.Value);
+        });
+
+        test("Lion roar common area adds four percentage points before the shared push without multiplying c.02", () =>
+        {
+            var ranks = ExpandedDanielLionRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["common.area.01"] = 1, ["weapon.daniel_lion.c.01"] = 1, ["weapon.daniel_lion.c.02"] = 1,
+            });
+            Check.Near(1.666, ranks.RoarRadius(false));
+            Check.Near(2.142, ranks.RoarRadius(true));
+            var state = new ExpandedDanielLionState();
+            var enemies = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.Zero, [2] = new Vector2(1.665f, 0), [3] = new Vector2(1.667f, 0),
+            };
+            var hits = new List<ExpandedDanielLionHit>();
+            Step(state, 0, enemies, hits, ranks: ranks);
+            Step(state, 4, enemies, hits, ranks: ranks);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Roar)
+                .Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+        });
+
+        test("Lion e.02 uses only the last natural leap kill for a nonrecursive unvisited 35 percent follow-up", () =>
+        {
+            foreach (var (killFinal, canFollow, readyAt) in new[]
+            {
+                (true, true, (double?)null), (false, true, (double?)null), (true, false, (double?)null),
+                (true, true, (double?)3), (true, true, (double?)3.001),
+            })
+            {
+                var state = new ExpandedDanielLionState();
+                var enemies = new Dictionary<int, Vector2>
+                {
+                    [1] = Vector2.Zero, [2] = new Vector2(2, 0), [3] = new Vector2(4, 0),
+                };
+                if (canFollow)
+                {
+                    enemies.Add(4, new Vector2(6, 0));
+                    enemies.Add(5, new Vector2(6.3f, 0));
+                }
+                var hits = new List<ExpandedDanielLionHit>();
+                for (var time = 0; time <= 2; time++)
+                    Step(state, time, enemies, hits, evolved: true, ranks: Rank("e.02"));
+                state.KillLeapReadyAt = readyAt;
+                var loaded = Restore(state);
+                loaded.Validate(2, true);
+                Step(loaded, 2.5, enemies, hits, evolved: true, accept: hit => enemies.Remove(hit.TargetId));
+                Check.Equal(0, hits.Count(hit => hit.Kind == ExpandedDanielLionHitKind.KillFollowupLeap));
+                loaded = Restore(loaded);
+                Step(loaded, 3, enemies, hits, evolved: true, accept: hit =>
+                {
+                    if (hit.Kind == ExpandedDanielLionHitKind.KillFollowupLeap || killFinal)
+                        enemies.Remove(hit.TargetId);
+                    return true;
+                });
+                Check.True(hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.Leap)
+                    .Select(hit => hit.TargetId).SequenceEqual(new[] { 2, 3 }));
+                var bonus = hits.Where(hit => hit.Kind == ExpandedDanielLionHitKind.KillFollowupLeap).ToArray();
+                if (killFinal && canFollow && (!readyAt.HasValue || readyAt <= 3))
+                {
+                    Check.Equal(4, bonus.Single().TargetId);
+                    Check.Near(17.5, bonus[0].Damage);
+                    Check.True(enemies.ContainsKey(5));
+                    var saved = Restore(loaded);
+                    Check.Near(8, saved.KillLeapReadyAt!.Value);
+                    saved.Validate(3, true);
+                }
+                else
+                {
+                    Check.Equal(0, bonus.Length);
+                    Check.Equal(readyAt, loaded.KillLeapReadyAt);
+                }
+            }
+        });
+
+        test("Lion e.03 adds twelve radius points only in the evolved stance and extends actual claw contact", () =>
+        {
+            var enemies = new Dictionary<int, Vector2> { [1] = new Vector2(.728f, 0) };
+            var hits = new List<ExpandedDanielLionHit>();
+            var ranks = Rank("e.03");
+            Check.Equal(0, Step(new ExpandedDanielLionState(), 0, enemies, hits, ranks: ranks));
+            Check.Equal(0, Step(new ExpandedDanielLionState(), 0, enemies, hits, evolved: true));
+            Check.Equal(1, Step(new ExpandedDanielLionState(), 0, enemies, hits, evolved: true, ranks: ranks));
+            Check.Equal(ExpandedDanielLionHitKind.Claw, hits.Single().Kind);
+            enemies[1] = new Vector2(.729f, 0);
+            Check.Equal(0, Step(new ExpandedDanielLionState(), 0, enemies, hits, evolved: true, ranks: ranks));
+        });
     }
 
     private static ExpandedDanielLionRankOptions Rank(string id) => ExpandedDanielLionRankOptions.FromRanks(
@@ -287,12 +475,12 @@ internal static class ExpandedDanielLionTests
     private static int Step(ExpandedDanielLionState state, double time, Dictionary<int, Vector2> enemies,
         List<ExpandedDanielLionHit> hits, bool evolved = false, int amount = 1, Vector2 player = default,
         Func<ExpandedDanielLionHit, bool>? accept = null, ExpandedDanielLionRankOptions ranks = default,
-        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null) =>
+        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, Func<double>? afterClaw = null) =>
         ExpandedDanielLion.Step(state, time, player, 8, evolved, damage: 50, cycle: 1, amount,
             radius: .65, speed: 5, () => enemies, hit =>
             {
                 if (accept != null && !accept(hit)) return false;
                 hits.Add(hit);
                 return true;
-            }, ranks, isElite, isBoss);
+            }, ranks, isElite, isBoss, afterClaw);
 }

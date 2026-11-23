@@ -116,6 +116,36 @@ internal static class ExpandedWildernessVoiceTests
             Check.Equal(0, replayHits.Count);
         });
 
+        test("Wilderness Proclamation freezes the two trained echo radii through restore", () =>
+        {
+            var state = new ExpandedWildernessVoiceState();
+            var enemies = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(5.19f, 0),
+                [2] = new Vector2(5.21f, 0),
+                [3] = new Vector2(5.71f, 0),
+                [4] = new Vector2(5.73f, 0),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            Step(state, 0, enemies, hits, evolved: true, echoRadiusBonus: .04);
+            Check.Near(5.2, state.Active.Single().FirstEchoRadius);
+            Check.Near(5.72, state.Active.Single().SecondEchoRadius);
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
+            restored.Validate(0, true);
+            Step(restored, .5, enemies, hits, evolved: true);
+            Check.Equal((ExpandedWildernessVoiceHitKind.FirstEcho, 1), (hits.Single().Kind, hits.Single().TargetId));
+            hits.Clear();
+            Step(restored, 1, enemies, hits, evolved: true);
+            Check.True(hits.All(hit => hit.Kind == ExpandedWildernessVoiceHitKind.SecondEcho));
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
+            restored.Validate(1, true);
+        });
+
         test("Wilderness Voice exact cycle schedule supports overlapping casts and rejects invalid timers", () =>
         {
             const double cycle = .151;
@@ -187,9 +217,11 @@ internal static class ExpandedWildernessVoiceTests
 
     private static void Step(ExpandedWildernessVoiceState state, double time, Dictionary<int, Vector2> enemies,
         List<ExpandedWildernessVoiceHit> hits, bool evolved = false, Vector2 center = default,
-        Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2, double delayAdvance = 0)
+        Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2, double delayAdvance = 0,
+        double echoRadiusBonus = 0)
     {
         ExpandedWildernessVoice.Step(state, time, center, facing ?? Vector2.UnitX, 8, evolved,
-            damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add, delayAdvance);
+            damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add, delayAdvance,
+            echoRadiusBonus: echoRadiusBonus);
     }
 }

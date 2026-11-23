@@ -20,15 +20,17 @@ namespace BibleSurvivor.Core
         public bool KnockBack { get; }
         public bool WidenWhirlwind { get; }
         public bool ExtendTrail { get; }
+        public bool WidenSupportShape { get; }
 
         public ExpandedElijahChariotRankOptions(bool extendTravel = false, bool widenFormation = false,
-            bool knockBack = false, bool widenWhirlwind = false, bool extendTrail = false)
+            bool knockBack = false, bool widenWhirlwind = false, bool extendTrail = false, bool widenSupportShape = false)
         {
             ExtendTravel = extendTravel;
             WidenFormation = widenFormation;
             KnockBack = knockBack;
             WidenWhirlwind = widenWhirlwind;
             ExtendTrail = extendTrail;
+            WidenSupportShape = widenSupportShape;
         }
 
         public static ExpandedElijahChariotRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -36,7 +38,8 @@ namespace BibleSurvivor.Core
             if (ranks == null) throw new ArgumentNullException(nameof(ranks));
             bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
             return new ExpandedElijahChariotRankOptions(Has("weapon.elijah_chariot.a.01"), Has("weapon.elijah_chariot.b.01"),
-                Has("weapon.elijah_chariot.d.01"), Has("weapon.elijah_chariot.e.01"), Has("weapon.elijah_chariot.e.02"));
+                Has("weapon.elijah_chariot.d.01"), Has("weapon.elijah_chariot.e.01"), Has("weapon.elijah_chariot.e.02"),
+                Has("common.area.01"));
         }
     }
 
@@ -80,6 +83,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool ForwardKnockback { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WiderWhirlwind { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedTrail { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
         [DataMember(IsRequired = true)] public double Range { get; set; }
         [DataMember(IsRequired = true)] public double Speed { get; set; }
         [DataMember(IsRequired = true)] public double Width { get; set; }
@@ -97,7 +101,9 @@ namespace BibleSurvivor.Core
         private double WarningDelay => FirstDelay ?? ExpandedElijahChariot.Profile.FirstAttackDelay;
         public double EndAt => MoveAt + Range / Speed;
         public bool BodyEnded => Distance >= Range;
-        public double WhirlwindRadius => ExpandedElijahChariot.BaseWhirlwindRadius * (WiderWhirlwind ? 1.15 : 1);
+        public double WhirlwindRadius => ExpandedElijahChariot.BaseWhirlwindRadius *
+            (1 + (WiderWhirlwind ? .15 : 0) + (WidenedSupportShape ? .04 : 0));
+        public double TrailWidth => ExpandedElijahChariot.BaseTrailWidth * (WidenedSupportShape ? 1.04 : 1);
         public double TrailDuration => ExpandedElijahChariot.BaseTrailDuration * (ExtendedTrail ? 1.20 : 1);
 
         internal int TrailTickLimit => (int)Math.Ceiling((Range / Speed + TrailDuration - ExpandedElijahChariot.TimeEpsilon) /
@@ -190,7 +196,7 @@ namespace BibleSurvivor.Core
                     path.BodyHitIds.Count + path.WhirlwindCandidateIds.Count ||
                 (path.BodyEnded || !evolved) && path.WhirlwindCandidateIds.Count != 0 ||
                 now < path.MoveAt - epsilon && (path.BodyHitCount != 0 || path.WhirlwindCandidateIds.Count != 0) ||
-                (path.SuppressedTrail || path.WiderWhirlwind) && !evolved || path.ExtendedTrail && !hasTrail ||
+                (path.SuppressedTrail || path.WiderWhirlwind || path.WidenedSupportShape) && !evolved || path.ExtendedTrail && !hasTrail ||
                 path.TrailTicksFired < 0 || path.TrailTicksFired > (hasTrail ? path.TrailTickLimit : 0))
                 throw new ArgumentException("Invalid Elijah chariot hit history");
 
@@ -211,8 +217,10 @@ namespace BibleSurvivor.Core
         private static readonly double MaximumWidth = Profile.AtLevel(1).Width * 2.5;
         private static readonly double MinimumSpeed = Profile.AtLevel(1).Speed;
         private static readonly double MaximumSpeed = MinimumSpeed * 1.75;
-        private static readonly double TravelBonus = Profile.TravelDistance * .12;
-        private static readonly double MaximumRange = Profile.TravelDistance + TravelBonus;
+        internal static readonly double MaximumBaseRange = Profile.TravelDistance * 1.05;
+        internal static readonly double MaximumUntrainedRange = Profile.TravelDistance;
+        internal static readonly double TravelBonus = Profile.TravelDistance * .12;
+        private static readonly double MaximumRange = MaximumBaseRange + TravelBonus;
         internal static readonly int MaximumPaths = MaximumAmount *
             (int)Math.Ceiling((Profile.FirstAttackDelay + MaximumRange / MinimumSpeed + BaseTrailDuration * 1.20) / MinimumCycle);
         internal const double TimeEpsilon = 1e-9;
@@ -222,7 +230,7 @@ namespace BibleSurvivor.Core
         internal const double BaseTrailDuration = 1.5;
         internal const int MaximumLiveTargets = 120;
         internal const int MaximumBodyHits = 6210;
-        private const double TrailWidth = .9;
+        internal const double BaseTrailWidth = .9;
         private const double TrailDamageFactor = .35;
         internal const double BaseWhirlwindRadius = 1.15;
         private const double WhirlwindDamageFactor = .45;
@@ -241,7 +249,7 @@ namespace BibleSurvivor.Core
                 !BattleSnapshot.Position(playerPosition.X, playerPosition.Y) || !BattleSnapshot.Position(facing.X, facing.Y) ||
                 level < 1 || level > 8 || evolved && level != 8 || amount < 1 || amount > MaximumAmount ||
                 !BattleSnapshot.Finite(cycle) || cycle < MinimumCycle || cycle > MaximumCycle ||
-                !ValidPath(damage, width, speed, range) || range > Profile.TravelDistance)
+                !ValidPath(damage, width, speed, range) || range > MaximumBaseRange)
                 throw new ArgumentException("Invalid Elijah chariot parameters");
 
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
@@ -280,6 +288,7 @@ namespace BibleSurvivor.Core
                     ForwardKnockback = rankOptions.KnockBack,
                     WiderWhirlwind = evolved && rankOptions.WidenWhirlwind,
                     ExtendedTrail = evolved && !suppressedTrail && rankOptions.ExtendTrail,
+                    WidenedSupportShape = evolved && rankOptions.WidenSupportShape,
                     Range = travel,
                     Speed = speed,
                     Width = width,
@@ -379,7 +388,7 @@ namespace BibleSurvivor.Core
         {
             var (forward, side) = Project(path, target);
             if (forward < -TimeEpsilon || forward > path.Range + TimeEpsilon ||
-                Math.Abs(side) > TrailWidth * .5 + TimeEpsilon)
+                Math.Abs(side) > path.TrailWidth * .5 + TimeEpsilon)
                 return false;
             // The strip grows as the body advances. Each point expires after its own lifetime.
             var laidAt = path.MoveAt + Math.Max(0, forward) / path.Speed;
