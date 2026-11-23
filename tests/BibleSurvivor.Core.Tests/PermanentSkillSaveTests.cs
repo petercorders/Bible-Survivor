@@ -11,6 +11,70 @@ internal static class PermanentSkillSaveTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Every catalog rank can be transacted, reopened, frozen into a challenge and refunded", () =>
+        {
+            WithSave(path =>
+            {
+                var store = new SaveStore(path);
+                var state = SaveStore.PrepareNewChallenge(GameSnapshot.New());
+                state.Profile.Gold = 378050;
+                state.Profile.HighestSettledRound = 180;
+                state.Profile.UnlockedWeapons.AddRange(ExpandedWeaponRules.All.Select(weapon => weapon.WeaponId));
+                var nodes = PermanentSkillCatalog.Current.Nodes;
+                state.Profile.EvolvedWeapons!.AddRange(nodes.Select(node => node.RequiredEvolution)
+                    .Where(id => id != null).Select(id => id!).Distinct());
+                var definition = WaveTests.Adam();
+                _ = new AdamSession(state, definition, "bible");
+                store.Commit(state, 0, "full-ledger-fixture");
+                state = store.Load()!;
+                var initialRunId = state.Run!.RunId;
+                var count = 0;
+                while (count < 442)
+                {
+                    var profile = state.Profile;
+                    var node = nodes.First(item => item.Availability(profile.Upgrades, profile.Gold,
+                        profile.HighestSettledRound!.Value, profile.UnlockedWeapons, profile.EvolvedWeapons!) ==
+                        PermanentSkillAvailability.Available);
+                    var rank = PermanentRules.Rank(profile.Upgrades, node.Id);
+                    var command = Buy(state, node.Id, rank, node.Prices[rank]);
+                    var bought = store.TransactPermanent(command);
+                    Check.Equal(state.Revision + 1, bought.Revision);
+                    Check.Equal(profile.Gold - node.Prices[rank], bought.Profile.Gold);
+                    Check.Equal(rank + 1, bought.Profile.Upgrades[node.Id]);
+                    Check.Equal(node.Prices[rank], bought.Profile.PaidRanks![node.Id][rank]);
+                    Check.Equal(initialRunId, bought.Run!.RunId);
+                    Check.Equal(0, bought.Run.PermanentSnapshot.Count);
+                    state = bought;
+                    if (++count % 32 == 0)
+                    {
+                        store = new SaveStore(path);
+                        state = store.Load()!;
+                    }
+                }
+                Check.Equal(420, state.Profile.Upgrades.Count);
+                Check.Equal(442, state.Profile.PaidRanks!.Values.Sum(prices => prices.Count));
+                Check.Equal(0L, state.Profile.Gold);
+                state = SaveStore.PrepareNewChallenge(state);
+                _ = new AdamSession(state, definition, "sling");
+                store.Commit(state, state.Revision, "full-ledger-frozen-run");
+                state = store.Load()!;
+                Check.True(initialRunId != state.Run!.RunId);
+                var frozen = JsonSerializer.Serialize(state.Run);
+                var quote = PermanentSkillCommand.QuoteRefund(state.Profile);
+                Check.Equal(378050L, quote.Gold);
+                var refund = PermanentSkillCommand.RefundAll(PermanentSkillCommand.NewOperationId(state.Revision),
+                    state.Revision, quote.Gold, quote.Digest);
+                state = store.TransactPermanent(refund);
+                Check.Equal(378050L, state.Profile.Gold);
+                Check.Equal(0, state.Profile.Upgrades.Count);
+                Check.Equal(0, state.Profile.PaidRanks!.Count);
+                Check.Equal(frozen, JsonSerializer.Serialize(state.Run));
+                store = new SaveStore(path);
+                Check.Equal(state.Revision, store.TransactPermanent(refund).Revision);
+                Check.Equal(442, store.Load()!.Run!.PermanentSnapshot.Values.Sum());
+            });
+        });
+
         test("Permanent transaction archives a v3 source and refunds the original price without touching the run", () =>
         {
             WithSave(path =>

@@ -22,8 +22,8 @@ namespace BibleSurvivor.Unity
 
         readonly Texture2D[] rings = new Texture2D[3];
         readonly List<ExpandedLightningEventState> resolvedBolts = new List<ExpandedLightningEventState>();
-        readonly List<(double At, Vector2 Center, float Radius, bool Second)> echoes =
-            new List<(double, Vector2, float, bool)>();
+        readonly List<(double At, Vector2 Center, float Radius, Stroke Stroke)> echoes =
+            new List<(double, Vector2, float, Stroke)>();
         readonly List<(double At, Vector2 Center, float Radius, bool Guardian)> roars =
             new List<(double, Vector2, float, bool)>();
 
@@ -51,8 +51,9 @@ namespace BibleSurvivor.Unity
             if (previous.WildernessVoice?.Evolved == true && next.WildernessVoice?.Evolved == true)
                 foreach (var cast in previous.WildernessVoice.Active)
                 {
-                    CaptureEcho(next, cast.StartedAt + .5, (float)cast.FirstEchoRadius, false);
-                    CaptureEcho(next, cast.StartedAt + 1, (float)cast.SecondEchoRadius, true);
+                    CaptureEcho(next, cast.StartedAt + .5, (float)cast.FirstEchoRadius, Stroke.Dash);
+                    CaptureEcho(next, cast.StartedAt + 1, (float)cast.SecondEchoRadius, Stroke.Dot);
+                    if (cast.HasExtraEcho) CaptureEcho(next, cast.StartedAt + 1.5, (float)cast.ExtraEchoRadius, Stroke.Solid);
                 }
 
             var oldLion = previous.DanielLion;
@@ -61,14 +62,14 @@ namespace BibleSurvivor.Unity
             if (oldLion != null && newLion != null && oldLion.Evolved == newLion.Evolved)
             {
                 if (newLion.Evolved && newLion.Lions.Count > 0 && newLion.NextRoarAt > oldLion.NextRoarAt &&
-                    newLion.LastStepAt - oldLion.NextRoarAt < BattleWorld.FixedStep)
+                    newLion.LastStepAt - oldLion.NextRoarAt < MarkerLifetime)
                     Roar(newLion.Lions[0], guardianRoarRadius, true);
                 var representedLions = Math.Min(oldLion.Lions.Count, newLion.Lions.Count);
                 for (var index = 0; index < representedLions; index++)
                 {
                     var lion = newLion.Lions[index];
                     if (oldLion.Lions[index].NextPackRoarAt is double prior && lion.NextPackRoarAt > prior &&
-                        newLion.LastStepAt - prior < BattleWorld.FixedStep)
+                        newLion.LastStepAt - prior < MarkerLifetime)
                         Roar(lion, packRoarRadius, false);
                 }
             }
@@ -76,11 +77,11 @@ namespace BibleSurvivor.Unity
             void Roar(ExpandedDanielLionActorState lion, float radius, bool guardian) =>
                 roars.Add((next.Time, new Vector2(lion.X, lion.Y), radius, guardian));
 
-            void CaptureEcho(BattleSnapshot snap, double due, float radius, bool second)
+            void CaptureEcho(BattleSnapshot snap, double due, float radius, Stroke stroke)
             {
                 // The current anchor is valid when this fixed step resolved the due pulse.
                 if (previous.Time < due && due <= snap.Time && snap.Time - due < BattleWorld.FixedStep)
-                    echoes.Add((snap.Time, new Vector2(snap.PlayerX, snap.PlayerY), radius, second));
+                    echoes.Add((snap.Time, new Vector2(snap.PlayerX, snap.PlayerY), radius, stroke));
             }
         }
 
@@ -90,10 +91,10 @@ namespace BibleSurvivor.Unity
             if (snap.WildernessVoice != null)
             {
                 var player = new Vector2(snap.PlayerX, snap.PlayerY);
-                var facing = Mathf.Atan2(snap.FacingY, snap.FacingX);
                 foreach (var cast in snap.WildernessVoice.Active)
                 {
                     var age = snap.Time - cast.StartedAt;
+                    var facing = Mathf.Atan2(cast.LockedFacingY ?? snap.FacingY, cast.LockedFacingX ?? snap.FacingX);
                     var warning = cast.PrimaryPulses == 0 ? Stroke.Dash : Stroke.Solid;
                     if (age < cast.Duration)
                     {
@@ -106,10 +107,12 @@ namespace BibleSurvivor.Unity
                         Ring(projection, player, (float)cast.FirstEchoRadius, Voice, Stroke.Dash);
                     if (cast.EchoesFired == 1 && age >= 1 - MarkerLifetime)
                         Ring(projection, player, (float)cast.SecondEchoRadius, Voice, Stroke.Dot);
+                    if (cast.HasExtraEcho && cast.EchoesFired == 2 && age >= 1.5 - MarkerLifetime)
+                        Ring(projection, player, (float)cast.ExtraEchoRadius, Voice, Stroke.Solid);
                 }
             }
             foreach (var echo in echoes)
-                Ring(projection, echo.Center, echo.Radius, Voice, echo.Second ? Stroke.Dot : Stroke.Dash);
+                Ring(projection, echo.Center, echo.Radius, Voice, echo.Stroke);
 
             if (snap.Lightning != null)
                 foreach (var bolt in snap.Lightning.Pending) DrawBolt(projection, bolt, Stroke.Dash);

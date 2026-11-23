@@ -78,9 +78,9 @@ namespace BibleSurvivor.Core
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle",
                     ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
-                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus")))));
+                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho")))));
                 world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep",
-                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay ShortenedPrimaryInterval")))));
+                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage")))));
                 world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle",
                     ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane WidenedSupportShape")))));
                 world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle",
@@ -113,6 +113,7 @@ namespace BibleSurvivor.Core
                 run.Members.Add("NoHitCarrySeconds", Value);
                 run.Members.Add("LastTempoEliteKillAt", Value);
                 run.Members.Add("TempoOpeningUsed", Value);
+                run.Members.Add("BossEntryVoiceCycle", Value);
             }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));

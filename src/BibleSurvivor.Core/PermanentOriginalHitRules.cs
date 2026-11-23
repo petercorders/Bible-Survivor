@@ -92,7 +92,8 @@ namespace BibleSurvivor.Core
     {
         internal static PermanentOriginalHitProfile BaseCritical(IReadOnlyDictionary<string, int> ranks,
             string weapon, double damage) => new PermanentOriginalHitProfile(damage, BaseCriticalChance(ranks, weapon),
-                1.5 + BasicCriticalMultiplier(ranks), false);
+                Math.Min(2, 1.5 + BasicCriticalMultiplier(ranks) +
+                    (weapon == "sling" && Has(ranks, "weapon.sling.a.03") ? .20 : 0)), false);
 
         internal static bool HasBaseCriticalChance(IReadOnlyDictionary<string, int> ranks) =>
             BasicCriticalChance(ranks) > 0 || Has(ranks, "weapon.sling.a.02");

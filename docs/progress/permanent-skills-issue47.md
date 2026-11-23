@@ -6,6 +6,7 @@
 |---|---|---|
 | 카탈로그 | 420개 ID, 442 구매 단계, 22개 트리와 378,050골드. 선행 도달·R60/R180 투자 표본·레거시 가격 일치 | Core PermanentSkillCatalogTests |
 | 저장 거래 | 스키마 1~3의 읽기와 원본 보관, 표시한 가격·랭크·환불 목록 검증, 원래 단가 환불, 동일 요청, 오류 후 주 파일 재확인 | Core PermanentSkillSaveTests |
+| 전체 거래 원장 | 통제 프로필에서 442단계 모두 순차 거래하고 중간마다 재개. 총 378,050골드 환불과 멱등 재시도, 거래 전후 새 도전의 랭크 고정을 확인 | Core PermanentSkillSaveTests |
 | 초기 효과 | P01 0.74 거리 보석, P02 물맷돌 기본 연사 저장·재개, 진화형 8발 계산. 체력·방어 단계의 합산 조건 | Core PermanentSkillCombatTests |
 | 공통 효과 | 회복·기동·경험치·수집을 실제 전투에 연결. 이동 방향·보석·원본 처치·즉시 회복 상태를 보존하고 다음 라운드에서 초기화 | Core PermanentSkillCombatTests 및 PermanentRecoveryRulesTests |
 | 기본 치명타 | 확률과 배율의 첫 두 노드를 원본 타격에 연결. 무기별 난수 상태를 저장하고 기존 월드 생성 난수와 분리 | Core PermanentSkillCombatTests의 턱뼈 실타격 및 복원 |
@@ -17,10 +18,11 @@
 | 불수레 추가 효과 | 주행 거리·평행 간격·차체 밀침과 진화 회오리 반경·불길 수명을 저장하고 Unity 경계 표시가 해당 개체의 값을 읽음 | Core ExpandedElijahChariotTests 및 PermanentSkillCombatTests |
 | 공통 공격 범위 | 타격 치수, 근접 반각, 편도 거리, 지정 위치 원형 반경, 회전 거리 및 발사체 충돌 반경을 구분. 물결·불수레에도 편도 거리를 적용하고 이동 중 생긴 잔불에는 지정 위치 보너스를 적용하지 않음 | Core 무기별 시험과 PermanentSkillCombatTests의 월드 재개 |
 | 사자 추가 효과 | 개별 포효 일정·반경·밀침·타격 대기, 진화 마지막 도약 처치의 추가 도약과 진화 할퀴기 반경을 연결 | Core ExpandedDanielLionTests 및 PermanentSkillCombatTests |
+| 외침·불기둥·물맷돌 추가 효과 | 외침의 잠긴 조준과 주기·추가 메아리, 불기둥의 이동 예측·설치 거리·피해·진화 감속, 물맷돌의 연사·치명 배율·관통을 연결. 진화 외침의 방향 보너스는 전방 기준으로 계산하고 추가 메아리는 마지막 기본 메아리의 반경을 사용 | Core 무기별 시험, 보스 입장과 발사체 체크포인트 |
 | 전역 예약 | 원본 발사체 192칸과 보조 구역 16칸을 공유하는 경로의 일부를 상한에 맞추고, 병거 보조 슬롯 부족 시 차체를 유지 | Core ExpandedElijahChariotTests 및 ExpandedFirePillarTests |
 | 설치 캠페인 | v2에서 180개 라운드와 보스 60개를 통제 입력으로 진행. 책 진입과 대표 보스 월드·보상·R180 정산을 저장 후 복원 | Core ExpandedCampaignReplayTests |
-| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 178개 ID·200개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
-| 미완료 | 구매 미연결 242개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
+| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 195개 ID·217개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
+| 미완료 | 구매 미연결 225개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
 
 기준 Unity PlayMode는 38/40이며 #46의 두 시각 효과 단정을 같은 기준본에서 다시 확인했다. 변경 빌드의 전체 결과는 별도로 기록한다. macOS QA Player는 독립 저장 경로에서 실제 키보드로 구매·환불 확인과 각각의 취소를 시험했다. 테스트 잔액은 600 → 500 → 600이었다. 660×440 Editor 포인터 시험은 일시정지에서 진입해 선행 이동과 구매·환불의 확인과 취소를 재현했다. 기존 v1 도전은 시간과 ID를 유지하고 재개했다.
 

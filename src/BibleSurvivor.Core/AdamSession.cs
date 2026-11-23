@@ -120,7 +120,14 @@ namespace BibleSurvivor.Core
         internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
             HasExpandedSkill("weapon.fire_pillar.a.01"),
             HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
-            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: AreaProfile().HitShapeBonus);
+            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: AreaProfile().HitShapeBonus,
+            predictPlacement: HasExpandedSkill("weapon.fire_pillar.a.03"),
+            preferSeparatedCenters: HasExpandedSkill("weapon.fire_pillar.a.04"),
+            slowInCrowds: HasExpandedSkill("weapon.fire_pillar.e.02"),
+            increaseCoreDamage: HasExpandedSkill("weapon.fire_pillar.b.02"),
+            increaseIgnitionDamage: HasExpandedSkill("weapon.fire_pillar.d.01"));
+        internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
+            ExpandedWildernessVoiceRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
             ExpandedMosesStaffRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedCrossRankOptions CrossRankOptions() => ExpandedCrossRankOptions.FromRanks(run.PermanentSnapshot);
@@ -131,6 +138,12 @@ namespace BibleSurvivor.Core
             ExpandedElijahChariotRankOptions.FromRanks(run.PermanentSnapshot);
         internal PermanentAreaProfile AreaProfile() => HasExpandedSkill("common.area.01")
             ? PermanentAreaRules.Evaluate(run.PermanentSnapshot) : default;
+        internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
+        internal void RecordVoiceCyclesAtBossEntry(long cycle)
+        {
+            if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
+                run.BossEntryVoiceCycle = cycle;
+        }
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
         public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
@@ -188,7 +201,10 @@ namespace BibleSurvivor.Core
                     case "sling":
                         if (HasExpandedSkill(skillPrefix + "04")) collisionBonus += .10;
                         if (HasExpandedSkill(skillPrefix + "05")) bonuses.ProjectileSpeedBonus += .12;
-                        if (HasExpandedSkill("common.shot.03")) bonuses.ExtraPierce = 1;
+                        if (HasExpandedSkill("common.shot.03")) bonuses.ExtraPierce++;
+                        if (HasExpandedSkill("weapon.sling.d.01")) bonuses.ExtraPierce++;
+                        if (HasExpandedSkill("weapon.sling.b.01"))
+                            bonuses.BurstReduction = Math.Min(.25, bonuses.BurstReduction + .12);
                         break;
                 }
                 return CombatStats.ForExpanded(weaponId, level, bonuses, form, collisionBonus);
@@ -418,6 +434,7 @@ namespace BibleSurvivor.Core
             target.FirstBibleAttackUsed = false;
             target.LastTempoEliteKillAt = null;
             target.TempoOpeningUsed = false;
+            target.BossEntryVoiceCycle = 0;
         }
 
         public void Advance(double seconds)

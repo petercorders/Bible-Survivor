@@ -629,6 +629,7 @@ namespace BibleSurvivor.Core
         private void EnterBossGeometry()
         {
             impactFloor=ImpactSequence+1;
+            if (wildernessVoice != null) Session.RecordVoiceCyclesAtBossEntry(wildernessVoice.Cycle);
             enemies.Clear();drops.Clear();projectiles.Clear();weapons.Clear();ClearExpandedAttacks();Synchronize();
         }
         private void StepBoss(Vector2 movement)
@@ -864,7 +865,7 @@ namespace BibleSurvivor.Core
                     }
                     if (id == "wilderness_voice")
                     {
-                        wildernessVoice ??= new ExpandedWildernessVoiceState();
+                        wildernessVoice ??= new ExpandedWildernessVoiceState { Cycle = Session.BossEntryVoiceCycle };
                         wildernessVoice.ResetForForm(form!=null, SimulationTime);
                     }
                     if (id == "fire_pillar")
@@ -1084,7 +1085,8 @@ namespace BibleSurvivor.Core
                         knockbackBonus: Session.HasExpandedSkill("weapon.wilderness_voice.c.01") ? .25 : 0,
                         closeKnockbackBonus: Session.HasExpandedSkill("weapon.wilderness_voice.c.02") ? .25 : 0,
                         shortenedPrimaryInterval: Session.HasExpandedSkill("common.tempo.05"),
-                        nextCycleDuration: nextCycleDuration, echoRadiusBonus: Session.AreaProfile().HitShapeBonus);
+                        nextCycleDuration: nextCycleDuration, echoRadiusBonus: Session.AreaProfile().HitShapeBonus,
+                        rankOptions: Session.WildernessVoiceRankOptions(), uncappedDamage: profile.UncappedDamage);
                     if (wildernessVoice.Cycle != voiceCycle) ShotsFired++;
                     return true;
                 case "fire_pillar":
@@ -1095,7 +1097,8 @@ namespace BibleSurvivor.Core
                         delayAdvance: profile.AttackDelayAdvance, settings: firePillarSettings,
                         reserveEmber: () => SupportRegionCount < BattleSnapshot.ExpandedSupportRegionLimit,
                         shortenedPrimaryInterval: Session.HasExpandedSkill("common.tempo.05"),
-                        nextCycleDuration: nextCycleDuration);
+                        nextCycleDuration: nextCycleDuration, previousTargets: previous,
+                        level: Session.Inventory.Weapons[weapon]);
                     return true;
                 case "moses_staff":
                     mosesStaff ??= new ExpandedMosesStaffState();

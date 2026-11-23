@@ -66,6 +66,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double NoHitCarrySeconds { get; set; }
         [DataMember(EmitDefaultValue=false)] public double? LastTempoEliteKillAt { get; set; }
         [DataMember(EmitDefaultValue=false)] public bool TempoOpeningUsed { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryVoiceCycle { get; set; }
     }
 
     [DataContract]
@@ -123,7 +124,8 @@ namespace BibleSurvivor.Core
                 throw new UnsupportedSaveVersionException();
             if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null ||
                 Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
-                Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed))
+                Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
+                Run.BossEntryVoiceCycle != 0))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
             foreach (var encounter in PermanentProfile.EncounterHistory(Run))
                 if (encounter.Reward is { } reward &&
@@ -189,6 +191,11 @@ namespace BibleSurvivor.Core
                         PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.08") == 0) ||
                     Run.TempoOpeningUsed && PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.02") == 0)
                     throw new InvalidDataException("Invalid permanent tempo history");
+                if (Run.BossEntryVoiceCycle < 0 || Run.BossEntryVoiceCycle > 1201 ||
+                    Run.BossEntryVoiceCycle > 0 && (Run.Boss == null || !Run.Weapons.ContainsKey("wilderness_voice") ||
+                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.a.05") == 0 &&
+                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.e.03") == 0))
+                    throw new InvalidDataException("Invalid round voice cycle at boss entry");
                 if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
                     throw new InvalidDataException("Expanded run health does not match its starting ranks");
             }
@@ -327,12 +334,19 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Lightning strike flags require their frozen ranks");
                 var permanentRanks = Run.PermanentSnapshot;
                 var permanentArea = expandedCombat ? PermanentAreaRules.Evaluate(permanentRanks) : default;
-                if (Run.World.Projectiles.Any(projectile =>
-                    projectile.Lifetime > Run.World.Tuning.SlingLifetime * (1 + permanentArea.FlightDistanceBonus) + 1e-8))
-                    throw new InvalidDataException("Sling lifetime exceeds its frozen rank allowance");
+                bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
+                if (expandedCombat)
+                {
+                    var maximumLifetime = Run.World.Tuning.SlingLifetime * (1 + permanentArea.FlightDistanceBonus);
+                    var maximumFlight = maximumLifetime * Run.World.Tuning.SlingSpeed;
+                    var maximumRadius = .1 * (1 + permanentArea.ProjectileRadiusBonus +
+                        (HasRank("common.shot.02") ? .04 : 0) + (HasRank("weapon.sling.base.04") ? .10 : 0));
+                    if (Run.World.Projectiles.Any(projectile => projectile.Lifetime > maximumLifetime + 1e-8 ||
+                        projectile.Velocity.Length() * projectile.Lifetime > maximumFlight * (1 + 1e-6) ||
+                        projectile.Radius > maximumRadius + 1e-8))
+                        throw new InvalidDataException("Sling geometry exceeds its frozen rank allowance");
+                }
                 if (permanentArea.HitShapeBonus == 0 && (
-                    Run.World.WildernessVoice?.Active.Any(cast => cast.EchoRadiusBonus != 0) == true ||
-                    Run.World.FirePillar?.Regions.Any(region => region.Ember && region.Radius > ExpandedFirePillar.EmberRadius + 1e-8) == true ||
                     Run.World.MosesStaff?.Waves.Any(wave => wave.WidenedSupportShape) == true ||
                     Run.World.Cross?.Shots.Any(shot => shot.WidenedSupportShape) == true ||
                     Run.World.ElijahChariot?.Paths.Any(path => path.WidenedSupportShape) == true))
@@ -340,6 +354,27 @@ namespace BibleSurvivor.Core
                 if (Run.World.Lightning?.Pending.Any(strike => strike.Aftershock &&
                     strike.Radius > 1.4 * (1 + permanentArea.HitShapeBonus + permanentArea.PlacedCircleBonus) + 1e-8) == true)
                     throw new InvalidDataException("Lightning aftershock radius exceeds its frozen rank allowance");
+                var maximumEmberRadius = ExpandedFirePillar.EmberRadius * (1 + permanentArea.HitShapeBonus);
+                if (Run.World.FirePillar?.Regions.Any(region =>
+                    region.Ember && region.Radius > maximumEmberRadius + 1e-8 ||
+                    region.IncreasedCoreDamage && !HasRank("weapon.fire_pillar.b.02") ||
+                    region.IncreasedIgnitionDamage && !HasRank("weapon.fire_pillar.d.01")) == true)
+                    throw new InvalidDataException("Fire pillar region bonuses require their frozen ranks");
+                if (Run.World.WildernessVoice is { } voice)
+                {
+                    var maximumEchoBonus = permanentArea.HitShapeBonus +
+                        (voice.Evolved && HasRank("weapon.wilderness_voice.e.02") ? .12 : 0);
+                    if (voice.Cycle < Run.BossEntryVoiceCycle || voice.Active.Any(cast =>
+                        cast.EchoRadiusBonus > maximumEchoBonus + 1e-8 ||
+                        cast.FirstPulseDamage && !HasRank("weapon.wilderness_voice.a.02") ||
+                        cast.FinalPulseKnockback && !HasRank("weapon.wilderness_voice.a.03") ||
+                        cast.LockedFacingX.HasValue && !HasRank("weapon.wilderness_voice.a.04") ||
+                        cast.FourthCycleFinalDamage && !HasRank("weapon.wilderness_voice.a.05") ||
+                        cast.CenteredDamage && !HasRank("weapon.wilderness_voice.b.02") ||
+                        cast.EdgeKnockback && !HasRank("weapon.wilderness_voice.b.03") ||
+                        cast.HasExtraEcho && !HasRank("weapon.wilderness_voice.e.03")))
+                        throw new InvalidDataException("Wilderness voice cast bonuses require their frozen ranks");
+                }
                 bool InvalidDelay(double? delay, string nodeId) => delay.HasValue &&
                     (Math.Abs(delay.Value - .07) > 1e-9 || PermanentRules.Rank(permanentRanks, nodeId) == 0);
                 if (Run.World.WildernessVoice?.Active.Any(cast => InvalidDelay(cast.FirstDelay, "weapon.wilderness_voice.base.05")) == true ||

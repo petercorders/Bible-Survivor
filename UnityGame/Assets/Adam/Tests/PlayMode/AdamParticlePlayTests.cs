@@ -17,7 +17,8 @@ public sealed class AdamParticlePlayTests
         host.Checkpoint();var state=store.Load();var snapshot=state.Run.World;snapshot.PlayerX=100;snapshot.PlayerY=70;
         foreach(var enemy in snapshot.Enemies){enemy.X=101;enemy.Y=70;}
         snapshot.Projectiles.Clear();snapshot.NextProjectileId=projectileCount+1;
-        for(var i=1;i<=projectileCount;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=100.8f,Y=70,VelocityX=100,Lifetime=1,Damage=lethalLast && i==projectileCount?1000:.001,RemainingPierce=1,Radius=.1});
+        for(var i=1;i<=projectileCount;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=100.8f,Y=70,
+            VelocityX=(float)snapshot.Tuning.SlingSpeed,Lifetime=1,Damage=lethalLast && i==projectileCount?1000:.001,RemainingPierce=1,Radius=.1});
         snapshot.Weapons.Clear();snapshot.Weapons.Add(new BattleWeaponState{WeaponId="sling",NextCycle=100});
         store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Assert.IsTrue(host.Reload(),host.Error);host.SetPaused(false);return host;
     }
@@ -76,7 +77,8 @@ public sealed class AdamParticlePlayTests
             for(var n=0;n<20 && host.World.Capture().Enemies.Count<2;n++)host.Tick(.1);
             host.Checkpoint();var nextStore=new SaveStore(path);var next=nextStore.Load();var world=next.Run.World;
             foreach(var enemy in world.Enemies){enemy.X=world.PlayerX+1;enemy.Y=world.PlayerY;}
-            world.Projectiles.Clear();var id=world.NextProjectileId++;world.Projectiles.Add(new BattleProjectileState{Id=id,X=world.PlayerX+.8f,Y=world.PlayerY,VelocityX=100,Lifetime=1,Damage=.001,RemainingPierce=1,Radius=.1});
+            world.Projectiles.Clear();var id=world.NextProjectileId++;world.Projectiles.Add(new BattleProjectileState{Id=id,
+                X=world.PlayerX+.8f,Y=world.PlayerY,VelocityX=(float)world.Tuning.SlingSpeed,Lifetime=1,Damage=.001,RemainingPierce=1,Radius=.1});
             world.Weapons.Clear();world.Weapons.Add(new BattleWeaponState{WeaponId="sling",NextCycle=100});
             nextStore.Commit(next,next.Revision,Guid.NewGuid().ToString("N"));Assert.IsTrue(host.Reload(),host.Error);host.SetPaused(false);
             game.UpdatePresentation(0);Assert.IsFalse(camera.enabled);host.Tick(1d/60);game.UpdatePresentation(0);game.PrepareParticles(new Rect(0,0,1100,720));

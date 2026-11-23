@@ -429,6 +429,36 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("Sling burst timing, pierce and critical multiplier stack only for its equipped shots", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.sling.a.03", "weapon.sling.b.01", "weapon.sling.d.01",
+                    "weapon.sling.base.03", "common.crit.02", "common.tempo.09", "common.shot.03");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "sling");
+                Check.True(session.Inventory.TryChoose("jawbone", false));
+                Check.Near(.08, session.AttackProfile("sling").BurstInterval);
+                Check.Near(.15 * .92, session.AttackProfile("jawbone").BurstInterval);
+                var ranks = state.Run!.PermanentSnapshot;
+                Check.Near(1.8, PermanentOriginalHitRules.BaseCritical(ranks, "sling", 10).CriticalMultiplier);
+                Check.Near(1.6, PermanentOriginalHitRules.BaseCritical(ranks, "jawbone", 10).CriticalMultiplier);
+
+                session.Advance(2);
+                var battle = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in battle.Enemies) enemy.X = 4;
+                var world = BattleWorld.Restore(session, Speeds, battle);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var sling = frozen.Weapons.Single(weapon => weapon.WeaponId == "sling");
+                Check.Near(.08, sling.PendingBursts.Single() - sling.ActiveSince);
+                Check.Equal(3, frozen.Projectiles.Single().RemainingPierce);
+                state.Run.World = frozen;
+                store.Commit(state, state.Revision, "sling-burst-bonus");
+                Check.Equal(3, store.Load()!.Run!.World!.Projectiles.Single().RemainingPierce);
+            });
+        });
+
         test("Common motion and duration ranks change their own dimensions without increasing sling travel", () =>
         {
             WithStore(store =>
@@ -678,6 +708,58 @@ internal static class PermanentSkillCombatTests
                 var restoredLions = world.Capture().DanielLion!.Lions;
                 Check.Near(lions[1].NextPackRoarAt!.Value, restoredLions[1].NextPackRoarAt!.Value);
                 Check.Near(1.8 * 1.19, session.LionRoarRadius(true));
+            });
+        });
+
+        test("Voice rank cadence survives a boss-intro checkpoint and old casts are canceled", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.wilderness_voice.a.05", "weapon.wilderness_voice.b.03",
+                    "weapon.wilderness_voice.e.03", "common.area.01");
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                for (var round = 2; round <= 3; round++)
+                {
+                    session.Advance(180);
+                    while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                    session = session.StartNextRound(CatalogReader.Round("content/genesis/catalog.json", round));
+                }
+                var definition = CatalogReader.Round("content/genesis/catalog.json", 3);
+                for (var level = 0; level < 8; level++) Check.True(session.Inventory.TryChoose("wilderness_voice", false));
+                var weapon = ExpandedWeaponRules.Get("wilderness_voice");
+                Check.True(session.Inventory.TryChoose(weapon.PassiveId, true));
+                Check.True(session.Inventory.TryEvolve(weapon.EvolutionId));
+                var speeds = CatalogReader.MonsterSpeeds("content/genesis/catalog.json");
+                session.Advance(175);
+                var prepared = new BattleWorld(session, speeds, 7).Capture();
+                foreach (var enemy in prepared.Enemies) enemy.X = 100;
+                var world = BattleWorld.Restore(session, speeds, prepared);
+                world.Advance(4.6, Vector2.UnitY);
+                var beforeBoundary = world.Capture().WildernessVoice!;
+                Check.True(beforeBoundary.Cycle > 0);
+                var cast = beforeBoundary.Active.Last();
+                Check.Near(1, cast.LockedFacingY!.Value);
+                Check.Near(.16, cast.EchoRadiusBonus);
+                Check.True(cast.CenteredDamage && cast.EdgeKnockback && cast.UncappedDamage.HasValue);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "voice-cast-locked");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                world = BattleWorld.Restore(session, speeds, state.Run!.World!);
+                world.Advance(.5, Vector2.UnitX);
+                Check.Equal("boss_intro", session.Stage);
+                Check.True(world.Capture().WildernessVoice == null);
+                Check.Equal(beforeBoundary.Cycle, state.Run.BossEntryVoiceCycle);
+                state.Run.World = world.Capture();
+                store.Commit(state, state.Revision, "voice-boss-intro");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                world = BattleWorld.Restore(session, speeds, state.Run!.World!);
+                world.Advance(2.1, Vector2.UnitX);
+                Check.Equal("boss", session.Stage);
+                var bossVoice = world.Capture().WildernessVoice!;
+                Check.Equal(beforeBoundary.Cycle + 1, bossVoice.Cycle);
+                Check.Near(1, bossVoice.Active.Single().LockedFacingX!.Value);
             });
         });
 

@@ -12,9 +12,15 @@ namespace BibleSurvivor.Core
         internal Func<int, bool>? IsElite { get; }
         internal bool ExtendedEmbers { get; }
         internal double EmberRadiusBonus { get; }
+        internal bool PredictPlacement { get; }
+        internal bool PreferSeparatedCenters { get; }
+        internal bool SlowInCrowds { get; }
+        internal bool IncreaseCoreDamage { get; }
+        internal bool IncreaseIgnitionDamage { get; }
 
         public ExpandedFirePillarSettings(bool preferCrowds, Func<int, bool>? isElite, bool extendedEmbers,
-            double emberRadiusBonus = 0)
+            double emberRadiusBonus = 0, bool predictPlacement = false, bool preferSeparatedCenters = false,
+            bool slowInCrowds = false, bool increaseCoreDamage = false, bool increaseIgnitionDamage = false)
         {
             if (!BattleSnapshot.Finite(emberRadiusBonus) || emberRadiusBonus < 0 || emberRadiusBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(emberRadiusBonus));
@@ -22,6 +28,11 @@ namespace BibleSurvivor.Core
             IsElite = isElite;
             ExtendedEmbers = extendedEmbers;
             EmberRadiusBonus = emberRadiusBonus;
+            PredictPlacement = predictPlacement;
+            PreferSeparatedCenters = preferSeparatedCenters;
+            SlowInCrowds = slowInCrowds;
+            IncreaseCoreDamage = increaseCoreDamage;
+            IncreaseIgnitionDamage = increaseIgnitionDamage;
         }
     }
 
@@ -54,6 +65,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ShortenedPrimaryInterval { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? BaseDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool IncreasedCoreDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool IncreasedIgnitionDamage { get; set; }
         [DataMember(IsRequired = true)] public double Radius { get; set; }
         [DataMember(EmitDefaultValue = false)] public int TargetId { get; set; }
         [DataMember(EmitDefaultValue = false)] public double NextTargetAt { get; set; }
@@ -116,6 +130,7 @@ namespace BibleSurvivor.Core
                     !BattleSnapshot.Finite(region.Radius) || region.Radius <= 0 || region.Radius > 2.25 ||
                     region.Ember && (region.Radius < ExpandedFirePillar.EmberRadius || region.Radius > ExpandedFirePillar.EmberRadius * 2.5) ||
                     !BattleSnapshot.Finite(region.Damage) || region.Damage <= 0 || region.Damage > 45 ||
+                    !ExpandedFirePillar.ValidDamageBasis(region) ||
                     region.TargetId < 0 || !BattleSnapshot.Finite(region.NextTargetAt) ||
                     region.NextTargetAt < 0 || region.NextTargetAt > now + .5 + epsilon ||
                     !BattleSnapshot.Finite(region.TravelSinceEmber) || region.TravelSinceEmber < 0 || region.TravelSinceEmber >= 1)
@@ -130,6 +145,15 @@ namespace BibleSurvivor.Core
         private const double HitInterval = .5;
         private const double MinimumDelay = .05;
         private const float MotionSpeed = 1.2f;
+        private const double PredictionLead = .25;
+        private const float PredictionLimit = 1;
+        private const float PreferredCenterGap = 1.2f;
+        private const double CrowdRadius = 1.5;
+        private const double CrowdMotionMultiplier = .70;
+        private const double DamageCapMultiplier = 2.25;
+        private const double InnerRadiusFraction = .40;
+        private const double CoreDamageBonus = .08;
+        private const double IgnitionDamageBonus = .10;
         internal const double EmberRadius = .65;
         private const double EmberLifetime = 1;
         private const double EmberDamage = .25;
@@ -139,14 +163,21 @@ namespace BibleSurvivor.Core
             double damage, double cycle, int amount, double radius, double duration,
             Func<IReadOnlyDictionary<int, Vector2>> getTargets, Action<ExpandedFirePillarHit> hit,
             double delayAdvance = 0, ExpandedFirePillarSettings settings = default, Func<bool>? reserveEmber = null,
-            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null)
+            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null,
+            IReadOnlyDictionary<int, Vector2>? previousTargets = null, int level = 0)
         {
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
+            double? baseDamage = null;
+            if (settings.IncreaseCoreDamage || settings.IncreaseIgnitionDamage)
+            {
+                if (level < 1 || level > 8) throw new ArgumentOutOfRangeException(nameof(level));
+                baseDamage = Profile.AtLevel(level).Damage;
+            }
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
             state.Regions.RemoveAll(region => now + TimeEpsilon >= region.EndsAt);
             if (evolved)
                 MovePillars(state, now, getTargets(), settings.ExtendedEmbers ? 1.20 * EmberLifetime : EmberLifetime,
-                    EmberRadius * (1 + settings.EmberRadiusBonus), reserveEmber);
+                    EmberRadius * (1 + settings.EmberRadiusBonus), reserveEmber, settings.SlowInCrowds);
             state.LastStep = now;
             ResolveDue(state, now, getTargets(), hit);
 
@@ -154,7 +185,7 @@ namespace BibleSurvivor.Core
             var targets = getTargets();
             var candidates = targets.Where(target => InRange(target.Value, player, Profile.TargetSearchRadius))
                 .OrderByDescending(target => InRange(target.Value, player, 4) && settings.IsElite?.Invoke(target.Key) == true)
-                .ThenByDescending(target => settings.PreferCrowds ? targets.Count(other => InRange(target.Value, other.Value, 1.5)) : 0)
+                .ThenByDescending(target => settings.PreferCrowds ? targets.Count(other => InRange(target.Value, other.Value, CrowdRadius)) : 0)
                 .ThenBy(target => Vector2.DistanceSquared(target.Value, player)).ThenBy(target => target.Key).ToArray();
             if (candidates.Length == 0)
             {
@@ -169,9 +200,13 @@ namespace BibleSurvivor.Core
             var accepted = Math.Min(capacity, amount);
             state.SuppressedOriginal |= accepted != amount;
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - delayAdvance);
+            var rankedCenters = settings.PredictPlacement || settings.PreferSeparatedCenters
+                ? ResolveCenters(candidates, settings, previousTargets)
+                : null;
             for (var index = 0; index < accepted; index++)
             {
-                var center = candidates[index % candidates.Length].Value;
+                var candidateIndex = index % candidates.Length;
+                var center = rankedCenters?[candidateIndex] ?? candidates[candidateIndex].Value;
                 // Reused targets alternate left and right in world coordinates.
                 if (index >= candidates.Length)
                 {
@@ -181,9 +216,36 @@ namespace BibleSurvivor.Core
                 var region = Create(state, center, start, damage, radius, duration, false);
                 region.FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay;
                 region.ShortenedPrimaryInterval = shortenedPrimaryInterval;
+                region.BaseDamage = baseDamage;
+                region.IncreasedCoreDamage = settings.IncreaseCoreDamage;
+                region.IncreasedIgnitionDamage = settings.IncreaseIgnitionDamage;
                 region.NextHit = region.IgnitionAt;
             }
             return accepted;
+        }
+
+        private static Vector2[] ResolveCenters(KeyValuePair<int, Vector2>[] candidates, ExpandedFirePillarSettings settings,
+            IReadOnlyDictionary<int, Vector2>? previousTargets)
+        {
+            var centers = candidates.Select(candidate => settings.PredictPlacement &&
+                previousTargets != null && previousTargets.TryGetValue(candidate.Key, out var previous)
+                ? PredictCenter(previous, candidate.Value)
+                : candidate.Value).ToArray();
+            if (!settings.PreferSeparatedCenters || centers.Length == 1) return centers;
+
+            var first = centers[0];
+            return centers.Skip(1)
+                .OrderByDescending(center => Vector2.DistanceSquared(first, center) >= PreferredCenterGap * PreferredCenterGap)
+                .Prepend(first).ToArray();
+        }
+
+        private static Vector2 PredictCenter(Vector2 previous, Vector2 current)
+        {
+            var delta = (current - previous) * (float)(PredictionLead / BattleWorld.FixedStep);
+            var length = delta.Length();
+            if (length > PredictionLimit) delta *= PredictionLimit / length;
+            var predicted = current + delta;
+            return BattleSnapshot.Position(predicted.X, predicted.Y) ? predicted : current;
         }
 
         private static ExpandedFireRegion Create(ExpandedFirePillarState state, Vector2 center,
@@ -199,7 +261,8 @@ namespace BibleSurvivor.Core
         }
 
         private static void MovePillars(ExpandedFirePillarState state, double now,
-            IReadOnlyDictionary<int, Vector2> targets, double emberDuration, double emberRadius, Func<bool>? reserveEmber)
+            IReadOnlyDictionary<int, Vector2> targets, double emberDuration, double emberRadius, Func<bool>? reserveEmber,
+            bool slowInCrowds)
         {
             foreach (var pillar in state.Regions.Where(region => !region.Ember).OrderBy(region => region.Id).ToArray())
             {
@@ -208,7 +271,7 @@ namespace BibleSurvivor.Core
                     var due = pillar.NextTargetAt == 0 ? Math.Max(state.LastStep, pillar.StartedAt) : pillar.NextTargetAt;
                     pillar.NextTargetAt = due + HitInterval;
                     pillar.TargetId = targets
-                        .OrderByDescending(candidate => targets.Count(other => InRange(candidate.Value, other.Value, 1.5)))
+                        .OrderByDescending(candidate => targets.Count(other => InRange(candidate.Value, other.Value, CrowdRadius)))
                         .ThenBy(candidate => Vector2.DistanceSquared(candidate.Value, pillar.Center))
                         .ThenBy(candidate => candidate.Key).Select(candidate => candidate.Key).FirstOrDefault();
                 }
@@ -217,7 +280,9 @@ namespace BibleSurvivor.Core
                 var delta = target - from;
                 var distance = delta.Length();
                 if (distance <= 1e-7f) continue;
-                var movement = Math.Min(distance, MotionSpeed * (now - Math.Max(state.LastStep, pillar.StartedAt)));
+                var speed = slowInCrowds && targets.Values.Count(position => InRange(from, position, CrowdRadius)) >= 4
+                    ? MotionSpeed * CrowdMotionMultiplier : MotionSpeed;
+                var movement = Math.Min(distance, speed * (now - Math.Max(state.LastStep, pillar.StartedAt)));
                 var direction = delta / distance;
                 var center = from + direction * (float)movement;
                 pillar.X = center.X;
@@ -236,23 +301,54 @@ namespace BibleSurvivor.Core
         internal static bool ValidDelay(double? delay) => !delay.HasValue ||
             BattleSnapshot.Finite(delay.Value) && delay.Value >= MinimumDelay && delay.Value <= Profile.FirstAttackDelay;
 
+        internal static bool ValidDamageBasis(ExpandedFireRegion region)
+        {
+            var hasBonus = region.IncreasedCoreDamage || region.IncreasedIgnitionDamage;
+            if (!hasBonus) return !region.BaseDamage.HasValue;
+            return !region.Ember && region.BaseDamage is double basis &&
+                (basis == Profile.AtLevel(1).Damage || basis == Profile.AtLevel(4).Damage || basis == Profile.AtLevel(8).Damage) &&
+                region.Damage <= basis * DamageCapMultiplier;
+        }
+
         private static void ResolveDue(ExpandedFirePillarState state, double now,
             IReadOnlyDictionary<int, Vector2> targets, Action<ExpandedFirePillarHit> hit)
         {
             var due = state.Regions.Where(region => region.NextHit <= now + TimeEpsilon && region.NextHit < region.EndsAt)
-                .OrderBy(region => region.Id).ToArray();
+                .OrderBy(region => region.Id)
+                .Select(region => (Region: region, First: Math.Abs(region.IgnitionAt - region.NextHit) <= TimeEpsilon))
+                .ToArray();
             if (due.Length == 0) return;
-            foreach (var region in due) region.NextHit += region.ShortenedPrimaryInterval ? HitInterval * .96 : HitInterval;
-            var hits = new List<(ExpandedFireRegion Region, int Id, Vector2 Position)>();
-            foreach (var target in targets.OrderBy(target => target.Key))
-                foreach (var category in new[] { false, true })
+            foreach (var (region, _) in due) region.NextHit += region.ShortenedPrimaryInterval ? HitInterval * .96 : HitInterval;
+            var hits = new List<(ExpandedFireRegion Region, int Id, Vector2 Position, double Damage)>();
+            foreach (var target in targets)
+            {
+                foreach (var ember in new[] { false, true })
                 {
-                    var chosen = due.Where(region => region.Ember == category && InRange(region.Center, target.Value, region.Radius))
-                        .OrderByDescending(region => region.Damage).ThenBy(region => region.Id).FirstOrDefault();
-                    if (chosen != null) hits.Add((chosen, target.Key, target.Value));
+                    ExpandedFireRegion? winner = null;
+                    var damage = 0d;
+                    foreach (var (region, first) in due)
+                    {
+                        if (region.Ember != ember || !InRange(region.Center, target.Value, region.Radius)) continue;
+                        var candidate = HitDamage(region, target.Value, first);
+                        if (winner != null && candidate <= damage) continue;
+                        winner = region;
+                        damage = candidate;
+                    }
+                    if (winner != null) hits.Add((winner, target.Key, target.Value, damage));
                 }
+            }
             foreach (var candidate in hits.OrderBy(entry => entry.Region.Id).ThenBy(entry => entry.Id))
-                hit(new ExpandedFirePillarHit(candidate.Id, candidate.Position, candidate.Region.Damage, candidate.Region.Ember));
+                hit(new ExpandedFirePillarHit(candidate.Id, candidate.Position, candidate.Damage, candidate.Region.Ember));
+        }
+
+        private static double HitDamage(ExpandedFireRegion region, Vector2 position, bool first)
+        {
+            if (region.BaseDamage is not double basis) return region.Damage;
+            var bonus = first && region.IncreasedIgnitionDamage ? IgnitionDamageBonus : 0;
+            var innerRadius = (float)(region.Radius * InnerRadiusFraction);
+            if (region.IncreasedCoreDamage && Vector2.DistanceSquared(region.Center, position) <= innerRadius * innerRadius)
+                bonus += CoreDamageBonus;
+            return Math.Min(basis * DamageCapMultiplier, region.Damage + basis * bonus);
         }
 
         private static bool InRange(Vector2 left, Vector2 right, double radius) =>

@@ -11,6 +11,122 @@ internal static class ExpandedWildernessVoiceTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Trained voice freezes opening aim, uses shortened final pulse and stacks pre-cap bonuses", () =>
+        {
+            var state = new ExpandedWildernessVoiceState { Cycle = 3 };
+            var angle = Math.PI / 5;
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.UnitX,
+                [2] = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * 2,
+                [3] = -Vector2.UnitX,
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var ranks = ExpandedWildernessVoiceRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.wilderness_voice.a.02"] = 1,
+                ["weapon.wilderness_voice.a.03"] = 1,
+                ["weapon.wilderness_voice.a.04"] = 1,
+                ["weapon.wilderness_voice.a.05"] = 1,
+                ["weapon.wilderness_voice.b.02"] = 1,
+                ["weapon.wilderness_voice.b.03"] = 1,
+            });
+            void Tick(ExpandedWildernessVoiceState current, double now, Vector2 facing,
+                ExpandedWildernessVoiceRankOptions options = default) =>
+                ExpandedWildernessVoice.Step(current, now, Vector2.Zero, facing, 8, false, 31, 2.5,
+                    4.5, 1.13, 45, () => targets, hits.Add, knockbackBonus: .25, closeKnockbackBonus: .25,
+                    shortenedPrimaryInterval: true, rankOptions: options, uncappedDamage: 31);
+
+            Tick(state, 0, Vector2.UnitX, ranks);
+            Tick(state, .15, -Vector2.UnitX);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.Near(33.4, hits[0].Damage);
+            Check.Near(32.2, hits[1].Damage);
+            Check.Near(.60, hits[1].Knockback);
+            Check.Equal(Vector2.UnitX, hits[0].Facing);
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
+            restored.Validate(.15, false);
+            hits.Clear();
+            Tick(restored, .63, -Vector2.UnitX);
+            Check.Near(32.2, hits[0].Damage);
+            Check.Near(.60, hits[1].Knockback);
+            hits.Clear();
+            Tick(restored, 1.109, -Vector2.UnitX);
+            Check.Equal(0, hits.Count);
+            Tick(restored, 1.11, -Vector2.UnitX);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.Near(33.75, hits[0].Damage);
+            Check.Near(32.8, hits[1].Damage);
+            Check.Near(.90, hits[0].Knockback);
+            Check.Near(.90, hits[1].Knockback);
+            restored.Validate(1.11, false);
+
+            var corrupt = restored.Copy();
+            corrupt.Active.Single().LockedFacingY = null;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(1.11, false));
+            corrupt = restored.Copy();
+            corrupt.Active.Single().UncappedDamage = null;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(1.11, false));
+        });
+
+        test("Evolved voice adds a fifth-cycle echo with frozen common and evolution geometry", () =>
+        {
+            var state = new ExpandedWildernessVoiceState { Cycle = 4, Evolved = true };
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(4.94f, 0),
+                [2] = new Vector2(4.96f, 0),
+                [3] = new Vector2(6.37f, 0),
+                [4] = new Vector2(6.39f, 0),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var ranks = new ExpandedWildernessVoiceRankOptions(widenEvolution: true, widenEchoes: true, repeatFifthEcho: true);
+            void Tick(ExpandedWildernessVoiceState current, double now, ExpandedWildernessVoiceRankOptions options = default) =>
+                ExpandedWildernessVoice.Step(current, now, Vector2.Zero, Vector2.UnitX, 8, true, 20, 2.5,
+                    4.5, 1.3, 180, () => targets, hits.Add, echoRadiusBonus: .04, rankOptions: options);
+
+            Tick(state, 0, ranks);
+            var cast = state.Active.Single();
+            Check.True(cast.HasExtraEcho);
+            Check.Near(4.95, cast.Reach);
+            Check.Near(5.8, cast.FirstEchoRadius);
+            Check.Near(6.38, cast.SecondEchoRadius);
+            Tick(state, .15);
+            Check.Equal(1, hits.Single().TargetId);
+            Tick(state, 1.4);
+            var corrupt = state.Copy();
+            corrupt.Active.Single().HasExtraEcho = false;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(1.4, true));
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
+            restored.Validate(1.4, true);
+            hits.Clear();
+            Tick(restored, 1.499);
+            Check.Equal(0, hits.Count);
+            Tick(restored, 1.5);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
+            Check.True(hits.All(hit => hit.Kind == ExpandedWildernessVoiceHitKind.ExtraEcho &&
+                hit.Damage == 7 && hit.Knockback == 0 && hit.PulseNumber == 3));
+            Check.Equal(0, restored.Active.Count);
+            restored.Validate(1.5, true);
+
+            var basic = new ExpandedWildernessVoiceState { Cycle = 4 };
+            ExpandedWildernessVoice.Step(basic, 0, Vector2.Zero, Vector2.UnitX, 8, false, 20, 2.5,
+                4.5, 1.3, 45, () => targets, hits.Add, echoRadiusBonus: .04, rankOptions: ranks);
+            Check.Near(4.5, basic.Active.Single().Reach);
+            Check.Equal(0d, basic.Active.Single().EchoRadiusBonus);
+            Check.True(!basic.Active.Single().HasExtraEcho);
+        });
+
         test("Trained voice cone and close knockback use the frozen primary cast after restore", () =>
         {
             var state = new ExpandedWildernessVoiceState();
