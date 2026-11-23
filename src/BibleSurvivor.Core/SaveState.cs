@@ -67,6 +67,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double? LastTempoEliteKillAt { get; set; }
         [DataMember(EmitDefaultValue=false)] public bool TempoOpeningUsed { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryVoiceCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryJawboneCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryLightningCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryLightningStrikes { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryFireCycle { get; set; }
@@ -142,7 +143,7 @@ namespace BibleSurvivor.Core
             if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null ||
                 Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
                 Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
-                Run.BossEntryVoiceCycle != 0 || Run.BossEntryLightningCycle != 0 ||
+                Run.BossEntryVoiceCycle != 0 || Run.BossEntryJawboneCycle != 0 || Run.BossEntryLightningCycle != 0 ||
                 Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0 ||
                 Run.BossEntryStaffCycle != 0 || Run.BossEntryStaffWaves != 0 || Run.BossEntryChariot != null))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
@@ -217,7 +218,8 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Invalid round voice cycle at boss entry");
                 bool InvalidBossCadence(long value, string equipped) => value < 0 || value > 1201 ||
                     value > 0 && (Run.Boss == null || !Run.Weapons.ContainsKey(equipped));
-                if (InvalidBossCadence(Run.BossEntryLightningCycle, "lightning") ||
+                if (InvalidBossCadence(Run.BossEntryJawboneCycle, "jawbone") ||
+                    InvalidBossCadence(Run.BossEntryLightningCycle, "lightning") ||
                     Run.BossEntryLightningStrikes < Run.BossEntryLightningCycle ||
                     Run.BossEntryLightningStrikes > 4 * Run.BossEntryLightningCycle ||
                     InvalidBossCadence(Run.BossEntryFireCycle, "fire_pillar") || InvalidBossCadence(Run.BossEntryCrossCycle, "cross") ||
@@ -377,6 +379,10 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World weapon cadence precedes boss entry");
                 var permanentRanks = Run.PermanentSnapshot;
                 bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
+                if (Run.World.Weapons.Any(clock => clock.WeaponId == "jawbone" &&
+                    (clock.StarterCycle < Run.BossEntryJawboneCycle || clock.JawboneMarks != null && !HasRank("weapon.jawbone.b.03") ||
+                        clock.NextJawboneShockAt.HasValue && !HasRank("weapon.jawbone.b.04"))))
+                    throw new InvalidDataException("Jawbone state requires its frozen ranks and cadence");
                 int WeaponNodeFlags(string prefix)
                 {
                     var flags = 0;
@@ -464,6 +470,8 @@ namespace BibleSurvivor.Core
                     (fire.Spark != null || fire.SparkHitCount != 0 || fire.NextSparkAt.HasValue) && !HasRank("weapon.fire_pillar.c.01") ||
                     fire.Spark?.MakesFire == true && !HasRank("weapon.fire_pillar.c.02") ||
                     fire.NextLinkAt.HasValue && !HasRank("weapon.fire_pillar.c.04") ||
+                    fire.NextGroupRushAt.HasValue && !HasRank("weapon.fire_pillar.e.03") ||
+                    fire.NextMovingFireAt.HasValue && !HasRank("weapon.fire_pillar.e.05") ||
                     (fire.RadiusBoostUntil.HasValue || fire.NextRadiusBoostAt.HasValue || fire.RadiusKillCount != 0) &&
                         !HasRank("weapon.fire_pillar.c.05")))
                     throw new InvalidDataException("Fire pillar cooldowns require their frozen ranks");
@@ -473,6 +481,10 @@ namespace BibleSurvivor.Core
                     region.SupportKind == ExpandedFireSupportKind.CloseRange && !HasRank("weapon.fire_pillar.a.05") ||
                     region.SupportKind == ExpandedFireSupportKind.EliteReignition && !HasRank("weapon.fire_pillar.d.04") ||
                     region.SupportKind == ExpandedFireSupportKind.SparkFire && !HasRank("weapon.fire_pillar.c.02") ||
+                    (region.PursuedGroup != null || region.RushUntil.HasValue) && !HasRank("weapon.fire_pillar.e.03") ||
+                    region.NextRimHitAt.HasValue && !HasRank("weapon.fire_pillar.e.04") ||
+                    (region.TravelSinceMovingFire > 0 || region.SupportKind == ExpandedFireSupportKind.MovingFire) &&
+                        !HasRank("weapon.fire_pillar.e.05") ||
                     region.RepeatedHeat && !HasRank("weapon.fire_pillar.b.04") ||
                     region.AdaptiveHeat && !HasRank("weapon.fire_pillar.d.03") ||
                     region.NativeDuration.HasValue && !HasRank("weapon.fire_pillar.b.05") ||
@@ -592,7 +604,12 @@ namespace BibleSurvivor.Core
                     (lion.Lions.Any(actor => actor.ExtendedLeash && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.a.02") == 0 ||
                         actor.FirstClawPhaseResolved && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.b.02") == 0 ||
                         actor.NextPackRoarAt.HasValue && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.c.01") == 0 ||
-                        actor.ClawHasteUntil.HasValue && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.c.04") == 0) ||
+                        actor.ClawHasteUntil.HasValue && !HasRank("weapon.daniel_lion.c.04") ||
+                        (actor.Pounce != null || actor.NextPounceAt.HasValue) && !HasRank("weapon.daniel_lion.a.03")) ||
+                        (lion.PackCycle != 0 || lion.NextPackLeapAt.HasValue) && !HasRank("weapon.daniel_lion.b.05") ||
+                        lion.TargetHistory?.Any(history =>
+                            history.RecentClaws != null && !HasRank("weapon.daniel_lion.b.03") ||
+                            history.MarkUntil.HasValue && !HasRank("weapon.daniel_lion.b.04")) == true ||
                         lion.Leap?.EmpoweredDamage == true && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.01") == 0 ||
                         (lion.KillLeapReadyAt.HasValue || lion.Leap?.FollowupOnKill == true) &&
                         PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.02") == 0))

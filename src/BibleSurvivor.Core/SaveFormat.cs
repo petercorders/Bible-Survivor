@@ -65,6 +65,12 @@ namespace BibleSurvivor.Core
                 weapon.Members!.Add("StrengthenedFirstPulse", Value);
                 weapon.Members.Add("FrozenPulseRadius", Value);
                 weapon.Members.Add("LastJawboneReach", Value);
+                weapon.Members.Add("LastJawboneHalfAngle", Value);
+                weapon.Members.Add("LastJawboneDirectionX", Value);
+                weapon.Members.Add("LastJawboneDirectionY", Value);
+                weapon.Members.Add("JawboneCycleAmount", Value);
+                weapon.Members.Add("NextJawboneShockAt", Value);
+                weapon.Members.Add("JawboneMarks", Object("LastEliteId ConsecutiveHits", ("Marks", Array(Object("Id At")))));
                 weapon.Members.Add("FrozenOrbitCount", Value);
                 weapon.Members.Add("FrozenOrbitRadius", Value);
                 weapon.Members.Add("FrozenOrbitHitRadius", Value);
@@ -94,9 +100,9 @@ namespace BibleSurvivor.Core
                     ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain UsesFarthestReuse PredecessorTargetId PredecessorX PredecessorY OriginalBaseDamage IsolatedDamage HighHealthDamage RepeatStrikeDamage WiderLastStrike EliteThunderOnHit EliteThunder CurrentRanks GroundRanks EvolutionRanks")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
                     ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho OriginalBaseDamage")))));
-                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle NextClosingEmberAt NextClosingAshAt NextCloseRangeAt NextEliteExtensionAt NormalBurstKills NextNormalBurstAt NextEliteReignitionAt NextCyclePulseAt SparkHitCount NextSparkAt NextLinkAt RadiusKillCount RadiusBoostUntil NextRadiusBoostAt",
+                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle NextClosingEmberAt NextClosingAshAt NextCloseRangeAt NextEliteExtensionAt NormalBurstKills NextNormalBurstAt NextEliteReignitionAt NextCyclePulseAt SparkHitCount NextSparkAt NextLinkAt RadiusKillCount RadiusBoostUntil NextRadiusBoostAt NextGroupRushAt NextMovingFireAt",
                     ("Spark", Object("TargetId X Y StartedAt LastStepAt ParentDamage MakesFire RegionShapeBonus RegionDurationBonus")),
-                    ("Regions", Array(Object("Id Ember SupportKind X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage OriginalBaseDamage RepeatedHeat NativeDuration EliteExtensionUsed AdaptiveHeat",
+                    ("Regions", Array(Object("Id Ember SupportKind X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage OriginalBaseDamage RepeatedHeat NativeDuration EliteExtensionUsed AdaptiveHeat PursuedGroup RushUntil NextRimHitAt TravelSinceMovingFire",
                         ("Contacts", Array(Object("TargetId LastDueAt ConsecutiveHits"))),
                         ("HeatTimers", Array(Object("TargetId EnteredAt LastHitAt"))))))));
                 world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle NextReturnAt NextEndPillarAt NextEliteSplashAt NextResidualCrossAt NextResidualEndAt NextWaterScreenAt NextEncirclingWaveAt NextHostileEraseAt HostileEraseRandomState LastCycleStartedAt LastPlayerHurtObservedAt NextHurtAdvanceAt NextEvolvedReturnAt NextEliteKillLaneAt",
@@ -114,8 +120,10 @@ namespace BibleSurvivor.Core
                     ("Winds", Array(Object("SourcePathId Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Damage Distance HitIds Guaranteed Wider WiderHitShape TurnDirectionX TurnDirectionY"))),
                     ("Spark", Object("SourcePathId Cycle TargetId X Y Damage SpawnedAt SteppedAt")),
                     ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail WidenedSupportShape WiderDamageRegion StaggerIndex ResidualDurationBonus OriginalBaseDamage MakesOriginFire OriginFireTicks MakesBasicTrail WidensEvolvedTrail ExplodesAtEnd RewardsBodyHits FollowsWithWind GuaranteesWind WindChecked WidensWind WidensWindHitShape TracksCrossing MakesEndFlame TurnsMidway MidpointTurnResolved TurnDirectionX TurnDirectionY ReversesAtEnd HasCrossingChild")))));
-                world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits KillLeapReadyAt",
-                    ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget ExtendedLeash FirstClawPhaseResolved NextPackRoarAt ClawHasteUntil"))),
+                world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits KillLeapReadyAt PackCycle NextPackLeapAt",
+                    ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget ExtendedLeash FirstClawPhaseResolved NextPackRoarAt ClawHasteUntil NextPounceAt",
+                        ("Pounce", Object("StartedAt StartX StartY EndX EndY"))))),
+                    ("TargetHistory", Array(Object("TargetId MarkUntil", ("RecentClaws", Array(Object("LionIndex At")))))),
                     ("Leap", Object("At OriginX OriginY Damage VisitedIds EmpoweredDamage FollowupOnKill"))));
             }
             var reward = Object("RewardId PolicyId EligibleEvolutions Applied UnlockedWeapons SelectedId PromotedFrom GoldApplied",("Weapons",integerMap),("Passives",integerMap),("Forms",integerMap),("Candidates",Array(Object("Id Kind ItemId Level Gold"))));
@@ -139,6 +147,7 @@ namespace BibleSurvivor.Core
                 run.Members.Add("LastTempoEliteKillAt", Value);
                 run.Members.Add("TempoOpeningUsed", Value);
                 run.Members.Add("BossEntryVoiceCycle", Value);
+                run.Members.Add("BossEntryJawboneCycle", Value);
                 run.Members.Add("BossEntryLightningCycle", Value);
                 run.Members.Add("BossEntryLightningStrikes", Value);
                 run.Members.Add("BossEntryFireCycle", Value);

@@ -31,6 +31,9 @@ namespace BibleSurvivor.Core
         internal bool SparkLeavesFire { get; }
         internal bool LinkNearbyPillars { get; }
         internal bool EmpowerAfterKills { get; }
+        internal bool RushToNextGroup { get; }
+        internal bool HeatAroundRim { get; }
+        internal bool LeaveMovingFire { get; }
         internal double RegionShapeBonus { get; }
 
         public ExpandedFirePillarSettings(bool preferCrowds, Func<int, bool>? isElite, bool extendedEmbers,
@@ -39,7 +42,8 @@ namespace BibleSurvivor.Core
             double emberDurationBonus = 0, bool closeRangeFire = false, bool leaveClosingEmber = false,
             bool closingAshHit = false, double regionShapeBonus = 0, bool repeatedHeat = false,
             bool extendOnEliteKill = false, bool normalKillBurst = false, bool eliteReignition = false, bool cyclePulse = false, bool adaptiveHeat = false, bool sparkOnSixthHit = false,
-            bool sparkLeavesFire = false, bool linkNearbyPillars = false, bool empowerAfterKills = false)
+            bool sparkLeavesFire = false, bool linkNearbyPillars = false, bool empowerAfterKills = false,
+            bool rushToNextGroup = false, bool heatAroundRim = false, bool leaveMovingFire = false)
         {
             if (!BattleSnapshot.Finite(emberRadiusBonus) || emberRadiusBonus < 0 || emberRadiusBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(emberRadiusBonus));
@@ -68,6 +72,9 @@ namespace BibleSurvivor.Core
             SparkLeavesFire = sparkLeavesFire;
             LinkNearbyPillars = linkNearbyPillars;
             EmpowerAfterKills = empowerAfterKills;
+            RushToNextGroup = rushToNextGroup;
+            HeatAroundRim = heatAroundRim;
+            LeaveMovingFire = leaveMovingFire;
             if (!BattleSnapshot.Finite(regionShapeBonus) || regionShapeBonus < 0 || regionShapeBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(regionShapeBonus));
             RegionShapeBonus = regionShapeBonus;
@@ -97,7 +104,7 @@ namespace BibleSurvivor.Core
         }
     }
 
-    public enum ExpandedFireSupportKind { EvolvedEmber, ClosingEmber, CloseRange, EliteReignition, SparkFire }
+    public enum ExpandedFireSupportKind { EvolvedEmber, ClosingEmber, CloseRange, EliteReignition, SparkFire, MovingFire }
 
     [DataContract]
     public sealed class ExpandedFireContact
@@ -148,6 +155,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public int TargetId { get; set; }
         [DataMember(EmitDefaultValue = false)] public double NextTargetAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double TravelSinceEmber { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<int>? PursuedGroup { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? RushUntil { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextRimHitAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double TravelSinceMovingFire { get; set; }
 
         internal Vector2 Center => new Vector2(X, Y);
         public double IgnitionAt => StartedAt + (Ember ? 0 : FirstDelay ?? ExpandedFirePillar.Profile.FirstAttackDelay);
@@ -157,6 +168,7 @@ namespace BibleSurvivor.Core
             var copy = (ExpandedFireRegion)MemberwiseClone();
             copy.Contacts = Contacts?.Select(contact => contact.Copy()).ToList();
             copy.HeatTimers = HeatTimers?.Select(timer => timer.Copy()).ToList();
+            copy.PursuedGroup = PursuedGroup?.ToList();
             return copy;
         }
     }
@@ -204,6 +216,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public int RadiusKillCount { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? RadiusBoostUntil { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextRadiusBoostAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextGroupRushAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextMovingFireAt { get; set; }
 
         public int ActiveSupportProjectiles => Spark == null ? 0 : 1;
         [DataMember(IsRequired = true)] public List<ExpandedFireRegion> Regions { get; set; } = new List<ExpandedFireRegion>();
@@ -219,6 +233,7 @@ namespace BibleSurvivor.Core
             SparkHitCount = SparkHitCount, NextSparkAt = NextSparkAt, Spark = Spark?.Copy(),
             NextLinkAt = NextLinkAt, RadiusKillCount = RadiusKillCount,
             RadiusBoostUntil = RadiusBoostUntil, NextRadiusBoostAt = NextRadiusBoostAt,
+            NextGroupRushAt = NextGroupRushAt, NextMovingFireAt = NextMovingFireAt,
             Regions = Regions.Select(region => region.Copy()).ToList()
         };
 
@@ -249,6 +264,9 @@ namespace BibleSurvivor.Core
                 !ExpandedFirePillar.ValidCooldown(NextLinkAt, now, 3) ||
                 !ExpandedFirePillar.ValidCooldown(RadiusBoostUntil, now, 5) ||
                 !ExpandedFirePillar.ValidCooldown(NextRadiusBoostAt, now, 5) ||
+                !ExpandedFirePillar.ValidCooldown(NextGroupRushAt, now, 3) ||
+                !ExpandedFirePillar.ValidCooldown(NextMovingFireAt, now, 1.5) ||
+                !evolved && (NextGroupRushAt.HasValue || NextMovingFireAt.HasValue) ||
                 RadiusBoostUntil.HasValue && RadiusBoostUntil != NextRadiusBoostAt ||
                 SparkHitCount < 0 || SparkHitCount >= 6 || NextSparkAt.HasValue && SparkHitCount != 0 ||
                 RadiusKillCount < 0 || RadiusKillCount >= 15 || NextRadiusBoostAt.HasValue && RadiusKillCount != 0 ||
@@ -281,6 +299,7 @@ namespace BibleSurvivor.Core
                     !ExpandedFirePillar.ValidOriginalBaseDamage(region, evolved) ||
                     region.TargetId < 0 || !BattleSnapshot.Finite(region.NextTargetAt) ||
                     region.NextTargetAt < 0 || region.NextTargetAt > now + .5 + epsilon ||
+                    !ExpandedFirePillar.ValidEvolvedSkills(region, now, evolved) ||
                     !BattleSnapshot.Finite(region.TravelSinceEmber) || region.TravelSinceEmber < 0 || region.TravelSinceEmber >= 1)
                     throw new ArgumentException("Invalid expanded fire pillar region");
             }
@@ -342,17 +361,21 @@ namespace BibleSurvivor.Core
             if (state.NextLinkAt <= now + TimeEpsilon) state.NextLinkAt = null;
             if (state.RadiusBoostUntil < now - TimeEpsilon) state.RadiusBoostUntil = null;
             if (state.NextRadiusBoostAt < now - TimeEpsilon) state.NextRadiusBoostAt = null;
+            if (state.NextGroupRushAt <= now + TimeEpsilon) state.NextGroupRushAt = null;
+            if (state.NextMovingFireAt <= now + TimeEpsilon) state.NextMovingFireAt = null;
             var regionShapeBonus = settings.RegionShapeBonus + conditionalRegionBonus;
             EndRegions(state, now, settings, regionShapeBonus, getTargets, hit, reserveEmber, recordSupportSuppression);
             if (evolved)
                 MovePillars(state, now, getTargets(), EmberLifetime *
                     (1 + (settings.ExtendedEmbers ? .20 : 0) + settings.EmberDurationBonus),
-                    EmberRadius * (1 + settings.EmberRadiusBonus + conditionalRegionBonus), reserveEmber, settings.SlowInCrowds,
-                    recordSupportSuppression);
+                    EmberRadius * (1 + settings.EmberRadiusBonus + conditionalRegionBonus), reserveEmber, settings,
+                    regionShapeBonus, recordSupportSuppression);
             state.LastStep = now;
             MoveSpark(state, now, getTargets, hit, reserveEmber, recordSupportSuppression);
             ResolveDue(state, now, getTargets, hit, isElite, settings, regionShapeBonus,
                 reserveEmber, recordSupportSuppression, applyOriginalHit, reserveSupportProjectile);
+            if (evolved && settings.HeatAroundRim)
+                ResolveRimHits(state, now, getTargets, hit);
 
             if (state.NextCycle > now + TimeEpsilon) return 0;
             var targets = getTargets();
@@ -409,6 +432,7 @@ namespace BibleSurvivor.Core
                 TrackHeat(region, start, targets);
                 region.NativeDuration = settings.ExtendOnEliteKill ? Profile.AtLevel(level).Duration : (double?)null;
                 region.NextHit = region.IgnitionAt;
+                if (evolved && settings.HeatAroundRim) region.NextRimHitAt = region.IgnitionAt;
                 if (settings.LinkNearbyPillars && !state.NextLinkAt.HasValue)
                     LinkPillars(state, region, now, regionShapeBonus, getTargets, hit, reserveEmber, recordSupportSuppression);
             }
@@ -499,6 +523,8 @@ namespace BibleSurvivor.Core
             return region.SupportKind switch
             {
                 ExpandedFireSupportKind.EvolvedEmber => evolved,
+                ExpandedFireSupportKind.MovingFire => evolved && region.TargetId == 0 &&
+                    region.NextTargetAt == 0 && region.TravelSinceEmber == 0,
                 ExpandedFireSupportKind.ClosingEmber or ExpandedFireSupportKind.CloseRange or
                     ExpandedFireSupportKind.EliteReignition or ExpandedFireSupportKind.SparkFire => region.TargetId == 0 &&
                     region.NextTargetAt == 0 && region.TravelSinceEmber == 0,
@@ -641,26 +667,42 @@ namespace BibleSurvivor.Core
 
         private static void MovePillars(ExpandedFirePillarState state, double now,
             IReadOnlyDictionary<int, Vector2> targets, double emberDuration, double emberRadius, Func<bool>? reserveEmber,
-            bool slowInCrowds, Action? recordSupportSuppression)
+            ExpandedFirePillarSettings settings, double regionShapeBonus, Action? recordSupportSuppression)
         {
             foreach (var pillar in state.Regions.Where(region => !region.Ember).OrderBy(region => region.Id).ToArray())
             {
-                if (pillar.NextTargetAt <= now + TimeEpsilon)
+                if (pillar.RushUntil <= now + TimeEpsilon) pillar.RushUntil = null;
+                var groupEnded = pillar.PursuedGroup != null && !pillar.PursuedGroup.Any(targets.ContainsKey);
+                if (groupEnded || pillar.NextTargetAt <= now + TimeEpsilon)
                 {
-                    var due = pillar.NextTargetAt == 0 ? Math.Max(state.LastStep, pillar.StartedAt) : pillar.NextTargetAt;
+                    var due = groupEnded ? now :
+                        pillar.NextTargetAt == 0 ? Math.Max(state.LastStep, pillar.StartedAt) : pillar.NextTargetAt;
                     pillar.NextTargetAt = due + HitInterval;
                     pillar.TargetId = targets
                         .OrderByDescending(candidate => targets.Count(other => InRange(candidate.Value, other.Value, CrowdRadius)))
                         .ThenBy(candidate => Vector2.DistanceSquared(candidate.Value, pillar.Center))
                         .ThenBy(candidate => candidate.Key).Select(candidate => candidate.Key).FirstOrDefault();
+                    if (settings.RushToNextGroup)
+                    {
+                        pillar.PursuedGroup = targets.TryGetValue(pillar.TargetId, out var anchor)
+                            ? targets.Where(target => InRange(anchor, target.Value, CrowdRadius))
+                                .Select(target => target.Key).OrderBy(id => id).ToList()
+                            : null;
+                        if (groupEnded && pillar.PursuedGroup != null && !state.NextGroupRushAt.HasValue)
+                        {
+                            pillar.RushUntil = now + 1;
+                            state.NextGroupRushAt = now + 3;
+                        }
+                    }
                 }
                 if (!targets.TryGetValue(pillar.TargetId, out var target)) continue;
                 var from = pillar.Center;
                 var delta = target - from;
                 var distance = delta.Length();
                 if (distance <= 1e-7f) continue;
-                var speed = slowInCrowds && targets.Values.Count(position => InRange(from, position, CrowdRadius)) >= 4
+                var speed = settings.SlowInCrowds && targets.Values.Count(position => InRange(from, position, CrowdRadius)) >= 4
                     ? MotionSpeed * CrowdMotionMultiplier : MotionSpeed;
+                if (pillar.RushUntil.HasValue) speed *= 1.25;
                 var movement = Math.Min(distance, speed * (now - Math.Max(state.LastStep, pillar.StartedAt)));
                 var direction = delta / distance;
                 var center = from + direction * (float)movement;
@@ -675,6 +717,47 @@ namespace BibleSurvivor.Core
                     else recordSupportSuppression?.Invoke();
                 }
                 pillar.TravelSinceEmber = (pillar.TravelSinceEmber + movement) % 1;
+                if (!settings.LeaveMovingFire) continue;
+                var firstFire = 2 - pillar.TravelSinceMovingFire;
+                if (firstFire <= movement && !state.NextMovingFireAt.HasValue &&
+                    ReserveSupport(state, reserveEmber, recordSupportSuppression))
+                {
+                    var fire = Create(state, from + direction * (float)firstFire, now, pillar.Damage * .25,
+                        .7 * (1 + regionShapeBonus), 1.5 + settings.EmberDurationBonus, true);
+                    fire.SupportKind = ExpandedFireSupportKind.MovingFire;
+                    state.NextMovingFireAt = now + 1.5;
+                }
+                pillar.TravelSinceMovingFire = (pillar.TravelSinceMovingFire + movement) % 2;
+            }
+        }
+
+        internal static bool ValidEvolvedSkills(ExpandedFireRegion region, double now, bool evolved)
+        {
+            var hasState = region.PursuedGroup != null || region.RushUntil.HasValue || region.NextRimHitAt.HasValue ||
+                region.TravelSinceMovingFire != 0;
+            return (!hasState || evolved && !region.Ember) &&
+                ValidCooldown(region.RushUntil, now, 1) && ValidCooldown(region.NextRimHitAt, now, .75) &&
+                (!region.NextRimHitAt.HasValue || region.NextRimHitAt >= region.IgnitionAt - TimeEpsilon) &&
+                (region.PursuedGroup == null || region.PursuedGroup.Count > 0 && region.PursuedGroup.Count <= 120 &&
+                    region.PursuedGroup.All(id => id > 0) && region.PursuedGroup.Distinct().Count() == region.PursuedGroup.Count &&
+                    region.PursuedGroup.Contains(region.TargetId)) &&
+                BattleSnapshot.Finite(region.TravelSinceMovingFire) && region.TravelSinceMovingFire >= 0 &&
+                region.TravelSinceMovingFire < 2;
+        }
+
+        private static void ResolveRimHits(ExpandedFirePillarState state, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit)
+        {
+            var due = state.Regions.Where(region => region.NextRimHitAt <= now + TimeEpsilon).ToArray();
+            if (due.Length == 0) return;
+            foreach (var region in due) region.NextRimHitAt += .75;
+            foreach (var target in targets().OrderBy(pair => pair.Key).ToArray())
+            {
+                var winner = due.Where(region => InRange(region.Center, target.Value, region.Radius) &&
+                        !InRange(region.Center, target.Value, region.Radius * .8 - TimeEpsilon))
+                    .OrderByDescending(region => region.Damage).ThenBy(region => region.Id).FirstOrDefault();
+                if (winner != null)
+                    hit(new ExpandedFirePillarHit(target.Key, target.Value, winner.Damage * .20, true, 0, 0, 0));
             }
         }
 

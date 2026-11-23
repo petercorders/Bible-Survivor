@@ -56,6 +56,7 @@ internal static class Program
         ExpandedElijahChariotTests.Register(Test);
         ExpandedFirePillarTests.Register(Test);
         ExpandedDanielLionTests.Register(Test);
+        ExpandedJawboneRanksTests.Register(Test);
         PermanentOriginalHitRulesTests.Register(Test);
         PermanentRecoveryRulesTests.Register(Test);
         PermanentTempoRulesTests.Register(Test);

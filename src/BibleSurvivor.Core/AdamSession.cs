@@ -172,7 +172,10 @@ namespace BibleSurvivor.Core
             sparkOnSixthHit: HasExpandedSkill("weapon.fire_pillar.c.01"),
             sparkLeavesFire: HasExpandedSkill("weapon.fire_pillar.c.02"),
             linkNearbyPillars: HasExpandedSkill("weapon.fire_pillar.c.04"),
-            empowerAfterKills: HasExpandedSkill("weapon.fire_pillar.c.05"));
+            empowerAfterKills: HasExpandedSkill("weapon.fire_pillar.c.05"),
+            rushToNextGroup: HasExpandedSkill("weapon.fire_pillar.e.03"),
+            heatAroundRim: HasExpandedSkill("weapon.fire_pillar.e.04"),
+            leaveMovingFire: HasExpandedSkill("weapon.fire_pillar.e.05"));
         private double StaticRegionShapeBonus() =>
             (HasExpandedSkill("common.area.01") ? .04 : 0) + (HasExpandedSkill("common.area.09") ? .06 : 0);
         internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
@@ -188,6 +191,12 @@ namespace BibleSurvivor.Core
         internal PermanentAreaProfile AreaProfile(bool evolved = false, bool surrounded = false) => HasExpandedSkill("common.area.01")
             ? PermanentAreaRules.Evaluate(run.PermanentSnapshot, HealthRatio <= .30, surrounded, evolved) : default;
         internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
+        internal long BossEntryJawboneCycle => run.Stage == "boss" ? run.BossEntryJawboneCycle : 0;
+        internal void RecordJawboneCyclesAtBossEntry(long cycle)
+        {
+            if (CombatRulesVersion == 2) run.BossEntryJawboneCycle = cycle;
+        }
+        internal ExpandedJawboneRanks JawboneRanks() => ExpandedJawboneRanks.FromRanks(run.PermanentSnapshot);
         internal void RecordVoiceCyclesAtBossEntry(long cycle)
         {
             if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
@@ -510,6 +519,7 @@ namespace BibleSurvivor.Core
             target.LastTempoEliteKillAt = null;
             target.TempoOpeningUsed = false;
             target.BossEntryVoiceCycle = 0;
+            target.BossEntryJawboneCycle = 0;
             target.BossEntryLightningCycle = 0;
             target.BossEntryLightningStrikes = 0;
             target.BossEntryFireCycle = 0;

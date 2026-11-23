@@ -10,14 +10,21 @@ namespace BibleSurvivor.Unity
         public const double Duration=.2;
         public double Started {get;private set;}=-1;
         public Vector2 Direction {get;private set;}=Vector2.right;
-        public void Clear(){Started=-1;Direction=Vector2.right;}
+        private float sampledArc;
+        public void Clear(){Started=-1;Direction=Vector2.right;sampledArc=0;}
         public void Observe(BattleSnapshot snapshot,int amount,double interval)
         {
             foreach(var weapon in snapshot.Weapons)if(weapon.WeaponId=="jawbone")
             {
-                var at=AdamArtWorld.LatestJawboneBurst(weapon,snapshot.Time,amount,interval);
+                var at=AdamArtWorld.LatestJawboneBurst(weapon,snapshot.Time,
+                    weapon.JawboneCycleAmount > 0 ? weapon.JawboneCycleAmount : amount,interval);
                 if(at>=0 && (Started<0 || at>Started+1e-9))
-                {Started=at;Direction=new Vector2(snapshot.FacingX,snapshot.FacingY);}
+                {
+                    Started=at;
+                    sampledArc=(float)weapon.LastJawboneHalfAngle*2;
+                    Direction=sampledArc>0 ? new Vector2(weapon.LastJawboneDirectionX,weapon.LastJawboneDirectionY) :
+                        new Vector2(snapshot.FacingX,snapshot.FacingY);
+                }
                 break;
             }
         }
@@ -42,6 +49,7 @@ namespace BibleSurvivor.Unity
             float arcDegrees = 120)
         {
             if(!Active(clock))return;var elapsed=clock-Started;var hand=Hand(feet,scale,playerLeft);
+            if (sampledArc>0) arcDegrees=sampledArc;
             var matrix=GUI.matrix;var color=GUI.color;
             try
             {

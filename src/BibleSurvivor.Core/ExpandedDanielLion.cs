@@ -12,6 +12,7 @@ namespace BibleSurvivor.Core
         Leap,
         Roar,
         KillFollowupLeap,
+        PackLeap,
     }
 
     public readonly struct ExpandedDanielLionRankOptions
@@ -30,12 +31,20 @@ namespace BibleSurvivor.Core
         public bool FollowUpLeapKill { get; }
         public bool WidenCommonArea { get; }
         public bool WidenDamageRegion { get; }
+        public bool PounceOnPursuit { get; }
+        public bool ReacquireAfterDeath { get; }
+        public bool FinishLowNormalTargets { get; }
+        public bool CooperateOnClaw { get; }
+        public bool MarkEliteOnClaw { get; }
+        public bool AddPackLeap { get; }
 
         public ExpandedDanielLionRankOptions(bool prioritizeElite = false, bool extendLeash = false,
             bool spreadNormalTargets = false, bool staggerFirstBossClaw = false, bool empowerLeap = false,
             bool addPackRoar = false, bool widenRoar = false, bool strengthenRoarKnockback = false,
             bool hastenClawsAfterRoar = false, bool staggerPackRoar = false, bool widenEvolvedClaw = false,
-            bool followUpLeapKill = false, bool widenCommonArea = false, bool widenDamageRegion = false)
+            bool followUpLeapKill = false, bool widenCommonArea = false, bool widenDamageRegion = false,
+            bool pounceOnPursuit = false, bool reacquireAfterDeath = false, bool finishLowNormalTargets = false,
+            bool cooperateOnClaw = false, bool markEliteOnClaw = false, bool addPackLeap = false)
         {
             PrioritizeElite = prioritizeElite;
             ExtendLeash = extendLeash;
@@ -51,6 +60,12 @@ namespace BibleSurvivor.Core
             FollowUpLeapKill = followUpLeapKill;
             WidenCommonArea = widenCommonArea;
             WidenDamageRegion = widenDamageRegion;
+            PounceOnPursuit = pounceOnPursuit;
+            ReacquireAfterDeath = reacquireAfterDeath;
+            FinishLowNormalTargets = finishLowNormalTargets;
+            CooperateOnClaw = cooperateOnClaw;
+            MarkEliteOnClaw = markEliteOnClaw;
+            AddPackLeap = addPackLeap;
         }
 
         public static ExpandedDanielLionRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -60,7 +75,9 @@ namespace BibleSurvivor.Core
             return new ExpandedDanielLionRankOptions(Has("weapon.daniel_lion.a.01"), Has("weapon.daniel_lion.a.02"),
                 Has("weapon.daniel_lion.b.01"), Has("weapon.daniel_lion.b.02"), Has("weapon.daniel_lion.e.01"),
                 Has("weapon.daniel_lion.c.01"), Has("weapon.daniel_lion.c.02"), Has("weapon.daniel_lion.c.03"),
-                Has("weapon.daniel_lion.c.04"), Has("weapon.daniel_lion.c.05"), Has("weapon.daniel_lion.e.03"), Has("weapon.daniel_lion.e.02"), Has("common.area.01"), Has("common.area.09"));
+                Has("weapon.daniel_lion.c.04"), Has("weapon.daniel_lion.c.05"), Has("weapon.daniel_lion.e.03"), Has("weapon.daniel_lion.e.02"), Has("common.area.01"), Has("common.area.09"),
+                Has("weapon.daniel_lion.a.03"), Has("weapon.daniel_lion.a.04"), Has("weapon.daniel_lion.a.05"),
+                Has("weapon.daniel_lion.b.03"), Has("weapon.daniel_lion.b.04"), Has("weapon.daniel_lion.b.05"));
         }
 
         public double RoarRadius(bool guardian) =>
@@ -96,6 +113,24 @@ namespace BibleSurvivor.Core
     }
 
     [DataContract]
+    public sealed class ExpandedDanielLionPounceState
+    {
+        [DataMember(IsRequired = true)] public double StartedAt { get; set; }
+        [DataMember(IsRequired = true)] public float StartX { get; set; }
+        [DataMember(IsRequired = true)] public float StartY { get; set; }
+        [DataMember(IsRequired = true)] public float EndX { get; set; }
+        [DataMember(IsRequired = true)] public float EndY { get; set; }
+
+        public Vector2 Start => new Vector2(StartX, StartY);
+        public Vector2 End => new Vector2(EndX, EndY);
+        public double EndsAt => StartedAt + ExpandedDanielLion.PounceDuration;
+        public Vector2 PositionAt(double now) => Vector2.Lerp(Start, End,
+            (float)Math.Max(0, Math.Min(1, (now - StartedAt) / ExpandedDanielLion.PounceDuration)));
+
+        internal ExpandedDanielLionPounceState Copy() => (ExpandedDanielLionPounceState)MemberwiseClone();
+    }
+
+    [DataContract]
     public sealed class ExpandedDanielLionActorState
     {
         [DataMember(IsRequired = true)] public int Index { get; set; }
@@ -109,6 +144,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool FirstClawPhaseResolved { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextPackRoarAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? ClawHasteUntil { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextPounceAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public ExpandedDanielLionPounceState? Pounce { get; set; }
 
         public Vector2 Position
         {
@@ -116,7 +153,12 @@ namespace BibleSurvivor.Core
             internal set { X = value.X; Y = value.Y; }
         }
 
-        internal ExpandedDanielLionActorState Copy() => (ExpandedDanielLionActorState)MemberwiseClone();
+        internal ExpandedDanielLionActorState Copy()
+        {
+            var copy = (ExpandedDanielLionActorState)MemberwiseClone();
+            copy.Pounce = Pounce?.Copy();
+            return copy;
+        }
     }
 
     [DataContract]
@@ -145,6 +187,29 @@ namespace BibleSurvivor.Core
     }
 
     [DataContract]
+    public sealed class ExpandedDanielLionClawReceipt
+    {
+        [DataMember(IsRequired = true)] public int LionIndex { get; set; }
+        [DataMember(IsRequired = true)] public double At { get; set; }
+        internal ExpandedDanielLionClawReceipt Copy() => (ExpandedDanielLionClawReceipt)MemberwiseClone();
+    }
+
+    [DataContract]
+    public sealed class ExpandedDanielLionTargetHistory
+    {
+        [DataMember(IsRequired = true)] public int TargetId { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? MarkUntil { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedDanielLionClawReceipt>? RecentClaws { get; set; }
+
+        internal ExpandedDanielLionTargetHistory Copy() => new ExpandedDanielLionTargetHistory
+        {
+            TargetId = TargetId,
+            MarkUntil = MarkUntil,
+            RecentClaws = RecentClaws?.Select(claw => claw.Copy()).ToList(),
+        };
+    }
+
+    [DataContract]
     public sealed class ExpandedDanielLionState
     {
         [DataMember(IsRequired = true)] public bool Evolved { get; set; }
@@ -155,6 +220,9 @@ namespace BibleSurvivor.Core
             new List<ExpandedDanielLionActorState>();
         [DataMember(EmitDefaultValue = false)] public ExpandedDanielLionLeapState? Leap { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? KillLeapReadyAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedDanielLionTargetHistory>? TargetHistory { get; set; }
+        [DataMember(EmitDefaultValue = false)] public long PackCycle { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextPackLeapAt { get; set; }
 
         public ExpandedDanielLionState Copy() => new ExpandedDanielLionState
         {
@@ -165,6 +233,9 @@ namespace BibleSurvivor.Core
             Lions = Lions.Select(lion => lion.Copy()).ToList(),
             Leap = Leap?.Copy(),
             KillLeapReadyAt = KillLeapReadyAt,
+            TargetHistory = TargetHistory?.Select(history => history.Copy()).ToList(),
+            PackCycle = PackCycle,
+            NextPackLeapAt = NextPackLeapAt,
         };
 
         // Form change cancels reservations without moving the other permanent summons.
@@ -184,6 +255,7 @@ namespace BibleSurvivor.Core
                 lion.WaitingForTarget = false;
                 lion.NextPackRoarAt = null;
                 lion.ClawHasteUntil = null;
+                lion.Pounce = null;
             }
         }
 
@@ -193,7 +265,10 @@ namespace BibleSurvivor.Core
             if (!BattleSnapshot.Finite(now) || now < 0 || Evolved != evolved ||
                 !BattleSnapshot.Finite(LastStepAt) || LastStepAt < 0 || LastStepAt > now + epsilon ||
                 Lions == null || Lions.Count > ExpandedDanielLion.MaximumAmount ||
-                GuardianHits < 0 || GuardianHits > 0 && Lions.Count == 0 ||
+                GuardianHits < 0 || GuardianHits > 0 && Lions.Count == 0 || PackCycle < 0 ||
+                PackCycle > Math.Ceiling(LastStepAt / ExpandedDanielLion.MinimumCycle) + 1 ||
+                NextPackLeapAt.HasValue && PackCycle < ExpandedDanielLion.ClawsPerPackLeap ||
+                !ExpandedDanielLion.ValidFutureTime(NextPackLeapAt, LastStepAt, ExpandedDanielLion.PackLeapCooldown) ||
                 (evolved ? !BattleSnapshot.Finite(NextRoarAt) || NextRoarAt < LastStepAt - epsilon ||
                     NextRoarAt > LastStepAt + ExpandedDanielLion.RoarInterval + epsilon ||
                     !ExpandedDanielLion.ValidFutureTime(KillLeapReadyAt, LastStepAt, ExpandedDanielLion.KillLeapCooldown) :
@@ -210,12 +285,15 @@ namespace BibleSurvivor.Core
                     lion.WaitingForTarget && lion.NextClawAt > LastStepAt + epsilon ||
                     !ExpandedDanielLion.ValidFutureTime(lion.NextPackRoarAt, LastStepAt,
                         ExpandedDanielLion.RoarInterval + index * ExpandedDanielLion.PackRoarPhasePerIndex) ||
-                    !ExpandedDanielLion.ValidFutureTime(lion.ClawHasteUntil, LastStepAt, ExpandedDanielLion.ClawHasteDuration))
+                    !ExpandedDanielLion.ValidFutureTime(lion.ClawHasteUntil, LastStepAt, ExpandedDanielLion.ClawHasteDuration) ||
+                    !ExpandedDanielLion.ValidFutureTime(lion.NextPounceAt, LastStepAt, ExpandedDanielLion.PounceCooldown) ||
+                    !ExpandedDanielLion.ValidPounce(lion, LastStepAt))
                     throw new ArgumentException("Invalid Daniel lion actor");
             }
 
+            ValidateTargetHistory();
             var leap = Leap;
-            if (leap != null && (Lions.Count == 0 || Lions[0].Returning ||
+            if (leap != null && (Lions.Count == 0 || Lions[0].Returning || Lions[0].Pounce != null ||
                 GuardianHits == 0 || GuardianHits % ExpandedDanielLion.ClawsPerLeap != 0 ||
                 !BattleSnapshot.Position(leap.OriginX, leap.OriginY) || !BattleSnapshot.Finite(leap.At) ||
                 leap.At < LastStepAt - epsilon || leap.At > LastStepAt + ExpandedDanielLion.LeapInterval + epsilon ||
@@ -223,6 +301,33 @@ namespace BibleSurvivor.Core
                 leap.VisitedIds == null || leap.VisitedIds.Count < 1 || leap.VisitedIds.Count > 2 ||
                 leap.VisitedIds.Any(id => id < 1) || leap.VisitedIds.Distinct().Count() != leap.VisitedIds.Count))
                 throw new ArgumentException("Invalid Daniel lion leap");
+        }
+
+        private void ValidateTargetHistory()
+        {
+            if (TargetHistory == null) return;
+            if (TargetHistory.Count == 0 || TargetHistory.Count > ExpandedDanielLion.MaximumTrackedTargets)
+                throw new ArgumentException("Invalid Daniel lion targeting history count");
+            var previousId = 0;
+            foreach (var history in TargetHistory)
+            {
+                if (history == null || history.TargetId <= previousId || !history.MarkUntil.HasValue && history.RecentClaws == null ||
+                    !ExpandedDanielLion.ValidFutureTime(history.MarkUntil, LastStepAt, ExpandedDanielLion.MarkDuration))
+                    throw new ArgumentException("Invalid Daniel lion target history");
+                previousId = history.TargetId;
+                if (history.RecentClaws == null) continue;
+                if (history.RecentClaws.Count == 0 || history.RecentClaws.Count > ExpandedDanielLion.MaximumAmount)
+                    throw new ArgumentException("Invalid Daniel lion claw receipt count");
+                var previousIndex = -1;
+                foreach (var claw in history.RecentClaws)
+                {
+                    if (claw == null || claw.LionIndex <= previousIndex || claw.LionIndex >= ExpandedDanielLion.MaximumAmount ||
+                        !BattleSnapshot.Finite(claw.At) || claw.At < 0 || claw.At > LastStepAt + ExpandedDanielLion.TimeEpsilon ||
+                        claw.At < LastStepAt - ExpandedDanielLion.CooperationDuration - ExpandedDanielLion.TimeEpsilon)
+                        throw new ArgumentException("Invalid Daniel lion claw receipt");
+                    previousIndex = claw.LionIndex;
+                }
+            }
         }
     }
 
@@ -251,7 +356,17 @@ namespace BibleSurvivor.Core
         private const double GuardianRoarDamageFactor = .35;
         private const double PackRoarDamageFactor = .25;
         private const double GuardianRoarKnockback = .45;
-        private const double MinimumCycle = .15;
+        internal const double MinimumCycle = .15;
+        internal const double PounceDuration = .25;
+        internal const double PounceCooldown = 3;
+        internal const double PounceMinimumDistance = 2;
+        internal const double PounceMaximumDistance = 2.5;
+        internal const double CooperationDuration = 1;
+        internal const double MarkDuration = 2;
+        internal const int MaximumTrackedTargets = 120;
+        internal const int ClawsPerPackLeap = 6;
+        internal const double PackLeapCooldown = 4;
+        private const double PackLeapFactor = .35;
 
         // A hit callback returns true for accepted damage, including a kill. Only accepted
         // original claws count toward the next guardian leap or the returned original count.
@@ -259,13 +374,18 @@ namespace BibleSurvivor.Core
             bool evolved, double damage, double cycle, int amount, double radius, double speed,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedDanielLionHit, bool> applyHit,
             ExpandedDanielLionRankOptions rankOptions = default, Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null,
-            Func<double>? afterClaw = null)
+            Func<double>? afterClaw = null, Func<int, double>? targetHealthRatio = null,
+            Func<ExpandedDanielLionHit, double?>? applyOriginalHit = null, Func<bool>? reserveSupportLeap = null,
+            Action? recordSupportSuppression = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
-            if ((rankOptions.PrioritizeElite || rankOptions.SpreadNormalTargets) && isElite == null)
+            if ((rankOptions.PrioritizeElite || rankOptions.SpreadNormalTargets || rankOptions.FinishLowNormalTargets ||
+                rankOptions.MarkEliteOnClaw) && isElite == null)
                 throw new ArgumentNullException(nameof(isElite));
+            if (rankOptions.FinishLowNormalTargets && targetHealthRatio == null)
+                throw new ArgumentNullException(nameof(targetHealthRatio));
             if (rankOptions.StaggerFirstBossClaw && isBoss == null) throw new ArgumentNullException(nameof(isBoss));
             if (!BattleSnapshot.Finite(now) || now < state.LastStepAt - TimeEpsilon || now < 0 ||
                 !BattleSnapshot.Position(playerPosition.X, playerPosition.Y) ||
@@ -280,18 +400,34 @@ namespace BibleSurvivor.Core
             var distance = Math.Max(0, Math.Min(BattleWorld.FixedStep, now - state.LastStepAt)) * speed;
             state.LastStepAt = now;
             if (state.KillLeapReadyAt <= now + TimeEpsilon) state.KillLeapReadyAt = null;
+            if (state.NextPackLeapAt <= now + TimeEpsilon) state.NextPackLeapAt = null;
+            PruneTargetHistory(state, now, targets);
             if (evolved && rankOptions.WidenEvolvedClaw)
                 radius = Math.Min(MaximumRadius, radius + Profile.AtLevel(1).Radius * .12);
             var levelProfile = Profile.AtLevel(level);
             var originals = 0;
+            double packLeapDamage = 0;
             var assigned = new HashSet<int>();
+            Func<ExpandedDanielLionHit, double?> resolveOriginal = applyOriginalHit ??
+                (hit => applyHit(hit) ? hit.Damage : (double?)null);
             foreach (var lion in state.Lions)
             {
                 var guardian = evolved && lion.Index == 0;
                 if (lion.ClawHasteUntil <= now + TimeEpsilon) lion.ClawHasteUntil = null;
-                if (AdvanceLion(state, lion, guardian, now, playerPosition, damage, cycle, radius,
-                    distance, assigned, targets, applyHit, rankOptions, isElite, isBoss, afterClaw, levelProfile))
+                if (lion.Pounce == null && lion.NextPounceAt <= now + TimeEpsilon) lion.NextPounceAt = null;
+                var applied = AdvanceLion(state, lion, guardian, now, playerPosition, damage, cycle, radius,
+                    distance, assigned, targets, applyHit, resolveOriginal, rankOptions, isElite, isBoss, targetHealthRatio,
+                    afterClaw, levelProfile);
+                if (applied > 0)
+                {
                     originals++;
+                    if (lion.Index == 0 && rankOptions.AddPackLeap)
+                    {
+                        state.PackCycle = checked(state.PackCycle + 1);
+                        if (state.PackCycle % ClawsPerPackLeap == 0 && !state.NextPackLeapAt.HasValue)
+                            packLeapDamage = applied * PackLeapFactor;
+                    }
+                }
                 if (guardian && state.NextRoarAt <= now + TimeEpsilon)
                 {
                     state.NextRoarAt += RoarInterval;
@@ -300,6 +436,9 @@ namespace BibleSurvivor.Core
                 if (rankOptions.AddPackRoar)
                     AdvancePackRoar(lion, now, damage, rankOptions, targets, applyHit);
             }
+            if (packLeapDamage > 0)
+                ApplyPackLeap(state, now, playerPosition, packLeapDamage, targets, applyHit, reserveSupportLeap, recordSupportSuppression);
+            PruneTargetHistory(state, now, targets);
             return originals;
         }
 
@@ -317,22 +456,24 @@ namespace BibleSurvivor.Core
                 });
         }
 
-        private static bool AdvanceLion(ExpandedDanielLionState state, ExpandedDanielLionActorState lion,
+        private static double AdvanceLion(ExpandedDanielLionState state, ExpandedDanielLionActorState lion,
             bool guardian, double now, Vector2 player, double damage, double cycle, double radius,
             double distance, HashSet<int> assigned, Func<IReadOnlyDictionary<int, Vector2>> targets,
-            Func<ExpandedDanielLionHit, bool> applyHit, ExpandedDanielLionRankOptions ranks,
-            Func<int, bool>? isElite, Func<int, bool>? isBoss, Func<double>? afterClaw, ExpandedWeaponLevel levelProfile)
+            Func<ExpandedDanielLionHit, bool> applyHit, Func<ExpandedDanielLionHit, double?> applyOriginalHit,
+            ExpandedDanielLionRankOptions ranks, Func<int, bool>? isElite, Func<int, bool>? isBoss,
+            Func<int, double>? targetHealthRatio, Func<double>? afterClaw, ExpandedWeaponLevel levelProfile)
         {
             var leash = (float)(Profile.LeashDistance * (lion.ExtendedLeash ? 1.15 : 1));
             if (!Within(lion.Position, player, leash)) lion.Returning = true;
             if (lion.Returning)
             {
                 lion.TargetId = 0;
+                lion.Pounce = null;
                 MarkWaitingIfDue(lion, now);
                 if (guardian) state.Leap = null;
                 lion.Position = Move(lion.Position, player, distance, Profile.ReturnRadius);
                 lion.Returning = !Within(lion.Position, player, Profile.ReturnRadius);
-                return false;
+                return 0;
             }
 
             if (guardian && state.Leap != null)
@@ -340,7 +481,34 @@ namespace BibleSurvivor.Core
                 lion.TargetId = 0;
                 MarkWaitingIfDue(lion, now);
                 AdvanceLeap(state, lion, now, player, targets, applyHit);
-                return false;
+                return 0;
+            }
+
+            if (lion.Pounce is { } pounce)
+            {
+                if (ranks.ReacquireAfterDeath && !targets().ContainsKey(lion.TargetId))
+                    lion.Pounce = null;
+                else
+                {
+                    var position = pounce.PositionAt(now);
+                    if (!Within(position, player, leash))
+                    {
+                        lion.Returning = true;
+                        lion.TargetId = 0;
+                        lion.Pounce = null;
+                        MarkWaitingIfDue(lion, now);
+                        return 0;
+                    }
+                    lion.Position = position;
+                    if (now < pounce.EndsAt - TimeEpsilon)
+                    {
+                        assigned.Add(lion.TargetId);
+                        MarkWaitingIfDue(lion, now);
+                        return 0;
+                    }
+                    lion.Pounce = null;
+                    distance *= Math.Max(0, Math.Min(1, (now - pounce.EndsAt) / BattleWorld.FixedStep));
+                }
             }
 
             var from = lion.Position;
@@ -350,16 +518,28 @@ namespace BibleSurvivor.Core
             {
                 MarkWaitingIfDue(lion, now);
                 lion.Position = Move(from, player, distance, Profile.ReturnRadius);
-                return false;
+                return 0;
             }
 
             assigned.Add(target.Key);
+            if (ranks.PounceOnPursuit && !lion.NextPounceAt.HasValue &&
+                DistanceSquared(from, target.Value) >= PounceMinimumDistance * PounceMinimumDistance - DistanceEpsilon)
+            {
+                var end = Move(from, target.Value, PounceMaximumDistance, 0);
+                lion.Pounce = new ExpandedDanielLionPounceState
+                {
+                    StartedAt = now, StartX = from.X, StartY = from.Y, EndX = end.X, EndY = end.Y,
+                };
+                lion.NextPounceAt = now + PounceCooldown;
+                MarkWaitingIfDue(lion, now);
+                return 0;
+            }
             lion.Position = Move(from, target.Value, distance, radius);
-            if (lion.NextClawAt > now + TimeEpsilon) return false;
+            if (lion.NextClawAt > now + TimeEpsilon) return 0;
             if (!Within(lion.Position, target.Value, radius))
             {
                 lion.WaitingForTarget = true;
-                return false;
+                return 0;
             }
             if (ranks.StaggerFirstBossClaw && !lion.FirstClawPhaseResolved &&
                 lion.Index > 0 && candidateCount == 1 && isBoss!(target.Key))
@@ -367,14 +547,30 @@ namespace BibleSurvivor.Core
                 lion.FirstClawPhaseResolved = true;
                 lion.NextClawAt = now + lion.Index * FirstBossClawPhasePerIndex;
                 lion.WaitingForTarget = false;
-                return false;
+                return 0;
             }
-            if (!applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Claw,
-                    lion.Index, target.Key, target.Value, lion.Position, damage, originalBaseDamage: levelProfile.Damage)))
+            var elite = (ranks.FinishLowNormalTargets || ranks.MarkEliteOnClaw) && isElite!(target.Key);
+            var history = state.TargetHistory?.Find(entry => entry.TargetId == target.Key);
+            var bonus = ranks.CooperateOnClaw && history?.RecentClaws?.Any(entry => entry.LionIndex != lion.Index) == true ? .08 : 0;
+            if (ranks.MarkEliteOnClaw && history?.MarkUntil >= now - TimeEpsilon) bonus += .06;
+            if (ranks.FinishLowNormalTargets && !elite)
+            {
+                var health = targetHealthRatio!(target.Key);
+                if (!BattleSnapshot.Finite(health) || health < 0 || health > 1)
+                    throw new ArgumentOutOfRangeException(nameof(targetHealthRatio));
+                if (health <= .25) bonus += .10;
+            }
+            var clawDamage = bonus > 0 ? Math.Min(levelProfile.Damage * 2.25, damage + levelProfile.Damage * bonus) : damage;
+            var acceptedDamage = applyOriginalHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Claw,
+                lion.Index, target.Key, target.Value, lion.Position, clawDamage, originalBaseDamage: levelProfile.Damage));
+            if (!acceptedDamage.HasValue || acceptedDamage.Value <= 0)
             {
                 lion.WaitingForTarget = true;
-                return false;
+                return 0;
             }
+
+            if ((ranks.CooperateOnClaw || ranks.MarkEliteOnClaw && elite) && targets().ContainsKey(target.Key))
+                RecordTargetHistory(state, history, target.Key, lion.Index, now, ranks.CooperateOnClaw, ranks.MarkEliteOnClaw && elite);
 
             var at = lion.WaitingForTarget ? now : lion.NextClawAt;
             var nextWait = afterClaw?.Invoke() ?? cycle;
@@ -392,13 +588,86 @@ namespace BibleSurvivor.Core
                 state.Leap = new ExpandedDanielLionLeapState
                 {
                     At = at + LeapInterval,
-                    Damage = damage,
+                    Damage = acceptedDamage.Value,
                     Origin = target.Value,
                     VisitedIds = new List<int> { target.Key },
                     EmpoweredDamage = ranks.EmpowerLeap,
                     FollowupOnKill = ranks.FollowUpLeapKill,
                 };
-            return true;
+            return acceptedDamage.Value;
+        }
+
+        private static void PruneTargetHistory(ExpandedDanielLionState state, double now, Func<IReadOnlyDictionary<int, Vector2>> targets)
+        {
+            if (state.TargetHistory == null) return;
+            var current = targets();
+            foreach (var history in state.TargetHistory)
+            {
+                if (history.MarkUntil < now - TimeEpsilon) history.MarkUntil = null;
+                history.RecentClaws?.RemoveAll(claw => claw.At < now - CooperationDuration - TimeEpsilon);
+                if (history.RecentClaws?.Count == 0) history.RecentClaws = null;
+            }
+            state.TargetHistory.RemoveAll(history => !current.ContainsKey(history.TargetId) ||
+                !history.MarkUntil.HasValue && history.RecentClaws == null);
+            if (state.TargetHistory.Count == 0) state.TargetHistory = null;
+        }
+
+        private static void RecordTargetHistory(ExpandedDanielLionState state, ExpandedDanielLionTargetHistory? history,
+            int targetId, int lionIndex, double now, bool cooperation, bool mark)
+        {
+            if (history == null)
+            {
+                state.TargetHistory ??= new List<ExpandedDanielLionTargetHistory>();
+                history = new ExpandedDanielLionTargetHistory { TargetId = targetId };
+                var insert = state.TargetHistory.FindIndex(entry => entry.TargetId > targetId);
+                if (insert < 0) state.TargetHistory.Add(history);
+                else state.TargetHistory.Insert(insert, history);
+            }
+            if (mark) history.MarkUntil = now + MarkDuration;
+            if (!cooperation) return;
+            history.RecentClaws ??= new List<ExpandedDanielLionClawReceipt>();
+            var claw = history.RecentClaws.Find(entry => entry.LionIndex == lionIndex);
+            if (claw != null) claw.At = now;
+            else
+            {
+                claw = new ExpandedDanielLionClawReceipt { LionIndex = lionIndex, At = now };
+                var insert = history.RecentClaws.FindIndex(entry => entry.LionIndex > lionIndex);
+                if (insert < 0) history.RecentClaws.Add(claw);
+                else history.RecentClaws.Insert(insert, claw);
+            }
+        }
+
+        private static void ApplyPackLeap(ExpandedDanielLionState state, double now, Vector2 player, double damage,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedDanielLionHit, bool> applyHit,
+            Func<bool>? reserveSupportLeap, Action? recordSupportSuppression)
+        {
+            var accepted = 0;
+            var candidatesUsed = 0;
+            foreach (var lion in state.Lions)
+            {
+                if (lion.Returning || lion.Pounce != null) continue;
+                var origin = lion.Position;
+                var candidates = targets().Where(entry => Within(entry.Value, origin, LeapRadius) &&
+                    Within(entry.Value, player, Profile.TargetSearchRadius))
+                    .OrderBy(entry => DistanceSquared(entry.Value, origin)).ThenBy(entry => entry.Key).ToArray();
+                if (candidates.Length == 0) continue;
+                if (candidatesUsed++ == 2) break;
+                if (reserveSupportLeap?.Invoke() == false)
+                {
+                    recordSupportSuppression?.Invoke();
+                    continue;
+                }
+                foreach (var candidate in candidates)
+                {
+                    if (!applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.PackLeap, lion.Index,
+                        candidate.Key, candidate.Value, origin, damage))) continue;
+                    lion.Position = candidate.Value;
+                    lion.TargetId = 0;
+                    accepted++;
+                    break;
+                }
+            }
+            if (accepted > 0) state.NextPackLeapAt = now + PackLeapCooldown;
         }
 
         private static (KeyValuePair<int, Vector2> Target, int CandidateCount) SelectTarget(Vector2 lion,
@@ -524,6 +793,19 @@ namespace BibleSurvivor.Core
                     applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Roar, lion.Index,
                         id, position, center, damage * factor, knockback));
             if (ranks.HastenClawsAfterRoar) lion.ClawHasteUntil = now + ClawHasteDuration;
+        }
+
+        internal static bool ValidPounce(ExpandedDanielLionActorState lion, double now)
+        {
+            if (lion.Pounce is not { } pounce) return true;
+            return !lion.Returning && lion.TargetId > 0 && lion.NextPounceAt.HasValue &&
+                BattleSnapshot.Finite(pounce.StartedAt) && pounce.StartedAt >= 0 && pounce.StartedAt <= now + TimeEpsilon &&
+                pounce.EndsAt > now + TimeEpsilon &&
+                Math.Abs(lion.NextPounceAt.Value - (pounce.StartedAt + PounceCooldown)) <= TimeEpsilon &&
+                BattleSnapshot.Position(pounce.StartX, pounce.StartY) && BattleSnapshot.Position(pounce.EndX, pounce.EndY) &&
+                DistanceSquared(pounce.Start, pounce.End) >= PounceMinimumDistance * PounceMinimumDistance - 1e-5 &&
+                DistanceSquared(pounce.Start, pounce.End) <= PounceMaximumDistance * PounceMaximumDistance + 1e-5 &&
+                lion.Position == pounce.PositionAt(now);
         }
 
         internal static bool ValidFutureTime(double? value, double now, double horizon) => !value.HasValue ||

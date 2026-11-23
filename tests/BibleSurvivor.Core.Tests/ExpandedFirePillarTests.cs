@@ -12,6 +12,69 @@ internal static class ExpandedFirePillarTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Evolved pillar rush waits for its entire pursuit group and continues across serialization", () =>
+        {
+            var fire = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [1] = new(1, 0), [2] = new(1.2f, 0), [3] = new(5, 0) };
+            var rules = new ExpandedFirePillarSettings(false, null, false, rushToNextGroup: true);
+            void Step(ExpandedFirePillarState state, double at) => Tick(state, at, targets, _ => { }, evolved: true, settings: rules);
+            Step(fire, 0);
+            Step(fire, .01);
+            Check.True(fire.Regions[0].PursuedGroup!.SequenceEqual(new[] { 1, 2 }));
+            targets.Remove(1);
+            Step(fire, .02);
+            Check.True(!fire.Regions[0].RushUntil.HasValue);
+            var restored = Restore(fire);
+            targets.Remove(2);
+            var prior = fire.Regions[0].X;
+            Step(fire, .03);
+            Step(restored, .03);
+            Check.Near(prior + .01 * 1.2 * 1.25, fire.Regions[0].X, 1e-6);
+            Check.Near(1.03, fire.Regions[0].RushUntil!.Value);
+            Check.Near(3.03, fire.NextGroupRushAt!.Value);
+            restored.Validate(.03, true);
+            Check.Equal(JsonSerializer.Serialize(fire), JsonSerializer.Serialize(restored));
+        });
+
+        test("An evolved fire rim damages the outer band on its own cadence without duplicate overlaps", () =>
+        {
+            var fire = new ExpandedFirePillarState();
+            var hits = new List<ExpandedFirePillarHit>();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var rules = new ExpandedFirePillarSettings(false, null, false, heatAroundRim: true);
+            void Step(double at, int amount = 1) => Tick(fire, at, targets, hits.Add, evolved: true,
+                settings: rules, amount: amount, damage: 20);
+            Step(0, 2);
+            targets.Add(2, new Vector2(.78f, 0));
+            targets.Add(3, new Vector2(0, .5f));
+            targets.Add(4, new Vector2(0, .95f));
+            Step(.15);
+            Check.Equal(1, hits.Count(hit => hit.IsEmber && hit.TargetId == 2 && hit.Damage == 4));
+            Check.True(hits.All(hit => !hit.IsEmber || hit.TargetId == 2));
+            hits.Clear();
+            for (var tick = 10; tick <= 54; tick++) Step(tick / 60d);
+            Check.Equal(1, hits.Count(hit => hit.IsEmber && hit.TargetId == 2 && hit.Damage == 4));
+            fire.Validate(.9, true);
+        });
+
+        test("Evolved trail places the extra fire at actual traveled distance and keeps its own budget", () =>
+        {
+            var fire = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var rules = new ExpandedFirePillarSettings(false, null, false, leaveMovingFire: true);
+            void Step(double at) => Tick(fire, at, targets, _ => { }, evolved: true, settings: rules, damage: 20);
+            Step(0);
+            targets[1] = new Vector2(7, 0);
+            for (var tick = 1; tick <= 114; tick++) Step(tick / 60d);
+            var trail = fire.Regions.Single(region => region.SupportKind == ExpandedFireSupportKind.MovingFire);
+            Check.Near(2, trail.X, 1e-5);
+            Check.Near(.7, trail.Radius);
+            Check.Near(1.5, trail.EndsAt - trail.StartedAt);
+            Check.Near(5, trail.Damage);
+            Check.Near(trail.EndsAt, fire.NextMovingFireAt!.Value);
+            Restore(fire).Validate(1.9, true);
+        });
+
         test("Fire pillar freezes launch base and ranks targets after selecting each overlap winner", () =>
         {
             var state = new ExpandedFirePillarState();

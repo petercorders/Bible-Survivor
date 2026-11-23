@@ -1151,6 +1151,39 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("A purchased Jawbone reverse strike keeps its facing and pending slot across a real checkpoint", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.jawbone.a.02");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "jawbone");
+                while (session.Inventory.TryChoose("jawbone", false)) { }
+                session.Advance(7);
+                var snapshot = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in snapshot.Enemies) { enemy.X = 35; enemy.Y = 0; }
+                var rear = snapshot.Enemies.First();
+                rear.X = -1.4f;
+                var world = BattleWorld.Restore(session, Speeds, snapshot);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                state.Run!.World = world.Capture();
+                var before = state.Run.World.Weapons.Single(weapon => weapon.WeaponId == "jawbone");
+                Check.True(before.PendingBursts.Count >= 1);
+                Check.Near(1, before.LastJawboneDirectionX);
+                Check.Equal(0, world.Hits);
+                store.Commit(state, state.Revision, "jawbone-saved-before-reverse");
+                var saved = store.Load()!;
+                var resumed = BattleWorld.Restore(AdamSession.Resume(saved, definition), Speeds, saved.Run!.World!);
+                var untilReverse = before.PendingBursts[0] - state.Run.World.Time + BattleWorld.FixedStep / 2;
+                world.Advance(untilReverse, Vector2.Zero);
+                resumed.Advance(untilReverse, Vector2.Zero);
+                var actual = resumed.Capture();
+                Check.Near(-1, actual.Weapons.Single(weapon => weapon.WeaponId == "jawbone").LastJawboneDirectionX);
+                Check.Equal(1, resumed.Hits);
+                Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(actual));
+            });
+        });
+
         test("Evolved Staff return saves without owning the unrelated base return branch", () =>
         {
             WithStore(store =>

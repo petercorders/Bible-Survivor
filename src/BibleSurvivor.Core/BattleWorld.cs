@@ -101,9 +101,15 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double FrozenOrbitDamage { get; set; }
         [DataMember(EmitDefaultValue=false)] public double FrozenOrbitBaseDamage { get; set; }
         [DataMember(EmitDefaultValue=false)] public double LastJawboneReach { get; set; }
+        [DataMember(EmitDefaultValue=false)] public int JawboneCycleAmount { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double LastJawboneHalfAngle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public float LastJawboneDirectionX { get; set; }
+        [DataMember(EmitDefaultValue=false)] public float LastJawboneDirectionY { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? NextJawboneShockAt { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedJawboneEliteMarks? JawboneMarks { get; set; }
         [DataMember(EmitDefaultValue=false)] public List<BattleHitState>? FormHits {get;set;}
         internal BattleWeaponState Copy()
-        {var copy=(BattleWeaponState)MemberwiseClone();copy.OrbitHits=OrbitHits.Select(x=>x.Copy()).ToList();copy.PendingBursts=new List<double>(PendingBursts);copy.PulseHitIds=PulseHitIds?.ToList();copy.OriginalHitLedger=OriginalHitLedger?.Copy();copy.FormHits=FormHits?.Select(x=>x.Copy()).ToList();return copy;}
+        {var copy=(BattleWeaponState)MemberwiseClone();copy.OrbitHits=OrbitHits.Select(x=>x.Copy()).ToList();copy.PendingBursts=new List<double>(PendingBursts);copy.PulseHitIds=PulseHitIds?.ToList();copy.OriginalHitLedger=OriginalHitLedger?.Copy();copy.FormHits=FormHits?.Select(x=>x.Copy()).ToList();copy.JawboneMarks=JawboneMarks?.Copy();return copy;}
     }
     [DataContract]
     public sealed class BattleSpeedState
@@ -160,6 +166,12 @@ namespace BibleSurvivor.Core
             foreach (var weapon in Weapons)
             {
                 foreach (var hit in weapon.OrbitHits) yield return hit.Id;
+                if (weapon.JawboneMarks is { } jawbone)
+                {
+                    if (jawbone.LastEliteId != 0) yield return jawbone.LastEliteId;
+                    if (jawbone.Marks != null)
+                        foreach (var mark in jawbone.Marks) yield return mark.Id;
+                }
                 if (weapon.OriginalHitLedger is not { } original) continue;
                 if (original.LastTargetId > 0) yield return original.LastTargetId;
                 if (original.Marks != null)
@@ -186,6 +198,8 @@ namespace BibleSurvivor.Core
                         foreach (var contact in region.Contacts) yield return contact.TargetId;
                     if (region.HeatTimers != null)
                         foreach (var timer in region.HeatTimers) yield return timer.TargetId;
+                    if (region.PursuedGroup != null)
+                        foreach (var id in region.PursuedGroup) yield return id;
                 }
             if (MosesStaff != null)
             {
@@ -224,6 +238,8 @@ namespace BibleSurvivor.Core
                     if (lion.TargetId != 0) yield return lion.TargetId;
                 if (DanielLion.Leap != null)
                     foreach (var id in DanielLion.Leap.VisitedIds) yield return id;
+                if (DanielLion.TargetHistory != null)
+                    foreach (var history in DanielLion.TargetHistory) yield return history.TargetId;
             }
         }
         internal const int ExpandedVersion = 6;
@@ -350,6 +366,20 @@ namespace BibleSurvivor.Core
                     w.LastJawboneReach > Tuning.JawboneRange * 2.5 ||
                     w.LastJawboneReach > 0 && (!expanded || w.WeaponId != "jawbone" || w.ActiveSince < 0))
                     throw new InvalidOperationException("Invalid expanded jawbone swing reach");
+                if ((w.JawboneCycleAmount != 0 || w.NextJawboneShockAt.HasValue || w.JawboneMarks != null) &&
+                    (!expanded || w.WeaponId != "jawbone" || w.ActiveSince < 0 || w.StarterCycle <= 0) ||
+                    w.JawboneCycleAmount != 0 && (w.JawboneCycleAmount < w.PendingBursts.Count ||
+                        w.JawboneCycleAmount < 1 || w.JawboneCycleAmount > CombatStats.ExpandedAmountLimit("jawbone")) ||
+                    w.NextJawboneShockAt is double shock && (!Finite(shock) || shock < 0 ||
+                        shock > Time + ExpandedJawboneRanks.GroundShockCooldown + 1e-9))
+                    throw new ArgumentException("Invalid jawbone branch state");
+                if (!Finite(w.LastJawboneHalfAngle) || w.LastJawboneHalfAngle < 0 || w.LastJawboneHalfAngle > 90 ||
+                    w.LastJawboneHalfAngle == 0 && (w.LastJawboneDirectionX != 0 || w.LastJawboneDirectionY != 0) ||
+                    w.LastJawboneHalfAngle > 0 && (w.JawboneCycleAmount == 0 || w.LastJawboneReach <= 0 ||
+                        !Position(w.LastJawboneDirectionX, w.LastJawboneDirectionY) ||
+                        Math.Abs(new Vector2(w.LastJawboneDirectionX, w.LastJawboneDirectionY).LengthSquared() - 1) > .0001))
+                    throw new ArgumentException("Invalid jawbone swing direction");
+                w.JawboneMarks?.Validate(Time);
                 if (!Finite(w.FrozenOrbitDamage) || !Finite(w.FrozenOrbitBaseDamage) ||
                     w.FrozenOrbitDamage < 0 || w.FrozenOrbitBaseDamage < 0 ||
                     (w.FrozenOrbitDamage > 0) != (w.FrozenOrbitBaseDamage > 0) ||
@@ -764,6 +794,7 @@ namespace BibleSurvivor.Core
         {
             impactFloor=ImpactSequence+1;
             if (wildernessVoice != null) Session.RecordVoiceCyclesAtBossEntry(wildernessVoice.Cycle);
+            if (weapons.TryGetValue("jawbone", out var jawbone)) Session.RecordJawboneCyclesAtBossEntry(jawbone.StarterCycle);
             Session.RecordWeaponCadenceAtBossEntry(lightning, firePillar, cross, mosesStaff, elijahChariot);
             enemies.Clear();drops.Clear();projectiles.Clear();weapons.Clear();ClearExpandedAttacks();Synchronize();
         }
@@ -1056,6 +1087,8 @@ namespace BibleSurvivor.Core
                 if(!weapons.TryGetValue(id,out var clock)||clock.WeaponForm!=form)
                 {
                     weapons[id]=new BattleWeaponState{WeaponId=id,WeaponForm=form,NextCycle=SimulationTime};
+                    if (id == "jawbone" && Session.CombatRulesVersion == 2)
+                        weapons[id].StarterCycle = clock?.StarterCycle ?? Session.BossEntryJawboneCycle;
                     if (id == "lightning")
                     {
                         var cadence = Session.BossEntryLightningCadence;
@@ -1181,6 +1214,7 @@ namespace BibleSurvivor.Core
                 var cycle = bibleWait ? Session.AttackProfile(clock.WeaponId, true, firstTempoWait).Cycle : profile.Cycle;
                 clock.NextCycle=scheduled+cycle;
                 clock.BurstsRemaining=profile.IsOrbit?0:profile.Amount;
+                if (expanded && clock.WeaponId == "jawbone") clock.JawboneCycleAmount = profile.Amount;
                 clock.NextBurst=expanded&&profile.IsOrbit?0:scheduled;
                 if(clock.WeaponForm==EvolutionRules.Sling)clock.FocusTargetId=FocusSlingTarget(profile);
                 if(profile.IsOrbit)
@@ -1238,18 +1272,18 @@ namespace BibleSurvivor.Core
                 {
                     ShotsFired++;
                     Session.ObserveTempoOpening();
-                    var degrees = Session.JawboneArcDegrees;
                     var reach = tuning.JawboneRange * profile.AreaMultiplier;
-                    if (expanded) clock.LastJawboneReach = reach;
-                    var ordinal = 0;
-                    foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
+                    if (expanded) ResolveExpandedJawbone(clock, profile, reach);
+                    else
                     {
-                        var relative=pair.Value-PlayerPosition;
-                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,reach+TargetRadius(pair.Key),degrees))
-                            Hit(pair.Key, Session.JawboneDamage(profile.Damage, relative.Length(), reach),
-                                "jawbone", pair.Value, cycle: clock.StarterCycle,
-                                originalBaseDamage: profile.OriginalBaseDamage, ordinal: ++ordinal);
-                        if(!Session.CanAttack)break;
+                        foreach (var pair in enemies.OrderBy(x => x.Key).ToArray())
+                        {
+                            var relative = pair.Value - PlayerPosition;
+                            if (HitGeometry.InArc(relative.X, relative.Y, facing.X, facing.Y,
+                                    reach + TargetRadius(pair.Key), Session.JawboneArcDegrees))
+                                Hit(pair.Key, profile.Damage, "jawbone", pair.Value);
+                            if (!Session.CanAttack) break;
+                        }
                     }
                 }
                 else if(enemies.Count>0&&(expanded?OriginalProjectileCount:projectiles.Count)<projectileLimit)
@@ -1282,6 +1316,62 @@ namespace BibleSurvivor.Core
             }
             clock.BurstsRemaining=clock.PendingBursts.Count;
             clock.NextBurst=clock.PendingBursts.Count==0?0:clock.PendingBursts.Min();
+        }
+
+        private void ResolveExpandedJawbone(BattleWeaponState clock, CombatStats profile, double reach)
+        {
+            var ranks = Session.JawboneRanks();
+            var amount = clock.JawboneCycleAmount != 0 ? clock.JawboneCycleAmount :
+                Math.Max(clock.PendingBursts.Count + 1, profile.Amount);
+            var swing = ranks.ForSwing(Math.Max(1, clock.StarterCycle), amount - clock.PendingBursts.Count,
+                amount, facing, Session.AreaProfile().HalfAngleBonus);
+            clock.LastJawboneReach = reach;
+            clock.JawboneCycleAmount = amount;
+            clock.LastJawboneHalfAngle = swing.HalfAngle;
+            clock.LastJawboneDirectionX = swing.Direction.X;
+            clock.LastJawboneDirectionY = swing.Direction.Y;
+            var targets = enemies.OrderBy(pair => pair.Key).Where(pair =>
+                swing.HitsOriginal(pair.Value - PlayerPosition, reach + TargetRadius(pair.Key))).ToArray();
+            var knockback = ranks.Knockback(clock.WeaponForm == EvolutionRules.Jawbone ? EvolutionRules.Knockback : 0,
+                targets.Length);
+            var preCritical = profile.Damage;
+            var ordinal = 0;
+            if (ranks.TracksEliteMark) clock.JawboneMarks ??= new ExpandedJawboneEliteMarks();
+            clock.JawboneMarks?.Prune(SimulationTime, enemies.ContainsKey);
+            foreach (var target in targets)
+            {
+                var relative = target.Value - PlayerPosition;
+                var elite = Session.IsEliteActor(target.Key);
+                var damage = Session.JawboneDamage(profile.Damage, relative.Length(), reach);
+                damage = ranks.ApplyOriginalDamage(swing, damage, profile.OriginalBaseDamage,
+                    Session.TargetHealthRatio(target.Key), clock.JawboneMarks?.IsMarked(target.Key, SimulationTime) == true);
+                var accepted = ApplyExpandedDamage(target.Key, damage, "jawbone", target.Value, relative, knockback,
+                    original: true, cycle: clock.StarterCycle, originalBaseDamage: profile.OriginalBaseDamage, ordinal: ordinal + 1);
+                if (accepted > 0)
+                {
+                    if (++ordinal == 1) preCritical = accepted;
+                    clock.JawboneMarks?.RecordOriginalHit(target.Key, elite, enemies.ContainsKey(target.Key), SimulationTime);
+                }
+                if (!Session.CanAttack) return;
+            }
+            if (swing.RearStrike) ApplySupport((relative, radius) => swing.HitsRear(relative, reach + radius));
+            if (swing.FourWayStrike) ApplySupport((relative, radius) => swing.HitsFourWay(relative, reach + radius));
+            if (ranks.CanEmitGroundShock(swing, SimulationTime, clock.NextJawboneShockAt))
+            {
+                if (SupportRegionCount < BattleSnapshot.ExpandedSupportRegionLimit)
+                {
+                    ApplySupport((relative, _) => swing.HitsGroundShock(relative));
+                    clock.NextJawboneShockAt = SimulationTime + ExpandedJawboneRanks.GroundShockCooldown;
+                }
+                else RecordSupportSuppression();
+            }
+
+            void ApplySupport(Func<Vector2, double, bool> hits)
+            {
+                foreach (var target in enemies.OrderBy(pair => pair.Key).ToArray())
+                    if (hits(target.Value - PlayerPosition, TargetRadius(target.Key)))
+                        Hit(target.Key, ExpandedJawboneSwing.SupportDamage(preCritical), "jawbone", target.Value, original: false);
+            }
         }
         private bool RunExpandedAttack(BattleWeaponState clock, CombatStats profile, IReadOnlyDictionary<int,Vector2> previous,
             bool surrounded)
@@ -1421,14 +1511,18 @@ namespace BibleSurvivor.Core
                     ShotsFired += ExpandedDanielLion.Step(danielLion, SimulationTime, PlayerPosition,
                         Session.Inventory.Weapons[weapon], evolved, profile.Damage, profile.Cycle,
                         profile.Amount, profile.AttackRadius, profile.AttackSpeed, () => enemies,
-                        hit => ApplyLionHit(hit, weapon),
+                        hit => ApplyLionHit(hit, weapon) > 0,
                         rankOptions: danielLionRankOptions, isElite: Session.IsEliteActor, isBoss: Session.IsBossActor,
                         afterClaw: Session.TempoOpeningAvailable || nextCycleDuration != null ? () =>
                         {
                             var shortened = Session.AttackProfile(weapon, false, Session.TempoOpeningAvailable).Cycle;
                             Session.ObserveTempoOpening();
                             return shortened;
-                        } : null);
+                        } : null,
+                        targetHealthRatio: Session.TargetHealthRatio,
+                        applyOriginalHit: hit => AcceptedOriginalDamage(ApplyLionHit(hit, weapon)),
+                        reserveSupportLeap: () => SupportProjectileCount < BattleSnapshot.ExpandedSupportProjectileLimit,
+                        recordSupportSuppression: RecordSupportSuppression);
                     return true;
                 default:
                     return false;
@@ -1442,14 +1536,14 @@ namespace BibleSurvivor.Core
             return true;
         }
 
-        private bool ApplyLionHit(ExpandedDanielLionHit hit, string weapon)
+        private double ApplyLionHit(ExpandedDanielLionHit hit, string weapon)
         {
             var claw = hit.Kind == ExpandedDanielLionHitKind.Claw;
             var damage = ApplyExpandedDamage(hit.TargetId, hit.Damage, weapon, hit.Position,
                 hit.Position - hit.Center, hit.Knockback, claw, cycle: 0, singleHitCycle: true,
                 originalBaseDamage: hit.OriginalBaseDamage, ordinal: hit.TargetOrdinal);
             if (claw && damage > 0) RecordAreaEffect(BattleAreaEffectKind.LionClaw, hit.Position, 0, SimulationTime);
-            return damage > 0;
+            return damage;
         }
 
         private double RecordContactEffect(BattleAreaEffectKind kind, Vector2 contact, double damage)
@@ -1571,7 +1665,7 @@ namespace BibleSurvivor.Core
             else if(after.Health<before)
             {
                 Hits++;Impact(cause,id,contact,before-after.Health,false);
-                if(cause=="jawbone"&&Session.WeaponForm("jawbone")==EvolutionRules.Jawbone)
+                if(Session.CombatRulesVersion==1&&cause=="jawbone"&&Session.WeaponForm("jawbone")==EvolutionRules.Jawbone)
                 {
                     var offset=position-PlayerPosition;var direction=offset.LengthSquared()>1e-12?Vector2.Normalize(offset):facing;
                     var pushed=position+direction*(float)EvolutionRules.Knockback;
