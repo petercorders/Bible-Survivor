@@ -84,6 +84,8 @@ namespace BibleSurvivor.Unity
             host.TakeSavedCinematic();
             cinematic.End();
             releaseCinematicControls = false;
+            cinematicExitFrame = -1;
+            replaySelection = -1;
             newChallengeSource=null;
             focusNewChallenge=false;
             sortie.Reset();sortieSession=host.Session;inputReleased=false;
@@ -141,7 +143,7 @@ namespace BibleSurvivor.Unity
             var keys = Keyboard.current;
             if(keys?.f6Key.wasPressedThisFrame == true) ArtWorld.FeedbackEnabled = !ArtWorld.FeedbackEnabled;
             if (BeginSavedCinematic() && !CinematicPlaying) return;
-            if (UpdateCinematic(keys)) return;
+            if (UpdateCinematic(keys) || UpdateCinematicReplay(keys)) return;
             if (keys?.f5Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.Creation)) return;
             if (keys?.f10Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.GenesisEnding)) return;
             if (HandlePermanentSkillInput(keys))
@@ -364,6 +366,13 @@ namespace BibleSurvivor.Unity
         public void DrawGameView(Rect viewport, bool mobile = false, Rect? physicalFrame = null)
         {
             drawingMobile = mobile;
+            var prior = GUI.enabled;
+            GUI.enabled = prior && (CinematicPlaying || (!releaseCinematicControls && cinematicExitFrame != Time.frameCount));
+            try { DrawGameLayers(viewport, mobile, physicalFrame); }
+            finally { GUI.enabled = prior; }
+        }
+        void DrawGameLayers(Rect viewport, bool mobile, Rect? physicalFrame)
+        {
             var scale = mobile ? AdamMobileLayout.Scale(viewport) : AdamChoiceText.ScreenScale(viewport.width, viewport.height);
             GUI.matrix = Matrix4x4.TRS(new Vector3(viewport.x, viewport.y, 0), Quaternion.identity, new Vector3(scale, scale, 1));
             var width = viewport.width / scale; var height = viewport.height / scale;
@@ -371,6 +380,11 @@ namespace BibleSurvivor.Unity
             if (CinematicPlaying)
             {
                 DrawCinematic(viewport);
+                return;
+            }
+            if (replaySelection >= 0)
+            {
+                DrawCinematicReplayMenu(width, height);
                 return;
             }
             SyncSortieSession();
@@ -463,7 +477,13 @@ namespace BibleSurvivor.Unity
             else if(session?.Stage=="boss_settlement"||session?.Stage=="round_settlement")
             {
                 Modal(width,height,"보상 적용됨 · 완료 정산",AdamBossPresentation.Forms(session));
-                if(ArtButton(mobile?AdamMobileLayout.Action(AdamMobileLayout.Panel(width,height),0,1):new Rect(width/2-150,height/2+30,300,56),"완료 정산",button)){if(session.Stage=="boss_settlement")Host.CompleteBossSettlement();else Host.CompleteNormalSettlement();}
+                if (ArtButton(mobile ? AdamMobileLayout.Action(AdamMobileLayout.Panel(width,height),0,1)
+                    : new Rect(width/2-150,height/2+30,300,56), "완료 정산", button))
+                {
+                    if (session.Stage == "boss_settlement") Host.CompleteBossSettlement();
+                    else Host.CompleteNormalSettlement();
+                    BeginSavedCinematic();
+                }
             }
             else if(Host.BookComplete)
             {
@@ -530,7 +550,7 @@ namespace BibleSurvivor.Unity
                 GUI.enabled=enabled && !Host.Suspended && Host.CanStartNew;
                 if(ArtButton(BookAction(panel,next==0?0:1,next==0?1:2,mobile),"새 도전…",button,focusOverride:!PermanentSkillEntryHasFocus&&(focusNewChallenge||next==0),pointerOnly:true)) OpenNewChallenge();
                 if (!mobile && !NewChallengeOpen)
-                    DrawCinematicReplay(new Vector2(panel.center.x - 172, panel.y + 270), true);
+                    DrawCinematicReplay(new Vector2(panel.center.x - 83, panel.y + 270));
             }
             finally {GUI.enabled=enabled;}
         }
@@ -560,6 +580,7 @@ namespace BibleSurvivor.Unity
         {
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
             SetPlayPaused(false);RecordSortieTransition(previous,run);
+            BeginSavedCinematic();
         }
         void RetrySaveWithDeparture()
         {

@@ -1,0 +1,179 @@
+// Copy into Adam/Runtime only in a development build of the isolated, audio-disabled QA project.
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+using System;
+using System.Collections;
+using System.IO;
+using System.Reflection;
+using BibleSurvivor.Core;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+
+namespace BibleSurvivor.Unity
+{
+    sealed class CuratedCinematicsPlayerProbe : MonoBehaviour
+    {
+        static readonly FieldInfo Timeline = typeof(AdamGame).GetField("cinematic", BindingFlags.Instance | BindingFlags.NonPublic);
+        AdamGame game;
+        string output, source;
+        int width, height;
+        Keyboard keyboard;
+        Gamepad pad;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Launch()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(args, "-curatedCinematicsProbe");
+            if (index < 0) return;
+            var game = FindAnyObjectByType<AdamGame>();
+            if (game == null) game = new GameObject("Curated cinematic probe").AddComponent<AdamGame>();
+            game.AutoInitialize = false;
+            var probe = game.gameObject.AddComponent<CuratedCinematicsPlayerProbe>();
+            probe.game = game;
+            probe.output = args[index + 1];
+            probe.source = args[index + 2];
+            probe.width = int.Parse(args[index + 3]);
+            probe.height = int.Parse(args[index + 4]);
+        }
+
+        void Start()
+        {
+            Application.runInBackground = true;
+            Screen.SetResolution(width, height, width == 1920 && height == 1080
+                ? FullScreenMode.FullScreenWindow
+                : FullScreenMode.Windowed);
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            keyboard = InputSystem.AddDevice<Keyboard>();
+            pad = InputSystem.AddDevice<Gamepad>();
+            Application.logMessageReceived += QuitOnFailure;
+            StartCoroutine(Run());
+        }
+
+        void OnDestroy() => Application.logMessageReceived -= QuitOnFailure;
+
+        static void QuitOnFailure(string message, string stack, LogType type)
+        {
+            if (message.Contains("CURATED_FAIL", StringComparison.Ordinal)) Application.Quit(1);
+        }
+
+        static void Check(bool result, string detail)
+        {
+            if (!result) throw new InvalidOperationException("CURATED_FAIL " + detail);
+            Debug.Log("CURATED_PASS " + detail);
+        }
+
+        void Keys(params Key[] keys) => InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys));
+
+        IEnumerator Capture(string name)
+        {
+            yield return new WaitForEndOfFrame();
+            var image = ScreenCapture.CaptureScreenshotAsTexture();
+            Check(image.width == width && image.height == height, $"capture {name} {image.width}x{image.height}");
+            File.WriteAllBytes(Path.Combine(output, name + ".png"), image.EncodeToPNG());
+            Destroy(image);
+        }
+
+        IEnumerator CheckMissingEnding(string path)
+        {
+            var store = new SaveStore(path);
+            var completed = store.LoadConfirmed();
+            var expectedGold = completed.Profile.Gold;
+            var expectedTime = completed.OldTestamentClear.CompletedAtUnixMilliseconds;
+            var expectedReward = completed.Run.Boss.Reward.SelectedId;
+            var pending = SaveStore.Copy(completed);
+            pending.Profile.Gold -= CampaignContent.Round(180).CompletionGold;
+            pending.Run.RoundNumber = 180;
+            pending.Run.Stage = "boss_settlement";
+            pending.Run.Boss.CompletionApplied = false;
+            store.Commit(pending, completed.Revision, "probe-before-r180-settlement");
+            var host = new AdamHost(AdamCatalog.Load(), store);
+            game.Initialize(host);
+            game.SetLifecycle(true, false);
+            Check(host.Error == null && !host.ContentComplete, "pre-settlement checkpoint");
+            Check(Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.Malachi)) == null,
+                "ending script physically absent");
+            Check(host.CompleteBossSettlement(), "R180 settlement committed");
+            yield return null;
+            Check(!game.CinematicPlaying && host.ContentComplete && !game.NewChallengeOpen,
+                "missing ending falls through to completed screen");
+            var saved = store.LoadConfirmed();
+            Check(saved.Revision == completed.Revision + 2 && saved.Profile.Gold == expectedGold &&
+                saved.OldTestamentClear.CompletedAtUnixMilliseconds == expectedTime &&
+                saved.Run.Boss.Reward.SelectedId == expectedReward, "missing ending preserves reward and receipt");
+            Check(!host.CompleteBossSettlement(), "no repeated settlement");
+            yield return Capture("r180-missing-completed");
+        }
+
+        IEnumerator Run()
+        {
+            var deadline = Time.realtimeSinceStartup + 10;
+            while ((Screen.width != width || Screen.height != height) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Check(Screen.width == width && Screen.height == height, $"viewport {Screen.width}x{Screen.height}");
+
+            var path = Path.Combine(output, "save.json");
+            File.Copy(source, path);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-curatedMissingEnding") >= 0)
+            {
+                yield return CheckMissingEnding(path);
+                Application.Quit(0);
+                yield break;
+            }
+            var host = new AdamHost(AdamCatalog.Load(), new SaveStore(path));
+            game.Initialize(host);
+            game.SetLifecycle(true, false);
+            yield return null;
+            Check(host.Error == null && host.ContentComplete && !game.CinematicPlaying, "legacy R180 opens completed without auto-play");
+            var content = Convert.ToBase64String(File.ReadAllBytes(path));
+            var clearRun = host.State.OldTestamentClear.RunId;
+            var clearTime = host.State.OldTestamentClear.CompletedAtUnixMilliseconds;
+            var gold = host.State.Profile.Gold;
+            foreach (var kind in new[] { AdamCinematicKind.Creation, AdamCinematicKind.Judges,
+                AdamCinematicKind.Samuel, AdamCinematicKind.Malachi })
+            {
+                Check(game.Replay(kind), "start " + kind);
+                var timeline = (AdamCinematic)Timeline.GetValue(game);
+                Check(timeline.Elapsed == 0, "first frame " + kind);
+                yield return Capture(kind + "-1");
+                if (kind == AdamCinematicKind.Creation)
+                {
+                    Keys(Key.Escape, Key.Enter);
+                    yield return null;
+                    Check(!game.CinematicPlaying && !game.NewChallengeOpen, "keyboard skip does not select complete action");
+                    Keys();
+                    yield return null;
+                    continue;
+                }
+
+                var spec = AdamCinematicSpec.Find(kind);
+                for (var i = 1; i < spec.CutCount; i++)
+                {
+                    while (timeline.CurrentIndex < i) timeline.Advance(.1f);
+                    yield return Capture(kind + "-" + (i + 1));
+                }
+                if (kind == AdamCinematicKind.Malachi && width == 1920)
+                {
+                    deadline = Time.realtimeSinceStartup + 12;
+                    while (game.CinematicPlaying && Time.realtimeSinceStartup < deadline) yield return null;
+                    Check(!game.CinematicPlaying, "natural Malachi ending");
+                }
+                else
+                {
+                    InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.East));
+                    yield return null;
+                    Check(!game.CinematicPlaying, "controller skip " + kind);
+                    InputSystem.QueueStateEvent(pad, new GamepadState());
+                }
+                yield return null;
+            }
+
+            Check(host.ContentComplete && host.State.OldTestamentClear.RunId == clearRun &&
+                host.State.OldTestamentClear.CompletedAtUnixMilliseconds == clearTime && host.State.Profile.Gold == gold &&
+                Convert.ToBase64String(File.ReadAllBytes(path)) == content, "replay and skip preserve receipt, gold and save bytes");
+            yield return Capture("r180-completed");
+            Application.Quit(0);
+        }
+    }
+}
+#endif

@@ -226,6 +226,46 @@ public class AdamPlayTests
         }
     }
 #if UNITY_EDITOR
+    [UnityTest] public IEnumerator PointerReplaysAClipAndReturnsToTheSameStartScreen()
+    {
+        var window = ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game = game;
+            window.minSize = window.maxSize = new Vector2(660, 440);
+            window.position = new Rect(10, 10, 660, 440);
+            window.ShowUtility();
+            window.Repaint();
+            yield return null;
+            game.SetLifecycle(true, false);
+            void Click(float x, float y)
+            {
+                var point = new Vector2(x, y);
+                window.SendEvent(new Event { type = EventType.MouseDown, mousePosition = point, button = 0, clickCount = 1 });
+                window.SendEvent(new Event { type = EventType.MouseUp, mousePosition = point, button = 0, clickCount = 1 });
+            }
+            Click(555, 25);
+            yield return null;
+            Click(210, 130);
+            Assert.IsTrue(game.CinematicPlaying);
+            Click(414, 419);
+            Assert.IsFalse(game.CinematicPlaying);
+            Assert.IsNull(game.Host.State.Run);
+            Assert.Zero(game.Host.State.Revision);
+            yield return null;
+            Click(555, 25);
+            yield return null;
+            Click(330, 380);
+            Assert.IsFalse(game.CinematicPlaying);
+            Assert.IsNull(game.Host.State.Run);
+            yield return null;
+            Keys(Key.Enter);
+            yield return null;
+            Assert.IsNotNull(game.Host.State.Run, "the start screen accepts input after closing the directory");
+        }
+        finally { window.Close(); }
+    }
+
     [UnityTest] public IEnumerator MobileScaledStartAndPauseAreClickableWithoutKeyboard()
     {
         var window = UnityEngine.ScriptableObject.CreateInstance<PauseModalPointerWindow>();
