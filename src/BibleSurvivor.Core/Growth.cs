@@ -179,16 +179,20 @@ namespace BibleSurvivor.Core
         private readonly Dictionary<string, int> weapons;
         private readonly Dictionary<string, int> passives;
         private readonly Dictionary<string,string> forms=new Dictionary<string,string>(StringComparer.Ordinal);
+        private readonly int combatRulesVersion;
         public IReadOnlyDictionary<string,string> Forms {get;}
         public IReadOnlyDictionary<string, int> Weapons { get; }
         public IReadOnlyDictionary<string, int> Passives { get; }
 
-        public EquipmentInventory(string startingWeapon)
+        public EquipmentInventory(string startingWeapon, int combatRulesVersion = 1)
             : this(new Dictionary<string, int>(StringComparer.Ordinal) { [startingWeapon ?? ""] = 1 },
-                new Dictionary<string, int>(StringComparer.Ordinal)) { }
+                new Dictionary<string, int>(StringComparer.Ordinal), combatRulesVersion) { }
 
-        private EquipmentInventory(IReadOnlyDictionary<string, int> weaponLevels, IReadOnlyDictionary<string, int> passiveLevels)
+        private EquipmentInventory(IReadOnlyDictionary<string, int> weaponLevels, IReadOnlyDictionary<string, int> passiveLevels,
+            int combatRulesVersion)
         {
+            if (combatRulesVersion != 1 && combatRulesVersion != 2) throw new ArgumentOutOfRangeException(nameof(combatRulesVersion));
+            this.combatRulesVersion = combatRulesVersion;
             if (weaponLevels == null) throw new ArgumentNullException(nameof(weaponLevels));
             if (passiveLevels == null) throw new ArgumentNullException(nameof(passiveLevels));
             if (weaponLevels.Count == 0 || weaponLevels.Count > 6 || passiveLevels.Count > 6)
@@ -197,7 +201,7 @@ namespace BibleSurvivor.Core
             passives = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var pair in weaponLevels)
             {
-                if (!ImplementedWeapons.Contains(pair.Key) || pair.Value < 1 || pair.Value > 8)
+                if (!SupportsWeapon(pair.Key, combatRulesVersion) || pair.Value < 1 || pair.Value > 8)
                     throw new ArgumentException("Invalid or unimplemented weapon in inventory.", nameof(weaponLevels));
                 weapons.Add(pair.Key, pair.Value);
             }
@@ -212,9 +216,14 @@ namespace BibleSurvivor.Core
             Passives = new ReadOnlyDictionary<string, int>(passives);
         }
 
-        public static EquipmentInventory Restore(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives,IReadOnlyDictionary<string,string>? forms=null)
+        internal static bool SupportsWeapon(string id, int combatRulesVersion) =>
+            ImplementedWeapons.Contains(id) || combatRulesVersion == 2 &&
+            ExpandedWeaponRules.TryGet(id, out _);
+
+        public static EquipmentInventory Restore(IReadOnlyDictionary<string, int> weapons, IReadOnlyDictionary<string, int> passives,
+            IReadOnlyDictionary<string,string>? forms=null, int combatRulesVersion=1)
         {
-            var inventory=new EquipmentInventory(weapons,passives);
+            var inventory=new EquipmentInventory(weapons,passives,combatRulesVersion);
             if(forms!=null)foreach(var pair in forms)
             {
                 if(EvolutionRules.Base(pair.Value)!=pair.Key||!EvolutionRules.Eligible(pair.Key,weapons,passives,null))throw new ArgumentException("Invalid evolution lineage");
@@ -226,13 +235,14 @@ namespace BibleSurvivor.Core
         {
             string weapon;
             try{weapon=EvolutionRules.Base(form);}catch(ArgumentException){return false;}
-            if(!EvolutionRules.Eligible(weapon,weapons,passives,forms))return false;
+            if(!SupportsWeapon(weapon, combatRulesVersion) || !EvolutionRules.Eligible(weapon,weapons,passives,forms))return false;
             forms.Add(weapon,form);return true;
         }
 
         public bool TryChoose(string id, bool passive)
         {
-            if (id == null || !(passive ? KnownPassives : ImplementedWeapons).Contains(id) || (!passive&&forms.ContainsKey(id))) return false;
+            if (id == null || !(passive ? KnownPassives.Contains(id) : SupportsWeapon(id, combatRulesVersion)) ||
+                (!passive&&forms.ContainsKey(id))) return false;
             var items = passive ? passives : weapons;
             var maximum = passive ? PassiveMaximum(id) : 8;
             if (items.TryGetValue(id, out var current))
@@ -253,7 +263,7 @@ namespace BibleSurvivor.Core
             if (count < 0 || count > 3) throw new ArgumentOutOfRangeException(nameof(count));
             var choices = new HashSet<string>(StringComparer.Ordinal);
             foreach (var id in unlockedWeapons)
-                if (id != null && ImplementedWeapons.Contains(id) && !forms.ContainsKey(id) && IsEligible(weapons, id, 8)) choices.Add(id);
+                if (id != null && SupportsWeapon(id, combatRulesVersion) && !forms.ContainsKey(id) && IsEligible(weapons, id, 8)) choices.Add(id);
             foreach (var id in availablePassives)
                 if (id != null && KnownPassives.Contains(id) && IsEligible(passives, id, PassiveMaximum(id))) choices.Add(id);
             // Sorting makes enumeration order irrelevant; xorshift32 is stable across

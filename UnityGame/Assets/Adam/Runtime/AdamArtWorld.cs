@@ -12,6 +12,7 @@ namespace BibleSurvivor.Unity
         public readonly AdamVisualQualityWorld VisualQuality=new AdamVisualQualityWorld();
         public readonly AdamPolishContacts PolishContacts=new AdamPolishContacts();
         readonly AdamPolishFlash polishFlash=new AdamPolishFlash();
+        readonly AdamExpandedWeaponView expandedWeapons=new AdamExpandedWeaponView();
         public bool PolishEnabled=>AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Thud,out _);
         AdamR02Art r02;
         AdamR03Art r03;
@@ -172,6 +173,7 @@ namespace BibleSurvivor.Unity
 
                 foreach(var id in new List<int>(reactions.Keys))
                     if(!previousPositions.ContainsKey(id) || reactions[id]<=Clock)reactions.Remove(id);
+                if(host.Session.CombatRulesVersion==2)expandedWeapons.Observe(Snapshot,next);
                 Snapshot=next;
                 wasActive=active;
             }
@@ -191,7 +193,7 @@ namespace BibleSurvivor.Unity
         public double PlayerSeconds => PlayerMotion=="death" ? Math.Max(0,Clock-deathAt) : Clock;
         public void Clear()
         {
-            JawboneSwing.Clear();VisualQuality.Clear();PolishContacts.Clear();
+            JawboneSwing.Clear();VisualQuality.Clear();PolishContacts.Clear();expandedWeapons.Clear();
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
@@ -199,7 +201,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();damageZone.Dispose();aimedProjectile.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();polishFlash.Dispose();expandedWeapons.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();damageZone.Dispose();aimedProjectile.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
 
         // Leviticus and later books reuse the reviewed Exodus R06 art for equivalent movement roles.
         static string SourceActor(string id)
@@ -368,6 +370,7 @@ namespace BibleSurvivor.Unity
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
             if(host.Session.IsActive)
             {
+                if(host.Session.CombatRulesVersion==2)expandedWeapons.DrawGround(projection,snap);
                 var monsters=host.Session.Targets;var experience=host.Session.DroppedExperience;
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
@@ -512,6 +515,7 @@ namespace BibleSurvivor.Unity
                 else{if(r03==null)r03=new AdamR03Art();r03.Draw(AdamR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
             }
 
+            if(host.Session.IsActive && host.Session.CombatRulesVersion==2)expandedWeapons.DrawActors(projection,snap,FeedbackEnabled);
             // All six layers share ONE parent reflection about the registered feet pivot.
             var feet=Point(snap.PlayerX,snap.PlayerY); var matrix=GUI.matrix;
             if(PlayerLeft) GUI.matrix=matrix*FacingMatrix(feet+arena.position,Vector2.left);

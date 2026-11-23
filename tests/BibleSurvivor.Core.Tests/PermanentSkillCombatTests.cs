@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
+using BibleSurvivor.Sim;
 
 namespace BibleSurvivor.Core.Tests;
 
@@ -13,6 +14,109 @@ internal static class PermanentSkillCombatTests
 
     public static void Register(Action<string, Action> test)
     {
+        test("Expanded armor applies per-source, health, time, crowd and boss conditions before capping", () =>
+        {
+            var ranks = new Dictionary<string, int> { ["armor"] = 3 };
+            for (var ordinal = 2; ordinal <= 10; ordinal++) ranks.Add($"common.armor.{ordinal:D2}", 1);
+            Check.Equal(5, PermanentCombatRules.Armor(ranks, 0, IncomingDamageKind.Contact, .5, 7.999,
+                false, false, false));
+            Check.Equal(5, PermanentCombatRules.Armor(ranks, 0, IncomingDamageKind.Projectile, .5, 7.999,
+                false, false, false));
+            Check.Equal(8, PermanentCombatRules.Armor(ranks, 0, IncomingDamageKind.Other, .30, 8,
+                true, false, false));
+            Check.Equal(8, PermanentCombatRules.Armor(ranks, 0, IncomingDamageKind.Other, .90, 0,
+                false, true, true));
+            Check.Equal(12, PermanentCombatRules.Armor(ranks, 5, IncomingDamageKind.Projectile, .30, 8,
+                true, true, true));
+        });
+
+        test("Expanded health tree applies every rank contribution to new challenge health", () =>
+        {
+            var profile = GameSnapshot.New();
+            PermanentProfile.Upgrade(profile);
+            profile.Profile.HighestSettledRound = 180;
+            var modifiers = new[] { 4, 4, 5, 5, 5, 6, 6, 7, 8 };
+            var expected = 150;
+            profile.Profile.Upgrades.Add("health", 5);
+            profile.Profile.PaidRanks!.Add("health", PermanentRules.LegacyRankPrices("health", 5));
+            Check.Near(expected, new AdamSession(profile, WaveTests.Adam(), "bible").CurrentHealth);
+            for (var index = 0; index < modifiers.Length; index++)
+            {
+                profile.Run = null;
+                var id = $"common.health.{index + 2:D2}";
+                var node = PermanentSkillCatalog.Current.Find(id);
+                profile.Profile.Upgrades.Add(id, 1);
+                profile.Profile.PaidRanks.Add(id, node.Prices.ToList());
+                expected += modifiers[index];
+                Check.Near(expected, new AdamSession(profile, WaveTests.Adam(), "bible").CurrentHealth);
+                profile.Validate();
+            }
+            Check.Equal(200, expected);
+        });
+
+        test("Expanded motion and collection context survive a live checkpoint and reset for the next round", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.move.08", "common.pickup.07", "common.xp.07");
+                var session = new AdamSession(state, WaveTests.Adam(), "sling");
+                var world = new BattleWorld(session, Speeds, 7);
+                world.Advance(1.1, Vector2.UnitX);
+                Check.True(state.Run!.PermanentActions!.Moving);
+                Check.Near(0, state.Run.PermanentActions.HeadingSince);
+                Check.Near(1.12, session.MoveSpeedMultiplier);
+                Check.Near(1.38, session.PickupRangeMultiplier);
+                state.Run.World = world.Capture();
+                store.Commit(state, state.Revision, "moving-checkpoint");
+
+                var restored = store.Load()!;
+                session = AdamSession.Resume(restored, WaveTests.Adam());
+                Check.Near(1.12, session.MoveSpeedMultiplier);
+                var loadedWorld = BattleWorld.Restore(session, Speeds, restored.Run!.World!);
+                loadedWorld.Advance(BattleWorld.FixedStep, Vector2.UnitY);
+                Check.Near(1.09, session.MoveSpeedMultiplier);
+                var clock = restored.Run.PermanentActions!;
+                Check.True(clock.HeadingSince >= 1);
+                var target = session.Targets.Keys.First();
+                session.Kill(target);
+                session.Collect(target);
+                Check.Equal(1, clock.GemsCollected);
+                Check.Near(session.CombatTime, clock.LastGemAt);
+                Check.Near(1.35, session.PickupRangeMultiplier);
+                while (session.PendingChoices.Count > 0) Check.True(session.Choose(session.PendingChoices[0]));
+                session.Advance(180);
+                while (session.PendingChoices.Count > 0) Check.True(session.Choose(session.PendingChoices[0]));
+                session.StartNextRound(CatalogReader.Round("content/genesis/catalog.json", 2));
+                Check.Equal(0, restored.Run.PermanentActions!.GemsCollected);
+                Check.True(!restored.Run.PermanentActions.Moving);
+            });
+        });
+
+        test("Expanded immediate recovery persists normal-kill count and ignores non-original kills", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.regen.09");
+                var session = new AdamSession(state, WaveTests.Adam(), "sling");
+                session.Advance(15);
+                session.Damage(55);
+                var targets = session.Targets.Keys.ToArray();
+                Check.True(targets.Length >= 11);
+                foreach (var id in targets.Take(9)) session.Hit(id, 1_000);
+                Check.Equal(9, state.Run!.PermanentRecovery!.NormalKills);
+                store.Commit(state, state.Revision, "before-tenth-kill");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, WaveTests.Adam());
+                var health = session.CurrentHealth;
+                session.Hit(targets[9], 1_000, null, original: false);
+                Check.Near(health, session.CurrentHealth);
+                session.Hit(targets[10], 1_000);
+                Check.Near(health + 1, session.CurrentHealth);
+                Check.Equal(10, state.Run!.PermanentRecovery!.NormalKills);
+                Check.Equal(1, state.Run.PermanentRecovery.ImmediateHeals.Count);
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>
@@ -124,6 +228,29 @@ internal static class PermanentSkillCombatTests
         var arena = BattleWorld.Restore(session, Speeds, state.Run!.World!);
         arena.Advance(BattleWorld.FixedStep, Vector2.Zero);
         return arena.Collected;
+    }
+
+    private static GameSnapshot ExpandedProfile(SaveStore store, params string[] desired)
+    {
+        var state = SaveStore.PrepareNewChallenge(GameSnapshot.New());
+        state.Profile.HighestSettledRound = 180;
+        state.Profile.Gold = 100_000;
+        store.Commit(state, state.Revision, "seed-settled-profile");
+        state = store.Load()!;
+        foreach (var id in desired) BuyPrerequisites(id, 1);
+        return state;
+
+        void BuyPrerequisites(string id, int rank)
+        {
+            if (PermanentRules.Rank(state.Profile.Upgrades, id) >= rank) return;
+            var node = PermanentSkillCatalog.Current.Find(id);
+            foreach (var requirement in node.Prerequisites) BuyPrerequisites(requirement.Key, requirement.Value);
+            var currentRank = PermanentRules.Rank(state.Profile.Upgrades, id);
+            for (; currentRank < rank; currentRank++)
+                state = store.TransactPermanent(PermanentSkillCommand.Purchase(
+                    PermanentSkillCommand.NewOperationId(state.Revision), state.Revision, id,
+                    currentRank, node.Prices[currentRank]));
+        }
     }
 
     private static GameSnapshot Buy(SaveStore store, GameSnapshot state, string id, int price) =>

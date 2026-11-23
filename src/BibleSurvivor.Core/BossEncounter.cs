@@ -268,10 +268,11 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public string? SelectedId {get;set;}
         [DataMember(EmitDefaultValue=false)] public string? PromotedFrom {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool GoldApplied {get;set;}
+        [DataMember(EmitDefaultValue=false)] public int? RulesVersion {get;set;}
         internal BossRewardState Copy()=>new BossRewardState{RewardId=RewardId,PolicyId=PolicyId,Weapons=new Dictionary<string,int>(Weapons),
             Passives=new Dictionary<string,int>(Passives),EligibleEvolutions=new List<string>(EligibleEvolutions),Applied=Applied,
             Forms=Forms==null?null:new Dictionary<string,string>(Forms),UnlockedWeapons=UnlockedWeapons?.ToList(),Candidates=Candidates?.Select(x=>x.Copy()).ToList(),
-            SelectedId=SelectedId,PromotedFrom=PromotedFrom,GoldApplied=GoldApplied};
+            SelectedId=SelectedId,PromotedFrom=PromotedFrom,GoldApplied=GoldApplied,RulesVersion=RulesVersion};
         internal static List<string> Eligibility(IReadOnlyDictionary<string,int> weapons,IReadOnlyDictionary<string,int> passives)
             =>EvolutionRules.Eligibility(weapons,passives,null);
     }
@@ -393,7 +394,8 @@ namespace BibleSurvivor.Core
             {
                 if(IntroElapsed!=2||Health!=0||!BossGoldApplied||Reward==null||Supports.Count!=0||run.Drops.Count!=0||Telegraphing||
                     Reward.RewardId!=EncounterId+":reward"||Reward.Weapons==null||Reward.Passives==null||Reward.EligibleEvolutions==null||
-                    !Reward.EligibleEvolutions.SequenceEqual(EvolutionRules.Eligibility(Reward.Weapons,Reward.Passives,Reward.Forms))||
+                    !Reward.EligibleEvolutions.SequenceEqual(EvolutionRules.Eligibility(Reward.Weapons,Reward.Passives,
+                        Reward.Forms,Reward.RulesVersion??1,Reward.UnlockedWeapons))||
                     (run.Stage=="boss_reward")==Reward.Applied||CompletionApplied!=(run.Stage=="between_rounds")||
                     run.RoundNumber!=(run.Stage=="between_rounds"?rules.Number+1:rules.Number)||
                     (run.Stage=="between_rounds"&&(run.PendingLevels!=0||run.Health!=run.MaxHealth))||

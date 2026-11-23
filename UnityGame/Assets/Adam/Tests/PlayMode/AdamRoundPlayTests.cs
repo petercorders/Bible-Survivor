@@ -282,9 +282,9 @@ public sealed class AdamRoundPlayTests
     }
     [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameUseExplicitNewChallengeOnly()
     {
-        var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(host.State.Profile);game.Initialize(host);game.SetLifecycle(true,false);yield return null;
+        var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(SaveStore.PreviewPermanentProfile(host.State));game.Initialize(host);game.SetLifecycle(true,false);yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
-        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(2,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);Assert.AreEqual(2,host.Session.CombatRulesVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
     }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}

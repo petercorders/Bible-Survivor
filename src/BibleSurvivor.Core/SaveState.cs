@@ -58,6 +58,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public string? CampaignLayout { get; set; }
         [DataMember(EmitDefaultValue=false)] public int? CombatRulesVersion { get; set; }
         [DataMember(EmitDefaultValue=false)] public int? PermanentCatalogVersion { get; set; }
+        [DataMember(EmitDefaultValue=false)] public List<string>? GrowthChoiceUnlockedWeapons { get; set; }
+        [DataMember(EmitDefaultValue=false)] public PermanentActionState? PermanentActions { get; set; }
+        [DataMember(EmitDefaultValue=false)] public PermanentRecoveryState? PermanentRecovery { get; set; }
     }
 
     [DataContract]
@@ -106,14 +109,19 @@ namespace BibleSurvivor.Core
             if (Run == null) return;
             if (skillTree && ((Run.CombatRulesVersion != 1 && Run.CombatRulesVersion != 2) ||
                 (Run.CampaignLayout != "genesis" && Run.CampaignLayout != "campaign")) ||
-                !skillTree && (Run.CombatRulesVersion != null || Run.CampaignLayout != null || Run.PermanentCatalogVersion != null))
+                !skillTree && (Run.CombatRulesVersion != null || Run.CampaignLayout != null ||
+                    Run.PermanentCatalogVersion != null || Run.GrowthChoiceUnlockedWeapons != null))
                 throw new UnsupportedSaveVersionException();
             var expandedCombat = Run.CombatRulesVersion == 2;
             if (expandedCombat && (Run.PermanentCatalogVersion is not int catalog ||
                 !PermanentSkillCatalog.SupportsVersion(catalog)))
                 throw new UnsupportedSaveVersionException();
-            if (!expandedCombat && Run.PermanentCatalogVersion != null)
+            if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null || Run.PermanentRecovery != null))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
+            foreach (var encounter in PermanentProfile.EncounterHistory(Run))
+                if (encounter.Reward is { } reward &&
+                    (reward.RulesVersion ?? 1) != (expandedCombat ? 2 : 1))
+                    throw new InvalidDataException("Boss reward rules do not match the run");
             var layoutVersion = skillTree
                 ? Run.CampaignLayout == "campaign" ? SaveFormat.CampaignVersion : SaveFormat.GenesisVersion
                 : SchemaVersion;
@@ -144,10 +152,30 @@ namespace BibleSurvivor.Core
             if (Run.Drops == null || Run.Drops.Any(x=>x.Key <= 0 || x.Value < 0) || Run.PendingLevels < 0 || Run.ChoiceSerial < 1 ||
                 Run.Choices == null || Run.Choices.Count > 3 || Run.Choices.Distinct().Count() != Run.Choices.Count ||
                 (Run.PendingLevels == 0) != (Run.Choices.Count == 0)) throw new InvalidDataException("Invalid pending progression");
-            if (expandedCombat) PermanentSkillCatalog.ForVersion(Run.PermanentCatalogVersion!.Value).ValidateRanks(Run.PermanentSnapshot);
+            var growthUnlocks = Run.GrowthChoiceUnlockedWeapons;
+            if (expandedCombat && Run.PendingLevels > 0)
+            {
+                if (growthUnlocks == null || growthUnlocks.Distinct(StringComparer.Ordinal).Count() != growthUnlocks.Count ||
+                    growthUnlocks.Any(id => id == null || !Profile.UnlockedWeapons.Contains(id) || !EquipmentInventory.SupportsWeapon(id, 2)))
+                    throw new InvalidDataException("Invalid expanded growth choice unlock snapshot");
+            }
+            else if (growthUnlocks != null)
+                throw new InvalidDataException("Unexpected growth choice unlock snapshot");
+            if (expandedCombat)
+            {
+                PermanentSkillCatalog.ForVersion(Run.PermanentCatalogVersion!.Value).ValidateRanks(Run.PermanentSnapshot);
+                if (Run.PermanentActions == null || Run.PermanentRecovery == null)
+                    throw new InvalidDataException("Expanded run requires permanent action and recovery state");
+                if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
+                    throw new InvalidDataException("Expanded run health does not match its starting ranks");
+            }
             else PermanentRules.Validate(Run.PermanentSnapshot);
             if(Run.Wave!=null && (Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null)))
                 throw new InvalidDataException("Invalid active enemy collection");
+            if (expandedCombat && Run.Wave is { } activeWave &&
+                (Run.Drops.Keys.Any(id => id > activeWave.Cursor) ||
+                    activeWave.Active.Any(enemy => Run.Drops.ContainsKey(enemy.Id))))
+                throw new InvalidDataException("Expanded drop refers to an unissued or living actor");
             var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&(Run.RoundNumber==4||Run.RoundNumber==7||Run.RoundNumber==10||r10&&(Run.RoundNumber==13||Run.RoundNumber==16||Run.RoundNumber==19||expansionBoss)));
             if(bossStage!=(Run.Boss!=null)||bossStage&&((r10?(Run.Boss!.EncounterRound!=12&&Run.Boss.EncounterRound!=15&&Run.Boss.EncounterRound!=18&&!expansionBoss):layoutVersion!=2)||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
             if(Run.Forms!=null&&((layoutVersion!=2&&!r10)||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
@@ -266,6 +294,8 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World weapon form does not match inventory");
                 if (expandedCombat && Run.World.Weapons.Any(w => !Run.Weapons.ContainsKey(w.WeaponId)))
                     throw new InvalidDataException("Expanded weapon clock requires equipped weapon");
+                if (expandedCombat && Run.World.PermanentTargetLedger().Any(id => id < firstActor || id > lastActor))
+                    throw new InvalidDataException("Expanded weapon ledger refers to an unissued actor");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if (expandedCombat && ((Run.World.Charges != null) != (normalRound >= 4) ||
                     (Run.World.HostileProjectiles != null) != chainWorld))
@@ -288,9 +318,16 @@ namespace BibleSurvivor.Core
             }
             try
             {
-                var inventory=EquipmentInventory.Restore(Run.Weapons, Run.Passives,Run.Forms); _ = new GrowthLedger(Run.Level, Run.Experience);
+                var actionClock = Run.Boss?.CombatTime ?? Run.Wave?.Elapsed ?? Run.NormalEndedAt ?? 180;
+                Run.PermanentActions?.Validate(actionClock);
+                Run.PermanentRecovery?.Validate(actionClock);
+                var inventory=EquipmentInventory.Restore(Run.Weapons, Run.Passives,Run.Forms, expandedCombat ? 2 : 1);
+                _ = new GrowthLedger(Run.Level, Run.Experience);
+                if (expandedCombat && (Run.Weapons.Keys.Any(id => !Profile.UnlockedWeapons.Contains(id)) ||
+                    growthUnlocks != null && !Run.Choices.SequenceEqual(AdamSession.GrowthChoices(inventory,growthUnlocks,Run.ChoiceSerial))))
+                    throw new InvalidDataException("Expanded equipment or growth choice changed");
                 if(Run.Choices.Any(x=>x!=null&&x.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal))&&
-                    !Run.Choices.SequenceEqual(AdamSession.GrowthChoices(inventory,Profile.UnlockedWeapons,Run.ChoiceSerial)))throw new InvalidDataException("Invalid exhausted growth choice");
+                    !Run.Choices.SequenceEqual(AdamSession.GrowthChoices(inventory,growthUnlocks ?? Profile.UnlockedWeapons,Run.ChoiceSerial)))throw new InvalidDataException("Invalid exhausted growth choice");
             }
             catch (ArgumentException error) { throw new InvalidDataException("Invalid progression", error); }
             if ((Run.Stage == "normal") != (Run.Wave != null)) throw new InvalidDataException("Invalid wave lifecycle");
@@ -348,6 +385,16 @@ namespace BibleSurvivor.Core
             PermanentProfile.Upgrade(copy);
             return copy.Profile;
         }
+
+        public static GameSnapshot PrepareNewChallenge(GameSnapshot snapshot)
+        {
+            var candidate = Copy(snapshot);
+            PermanentProfile.Upgrade(candidate);
+            candidate.Run = null;
+            return candidate;
+        }
+
+        public static void PreparePermanentCheckpoint(GameSnapshot snapshot) => PermanentProfile.Upgrade(snapshot);
 
         private GameSnapshot? LoadCore(out int sourceVersion, out byte[]? source)
         {

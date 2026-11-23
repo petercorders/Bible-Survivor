@@ -41,10 +41,15 @@ namespace BibleSurvivor.Unity
         public static Rect PauseResume(float width,float height,bool mobile)=>PauseResume(width,height,mobile,PolishEnabled);
         public static Rect PauseResume(float width,float height,bool mobile,bool polish)=>mobile||!polish?new Rect(width/2-125,height/2+20,250,mobile?66:56):new Rect(width/2-125,PausePanel(width,height).y+270,250,50);
         public static Rect Footer(float width,float height)=>new Rect(0,height-78,width,78);
-        public static Rect InventorySlot(float height,int slot,bool weapon)
+        public static Rect InventorySlot(float height, int slot, bool weapon, int combatRulesVersion = 1)
         {
-            if(slot<0||slot>=(weapon?3:10))throw new ArgumentOutOfRangeException(nameof(slot));
-            return weapon?new Rect(20+slot*38,height-66,36,36):new Rect(146+slot%5*30,height-72+slot/5*34,26,26);
+            var expanded = combatRulesVersion == 2;
+            var count = weapon ? (expanded ? 6 : 3) : (expanded ? 6 : 10);
+            if (slot < 0 || slot >= count) throw new ArgumentOutOfRangeException(nameof(slot));
+            if (weapon) return new Rect(20 + slot * 38, height - 66, 36, 36);
+            var columns = expanded ? 3 : 5;
+            var left = expanded ? 260 : 146;
+            return new Rect(left + slot % columns * 30, height - 72 + slot / columns * 34, 26, 26);
         }
         public static string Icon(string id)
         {

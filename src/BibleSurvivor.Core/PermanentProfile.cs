@@ -48,7 +48,7 @@ namespace BibleSurvivor.Core
             snapshot.SchemaVersion = SaveFormat.CurrentVersion;
         }
 
-        private static IEnumerable<BossEncounterState> EncounterHistory(RunState run) =>
+        internal static IEnumerable<BossEncounterState> EncounterHistory(RunState run) =>
             new[] { run.Boss, run.CompletedBoss, run.CompletedSecondBoss, run.CompletedThirdBoss,
                 run.CompletedFourthBoss, run.CompletedFifthBoss, run.CompletedSixthBoss }
                 .Concat(run.LaterBossHistory ?? Enumerable.Empty<BossEncounterState>()).OfType<BossEncounterState>();

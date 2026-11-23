@@ -16,15 +16,35 @@ public sealed class AdamRoundHostTests
     [TearDown] public void Cleanup(){if(Directory.Exists(directory))Directory.Delete(directory,true);}
     public static string Json(GameSnapshot value){using(var stream=new MemoryStream()){new DataContractJsonSerializer(typeof(GameSnapshot)).WriteObject(stream,value);return Encoding.UTF8.GetString(stream.ToArray());}}
     public static GameSnapshot Read(string file){using(var stream=File.OpenRead(file))return (GameSnapshot)new DataContractJsonSerializer(typeof(GameSnapshot)).ReadObject(stream);}
-    public static AdamHost Completed(string path,SaveStore store=null,bool pending=false)
+    public static AdamHost OpenLegacyChallenge(string path, SaveStore store = null, bool attackUpgrade = false,
+        bool changeProfileAfterStart = false)
     {
-        var host=new AdamHost(AdamCatalog.Load(),store??new SaveStore(path));host.State.Profile.Upgrades["attack"]=1;host.Start("sling");
+        var catalog = AdamCatalog.Load();
+        store = store ?? new SaveStore(path);
+        var state = GameSnapshot.New();
+        if (attackUpgrade) state.Profile.Upgrades["attack"] = 1;
+        var session = new AdamSession(state, catalog.Definition, "sling");
+        if (changeProfileAfterStart) state.Profile.Upgrades["attack"] = 2;
+        session.Capture();
+        store.Commit(state, 0, "legacy-challenge-fixture");
+        var host = new AdamHost(catalog, store);
+        Assert.IsNull(host.Error);
+        Assert.AreEqual(1, host.Session.CombatRulesVersion);
+        host.SetPaused(false);
+        return host;
+    }
+    public static AdamHost Completed(string path,SaveStore store=null,bool pending=false,bool changeProfileAfterStart=false)
+    {
+        var host=OpenLegacyChallenge(path,store,attackUpgrade:true,changeProfileAfterStart:changeProfileAfterStart);
         for(var i=0;i<12;i++){host.SetMovement(Vector2.right);host.Tick(.1);}
         host.Session.Inventory.TryChoose("hair",true);host.Session.Advance(20);
         foreach(var id in host.Session.Wave.Active.Keys.Take(7).ToArray())host.Session.Kill(id);
         host.Session.Advance(180);host.SetPaused(true);
         if(!pending)while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]),host.Error);
-        Assert.IsTrue(host.Checkpoint(),host.Error);return host;
+        Assert.IsTrue(host.Checkpoint(),host.Error);
+        Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);
+        Assert.AreEqual(1,host.Session.CombatRulesVersion);
+        return host;
     }
     [Test] public void CanonicalR01R02R03CatalogAndMarkersAreExplicit()
     {
@@ -48,8 +68,8 @@ public sealed class AdamRoundHostTests
     }
     [Test] public void EntryPreservesProgressionAndSnapshotButResetsWorldAndDoesNotRehealOrReward()
     {
-        var host=Completed(path);var old=host.World;Assert.Greater(old.SimulationTime,0);Assert.Greater(old.PlayerPosition.X,0);
-        host.State.Profile.Upgrades["attack"]=2;Assert.IsTrue(host.Checkpoint());var before=Read(path);var weapons=before.Run.Weapons.ToArray();var passives=before.Run.Passives.ToArray();
+        var host=Completed(path,changeProfileAfterStart:true);var old=host.World;Assert.Greater(old.SimulationTime,0);Assert.Greater(old.PlayerPosition.X,0);
+        var before=Read(path);Assert.AreEqual(2,before.Profile.Upgrades["attack"]);var weapons=before.Run.Weapons.ToArray();var passives=before.Run.Passives.ToArray();
         host.SetPaused(false);Assert.AreEqual(2,host.Session.RoundNumber);Assert.AreEqual(before.Run.RunId,host.State.Run.RunId);Assert.AreEqual(before.Run.Level,host.State.Run.Level);Assert.AreEqual(before.Run.Experience,host.State.Run.Experience);Assert.AreEqual(before.Run.KillRemainder,host.State.Run.KillRemainder);CollectionAssert.AreEquivalent(weapons,host.State.Run.Weapons.ToArray());CollectionAssert.AreEquivalent(passives,host.State.Run.Passives.ToArray());Assert.AreEqual(before.Profile.Gold,host.State.Profile.Gold);Assert.AreEqual(1,host.State.Run.PermanentSnapshot["attack"]);Assert.AreEqual(before.Run.Health,host.Session.CurrentHealth);
         Assert.AreNotSame(old,host.World);var world=host.World.Capture();Assert.Zero(world.Time);Assert.Zero(world.PlayerX);Assert.Zero(world.PlayerY);Assert.IsEmpty(world.Enemies);Assert.IsEmpty(world.Projectiles);Assert.IsEmpty(world.Weapons);Assert.IsEmpty(world.Drops);Assert.AreEqual(-1,host.State.Run.LastHitTime);
         host.Session.Damage(1);Assert.AreEqual(before.Run.Health-1,host.Session.CurrentHealth,"old-clock invulnerability/healing must not survive entry");
@@ -94,7 +114,7 @@ public sealed class AdamRoundHostTests
     {
         var host=Completed(path);host.SetPaused(false);Assert.AreEqual(2,host.Session.RoundNumber);host.Session.Advance(180);Assert.IsTrue(host.Checkpoint());Assert.IsTrue(host.AwaitingR03);Assert.IsFalse(host.ContentComplete);Assert.AreEqual(3,host.State.Run.RoundNumber);var gold=host.State.Profile.Gold;Assert.IsTrue(host.State.Profile.UnlockedWeapons.Contains("lightning"));
         var restored=new AdamHost(catalog,new SaveStore(path));Assert.IsNull(restored.Error);Assert.IsTrue(restored.AwaitingR03);Assert.AreEqual(2,restored.Session.RoundNumber);restored.SetPaused(false);Assert.AreEqual(3,restored.Session.RoundNumber);Assert.NotNull(restored.World);Assert.AreEqual(gold,restored.State.Profile.Gold);restored.Start("bible");Assert.AreEqual(3,restored.Session.RoundNumber,"a live R03 challenge cannot be overwritten");
-        var second=Completed(Path.Combine(directory,"death.json"));second.SetPaused(false);var balance=second.State.Profile.Gold;second.Session.Damage(100000);Assert.IsTrue(second.Checkpoint());second.Start("jawbone");Assert.AreEqual(1,second.Session.RoundNumber);Assert.AreEqual(balance,second.State.Profile.Gold);
+        var second=Completed(Path.Combine(directory,"death.json"));second.SetPaused(false);var balance=second.State.Profile.Gold;second.Session.Damage(100000);Assert.IsTrue(second.Checkpoint());second.Start("jawbone");Assert.AreEqual(1,second.Session.RoundNumber);Assert.AreEqual(SaveFormat.CurrentVersion,second.State.SchemaVersion);Assert.AreEqual(2,second.Session.CombatRulesVersion);Assert.AreEqual(balance,second.State.Profile.Gold);
     }
     [TestCase("bible")] [TestCase("jawbone")] [TestCase("sling")] public void ThreeWeaponsHitInjuredR02EnemiesAndCollectedExperienceCanBeChosen(string weapon)
     {

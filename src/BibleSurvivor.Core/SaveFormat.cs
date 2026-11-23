@@ -65,7 +65,28 @@ namespace BibleSurvivor.Core
                 ("Tuning", tuning), ("Enemies", Array(entity)), ("Drops", Array(entity)),
                 ("Projectiles", Array(projectile)), ("Weapons", Array(weapon)),
                 ("MonsterSpeeds", Array(Object("MonsterId Ratio"))),("HostileProjectiles",Array(Object("Version Id BornAt StartX StartY X Y DirectionX DirectionY Lifetime"))),("Charges",Array(Object("Version Id Phase NextAt Until TargetX TargetY DirectionX DirectionY"))));
+            if (skillTree)
+            {
+                world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle",
+                    ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds")))));
+                world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
+                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired")))));
+                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep",
+                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber")))));
+                world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle",
+                    ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds")))));
+                world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle",
+                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt",
+                        ("HitTargets", Array(Object("Id Outbound Returned LastHitAt"))),
+                        ("Thorns", Array(Object("StartX StartY EndX EndY BornAt Returning"))))))));
+                world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle",
+                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds")))));
+                world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits",
+                    ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget"))),
+                    ("Leap", Object("At OriginX OriginY Damage VisitedIds"))));
+            }
             var reward = Object("RewardId PolicyId EligibleEvolutions Applied UnlockedWeapons SelectedId PromotedFrom GoldApplied",("Weapons",integerMap),("Passives",integerMap),("Forms",integerMap),("Candidates",Array(Object("Id Kind ItemId Level Gold"))));
+            if (skillTree) reward.Members!.Add("RulesVersion", Value);
             var boss = Object("Version EncounterId NormalEndedAt IntroElapsed BossElapsed Health Paused NextAttackAt Telegraphing TargetX TargetY ThresholdUsed Summoned NextActorId BossGoldApplied CompletionApplied RoundNumber SummonMask",
                 ("AimedShot",Object("OriginX OriginY DirectionX DirectionY")),("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
@@ -75,6 +96,10 @@ namespace BibleSurvivor.Core
                 run.Members!.Add("CampaignLayout", Value);
                 run.Members.Add("CombatRulesVersion", Value);
                 run.Members.Add("PermanentCatalogVersion", Value);
+                run.Members.Add("GrowthChoiceUnlockedWeapons", Value);
+                run.Members.Add("PermanentActions", Object("GemsCollected LastGemAt LastContactAt StationarySince HeadingSince HeadingX HeadingY"));
+                run.Members.Add("PermanentRecovery", Object("NormalKills NextEliteAt NextBossSupportAt NextLowHealthAt LastEventAt",
+                    ("ImmediateHeals", Array(Object("At Amount")))));
             }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));
@@ -200,8 +225,7 @@ namespace BibleSurvivor.Core
                         BossDefinition.Find(worldRound-(betweenRounds?1:0))?.WorldVersion!=5)
                         throw new UnsupportedSaveVersionException();
                 }
-                if (members.Any(x => !RunFields.Contains(x.Name) &&
-                    !(skillTree && (x.Name == "CampaignLayout" || x.Name == "CombatRulesVersion" || x.Name == "PermanentCatalogVersion"))))
+                if (!skillTree && members.Any(x => !RunFields.Contains(x.Name)))
                     RejectUnsupportedContent(version, "Unknown run field for this save format");
                 var boss=members.SingleOrDefault(x=>x.Name=="Boss");
                 if(!r12&&boss?.ChildNodes.OfType<XmlElement>().Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")==true)throw new UnsupportedSaveVersionException();
@@ -256,7 +280,7 @@ namespace BibleSurvivor.Core
             }
             if (fields.Any(x => !EnvelopeFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown save envelope field");
             if (version >= GenesisVersion && !skillTree) CheckSupportedContent(root, LegacyContent);
-            if (version >= GenesisVersion) CheckForms(root);
+            if (version >= GenesisVersion) CheckForms(root, expandedCombat);
             return version;
         }
 
@@ -269,7 +293,7 @@ namespace BibleSurvivor.Core
                     ?stage=="boss_intro"||stage=="boss"||stage=="boss_reward"||stage=="boss_settlement"
                     :stage=="round_settlement")));
 
-        private static void CheckForms(XmlElement element)
+        private static void CheckForms(XmlElement element, bool expanded)
         {
             if((element.Name=="Boss"||element.Name=="CompletedBoss"||element.Name=="CompletedSecondBoss"||element.Name=="CompletedThirdBoss"||element.Name=="CompletedFourthBoss"||element.Name=="CompletedFifthBoss"||element.Name=="CompletedSixthBoss"||element.ParentNode?.Name=="LaterBossHistory")&&element.GetAttribute("type")=="object")
             {
@@ -292,6 +316,10 @@ namespace BibleSurvivor.Core
                 if(version?.GetAttribute("type")=="number"&&(!int.TryParse(version.InnerText,out var bv)||bv>maxVersion))throw new UnsupportedSaveVersionException();
                 if(rules?.UsesDash==true&&version?.InnerText!=maxVersion.ToString(CultureInfo.InvariantCulture))throw new UnsupportedSaveVersionException();
                 var reward=element.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Reward");
+                var rewardVersion=reward?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="RulesVersion");
+                if (rewardVersion?.GetAttribute("type")=="number" &&
+                    (!int.TryParse(rewardVersion.InnerText,out var rv)||rv>2))
+                    throw new UnsupportedSaveVersionException();
                 var policy=reward?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="PolicyId");
                 if(policy?.GetAttribute("type")=="string")
                 {
@@ -310,14 +338,14 @@ namespace BibleSurvivor.Core
                 }
             if(element.Name=="Choices"&&element.GetAttribute("type")=="array")
                 foreach(var choice in element.ChildNodes.OfType<XmlElement>())
-                    if(choice.GetAttribute("type")=="string"&&!AdamSession.KnownGrowthChoice(choice.InnerText))throw new UnsupportedSaveVersionException();
+                    if(choice.GetAttribute("type")=="string"&&!AdamSession.KnownGrowthChoice(choice.InnerText,expanded?2:1))throw new UnsupportedSaveVersionException();
             if(element.Name=="Forms" && element.GetAttribute("type")=="array")
                 foreach(var entry in element.ChildNodes.OfType<XmlElement>())
                 {
                     var value=entry.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="Value");
-                    if(value?.GetAttribute("type")=="string"&&!KnownForm(value.InnerText))throw new UnsupportedSaveVersionException();
+                    if(value?.GetAttribute("type")=="string"&&!KnownForm(value.InnerText,expanded))throw new UnsupportedSaveVersionException();
                 }
-            if(element.Name=="WeaponForm" && element.GetAttribute("type")=="string"&&!KnownForm(element.InnerText))throw new UnsupportedSaveVersionException();
+            if(element.Name=="WeaponForm" && element.GetAttribute("type")=="string"&&!KnownForm(element.InnerText,expanded))throw new UnsupportedSaveVersionException();
             if(element.Name=="item" && element.GetAttribute("type")=="object")
             {
                 var fields=element.ChildNodes.OfType<XmlElement>().ToArray();
@@ -326,12 +354,14 @@ namespace BibleSurvivor.Core
                 if(fields.Any(x=>x.Name=="Kind"&&x.InnerText=="evolution"))
                 {
                     var item=fields.FirstOrDefault(x=>x.Name=="ItemId");
-                    if(item?.GetAttribute("type")=="string"&&!KnownForm(item.InnerText))throw new UnsupportedSaveVersionException();
+                    if(item?.GetAttribute("type")=="string"&&!KnownForm(item.InnerText,expanded))throw new UnsupportedSaveVersionException();
                 }
             }
-            foreach(var child in element.ChildNodes.OfType<XmlElement>())CheckForms(child);
+            foreach(var child in element.ChildNodes.OfType<XmlElement>())CheckForms(child,expanded);
         }
-        private static bool KnownForm(string form)=>form==EvolutionRules.Bible||form==EvolutionRules.Jawbone||form==EvolutionRules.Sling;
+        private static bool KnownForm(string form,bool expanded)=>form==EvolutionRules.Bible||form==EvolutionRules.Jawbone||
+            form==EvolutionRules.Sling||expanded&&ExpandedWeaponRules.TryGetByEvolution(form,out var rules)&&
+            EquipmentInventory.SupportsWeapon(rules.WeaponId,2);
 
         private static void RejectUnsupportedContent(int version, string message)
         {

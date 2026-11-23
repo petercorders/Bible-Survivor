@@ -30,6 +30,8 @@ namespace BibleSurvivor.Unity
         }
         public static string ItemName(string id)
         {
+            if (ExpandedWeaponRules.TryGet(id, out var weapon)) return weapon.Name;
+            if (ExpandedWeaponRules.TryGetByEvolution(id, out var evolved)) return evolved.EvolutionName;
             switch (id)
             {
                 case "bible": return "회전 성경";
@@ -53,13 +55,19 @@ namespace BibleSurvivor.Unity
         {
             if(id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal))
                 return new AdamChoiceText{Id=id,Name="골드 주머니",Kind="재화",Effect="영구 골드 +25"};
-            var weapon = id == "bible" || id == "jawbone" || id == "sling";
+            var isExpandedWeapon = ExpandedWeaponRules.TryGet(id, out var expandedWeapon);
+            var weapon = isExpandedWeapon || id == "bible" || id == "jawbone" || id == "sling";
             var levels = weapon ? inventory.Weapons : inventory.Passives;
             var current = levels.TryGetValue(id, out var level) ? level : 0;
             var result = new AdamChoiceText { Id = id, Name = ItemName(id), Kind = weapon ? "무기" : "보조", CurrentLevel = current, Maximum = weapon ? 8 : id == "stones" ? 2 : 5 };
             if (current >= result.Maximum) throw new InvalidOperationException("Item is already at maximum level");
             if (weapon)
             {
+                if (isExpandedWeapon)
+                {
+                    result.Effect = ExpandedWeaponEffect(expandedWeapon, current);
+                    return result;
+                }
                 var next = WeaponRules.Get(id, current + 1);
                 if (current == 0)
                 {
@@ -99,6 +107,37 @@ namespace BibleSurvivor.Unity
             result.BeforeValue = current * perLevel; result.AfterValue = (current + 1) * perLevel;
             result.Effect = $"{effect} {N(result.BeforeValue)} → {N(result.AfterValue)}{unit}";
             return result;
+        }
+        private static string ExpandedWeaponEffect(ExpandedWeaponProfile weapon, int current)
+        {
+            var next = weapon.AtLevel(current + 1);
+            if (current == 0)
+            {
+                var attack = weapon.WeaponId switch
+                {
+                    "wilderness_voice" => "전방 부채꼴",
+                    "lightning" => "지정 위치 낙뢰",
+                    "moses_staff" => "전방 관통 물결",
+                    "fire_pillar" => "지속 화염 지대",
+                    "daniel_lion" => "추적 할퀴기",
+                    "cross" => "자동 조준 왕복",
+                    "elijah_chariot" => "전방 예고 후 돌진",
+                    _ => throw new ArgumentException("Unsupported expanded weapon"),
+                };
+                return $"{attack} · 기본 피해 {next.Damage} · 수량 {next.Amount} · 주기 {N(next.Cycle)}초";
+            }
+
+            var before = weapon.AtLevel(current);
+            var changes = new List<string>();
+            Add(changes, "기본 피해", before.Damage, next.Damage);
+            Add(changes, "수량", before.Amount, next.Amount);
+            Add(changes, "주기(초)", before.Cycle, next.Cycle);
+            Add(changes, "반경", before.Radius, next.Radius);
+            Add(changes, "폭", before.Width, next.Width);
+            Add(changes, "도달", before.Reach, next.Reach);
+            Add(changes, "지속(초)", before.Duration, next.Duration);
+            Add(changes, "속력", before.Speed, next.Speed);
+            return string.Join(" · ", changes);
         }
         static void Add(List<string> changes, string label, double before, double after)
         { if (before != after) changes.Add($"{label} {N(before)} → {N(after)}"); }

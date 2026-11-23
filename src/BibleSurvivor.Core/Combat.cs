@@ -25,6 +25,10 @@ namespace BibleSurvivor.Core
         public bool IsOrbit {get; private set;}
         public double ProjectileSpeedMultiplier {get; private set;}
         internal double OrbitCollisionMultiplier { get; private set; } = 1;
+        internal double AttackRadius { get; private set; }
+        internal double AttackReach { get; private set; }
+        internal double AttackWidth { get; private set; }
+        internal double AttackSpeed { get; private set; }
         internal CombatStats Evolved(string form)
         {
             var copy=(CombatStats)MemberwiseClone();
@@ -74,6 +78,25 @@ namespace BibleSurvivor.Core
         }
 
         internal static int ExpandedAmountLimit(string id) => id == "bible" ? 7 : id == "jawbone" ? 6 : 8;
+
+        internal static CombatStats ForScheduled(ExpandedWeaponProfile profile, int level, CombatBonuses bonuses, int specialization)
+        {
+            var basis = profile.AtLevel(level);
+            var original = profile.AtLevel(1);
+            var reachBonus = bonuses.AreaBonus + (profile.WeaponId == "wilderness_voice" ? .20 * specialization : 0);
+            return new CombatStats
+            {
+                Damage = Math.Max(1, basis.Damage * Math.Min(2.25, 1 + bonuses.DamageBonus)),
+                Cycle = Math.Max(.15, basis.Cycle * Math.Max(.20, 1 - bonuses.CooldownReduction)),
+                Amount = Math.Min(profile.MaximumOriginalAmount, basis.Amount + bonuses.ExtraAmount),
+                AttackRadius = Math.Min(original.Radius * 2.5,
+                    basis.Radius + original.Radius * (profile.WeaponId == "cross" ? 0 : bonuses.AreaBonus)),
+                AttackReach = Math.Min(original.Reach * 2.5, basis.Reach + original.Reach * reachBonus),
+                AttackWidth = Math.Min(original.Width * 2.5, basis.Width + original.Width * bonuses.AreaBonus),
+                Duration = basis.Duration * Math.Min(1.75, 1 + bonuses.DurationBonus),
+                AttackSpeed = basis.Speed * Math.Min(1.75, 1 + bonuses.ProjectileSpeedBonus),
+            };
+        }
     }
     public sealed class AttackEmission
     {

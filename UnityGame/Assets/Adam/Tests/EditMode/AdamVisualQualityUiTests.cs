@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using BibleSurvivor.Core;
 using BibleSurvivor.Unity;
@@ -22,6 +23,29 @@ public sealed class AdamVisualQualityUiTests
             Assert.GreaterOrEqual(rect.xMin,0);Assert.LessOrEqual(rect.xMax,350);
             for(var j=0;j<i;j++)Assert.IsFalse(rect.Overlaps(AdamHud.InventorySlot(height,j<3?j:j-3,j<3)));
         }
+    }
+
+    [TestCase(660,440)][TestCase(1100,720)]
+    public void ExpandedInventoryFitsSixWeaponsAndSixPassivesBeforeTheLegacyHints(float width,float height)
+    {
+        var footer=AdamHud.Footer(width,height);
+        var slots=Enumerable.Range(0,6).Select(slot=>AdamHud.InventorySlot(height,slot,true,2))
+            .Concat(Enumerable.Range(0,6).Select(slot=>AdamHud.InventorySlot(height,slot,false,2))).ToArray();
+        for(var i=0;i<slots.Length;i++)
+        {
+            var rect=slots[i];
+            Assert.GreaterOrEqual(rect.yMin-2,footer.yMin);
+            Assert.LessOrEqual(rect.yMax+6,height);
+            Assert.GreaterOrEqual(rect.xMin,0);
+            Assert.LessOrEqual(rect.xMax,Mathf.Max(350,width*.5f));
+            for(var j=0;j<i;j++)
+            {
+                var withPips=slots[j];
+                withPips.yMax+=6;
+                Assert.IsFalse(rect.Overlaps(withPips));
+            }
+        }
+        Assert.Throws<ArgumentOutOfRangeException>(()=>AdamHud.InventorySlot(height,3,true));
     }
 
     [Test] public void BossClockCannotBecomeAnElapsedTimeOverNormalThreeMinuteDenominator()
@@ -62,6 +86,51 @@ public sealed class AdamVisualQualityUiTests
         StringAssert.Contains("+25",currency.Card(1));
         var boss=AdamBossPresentation.Card(new BossRewardCandidate{Kind="gold",Gold=100},2,null);
         Assert.AreEqual("골드 보상",AdamHud.CardName(boss));StringAssert.Contains("+100",boss);
+    }
+
+    [Test] public void ExpandedCardsUseAllSevenCoreNamesAndTheirLevelAndFormDescriptions()
+    {
+        foreach(var profile in ExpandedWeaponRules.All)
+        {
+            var inventory=new EquipmentInventory("bible",2);
+            for(var level=0;level<8;level++)
+            {
+                var choice=AdamChoiceText.Describe(profile.WeaponId,inventory);
+                Assert.AreEqual(profile.Name,choice.Name);
+                Assert.AreEqual("무기",choice.Kind);
+                Assert.AreEqual(level,choice.CurrentLevel);
+                Assert.IsNotEmpty(choice.Effect);
+                if(level==0)
+                {
+                    StringAssert.Contains("기본 피해 "+profile.AtLevel(1).Damage,choice.Effect);
+                    StringAssert.Contains("수량 "+profile.AtLevel(1).Amount,choice.Effect);
+                }
+                Assert.IsTrue(inventory.TryChoose(profile.WeaponId,false));
+            }
+            var card=AdamBossPresentation.Card(new BossRewardCandidate{Kind="evolution",ItemId=profile.EvolutionId},0,null);
+            Assert.AreEqual(profile.EvolutionName,AdamHud.CardName(card));
+            Assert.AreEqual(profile.EvolutionName,AdamChoiceText.ItemName(profile.EvolutionId));
+            Assert.AreEqual("진화",AdamHud.CardTag(card));
+            StringAssert.Contains(AdamBossPresentation.EvolutionEffect(profile.EvolutionId),card);
+        }
+    }
+
+    [Test] public void PermanentShopOffersOnlyTheLinkedCommonAndWeaponEffects()
+    {
+        Assert.AreEqual(92,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
+        foreach(var profile in ExpandedWeaponRules.All)
+        {
+            for(var rank=1;rank<=3;rank++)
+                Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase($"weapon.{profile.WeaponId}.base.0{rank}"));
+            Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase($"weapon.{profile.WeaponId}.base.04"));
+        }
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.health.10"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.armor.10"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.regen.02"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.move.08"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.xp.07"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.pickup.10"));
+        Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase("common.crit.01"));
     }
 
     [TestCase(false)][TestCase(true)]

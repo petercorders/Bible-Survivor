@@ -47,6 +47,17 @@ internal static class Program
         PermanentSkillSaveTests.Register(Test);
         PermanentSkillCombatTests.Register(Test);
         ExpandedWeaponRulesTests.Register(Test);
+        ExpandedLightningTests.Register(Test);
+        ExpandedWeaponProgressionTests.Register(Test);
+        ExpandedWildernessVoiceTests.Register(Test);
+        ExpandedMosesStaffTests.Register(Test);
+        ExpandedCrossTests.Register(Test);
+        ExpandedElijahChariotTests.Register(Test);
+        ExpandedFirePillarTests.Register(Test);
+        ExpandedDanielLionTests.Register(Test);
+        PermanentOriginalHitRulesTests.Register(Test);
+        PermanentRecoveryRulesTests.Register(Test);
+        PermanentTempoRulesTests.Register(Test);
         CombatTests.Register(Test);
         SaveTests.Register(Test);
         SaveSchemaTests.Register(Test);

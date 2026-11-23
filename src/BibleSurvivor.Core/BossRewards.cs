@@ -24,11 +24,12 @@ namespace BibleSurvivor.Core
         internal static readonly string[] Passives={"scroll","hair","stones","east_wind","seal","cloud","thunder","crown","underwear","whirlwind"};
         internal static List<BossRewardCandidate> Generate(BossRewardState reward)
         {
-            var inventory=EquipmentInventory.Restore(reward.Weapons,reward.Passives,reward.Forms);
+            var version = reward.RulesVersion ?? 1;
+            var inventory=EquipmentInventory.Restore(reward.Weapons,reward.Passives,reward.Forms,version);
             using var hash=SHA256.Create();var bytes=hash.ComputeHash(Encoding.UTF8.GetBytes(reward.RewardId));
             var seed=unchecked((int)((uint)bytes[0]|(uint)bytes[1]<<8|(uint)bytes[2]<<16|(uint)bytes[3]<<24));
             var result=new List<BossRewardCandidate>();
-            var evolutions=EvolutionRules.Eligibility(reward.Weapons,reward.Passives,reward.Forms);
+            var evolutions=EvolutionRules.Eligibility(reward.Weapons,reward.Passives,reward.Forms,version,reward.UnlockedWeapons);
             if(evolutions.Count>0)
             {
                 var offset=(int)((uint)seed%(uint)evolutions.Count);
@@ -62,7 +63,14 @@ namespace BibleSurvivor.Core
                 reward.Candidates.Select(x=>x.Id).Distinct().Count()!=reward.Candidates.Count||
                 (reward.PromotedFrom!=null&&reward.PromotedFrom!=BossDefinition.LegacyPolicy))throw new InvalidDataException("Invalid reward candidates");
             List<BossRewardCandidate> expected;
-            try{expected=Generate(reward);}catch(ArgumentException error){throw new InvalidDataException("Invalid reward input",error);}
+            try
+            {
+                if (reward.RulesVersion==2 && !EvolutionRules.Eligibility(reward.Weapons,reward.Passives,reward.Forms,2,
+                    reward.UnlockedWeapons).SequenceEqual(reward.EligibleEvolutions))
+                    throw new InvalidDataException("Expanded reward evolution eligibility changed");
+                expected=Generate(reward);
+            }
+            catch(ArgumentException error){throw new InvalidDataException("Invalid reward input",error);}
             if(expected.Count!=reward.Candidates.Count||!expected.Zip(reward.Candidates,(a,b)=>a.Same(b)).All(x=>x))throw new InvalidDataException("Reward candidates changed");
             if(!reward.Applied)
             {
