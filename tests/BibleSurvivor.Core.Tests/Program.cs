@@ -43,6 +43,7 @@ internal static class Program
         {
         WaveTests.Register(Test);
         GrowthTests.Register(Test);
+        PermanentSkillCatalogTests.Register(Test);
         CombatTests.Register(Test);
         SaveTests.Register(Test);
         SaveSchemaTests.Register(Test);

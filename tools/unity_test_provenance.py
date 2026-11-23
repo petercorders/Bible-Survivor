@@ -34,6 +34,7 @@ def main():
         shutil.copy2(ROOT / 'tools/dotnet.sh', root / 'tools/dotnet.sh')
         (root / 'content/genesis').mkdir(parents=True)
         shutil.copy2(ROOT / 'content/genesis/catalog.json', root / 'content/genesis/catalog.json')
+        shutil.copytree(ROOT / 'content/permanent-skills', root / 'content/permanent-skills')
         nested = core / 'Nested/ExistingRule.cs'; nested.parent.mkdir()
         nested.write_text('namespace ProvenanceFixture { public class ExistingRule {} }\n')
         props = core / 'RuleInputs.props'

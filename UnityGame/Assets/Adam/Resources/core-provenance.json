@@ -56,6 +56,10 @@
           "metadata": {}
         },
         {
+          "path": "repo/src/BibleSurvivor.Core/PermanentSkillCatalog.cs",
+          "metadata": {}
+        },
+        {
           "path": "repo/src/BibleSurvivor.Core/SaveFormat.cs",
           "metadata": {}
         },
@@ -74,7 +78,15 @@
       ],
       "AdditionalFiles": [],
       "Analyzer": [],
-      "EmbeddedResource": [],
+      "EmbeddedResource": [
+        {
+          "path": "repo/content/permanent-skills/catalog-v1.tsv",
+          "metadata": {
+            "Link": "catalog-v1.tsv",
+            "LogicalName": "BibleSurvivor.Core.PermanentSkillCatalog.v1.tsv"
+          }
+        }
+      ],
       "Content": [],
       "None": [],
       "ProjectReference": [],
@@ -100,6 +112,14 @@
           "metadata": {}
         },
         {
+          "path": "ancestor5/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor6/.globalconfig",
+          "metadata": {}
+        },
+        {
           "path": "repo/.globalconfig",
           "metadata": {}
         },
@@ -119,7 +139,10 @@
       "ancestor2/.globalconfig": null,
       "ancestor3/.globalconfig": null,
       "ancestor4/.globalconfig": null,
+      "ancestor5/.globalconfig": null,
+      "ancestor6/.globalconfig": null,
       "repo/.globalconfig": null,
+      "repo/content/permanent-skills/catalog-v1.tsv": "8516ecb0621025d0bed2def39bab638aaa6aaa6ca8d13fe1571c2203f59603f2",
       "repo/src/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/AdamSession.cs": "5d43d1c0c0793751f856bdaa24c2d399a25a69c1976dad96dfbf37a6d6761296",
@@ -135,6 +158,7 @@
       "repo/src/BibleSurvivor.Core/HostileProjectiles.cs": "0ddb284786d00dd38077653f775dee5df405fb3ff18e562d20994283deacfe8c",
       "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs": "1fe2531bb795a88a2531273e79c9db313af22cf064e60d7acf51ce933542e1a9",
       "repo/src/BibleSurvivor.Core/LeviticusContent.cs": "9a53f6d1c1c504470de968d2c2ff0658891d4fd3bc7fa65c408240cd6555ad4a",
+      "repo/src/BibleSurvivor.Core/PermanentSkillCatalog.cs": "b5472c258c57607df62f638685900c708a81e9c5fd35868a9349110981dca54d",
       "repo/src/BibleSurvivor.Core/SaveFormat.cs": "1e2908766e7b245544de6655e74121f9cee510e7ef9b1940f2b85883ee0f389f",
       "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
       "repo/src/BibleSurvivor.Core/SaveState.cs": "020359a01839b499d1e74387d42bb01b401c25842c1241d069480e8ae95a9919",
@@ -270,14 +294,14 @@
       "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitHub/build/Microsoft.SourceLink.GitHub.targets": "059107ba3e4670028b0c038b19c606f3ae9d26d007b3939c54441def8a946984",
       "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.props": "30c2b92c9dd157d211238bf502802e6a8c55dac1eab0125f1e006d456a9eb75d",
       "dotnet/sdk/10.0.404/Sdks/Microsoft.SourceLink.GitLab/build/Microsoft.SourceLink.GitLab.targets": "c708182482beb469a330d5865068e9af779a2a600547ae277983d2dadc37da31",
-      "repo/src/BibleSurvivor.Core/BibleSurvivor.Core.csproj": "684bcc7ed4b8da36e9a25107d0f182ebcb84a69845e0096bf81498b1c11036fe",
-      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.props": "87404e8181275aff0e0bfc839e21d61363294c6864d47cca1088d93ed1ffd98d",
+      "repo/src/BibleSurvivor.Core/BibleSurvivor.Core.csproj": "f52e659cacae1d27d66946b8c8a07de9aa7d297b5c47b580c8e27aadfe58b390",
+      "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.props": "5fd4791e025b66d450063ce8b64656eacbf10f8ca7e0b6de3e83f96e26a5f3cc",
       "repo/src/BibleSurvivor.Core/obj/BibleSurvivor.Core.csproj.nuget.g.targets": "b14461e0cb1be3f77fcf9fe2fdd62889325ca92523d0f606980ed59eb5c4aa1c"
     },
     "config_sha256": {
       "repo/global.json": "1e11a016899ad0b6fde981def6e894fb0fba53cb00a837da1514b634126eed9a"
     },
-    "preprocessed_sha256": "dfbf75da3e641df551c10c51b59eb73b156cd8b2c293a2466a13936b0faa81e7"
+    "preprocessed_sha256": "6950524bd65bc29321dcccb4cfda5b0fef166aa114424e021514c0cc6799f4de"
   },
   "build": {
     "items": {
@@ -335,6 +359,10 @@
           "metadata": {}
         },
         {
+          "path": "repo/src/BibleSurvivor.Core/PermanentSkillCatalog.cs",
+          "metadata": {}
+        },
+        {
           "path": "repo/src/BibleSurvivor.Core/SaveFormat.cs",
           "metadata": {}
         },
@@ -361,7 +389,16 @@
       ],
       "AdditionalFiles": [],
       "Analyzer": [],
-      "EmbeddedResource": [],
+      "EmbeddedResource": [
+        {
+          "path": "repo/content/permanent-skills/catalog-v1.tsv",
+          "metadata": {
+            "Link": "catalog-v1.tsv",
+            "LogicalName": "BibleSurvivor.Core.PermanentSkillCatalog.v1.tsv",
+            "TargetPath": "catalog-v1.tsv"
+          }
+        }
+      ],
       "Content": [],
       "None": [],
       "ProjectReference": [],
@@ -1847,6 +1884,14 @@
           "metadata": {}
         },
         {
+          "path": "ancestor5/.globalconfig",
+          "metadata": {}
+        },
+        {
+          "path": "ancestor6/.globalconfig",
+          "metadata": {}
+        },
+        {
           "path": "repo/.globalconfig",
           "metadata": {}
         },
@@ -1871,6 +1916,8 @@
       "ancestor2/.globalconfig": null,
       "ancestor3/.globalconfig": null,
       "ancestor4/.globalconfig": null,
+      "ancestor5/.globalconfig": null,
+      "ancestor6/.globalconfig": null,
       "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/Microsoft.Win32.Primitives.dll": "2522cb85ef5379a4f716a035e11549b6814f4d426e758649250738358a71c85f",
       "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.AppContext.dll": "643ec79d998df16995c4270bf2dc8ba881796179c03fa55d343ee9c43ba074d7",
       "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/System.Buffers.dll": "d0648fc3d820c8b225fe991d55d506f3210b698cc02beaf8aa31d990cd990772",
@@ -1993,6 +2040,7 @@
       "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/mscorlib.dll": "fb7ac3d0534282d14c3256e66f8d273ea016055ea1307c0f70021e7a236d6c33",
       "nuget/netstandard.library.ref/2.1.0/ref/netstandard2.1/netstandard.dll": "79a49049c360a3ff282e747c311fcd567834efde564a96689872564164756e84",
       "repo/.globalconfig": null,
+      "repo/content/permanent-skills/catalog-v1.tsv": "8516ecb0621025d0bed2def39bab638aaa6aaa6ca8d13fe1571c2203f59603f2",
       "repo/src/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/.globalconfig": null,
       "repo/src/BibleSurvivor.Core/AdamSession.cs": "5d43d1c0c0793751f856bdaa24c2d399a25a69c1976dad96dfbf37a6d6761296",
@@ -2008,17 +2056,18 @@
       "repo/src/BibleSurvivor.Core/HostileProjectiles.cs": "0ddb284786d00dd38077653f775dee5df405fb3ff18e562d20994283deacfe8c",
       "repo/src/BibleSurvivor.Core/LaterCampaignBooks.cs": "1fe2531bb795a88a2531273e79c9db313af22cf064e60d7acf51ce933542e1a9",
       "repo/src/BibleSurvivor.Core/LeviticusContent.cs": "9a53f6d1c1c504470de968d2c2ff0658891d4fd3bc7fa65c408240cd6555ad4a",
+      "repo/src/BibleSurvivor.Core/PermanentSkillCatalog.cs": "b5472c258c57607df62f638685900c708a81e9c5fd35868a9349110981dca54d",
       "repo/src/BibleSurvivor.Core/SaveFormat.cs": "1e2908766e7b245544de6655e74121f9cee510e7ef9b1940f2b85883ee0f389f",
       "repo/src/BibleSurvivor.Core/SaveMigrationArchive.cs": "f6d018bddab18ca004b401024f6b146c005bc89308efb5bb321fc1cbdc7f48e2",
       "repo/src/BibleSurvivor.Core/SaveState.cs": "020359a01839b499d1e74387d42bb01b401c25842c1241d069480e8ae95a9919",
       "repo/src/BibleSurvivor.Core/Waves.cs": "308ea042eba364900e7660d0cc3c29b0bdc4a0aab0fe406f69fcdb74b5149dc5",
       "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/.NETStandard,Version=v2.1.AssemblyAttributes.cs": "df351ab8cda38d16370d8aa74d934a81faf0e44ecc9a079bb1c5cc7a1f1575af",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "20527f6b6fb10563be6af2b17bb89aef9d98c295eae7844649e290656a4a8236",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "8c68e5976ea1109adf5ae7ff2f62b0ef2b81f5f77f29a5098ddc0a7cc23ec339",
-      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "1888b135c8fb54365ade9af65be4e076624a011efb0d9d44f7d2554dc9655329"
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.AssemblyInfo.cs": "c633f055221f83faeafe23d218d388c17e78a1098f745f071e56f3243c655804",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig": "20fb37f28f4dd995ba2e4da1c720503c15660355d78eccfb9258ff4d16529206",
+      "repo/src/BibleSurvivor.Core/obj/Release/netstandard2.1/BibleSurvivor.Core.csproj.CoreCompileInputs.cache": "58c5409daf7909ff652175228d1ea346f57699f978917277b7d94f6e6bb74ece"
     }
   },
-  "dll_sha256": "d75058ca8679dd221e31313c52ad5146029f30b2b539c00d157419320ef95e28",
+  "dll_sha256": "55113828133254afdf952cafb30b707d8e6921a9f2a0671379ed49922ffe565b",
   "catalog_sha256": "5215376c36863ff94db05fec13b5de37ee1542d9b36c06830bc300dcb2c88246",
   "method": "Release Rebuild; evaluated item/import/property set + post-build compiler/reference/generated inputs"
 }

@@ -46,13 +46,18 @@ def main():
             for target in (old, new):
                 (target / 'src/BibleSurvivor.Core').mkdir(parents=True)
                 shutil.copy2(ROOT / 'global.json', target / 'global.json')
-            paths = command(['git', 'ls-tree', '-r', '--name-only', resolved, '--', 'src/BibleSurvivor.Core'], ROOT).splitlines()
+            catalog = Path('content/permanent-skills')
+            paths = command(['git', 'ls-tree', '-r', '--name-only', resolved, '--',
+                             'src/BibleSurvivor.Core', str(catalog)], ROOT).splitlines()
             for name in paths:
-                if name.endswith(('.cs', '.csproj')):
+                if name.endswith(('.cs', '.csproj', '.tsv')):
                     content = command(['git', 'show', resolved + ':' + name], ROOT)
-                    (old / name).write_text(content)
+                    destination = old / name
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_text(content)
             for source in (ROOT / 'src/BibleSurvivor.Core').glob('*'):
                 if source.suffix in ('.cs', '.csproj'): shutil.copy2(source, new / 'src/BibleSurvivor.Core' / source.name)
+            shutil.copytree(ROOT / catalog, new / catalog)
             fixture_hashes = {}
             for target in (old, new):
                 probe = target / 'Probe'; probe.mkdir()
