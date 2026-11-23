@@ -316,6 +316,11 @@ public sealed class AdamRoundPlayTests
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
             SettleForEntry(host);
+            if (round == 180)
+            {
+                yield return null;
+                Assert.IsFalse(game.CinematicPlaying);
+            }
             Assert.IsTrue(host.Reload(),host.Error);
             Assert.AreEqual(round==15,host.CanEnterLeviticus);
             Assert.AreEqual(round==21,host.CanEnterNumbers);

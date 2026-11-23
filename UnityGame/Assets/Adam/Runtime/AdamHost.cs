@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using BibleSurvivor.Core;
 using UnityEngine;
 using NVector = System.Numerics.Vector2;
@@ -15,6 +16,8 @@ namespace BibleSurvivor.Unity
         GameSnapshot chapterCandidate;
         double sinceSave;
         bool completedCheckpoint;
+        AdamCinematicKind cinematicAfterSave;
+        AdamCinematicKind savedCinematic;
         public GameSnapshot State { get; private set; }
         public AdamSession Session { get; private set; }
         public BattleWorld World { get; private set; }
@@ -98,13 +101,18 @@ namespace BibleSurvivor.Unity
                     ? new BattleWorld(session, catalog.SpeedsFor(session.RoundNumber), 7) : BattleWorld.Restore(session, catalog.SpeedsFor(session.RoundNumber), loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
                 operation = null; chapterCandidate=null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
+                cinematicAfterSave = savedCinematic = AdamCinematicKind.None;
                 return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
         }
-        public void Start(string weapon)
+        public void Start(string weapon) => Start(weapon, false);
+
+        internal void Start(string weapon, bool showCreation)
         {
             if (Error != null || !CanStartNew || (weapon!="bible" && weapon!="jawbone" && weapon!="sling")) return;
+            if (showCreation && Session == null && State.Revision == 0)
+                cinematicAfterSave = AdamCinematicKind.Creation;
             // Explicit new challenge button only; completed checkpoint is otherwise preserved.
             State = SaveStore.PrepareNewChallenge(State);
             completedCheckpoint=false;
@@ -189,6 +197,7 @@ namespace BibleSurvivor.Unity
         public bool CompleteBossSettlement()
         {
             if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
+            if (Session.ChapterComplete) cinematicAfterSave = AdamCinematicKind.GenesisEnding;
             Movement=Vector2.zero;return Checkpoint();
         }
         public bool CompleteNormalSettlement()
@@ -263,11 +272,32 @@ namespace BibleSurvivor.Unity
                     chapterCandidate=null;operation=null;Error=null;RequiresNewerGame=false;
                     Paused=true;Movement=Vector2.zero;sinceSave=0;completedCheckpoint=false;return true;
                 }
-                revision = store.Commit(State, revision, operation);
+                var committedRevision = store.Commit(State, revision, operation);
+                if (cinematicAfterSave == AdamCinematicKind.GenesisEnding)
+                {
+                    var confirmed = store.LoadConfirmed();
+                    if (confirmed?.Revision != committedRevision || confirmed.LastOperationId != operation ||
+                        confirmed.Run?.RunId != State.Run.RunId ||
+                        confirmed.Run?.RoundNumber != ExodusContent.GlobalRoundNumber ||
+                        confirmed.Run.Stage != "between_rounds" || confirmed.Run.Boss?.CompletionApplied != true)
+                        throw new IOException("Genesis settlement readback changed; reload before new input");
+                }
+                revision = committedRevision;
                 State.Revision = revision; State.LastOperationId = operation;
+                if (cinematicAfterSave != AdamCinematicKind.None)
+                {
+                    savedCinematic = cinematicAfterSave;
+                    cinematicAfterSave = AdamCinematicKind.None;
+                }
                 operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0;completedCheckpoint=AwaitingNextRound;return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
+        }
+        internal AdamCinematicKind TakeSavedCinematic()
+        {
+            var result = savedCinematic;
+            savedCinematic = AdamCinematicKind.None;
+            return result;
         }
     }
     static class ChoiceLookup

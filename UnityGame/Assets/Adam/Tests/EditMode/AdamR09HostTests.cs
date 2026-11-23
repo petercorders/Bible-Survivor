@@ -75,6 +75,7 @@ public sealed class AdamR09HostTests
     public void RewardAndChapterCompletionRetryPreserveThreeReceiptsGrowthAndExplicitNewChallenge(bool failSettlement)
     {
         var h=Intro(path);Active(h);var first=Bytes(h.State.Run.CompletedBoss);var second=Bytes(h.State.Run.CompletedSecondBoss);var unlocks=h.State.Profile.UnlockedWeapons.ToArray();var gold=h.State.Profile.Gold;
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
         h.Session.Hit(h.Session.BossRules.BossActorId,h.Session.BossRules.MaxHealth);Assert.IsTrue(h.Checkpoint(),h.Error);Assert.AreEqual(gold+350,h.State.Profile.Gold);Assert.AreEqual(BossDefinition.JudahPolicy,h.Session.Boss.Reward.PolicyId);
         var candidates=Bytes(h.Session.BossChoices.ToArray());Assert.IsTrue(h.Reload(),h.Error);CollectionAssert.AreEqual(candidates,Bytes(h.Session.BossChoices.ToArray()));
         // Explicit single pending-growth fixture; candidate count is not the number of Choose calls.
@@ -90,9 +91,16 @@ public sealed class AdamR09HostTests
         fail=failSettlement;var completed=h.CompleteBossSettlement();Assert.AreEqual(!failSettlement,completed);
         if(fail)
         {
+            Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
             Assert.NotNull(h.Error);var frozen=Bytes(h.State);h.Tick(60);h.Start("bible");Assert.IsFalse(h.CompleteBossSettlement());CollectionAssert.AreEqual(frozen,Bytes(h.State));fail=false;Assert.IsTrue(h.RetrySave(),h.Error);
         }
+        var persisted = new SaveStore(path).LoadConfirmed();
+        Assert.AreEqual(h.State.Run.RunId,persisted.Run.RunId);
+        Assert.IsTrue(persisted.Run.Boss.CompletionApplied);
+        Assert.AreEqual(AdamCinematicKind.GenesisEnding,h.TakeSavedCinematic());
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
         Assert.IsTrue(h.Reload(),h.Error);Assert.IsTrue(h.Paused);Assert.IsTrue(h.Session.ChapterComplete);Assert.IsFalse(h.ContentComplete);Assert.IsTrue(h.CanEnterExodus);Assert.IsFalse(h.AwaitingNextRound);Assert.AreEqual(10,h.State.Run.RoundNumber);Assert.IsNull(h.World);Assert.IsTrue(h.CanStartNew);
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
         Assert.AreEqual(gold+350+160+(candidate.Kind=="gold"?candidate.Gold:0),h.State.Profile.Gold);Assert.AreEqual(h.State.Run.MaxHealth,h.Session.CurrentHealth);CollectionAssert.AreEqual(unlocks,h.State.Profile.UnlockedWeapons);
         CollectionAssert.AreEqual(first,Bytes(h.State.Run.CompletedBoss));CollectionAssert.AreEqual(second,Bytes(h.State.Run.CompletedSecondBoss));Assert.AreEqual(9,h.State.Run.Boss.EncounterRound);Assert.IsTrue(h.State.Run.Boss.CompletionApplied);Assert.AreEqual(EvolutionRules.Sling,h.Session.WeaponForm("sling"));Assert.AreEqual(EvolutionRules.Bible,h.Session.WeaponForm("bible"));
         Assert.IsFalse(h.ChooseBossReward(reward,candidate.Id));Assert.IsFalse(h.CompleteBossSettlement());var run=Bytes(h.State.Run);var profile=Bytes(h.State.Profile);h.SetPaused(false);h.Tick(60);CollectionAssert.AreEqual(run,Bytes(h.State.Run));CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));var disk=File.ReadAllBytes(path);Assert.IsTrue(h.Reload(),h.Error);CollectionAssert.AreEqual(disk,File.ReadAllBytes(path));CollectionAssert.AreEqual(run,Bytes(h.State.Run));

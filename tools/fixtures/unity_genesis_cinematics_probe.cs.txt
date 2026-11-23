@@ -1,0 +1,238 @@
+// Copy to Assets/Adam/Runtime in an isolated Development Player build only.
+#if DEVELOPMENT_BUILD && !UNITY_EDITOR
+using System;
+using System.Collections;
+using System.IO;
+using System.Reflection;
+using BibleSurvivor.Core;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+
+namespace BibleSurvivor.Unity
+{
+    public sealed class GenesisCinematicsPlayerProbe : MonoBehaviour
+    {
+        AdamGame game;
+        Keyboard keyboard;
+        static readonly FieldInfo TimelineField = typeof(AdamGame).GetField("cinematic",BindingFlags.Instance|BindingFlags.NonPublic);
+        AdamCinematic Timeline => (AdamCinematic)TimelineField.GetValue(game);
+        string output;
+        SaveStore store;
+        bool failSettlement;
+        bool finished;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Launch()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(args,"-cinematicProbe");
+            if (index < 0) return;
+            var game = FindFirstObjectByType<AdamGame>();
+            if (game == null) game = new GameObject("Adam player probe").AddComponent<AdamGame>();
+            game.AutoInitialize = false;
+            var probe = game.gameObject.AddComponent<GenesisCinematicsPlayerProbe>();
+            probe.game = game;
+            probe.output = args[index + 1];
+        }
+
+        void Start()
+        {
+            Application.logMessageReceived += OnLog;
+            Application.runInBackground = true;
+            StartCoroutine(Run());
+        }
+
+        void OnDestroy() => Application.logMessageReceived -= OnLog;
+
+        void OnLog(string message,string stack,LogType type)
+        {
+            if (!finished && message.Contains("CINEMATIC_PROBE_FAIL", StringComparison.Ordinal))
+                Application.Quit(1);
+        }
+
+        static void Check(bool condition, string label)
+        {
+            if (!condition) throw new InvalidOperationException("CINEMATIC_PROBE_FAIL " + label);
+            Debug.Log("CINEMATIC_PROBE_PASS " + label);
+        }
+
+        void Keys(params Key[] keys) => InputSystem.QueueStateEvent(keyboard,new KeyboardState(keys));
+
+        IEnumerator SaveImage(string name)
+        {
+            yield return new WaitForEndOfFrame();
+            var texture = ScreenCapture.CaptureScreenshotAsTexture();
+            File.WriteAllBytes(Path.Combine(output,name+".png"),texture.EncodeToPNG());
+            Destroy(texture);
+        }
+
+        IEnumerator WaitUntil(float elapsed)
+        {
+            if (Timeline.Elapsed >= elapsed) yield break;
+            var deadline = Time.realtimeSinceStartup+22;
+            while (game.CinematicPlaying && Timeline.Elapsed < elapsed && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Check(game.CinematicPlaying && Timeline.Elapsed >= elapsed, "cut time reached " + elapsed);
+        }
+
+        IEnumerator Run()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var expected = Array.IndexOf(args,"-cinematicProbe");
+            var width = int.Parse(args[expected+2]);
+            var height = int.Parse(args[expected+3]);
+            var fixture = Path.Combine(output,"r09-fixture.json");
+            var save = Path.Combine(output,"player-save.json");
+            keyboard = InputSystem.AddDevice<Keyboard>();
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            yield return null;
+            game.Initialize(new AdamHost(AdamCatalog.Load(),new SaveStore(save)));
+            game.SetLifecycle(true,false);
+            Check(Screen.width==width && Screen.height==height, $"client area {Screen.width}x{Screen.height}");
+            Check(game.Host.Session == null, "new profile");
+            yield return SaveImage("r01-start-menu");
+            if (Array.IndexOf(args,"-cinematicMissing") >= 0)
+            {
+                yield return CheckMissing(save, fixture);
+                Complete();
+                yield break;
+            }
+            Keys(Key.Digit1);
+            yield return null;
+            Keys();
+            yield return null;
+            Check(game.CinematicPlaying && game.Host.World.SimulationTime == 0 && game.Host.World.Capture().Remainder == 0,
+                "creation precedes battle timer and its accumulator");
+            var run = game.Host.State.Run.RunId;
+            yield return SaveImage("r01-day1-start");
+            if (width == 660)
+            {
+                Keys(Key.F6); yield return null; Keys(); yield return null;
+                Check(!game.ArtWorld.FeedbackEnabled, "reduced effects selected");
+                yield return SaveImage("r01-reduced-a");
+                yield return WaitUntil(1.4f);
+                yield return SaveImage("r01-reduced-b");
+                Keys(Key.Space); yield return null; Keys(); yield return null;
+                var pausedAt = Timeline.Elapsed;
+                yield return new WaitForSecondsRealtime(.25f);
+                Check(Timeline.Elapsed == pausedAt, "film pause freezes cut");
+                Keys(Key.Enter,Key.D); yield return null;
+                Check(!game.CinematicPlaying && game.Host.World.SimulationTime == 0,"skip did not enter gameplay in same frame");
+                yield return null;
+                Check(game.Host.World.SimulationTime == 0, "held skip did not advance simulation");
+                Keys(); yield return null;
+            }
+            else
+            {
+                yield return WaitUntil(1.4f);
+                yield return SaveImage("r01-day1-light");
+                var cuts = new[]{ 3.1f,5.8f,8.6f,11.4f,14.2f,17.4f };
+                for (int i=0; i<cuts.Length; i++)
+                {
+                    yield return WaitUntil(cuts[i]);
+                    Check(Timeline.Current.day == i+2 && game.Host.World.SimulationTime == 0, "day "+(i+2));
+                    yield return SaveImage("r01-day"+(i+2));
+                }
+                var deadline = Time.realtimeSinceStartup+5;
+                while(game.CinematicPlaying && Time.realtimeSinceStartup<deadline) yield return null;
+                Check(!game.CinematicPlaying,"creation finishes naturally");
+            }
+            var position = game.Host.World.PlayerPosition;
+            Keys(Key.D); yield return new WaitForSecondsRealtime(.35f); Keys(); yield return null;
+            Check(game.Host.World.PlayerPosition.X > position.X,"Eden responds to fresh movement");
+            yield return SaveImage("r01-eden");
+
+            Check(game.Host.Checkpoint() && game.Host.Reload(),game.Host.Error ?? "R01 reload");
+            yield return null;
+            Check(!game.CinematicPlaying && game.Host.Paused && game.Host.State.Run.RunId == run, "continue does not replay");
+            Keys(Key.F5); yield return null; Keys(); yield return null;
+            Check(game.CinematicPlaying, "creation replay");
+            Keys(Key.Escape); yield return null; Keys(); yield return null;
+            Check(!game.CinematicPlaying && game.Host.Paused, "replay preserves game pause");
+
+            var r09 = Path.Combine(output,"r09-player.json");
+            File.Copy(fixture,r09);
+            store = new SaveStore(r09, () => { if(failSettlement) throw new IOException("technical settlement failure"); });
+            game.Initialize(new AdamHost(AdamCatalog.Load(),store));
+            game.SetLifecycle(true,false);
+            Check(game.Host.Session.Stage=="boss_settlement","R09 fixture awaiting settlement");
+            run = game.Host.State.Run.RunId;
+            var priorGold = game.Host.State.Profile.Gold;
+            failSettlement = true;
+            Check(!game.Host.CompleteBossSettlement(),"injected R09 write failure");
+            yield return null;
+            Check(!game.CinematicPlaying && store.LoadConfirmed().Run.Stage=="boss_settlement","failed save did not play");
+            failSettlement = false;
+            Check(game.Host.RetrySave(),"R09 write retry");
+            yield return null;
+            Check(game.CinematicPlaying && store.LoadConfirmed().Run.Boss.CompletionApplied,"ending begins from committed R09");
+            Check(store.LoadConfirmed().Profile.Gold == priorGold + 160,"settlement gold applied once");
+            yield return SaveImage("r09-final-two-a");
+            yield return WaitUntil(6.3f);
+            yield return SaveImage("r09-final-two-b");
+            Keys(Key.Enter); yield return null;
+            Check(!game.CinematicPlaying && game.Host.Session.RoundNumber==9,"skip goes to completion");
+            yield return null;
+            Check(game.Host.Session.RoundNumber==9,"held skip cannot advance to Exodus");
+            Keys(); yield return null;
+            yield return SaveImage("r09-complete");
+
+            Check(game.Host.Reload(),"read confirmed completion again"); yield return null;
+            Check(!game.CinematicPlaying && game.Host.Session.ChapterComplete,"reload restores completion without film");
+            Keys(Key.F10); yield return null; Keys(); yield return null;
+            Check(game.CinematicPlaying,"ending replay from completion");
+            var pad = InputSystem.AddDevice<Gamepad>();
+            InputSystem.QueueStateEvent(pad,new GamepadState().WithButton(GamepadButton.Start));
+            yield return null;
+            Check(Timeline.Paused,"gamepad Start pauses replay");
+            InputSystem.QueueStateEvent(pad,new GamepadState().WithButton(GamepadButton.East));
+            yield return null;
+            Check(!game.CinematicPlaying,"gamepad east skips replay");
+            InputSystem.QueueStateEvent(pad,new GamepadState());
+            yield return null;
+            InputSystem.RemoveDevice(pad);
+            Keys(Key.Enter); yield return null; Keys(); yield return null;
+            var persisted = store.LoadConfirmed();
+            Check(persisted.Run.RunId==run && persisted.Run.RoundNumber==10 && persisted.Run.CompletedThirdBoss.CompletionApplied,
+                "fresh confirmation writes R10 of same run with its R09 receipt");
+            Check(persisted.Profile.Gold == priorGold + 160,"R10 preserves one settlement award");
+            Complete();
+        }
+
+        IEnumerator CheckMissing(string save, string fixture)
+        {
+            Check(Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.Creation)) == null &&
+                Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.GenesisEnding)) == null,
+                "both resources absent");
+            Keys(Key.Digit1); yield return null; Keys(); yield return null;
+            var run = game.Host.State.Run.RunId;
+            Check(!game.CinematicPlaying && new SaveStore(save).LoadConfirmed().Run.RunId == run,
+                "missing creation uses the saved R01");
+            Keys(Key.D); yield return new WaitForSecondsRealtime(.25f); Keys(); yield return null;
+            Check(game.Host.World.SimulationTime > 0 && game.Host.World.PlayerPosition.X > 0,
+                "missing creation allows movement and timer");
+            var endingSave = Path.Combine(output,"r09-player.json");
+            File.Copy(fixture,endingSave);
+            store = new SaveStore(endingSave);
+            game.Initialize(new AdamHost(AdamCatalog.Load(),store));
+            game.SetLifecycle(true,false);
+            run = game.Host.State.Run.RunId;
+            Check(game.Host.CompleteBossSettlement(),"R09 settlement commits without resources");
+            yield return null;
+            Check(!game.CinematicPlaying && game.Host.Session.ChapterComplete &&
+                store.LoadConfirmed().Run.Boss.CompletionApplied, "missing ending falls back to R09 completion");
+            Keys(Key.Enter); yield return null; Keys(); yield return null;
+            Check(store.LoadConfirmed().Run.RunId == run && store.LoadConfirmed().Run.RoundNumber == 10,
+                "missing ending leads to R10 of same run");
+        }
+
+        void Complete()
+        {
+            finished = true;
+            Debug.Log("CINEMATIC_PROBE_COMPLETE");
+            Application.Quit(0);
+        }
+    }
+}
+#endif
