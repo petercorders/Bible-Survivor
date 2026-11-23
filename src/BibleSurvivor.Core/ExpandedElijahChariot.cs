@@ -265,6 +265,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool MakesEndFlame { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool TurnsMidway { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ReversesAtEnd { get; set; }
+        [DataMember(EmitDefaultValue = false)] public PermanentShotHitBonuses SharedShotHitBonuses { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool HasCrossingChild { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool MidpointTurnResolved { get; set; }
         [DataMember(EmitDefaultValue = false)] public float? TurnDirectionX { get; set; }
@@ -561,6 +562,8 @@ namespace BibleSurvivor.Core
                     path.TurnsMidway && path.MidpointTurnResolved != (path.Distance + epsilon >= path.PivotDistance) ||
                     !ExpandedElijahChariot.ValidPath(path.Damage, path.Width, path.Speed, path.Range) ||
                     !ExpandedElijahChariot.ValidOriginalBaseDamage(path.OriginalBaseDamage, evolved) ||
+                    (path.SharedShotHitBonuses & ~PermanentShotHitBonuses.LongFlight) != 0 ||
+                    path.SharedShotHitBonuses != PermanentShotHitBonuses.None && path.OriginalBaseDamage <= 0 ||
                     !BattleSnapshot.Finite(path.MoveAt) || !ExpandedElijahChariot.ValidDelay(path.FirstDelay) ||
                     path.StaggerIndex < 0 || path.StaggerIndex >= ExpandedElijahChariot.MaximumAmount ||
                     path.GuaranteesWind && (path.Cycle % 5 != 0 || path.StaggerIndex > 0) ||
@@ -757,7 +760,7 @@ namespace BibleSurvivor.Core
             Func<bool>? reserveSupportShot = null, Action<Vector2, double>? emitEndExplosion = null,
             Func<ExpandedElijahChariotHit, double?>? applyOriginalHit = null,
             Func<ExpandedElijahChariotSweep, bool>? tryDeflect = null, Action<Vector2, double>? emitCrossingWhirlwind = null,
-            Action<Vector2, double>? emitEndFlame = null)
+            Action<Vector2, double>? emitEndFlame = null, PermanentShotRules shotRules = default)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -878,10 +881,12 @@ namespace BibleSurvivor.Core
                     TurnsMidway = rankOptions.TurnMidway,
                     ReversesAtEnd = rankOptions.ReverseAtNaturalEnd && index == 0 && state.Cycle % 5 == 0,
                     Range = pathRange,
-                    Speed = speed,
-                    Width = width,
+                    Speed = shotRules.LaunchSpeed(Profile.AtLevel(level).Speed, speed, index == 0),
+                    Width = shotRules.LaunchCollisionDimension(Profile.AtLevel(1).Width,
+                        Math.Min(MaximumWidth, width + Profile.AtLevel(1).Width * shotRules.CollisionBonus), index == 0),
                     Damage = pathDamage,
                     OriginalBaseDamage = originalBaseDamage,
+                    SharedShotHitBonuses = shotRules.HitBonuses & PermanentShotHitBonuses.LongFlight,
                 };
                 if (path.FollowsWithWind || path.GuaranteesWind)
                 {
@@ -1343,7 +1348,10 @@ namespace BibleSurvivor.Core
                         Math.Abs(side) <= path.Width * .5 + TimeEpsilon;
                     if (crossesBody)
                     {
-                        var hit = new ExpandedElijahChariotHit(ExpandedElijahChariotHitKind.Body, id, position, path.Damage, path, section.Direction);
+                        var damageAtContact = PermanentShotRules.HitDamage(path.SharedShotHitBonuses, path.OriginalBaseDamage,
+                            path.Damage, null, section.Offset + Math.Max(start, Math.Min(end, forward)));
+                        var hit = new ExpandedElijahChariotHit(ExpandedElijahChariotHitKind.Body, id, position,
+                            damageAtContact, path, section.Direction);
                         var elite = isEliteForProcession?.Invoke(id) == true;
                         var damage = applyOriginalHit(hit);
                         if (damage.HasValue)

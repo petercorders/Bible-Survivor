@@ -18,8 +18,9 @@ namespace BibleSurvivor.Unity
             "common.power.07", "common.power.08", "common.power.09", "common.power.10",
             "common.crit.01", "common.crit.02", "common.crit.03", "common.crit.04", "common.crit.05",
             "common.crit.06", "common.crit.07", "common.crit.08", "common.crit.09", "common.crit.10",
-            "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04",
+            "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04", "common.duration.09",
             "common.shot.01", "common.shot.02", "common.shot.03",
+            "common.shot.05", "common.shot.06", "common.shot.07", "common.shot.08", "common.shot.09", "common.shot.10",
             "common.tempo.02", "common.tempo.03", "common.tempo.04", "common.tempo.05", "common.tempo.06",
             "common.tempo.07", "common.tempo.08", "common.tempo.09", "common.tempo.10",
             "common.area.01", "common.area.02", "common.area.03", "common.area.04", "common.area.05", "common.area.06",
@@ -59,8 +60,8 @@ namespace BibleSurvivor.Unity
             "weapon.wilderness_voice.c.01", "weapon.wilderness_voice.c.02",
             "weapon.wilderness_voice.a.02", "weapon.wilderness_voice.a.03",
             "weapon.wilderness_voice.a.04", "weapon.wilderness_voice.a.05",
-            "weapon.wilderness_voice.b.02", "weapon.wilderness_voice.b.03",
-            "weapon.wilderness_voice.e.01", "weapon.wilderness_voice.e.02", "weapon.wilderness_voice.e.03",
+            "weapon.wilderness_voice.b.02", "weapon.wilderness_voice.b.03", "weapon.wilderness_voice.b.04", "weapon.wilderness_voice.b.05",
+            "weapon.wilderness_voice.e.01", "weapon.wilderness_voice.e.02", "weapon.wilderness_voice.e.03", "weapon.wilderness_voice.e.04",
             "weapon.lightning.base.01", "weapon.lightning.base.02", "weapon.lightning.base.03",
             "weapon.lightning.base.04", "weapon.lightning.base.05",
             "weapon.lightning.a.01", "weapon.lightning.a.02", "weapon.lightning.e.01",
@@ -96,6 +97,8 @@ namespace BibleSurvivor.Unity
             "weapon.daniel_lion.e.01",
             "weapon.daniel_lion.c.01", "weapon.daniel_lion.c.02", "weapon.daniel_lion.c.03",
             "weapon.daniel_lion.c.04", "weapon.daniel_lion.c.05", "weapon.daniel_lion.e.02", "weapon.daniel_lion.e.03",
+            "weapon.daniel_lion.e.04", "weapon.daniel_lion.e.05",
+            "weapon.daniel_lion.d.01", "weapon.daniel_lion.d.02", "weapon.daniel_lion.d.03", "weapon.daniel_lion.d.04", "weapon.daniel_lion.d.05",
             "weapon.cross.base.01", "weapon.cross.base.02", "weapon.cross.base.03",
             "weapon.cross.base.04", "weapon.cross.base.05",
             "weapon.cross.d.01", "weapon.cross.d.02", "weapon.cross.d.03",
@@ -487,7 +490,8 @@ namespace BibleSurvivor.Unity
                     var common = node.TreeId.StartsWith("common.", StringComparison.Ordinal);
                     var group = common ? "공통" : "무기";
                     var locked = !common && !SkillProfile.UnlockedWeapons.Contains(node.TreeId) ? " · 미해금" : "";
-                    if (SkillButton(row, group + " · " + node.TreeName + locked, selected == index, "tree-" + node.TreeId))
+                    if (SkillButton(row, group + " · " + node.TreeName + locked, selected == index, "tree-" + node.TreeId,
+                        icon: common ? null : AdamHud.Icon(node.TreeId)))
                     {
                         SelectPermanentSkillTree(index);
                         ToggleSkillTrees();
@@ -498,7 +502,10 @@ namespace BibleSurvivor.Unity
                 {
                     var node = tree[index];
                     var rank = PermanentRules.Rank(SkillProfile.Upgrades, node.Id);
-                    if (SkillButton(row, $"{node.Name}  {rank}/{node.Prices.Count}", selected == index, "node-" + node.Id))
+                    var availability = SkillAvailability(node);
+                    var nodeState = SkillNodeArtwork(node, availability, rank);
+                    if (SkillButton(row, $"{node.Name}  {rank}/{node.Prices.Count}", selected == index, "node-" + node.Id,
+                        icon: SkillStateIcon(availability, nodeState), nodeState: nodeState))
                     {
                         SelectPermanentSkillRow(index);
                         skillFocus = SkillFocus.Nodes;
@@ -552,7 +559,8 @@ namespace BibleSurvivor.Unity
                 var required = PermanentSkillCatalog.Current.Find(requirement.Key);
                 var focusedRequirement = skillFocus == SkillFocus.Prerequisite && skillPrerequisite == requirementIndex;
                 if (SkillButton(new Rect(8, y, lineWidth, 40),
-                    $"↗ {required.Name} {requirement.Value}랭크 (G)", focusedRequirement, "prerequisite-" + required.Id))
+                    $"↗ {required.Name} {requirement.Value}랭크 (G)", focusedRequirement, "prerequisite-" + required.Id,
+                    icon: "ico_ui_link_static_16"))
                     GoToSkillPrerequisite(requirementIndex);
                 requirementIndex++;
                 y += 44;
@@ -624,7 +632,46 @@ namespace BibleSurvivor.Unity
             }
         }
 
-        private bool SkillButton(Rect rect, string text, bool focus, string id, bool available = true)
+        private static int SkillNodeArtwork(PermanentSkillNode node, PermanentSkillAvailability availability, int rank)
+        {
+            if (!OffersPermanentSkillPurchase(node.Id)) return 3;
+            return availability switch
+            {
+                PermanentSkillAvailability.MaximumRank => 2,
+                PermanentSkillAvailability.Available => rank == 0 ? 0 : 1,
+                PermanentSkillAvailability.RequiresWeapon or PermanentSkillAvailability.RequiresEvolution => 4,
+                _ => 3,
+            };
+        }
+
+        private static string SkillStateIcon(PermanentSkillAvailability availability, int state)
+        {
+            if (state == 2) return "ico_ui_check_static_16";
+            if (availability == PermanentSkillAvailability.RequiresSettledRound) return "ico_ui_round_static_16";
+            if (state >= 3) return "ico_ui_lock_static_16";
+            return null;
+        }
+
+        private static void DrawSkillNodeFocus(Rect rect)
+        {
+            const int inset = 4, leg = 8, thickness = 2;
+            var left = rect.x + inset;
+            var right = rect.xMax - inset;
+            var top = rect.y + inset;
+            var bottom = rect.yMax - inset;
+            var color = AdamHud.Lapis;
+            AdamHud.Fill(new Rect(left, top, leg, thickness), color);
+            AdamHud.Fill(new Rect(left, top, thickness, leg), color);
+            AdamHud.Fill(new Rect(right - leg, top, leg, thickness), color);
+            AdamHud.Fill(new Rect(right - thickness, top, thickness, leg), color);
+            AdamHud.Fill(new Rect(left, bottom - thickness, leg, thickness), color);
+            AdamHud.Fill(new Rect(left, bottom - leg, thickness, leg), color);
+            AdamHud.Fill(new Rect(right - leg, bottom - thickness, leg, thickness), color);
+            AdamHud.Fill(new Rect(right - thickness, bottom - leg, thickness, leg), color);
+        }
+
+        private bool SkillButton(Rect rect, string text, bool focus, string id, bool available = true,
+            string icon = null, int nodeState = -1)
         {
             var enabled = GUI.enabled;
             GUI.enabled = enabled && available;
@@ -632,10 +679,25 @@ namespace BibleSurvivor.Unity
             var mouse = Event.current.isMouse;
             var hover = rect.Contains(Event.current.mousePosition);
             var clicked = GUI.Button(rect, GUIContent.none, clearButton) && mouse;
-            AdamHud.Panel(art, rect, "ui_button_9slice_16", AdamHud.SurfaceState(GUI.enabled, focus, hover, hover && GUIUtility.hotControl != 0));
-            GUI.Label(new Rect(rect.x + 5, rect.y, rect.width - 10, rect.height), text,
+            const string nodePanel = "ui_skill-node_9slice_16";
+            if (nodeState >= 0 && AdamVisualQualityArt.TryGetClip(nodePanel, out _))
+                AdamHud.Panel(art, rect, nodePanel, nodeState);
+            else
+                AdamHud.Panel(art, rect, "ui_button_9slice_16", AdamHud.SurfaceState(GUI.enabled, focus, hover, hover && GUIUtility.hotControl != 0));
+            var leftPadding = 5;
+            if (!string.IsNullOrEmpty(icon) && AdamVisualQualityArt.TryGetClip(icon, out var clip))
+            {
+                var side = clip.width == 32 ? 32 : 16;
+                AdamHud.Image(art, icon, new Rect(rect.x + 8, rect.center.y - side / 2, side, side));
+                leftPadding = side + 12;
+            }
+            GUI.Label(new Rect(rect.x + leftPadding, rect.y, rect.width - leftPadding - 5, rect.height), text,
                 HudText(16, GUI.enabled ? AdamHud.Primary : AdamHud.Muted, false, TextAnchor.MiddleCenter));
-            if (focus && enabled) DrawFocusBracket(rect);
+            if (focus && enabled)
+            {
+                if (nodeState >= 0) DrawSkillNodeFocus(rect);
+                else DrawFocusBracket(rect);
+            }
             GUI.enabled = enabled;
             return clicked;
         }

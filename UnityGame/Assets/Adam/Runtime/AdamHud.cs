@@ -58,6 +58,13 @@ namespace BibleSurvivor.Unity
             if(id=="sling"||id==EvolutionRules.Sling)return "ico_wpn_sling_static_16";
             if(id=="scroll"||id=="hair"||id=="stones")return "ico_psv_"+id+"_static_16";
             if(id=="gold"||id?.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal)==true)return "ico_res_gold_static_16";
+            foreach (var profile in ExpandedWeaponRules.All)
+            {
+                var kind = id == profile.WeaponId ? "wpn" : id == profile.EvolutionId ? "evo" : null;
+                if (kind == null) continue;
+                var expandedIcon = "ico_" + kind + "_" + id.Replace('_', '-') + "_static_32";
+                return AdamVisualQualityArt.TryGetClip(expandedIcon, out _) ? expandedIcon : null;
+            }
             return null;
         }
         public static int SurfaceState(bool enabled,bool focused,bool hovered,bool pressed)=>!enabled?3:pressed?2:focused||hovered?1:0;

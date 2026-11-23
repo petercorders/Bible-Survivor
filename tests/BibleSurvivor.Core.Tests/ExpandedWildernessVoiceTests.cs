@@ -11,6 +11,116 @@ internal static class ExpandedWildernessVoiceTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Voice b.04 uses cast-start density within five and restores its first aim without freezing later facing", () =>
+        {
+            var rank = ExpandedWildernessVoiceRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.wilderness_voice.b.04"] = 1,
+            });
+            var state = new ExpandedWildernessVoiceState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.UnitX, [2] = new Vector2(0, 2), [3] = new Vector2(0, 2.2f),
+                [4] = new Vector2(0, 2.4f), [5] = new Vector2(0, -5.01f), [6] = new Vector2(.2f, -5.1f),
+                [7] = new Vector2(0, -5.2f), [8] = new Vector2(.2f, -5.3f),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            Step(state, 0, targets, hits, ranks: rank);
+            state = Restore(state);
+            state.Validate(0, false);
+            Check.Equal(Vector2.UnitY, state.Active[0].InitialFacing!.Value);
+            var invalid = state.Copy();
+            invalid.Active[0].InitialFacingY = null;
+            Check.Throws<ArgumentException>(() => invalid.Validate(0, false));
+            targets.Clear();
+            targets[9] = Vector2.UnitX;
+            targets[10] = Vector2.UnitY;
+            Step(state, .15, targets, hits, facing: Vector2.UnitX);
+            Step(state, .65, targets, hits, facing: Vector2.UnitX);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 10, 9 }));
+            Check.True(hits.Select(hit => hit.Facing).SequenceEqual(new[] { Vector2.UnitY, Vector2.UnitX }));
+
+            targets[11] = new Vector2(0, 1.2f);
+            var locked = new ExpandedWildernessVoiceState();
+            hits.Clear();
+            Step(locked, 0, targets, hits, ranks: new ExpandedWildernessVoiceRankOptions(lockFacing: true, aimAtCrowd: true));
+            locked = Restore(locked);
+            locked.Validate(0, false);
+            Check.True(!locked.Active[0].InitialFacing.HasValue);
+            Check.Equal(1f, locked.Active[0].LockedFacingY!.Value);
+            Step(locked, .15, targets, hits, facing: Vector2.UnitX);
+            Step(locked, .65, targets, hits, facing: Vector2.UnitX);
+            Check.True(hits.All(hit => hit.Facing == Vector2.UnitY));
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 10, 11, 10, 11 }));
+        });
+
+        test("Voice b.05 turns only for a rear lead of three inside four and ranks rear boss then elite", () =>
+        {
+            var ranks = ExpandedWildernessVoiceRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.wilderness_voice.b.04"] = 1, ["weapon.wilderness_voice.b.05"] = 1,
+            });
+            var targets = new Dictionary<int, Vector2>
+            {
+                [10] = Vector2.UnitX, [11] = new Vector2(1, .1f), [12] = new Vector2(1, -.1f),
+                [1] = new Vector2(-4.001f, 0), [2] = new Vector2(-1, 3.5f), [3] = new Vector2(-1, -3.5f),
+                [4] = new Vector2(-1, -3.4f), [5] = new Vector2(-1, 3.4f), [6] = new Vector2(-3, 0),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var calls = 0;
+            bool Boss(int id) { calls++; return id == 1; }
+            bool Elite(int id) { calls++; return id == 2; }
+            var noTurn = new ExpandedWildernessVoiceState();
+            Step(noTurn, 0, targets, hits, ranks: ranks, isBoss: Boss, isElite: Elite);
+            Check.Equal(0, calls);
+            Check.Equal(Vector2.UnitX, noTurn.Active[0].InitialFacing!.Value);
+
+            targets[1] = new Vector2(-4, 0);
+            var reroute = new ExpandedWildernessVoiceState();
+            Step(reroute, 0, targets, hits, ranks: ranks, isBoss: Boss, isElite: Elite);
+            Check.True(calls > 0);
+            reroute = Restore(reroute);
+            reroute.Validate(0, false);
+            Check.Equal(-Vector2.UnitX, reroute.Active[0].InitialFacing!.Value);
+            targets[15] = new Vector2(-2, 0);
+            Step(reroute, .15, targets, hits, facing: Vector2.UnitX);
+            Check.True(hits.Any(hit => hit.TargetId == 15));
+            Check.True(hits.All(hit => hit.Facing == -Vector2.UnitX));
+
+            var rearElite = new ExpandedWildernessVoiceState();
+            Step(rearElite, 0, targets, hits, ranks: ranks, isBoss: id => id == 10, isElite: Elite);
+            Check.Equal(Vector2.Normalize(targets[2]), rearElite.Active[0].InitialFacing!.Value);
+        });
+
+        test("Voice e.04 close evolved primary adds .35 at exact 1.2 without affecting echoes and caps combined knockback", () =>
+        {
+            var ranks = new ExpandedWildernessVoiceRankOptions(finalPulseKnockback: true, strongerEvolvedCloseKnockback: true);
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(1.2f, 0), [2] = new Vector2(1.2001f, 0) };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var evolved = new ExpandedWildernessVoiceState();
+            Step(evolved, 0, targets, hits, evolved: true, duration: 1, ranks: ranks, knockback: .25, closeKnockback: .25);
+            evolved = Restore(evolved);
+            evolved.Validate(0, true);
+            Check.True(evolved.Active[0].EvolvedCloseKnockback);
+            Step(evolved, .15, targets, hits, evolved: true);
+            Check.Near(.95, hits.Single(hit => hit.TargetId == 1).Knockback);
+            Check.Near(.35, hits.Single(hit => hit.TargetId == 2).Knockback);
+            hits.Clear();
+            Step(evolved, .5, targets, hits, evolved: true);
+            Check.True(hits.All(hit => hit.Kind == ExpandedWildernessVoiceHitKind.FirstEcho && hit.Knockback == 0));
+            hits.Clear();
+            Step(evolved, .65, targets, hits, evolved: true);
+            Check.Near(1, hits.Single(hit => hit.TargetId == 1).Knockback);
+            Check.Near(.65, hits.Single(hit => hit.TargetId == 2).Knockback);
+
+            hits.Clear();
+            var basic = new ExpandedWildernessVoiceState();
+            Step(basic, 0, targets, hits, duration: 1, ranks: ranks, knockback: .25, closeKnockback: .25);
+            Check.True(!basic.Active[0].EvolvedCloseKnockback);
+            Step(basic, .15, targets, hits);
+            Check.Near(.60, hits.Single(hit => hit.TargetId == 1).Knockback);
+        });
+
         test("Wilderness Voice restores its launch base and numbers eligible targets separately on each pulse", () =>
         {
             var state = new ExpandedWildernessVoiceState();
@@ -369,10 +479,21 @@ internal static class ExpandedWildernessVoiceTests
     private static void Step(ExpandedWildernessVoiceState state, double time, Dictionary<int, Vector2> enemies,
         List<ExpandedWildernessVoiceHit> hits, bool evolved = false, Vector2 center = default,
         Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2, double delayAdvance = 0,
-        double echoRadiusBonus = 0)
+        double echoRadiusBonus = 0, ExpandedWildernessVoiceRankOptions ranks = default,
+        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, double knockback = 0, double closeKnockback = 0)
     {
         ExpandedWildernessVoice.Step(state, time, center, facing ?? Vector2.UnitX, 8, evolved,
             damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add, delayAdvance,
-            echoRadiusBonus: echoRadiusBonus);
+            echoRadiusBonus: echoRadiusBonus, rankOptions: ranks, knockbackBonus: knockback,
+            closeKnockbackBonus: closeKnockback, isElite: isElite, isBoss: isBoss);
+    }
+
+    private static ExpandedWildernessVoiceState Restore(ExpandedWildernessVoiceState state)
+    {
+        using var save = new MemoryStream();
+        var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+        serializer.WriteObject(save, state);
+        save.Position = 0;
+        return (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
     }
 }

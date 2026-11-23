@@ -11,6 +11,43 @@ internal static class ExpandedMosesStaffTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Common projectile Staff freezes first-wave speed and later collision width without widening either lane", () =>
+        {
+            var rules = SharedShots("02", "05", "06");
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("c.01"));
+            var targets = new Dictionary<int, Vector2>();
+            var state = new ExpandedMosesStaffState { Evolved = true };
+            ExpandedMosesStaff.Step(state, 0, Vector2.Zero, Vector2.UnitX, 8, true, 40, 3, 2, 1.08, 7, 6.5,
+                () => targets, targets, _ => true, rankOptions: ranks, shotRules: rules);
+            state = RoundTrip(state);
+            state.Validate(0, true);
+            Check.Near(7.02, state.Waves[0].Speed);
+            Check.Near(6.5, state.Waves[1].Speed);
+            Check.Near(1.3392, state.Waves[0].Width);
+            Check.Near(1.404, state.Waves[1].Width);
+            Check.True(state.Waves.All(wave => Math.Abs(wave.LaneWidth - 1.2) < 1e-9 &&
+                Math.Abs(wave.ResidualLaneWidth - .7) < 1e-9));
+        });
+
+        test("Common projectile Staff uses the swept contact distance on the infinite-budget wave across restore", () =>
+        {
+            var rules = SharedShots("07", "08");
+            var targets = new Dictionary<int, Vector2>
+                { [1] = new Vector2(4.42f, 0), [2] = new Vector2(4.48f, 0) };
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState();
+            void Tick(double now, PermanentShotRules selected = default) =>
+                ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX, 8, false, 40, 3, 1, .90, 7, 5,
+                    () => targets, targets, hit => { hits.Add(hit); return true; }, shotRules: selected);
+            Tick(0, rules);
+            state = RoundTrip(state);
+            Check.Equal(PermanentShotHitBonuses.LongFlight, state.Waves.Single().SharedShotHitBonuses);
+            Tick(.9);
+            Check.Near(40, hits.Single(hit => hit.TargetId == 1).Damage);
+            Check.Near(42.4, hits.Single(hit => hit.TargetId == 2).Damage);
+            state.Validate(.9, false);
+        });
+
         test("Staff evolved closure launches one real endpoint-to-origin return with frozen parent geometry", () =>
         {
             var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.05", "e.04"));
@@ -982,6 +1019,9 @@ internal static class ExpandedMosesStaffTests
         foreach (var (wave, angle) in state.Waves.Zip(expected))
             Check.Near(angle, Math.Atan2(wave.Direction.Y, wave.Direction.X) * 180 / Math.PI, 1e-4);
     }
+
+    private static PermanentShotRules SharedShots(params string[] ids) =>
+        PermanentShotRules.FromRanks(ids.ToDictionary(id => "common.shot." + id, _ => 1));
 
     private static int Step(ExpandedMosesStaffState state, double now, IReadOnlyDictionary<int, Vector2> targets,
         List<ExpandedMosesStaffHit> hits, bool evolved = false, double damage = 40, double cycle = 3,

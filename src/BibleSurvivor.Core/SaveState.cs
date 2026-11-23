@@ -68,6 +68,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public bool TempoOpeningUsed { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryVoiceCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryJawboneCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryLionPackCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? BossEntryLionNextPackLeapAt { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryLightningCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryLightningStrikes { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryFireCycle { get; set; }
@@ -144,6 +146,7 @@ namespace BibleSurvivor.Core
                 Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
                 Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
                 Run.BossEntryVoiceCycle != 0 || Run.BossEntryJawboneCycle != 0 || Run.BossEntryLightningCycle != 0 ||
+                Run.BossEntryLionPackCycle != 0 || Run.BossEntryLionNextPackLeapAt.HasValue ||
                 Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0 ||
                 Run.BossEntryStaffCycle != 0 || Run.BossEntryStaffWaves != 0 || Run.BossEntryChariot != null))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
@@ -219,6 +222,11 @@ namespace BibleSurvivor.Core
                 bool InvalidBossCadence(long value, string equipped) => value < 0 || value > 1201 ||
                     value > 0 && (Run.Boss == null || !Run.Weapons.ContainsKey(equipped));
                 if (InvalidBossCadence(Run.BossEntryJawboneCycle, "jawbone") ||
+                    InvalidBossCadence(Run.BossEntryLionPackCycle, "daniel_lion") ||
+                    Run.BossEntryLionPackCycle > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.daniel_lion.b.05") == 0 ||
+                    Run.BossEntryLionNextPackLeapAt is double packLeap && (!Finite(packLeap) ||
+                        Run.BossEntryLionPackCycle < ExpandedDanielLion.ClawsPerPackLeap ||
+                        packLeap <= 0 || packLeap > (Run.NormalEndedAt ?? Run.Boss?.NormalEndedAt ?? 180) + ExpandedDanielLion.PackLeapCooldown + 1e-8) ||
                     InvalidBossCadence(Run.BossEntryLightningCycle, "lightning") ||
                     Run.BossEntryLightningStrikes < Run.BossEntryLightningCycle ||
                     Run.BossEntryLightningStrikes > 4 * Run.BossEntryLightningCycle ||
@@ -390,10 +398,11 @@ namespace BibleSurvivor.Core
                         if (HasRank(prefix + (index + 1).ToString("D2"))) flags |= 1 << index;
                     return flags;
                 }
-                if ((Run.World.ChariotDeflectRandom.HasValue || Run.World.ChariotDeflectionAttempts != null) &&
+                if (Run.World.LionDeflectRandom.HasValue && !HasRank("weapon.daniel_lion.e.04") ||
+                    (Run.World.ChariotDeflectRandom.HasValue || Run.World.ChariotDeflectionAttempts != null) &&
                     !HasRank("weapon.elijah_chariot.d.04") ||
                     Run.World.NextHostileEraseAt.HasValue && !HasRank("weapon.elijah_chariot.d.04") &&
-                    !HasRank("weapon.moses_staff.d.02") && !HasRank("weapon.bible.b.03"))
+                    !HasRank("weapon.moses_staff.d.02") && !HasRank("weapon.bible.b.03") && !HasRank("weapon.daniel_lion.e.04"))
                     throw new InvalidDataException("Hostile erase state requires a frozen defensive rank");
                 var lightningCurrentRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.c.");
                 var lightningGroundRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.d.");
@@ -433,11 +442,22 @@ namespace BibleSurvivor.Core
                     var maximumLifetime = Run.World.Tuning.SlingLifetime * (1 + permanentArea.FlightDistanceBonus);
                     var maximumFlight = maximumLifetime * Run.World.Tuning.SlingSpeed;
                     var maximumRadius = .1 * (1 + permanentArea.ProjectileRadiusBonus + possibleArea.ConditionalHitShapeBonus +
-                        (HasRank("common.shot.02") ? .04 : 0) + (HasRank("weapon.sling.base.04") ? .10 : 0));
+                        (HasRank("common.shot.02") ? .04 : 0) + (HasRank("common.shot.06") ? .06 : 0) +
+                        (HasRank("weapon.sling.base.04") ? .10 : 0));
+                    var shotBonuses = PermanentShotRules.FromRanks(permanentRanks).HitBonuses;
                     if (Run.World.Projectiles.Any(projectile => projectile.Lifetime > maximumLifetime + 1e-8 ||
-                        projectile.Velocity.Length() * projectile.Lifetime > maximumFlight * (1 + 1e-6) ||
+                        projectile.Velocity.Length() * projectile.Lifetime + projectile.TravelledDistance > maximumFlight * (1 + 1e-6) ||
+                        (projectile.SharedShotHitBonuses & ~shotBonuses) != 0 ||
                         projectile.Radius > maximumRadius + 1e-8))
                         throw new InvalidDataException("Sling geometry exceeds its frozen rank allowance");
+                    if (Run.World.MosesStaff?.Waves.Any(wave => (wave.SharedShotHitBonuses & ~shotBonuses) != 0) == true ||
+                        Run.World.Cross?.Shots.Any(shot => (shot.SharedShotHitBonuses & ~shotBonuses) != 0 ||
+                            shot.SharedReturnSpeed.HasValue && !HasRank("common.shot.10") ||
+                            shot.LongerReturnLifetime && !HasRank("common.duration.09") ||
+                            shot.IncreasedEvolvedLegBudget && !HasRank("common.shot.09")) == true ||
+                        Run.World.ElijahChariot?.Paths.Any(path => (path.SharedShotHitBonuses & ~shotBonuses) != 0) == true ||
+                        Run.World.Weapons.Any(weapon => weapon.LaunchedSlingInCycle && !HasRank("common.shot.05") && !HasRank("common.shot.06")))
+                        throw new InvalidDataException("Projectile launch state requires its frozen ranks");
                 }
                 if (permanentArea.HitShapeBonus == 0 && (
                     Run.World.MosesStaff?.Waves.Any(wave => wave.WidenedSupportShape) == true ||
@@ -503,6 +523,8 @@ namespace BibleSurvivor.Core
                         cast.FourthCycleFinalDamage && !HasRank("weapon.wilderness_voice.a.05") ||
                         cast.CenteredDamage && !HasRank("weapon.wilderness_voice.b.02") ||
                         cast.EdgeKnockback && !HasRank("weapon.wilderness_voice.b.03") ||
+                        cast.InitialFacingX.HasValue && !HasRank("weapon.wilderness_voice.b.04") && !HasRank("weapon.wilderness_voice.b.05") ||
+                        cast.EvolvedCloseKnockback && !HasRank("weapon.wilderness_voice.e.04") ||
                         cast.HasExtraEcho && !HasRank("weapon.wilderness_voice.e.03")))
                         throw new InvalidDataException("Wilderness voice cast bonuses require their frozen ranks");
                 }
@@ -532,7 +554,8 @@ namespace BibleSurvivor.Core
                 var evolvedEmberBonus = HasRank("weapon.fire_pillar.e.01") ? .20 : 0;
                 if (Run.World.FirePillar?.Regions.Any(region =>
                     region.Ember && (region.EndsAt - region.StartedAt > emberLifetime +
-                        (region.SupportKind == ExpandedFireSupportKind.EvolvedEmber ? evolvedEmberBonus : 0) + 1e-8 ||
+                        (region.SupportKind == ExpandedFireSupportKind.EvolvedEmber ? evolvedEmberBonus :
+                            region.SupportKind == ExpandedFireSupportKind.MovingFire ? .5 : 0) + 1e-8 ||
                         region.EndsAt - region.StartedAt < ExpandedFirePillar.EmberLifetime - 1e-8)) == true)
                     throw new InvalidDataException("Fire pillar ember lifetime does not match its frozen ranks");
                 var staffSuffixes = new[] { "a.04", "a.05", "b.02", "b.03", "b.04", "b.05" };
@@ -605,11 +628,21 @@ namespace BibleSurvivor.Core
                         actor.FirstClawPhaseResolved && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.b.02") == 0 ||
                         actor.NextPackRoarAt.HasValue && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.c.01") == 0 ||
                         actor.ClawHasteUntil.HasValue && !HasRank("weapon.daniel_lion.c.04") ||
-                        (actor.Pounce != null || actor.NextPounceAt.HasValue) && !HasRank("weapon.daniel_lion.a.03")) ||
+                        (actor.Pounce != null || actor.NextPounceAt.HasValue) && !HasRank("weapon.daniel_lion.a.03") ||
+                        actor.PatrolUntil.HasValue && !HasRank("weapon.daniel_lion.d.01") ||
+                        actor.PatrolLeap != null && !HasRank("weapon.daniel_lion.d.02") ||
+                        actor.ReturnHitIds != null && !HasRank("weapon.daniel_lion.d.03")) ||
+                        lion.PackCycle < Run.BossEntryLionPackCycle ||
+                        lion.NextPatrolAt.HasValue && !HasRank("weapon.daniel_lion.d.01") ||
+                        lion.NextPatrolLeapAt.HasValue && !HasRank("weapon.daniel_lion.d.02") ||
+                        lion.NextProtectionAt.HasValue && !HasRank("weapon.daniel_lion.d.04") ||
+                        (lion.NextGuardAt.HasValue || lion.GuardUntil.HasValue) && !HasRank("weapon.daniel_lion.d.05") ||
+                        lion.NextRoarDeflectAt.HasValue && !HasRank("weapon.daniel_lion.e.04") ||
                         (lion.PackCycle != 0 || lion.NextPackLeapAt.HasValue) && !HasRank("weapon.daniel_lion.b.05") ||
                         lion.TargetHistory?.Any(history =>
                             history.RecentClaws != null && !HasRank("weapon.daniel_lion.b.03") ||
-                            history.MarkUntil.HasValue && !HasRank("weapon.daniel_lion.b.04")) == true ||
+                            history.MarkUntil.HasValue && !HasRank("weapon.daniel_lion.b.04") &&
+                                !(lion.Evolved && HasRank("weapon.daniel_lion.e.05"))) == true ||
                         lion.Leap?.EmpoweredDamage == true && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.01") == 0 ||
                         (lion.KillLeapReadyAt.HasValue || lion.Leap?.FollowupOnKill == true) &&
                         PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.02") == 0))

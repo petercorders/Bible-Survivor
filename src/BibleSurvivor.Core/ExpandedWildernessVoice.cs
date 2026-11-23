@@ -25,10 +25,14 @@ namespace BibleSurvivor.Core
         public bool WidenEvolution { get; }
         public bool WidenEchoes { get; }
         public bool RepeatFifthEcho { get; }
+        public bool AimAtCrowd { get; }
+        public bool TurnTowardRearCrowd { get; }
+        public bool StrongerEvolvedCloseKnockback { get; }
 
         public ExpandedWildernessVoiceRankOptions(bool firstPulseDamage = false, bool finalPulseKnockback = false,
             bool lockFacing = false, bool fourthCycleFinalDamage = false, bool centeredDamage = false,
-            bool edgeKnockback = false, bool widenEvolution = false, bool widenEchoes = false, bool repeatFifthEcho = false)
+            bool edgeKnockback = false, bool widenEvolution = false, bool widenEchoes = false, bool repeatFifthEcho = false,
+            bool aimAtCrowd = false, bool turnTowardRearCrowd = false, bool strongerEvolvedCloseKnockback = false)
         {
             FirstPulseDamage = firstPulseDamage;
             FinalPulseKnockback = finalPulseKnockback;
@@ -39,6 +43,9 @@ namespace BibleSurvivor.Core
             WidenEvolution = widenEvolution;
             WidenEchoes = widenEchoes;
             RepeatFifthEcho = repeatFifthEcho;
+            AimAtCrowd = aimAtCrowd;
+            TurnTowardRearCrowd = turnTowardRearCrowd;
+            StrongerEvolvedCloseKnockback = strongerEvolvedCloseKnockback;
         }
 
         public static ExpandedWildernessVoiceRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -46,7 +53,8 @@ namespace BibleSurvivor.Core
             if (ranks == null) throw new ArgumentNullException(nameof(ranks));
             bool Has(string suffix) => ranks.TryGetValue("weapon.wilderness_voice." + suffix, out var rank) && rank > 0;
             return new ExpandedWildernessVoiceRankOptions(Has("a.02"), Has("a.03"), Has("a.04"), Has("a.05"),
-                Has("b.02"), Has("b.03"), Has("e.01"), Has("e.02"), Has("e.03"));
+                Has("b.02"), Has("b.03"), Has("e.01"), Has("e.02"), Has("e.03"),
+                Has("b.04"), Has("b.05"), Has("e.04"));
         }
     }
 
@@ -104,6 +112,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool EdgeKnockback { get; set; }
         [DataMember(EmitDefaultValue = false)] public float? LockedFacingX { get; set; }
         [DataMember(EmitDefaultValue = false)] public float? LockedFacingY { get; set; }
+        [DataMember(EmitDefaultValue = false)] public float? InitialFacingX { get; set; }
+        [DataMember(EmitDefaultValue = false)] public float? InitialFacingY { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool EvolvedCloseKnockback { get; set; }
         [DataMember(EmitDefaultValue = false)] public int DamageLevel { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? UncappedDamage { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool HasExtraEcho { get; set; }
@@ -123,16 +134,16 @@ namespace BibleSurvivor.Core
         internal double EchoAt(int echo) => StartedAt + (echo + 1) * ExpandedWildernessVoice.EchoInterval;
         internal int EchoCount(bool evolved) => evolved ? (HasExtraEcho ? 3 : 2) : 0;
         internal double ExpiresAt(bool evolved) => evolved ? Math.Max(End, EchoAt(EchoCount(true) - 1)) : End;
-        internal Vector2 PulseFacing(Vector2 facing) => LockedFacingX is float x && LockedFacingY is float y
-            ? new Vector2(x, y) : facing;
+        public Vector2? InitialFacing => InitialFacingX is float x && InitialFacingY is float y ? new Vector2(x, y) : (Vector2?)null;
+
+        internal Vector2 PulseFacing(Vector2 facing, bool firstPrimary = false) => LockedFacingX is float x && LockedFacingY is float y
+            ? new Vector2(x, y) : firstPrimary ? InitialFacing ?? facing : facing;
 
         internal bool ValidRanks(bool evolved)
         {
             if ((FourthCycleFinalDamage && Id % 4 != 0) || (HasExtraEcho && (!evolved || Id % 5 != 0)) ||
-                LockedFacingX.HasValue != LockedFacingY.HasValue)
-                return false;
-            if (LockedFacingX is float x && LockedFacingY is float y &&
-                (!BattleSnapshot.Position(x, y) || Math.Abs(new Vector2(x, y).LengthSquared() - 1) > .0001))
+                EvolvedCloseKnockback && !evolved || InitialFacingX.HasValue && LockedFacingX.HasValue ||
+                !ValidFacing(LockedFacingX, LockedFacingY) || !ValidFacing(InitialFacingX, InitialFacingY))
                 return false;
 
             if (!FirstPulseDamage && !FourthCycleFinalDamage && !CenteredDamage)
@@ -140,6 +151,10 @@ namespace BibleSurvivor.Core
             return DamageLevel >= 1 && DamageLevel <= 8 && (!evolved || DamageLevel == 8) &&
                 UncappedDamage is double damage && ExpandedWildernessVoice.ValidUncappedDamage(DamageLevel, damage, Damage);
         }
+
+        private static bool ValidFacing(float? x, float? y) => x.HasValue == y.HasValue &&
+            (!x.HasValue || BattleSnapshot.Position(x.Value, y!.Value) &&
+                Math.Abs(new Vector2(x.Value, y.Value).LengthSquared() - 1) <= .0001);
 
         internal ExpandedWildernessVoiceCastState Copy() => (ExpandedWildernessVoiceCastState)MemberwiseClone();
     }
@@ -227,6 +242,11 @@ namespace BibleSurvivor.Core
         internal const double MinimumCycle = .15;
         private const double MinimumDelay = .05;
         internal const double EchoInterval = .5;
+        private const double AimRange = 5;
+        private const double RearRange = 4;
+        private const int RearCountLead = 3;
+        private const double CrowdRadius = 1.5;
+        private const double EvolutionCloseKnockback = .35;
 
         // Cast stats are frozen at start. Each atomic pulse samples the current
         // center and facing, then processes every eligible target once in ID order.
@@ -235,11 +255,14 @@ namespace BibleSurvivor.Core
             Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit,
             double delayAdvance = 0, double knockbackBonus = 0, double closeKnockbackBonus = 0,
             bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null, double echoRadiusBonus = 0,
-            ExpandedWildernessVoiceRankOptions rankOptions = default, double? uncappedDamage = null)
+            ExpandedWildernessVoiceRankOptions rankOptions = default, double? uncappedDamage = null,
+            Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
+            if (rankOptions.TurnTowardRearCrowd && isElite == null) throw new ArgumentNullException(nameof(isElite));
+            if (rankOptions.TurnTowardRearCrowd && isBoss == null) throw new ArgumentNullException(nameof(isBoss));
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (!ValidKnockbackBonus(knockbackBonus) || !ValidKnockbackBonus(closeKnockbackBonus))
                 throw new ArgumentException("Invalid voice knockback bonus");
@@ -270,6 +293,10 @@ namespace BibleSurvivor.Core
             var needsDamageBasis = rankOptions.FirstPulseDamage || fourthCycleFinalDamage || rankOptions.CenteredDamage;
             if (evolved && rankOptions.WidenEvolution)
                 reach = Math.Min(MaximumReach, reach + Profile.AtLevel(1).Reach * .15);
+            var adjustedAim = rankOptions.AimAtCrowd || rankOptions.TurnTowardRearCrowd
+                ? AimAtStart(playerPosition, direction, targets(), rankOptions, isElite, isBoss) : (Vector2?)null;
+            var initialAim = rankOptions.LockFacing ? null : adjustedAim;
+            var lockedAim = rankOptions.LockFacing ? adjustedAim ?? direction : (Vector2?)null;
             state.Active.Add(new ExpandedWildernessVoiceCastState
             {
                 Id = state.Cycle,
@@ -289,12 +316,48 @@ namespace BibleSurvivor.Core
                 FourthCycleFinalDamage = fourthCycleFinalDamage,
                 CenteredDamage = rankOptions.CenteredDamage,
                 EdgeKnockback = rankOptions.EdgeKnockback,
-                LockedFacingX = rankOptions.LockFacing ? direction.X : (float?)null,
-                LockedFacingY = rankOptions.LockFacing ? direction.Y : (float?)null,
+                LockedFacingX = lockedAim?.X,
+                LockedFacingY = lockedAim?.Y,
+                InitialFacingX = initialAim?.X,
+                InitialFacingY = initialAim?.Y,
+                EvolvedCloseKnockback = evolved && rankOptions.StrongerEvolvedCloseKnockback,
                 DamageLevel = needsDamageBasis ? level : 0,
                 UncappedDamage = needsDamageBasis ? uncappedDamage : null,
                 HasExtraEcho = evolved && rankOptions.RepeatFifthEcho && state.Cycle % 5 == 0,
             });
+        }
+
+        private static Vector2? AimAtStart(Vector2 center, Vector2 facing, IReadOnlyDictionary<int, Vector2> targets,
+            ExpandedWildernessVoiceRankOptions ranks, Func<int, bool>? isElite, Func<int, bool>? isBoss)
+        {
+            var front = 0;
+            var rear = 0;
+            if (ranks.TurnTowardRearCrowd)
+            {
+                foreach (var position in targets.Values)
+                {
+                    var offset = position - center;
+                    if (offset.LengthSquared() > RearRange * RearRange) continue;
+                    if (Behind(offset)) rear++;
+                    else front++;
+                }
+            }
+
+            var turn = rear - front >= RearCountLead;
+            if (!turn && !ranks.AimAtCrowd) return null;
+            var range = turn ? RearRange : AimRange;
+            var best = targets.Select(target => (target.Key, target.Value, Offset: target.Value - center))
+                .Where(target => target.Offset.LengthSquared() > 1e-12f && target.Offset.LengthSquared() <= range * range &&
+                    (!turn || Behind(target.Offset)))
+                .OrderByDescending(target => turn ? isBoss!(target.Key) ? 2 : isElite!(target.Key) ? 1 : 0 : 0)
+                .ThenByDescending(target => targets.Values.Count(position =>
+                    Vector2.DistanceSquared(target.Value, position) <= CrowdRadius * CrowdRadius))
+                .ThenBy(target => target.Offset.LengthSquared())
+                .ThenBy(target => target.Key)
+                .FirstOrDefault();
+            return best.Key == 0 ? (Vector2?)null : Vector2.Normalize(best.Offset);
+
+            bool Behind(Vector2 offset) => Vector2.Dot(offset, facing) < 0;
         }
 
         private static void ResolveDue(ExpandedWildernessVoiceState state, double now, Vector2 center, Vector2 direction,
@@ -361,7 +424,7 @@ namespace BibleSurvivor.Core
             };
             // A full-circle primary still uses its facing for directional modifiers.
             var halfAngle = primary && !evolved ? cast.HalfAngle : 180;
-            var aim = cast.PulseFacing(direction);
+            var aim = cast.PulseFacing(direction, primary && pulseNumber == 1);
             var final = primary && cast.PrimaryAt(cast.PrimaryPulses) >= cast.End - TimeEpsilon;
             var pulseBonus = (primary && pulseNumber == 1 && cast.FirstPulseDamage ? .08 : 0) +
                 (final && cast.FourthCycleFinalDamage ? .12 : 0);
@@ -396,7 +459,8 @@ namespace BibleSurvivor.Core
         private static double PrimaryKnockback(ExpandedWildernessVoiceCastState cast, Vector2 offset,
             double angle, double halfAngle, bool final)
         {
-            var close = offset.LengthSquared() <= 1.2f * 1.2f ? cast.CloseKnockbackBonus : 0;
+            var close = offset.LengthSquared() <= 1.2f * 1.2f
+                ? cast.CloseKnockbackBonus + (cast.EvolvedCloseKnockback ? EvolutionCloseKnockback : 0) : 0;
             var edge = cast.EdgeKnockback && angle + GeometryEpsilon >= halfAngle * .8 ? .25 : 0;
             var finish = final && cast.FinalPulseKnockback ? .30 : 0;
             return Math.Min(1, Profile.Knockback + cast.KnockbackBonus + close + edge + finish);

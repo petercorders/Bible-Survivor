@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BibleSurvivor.Core;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ namespace BibleSurvivor.Unity
         enum Stroke { Solid, Dash, Dot }
 
         const double MarkerLifetime = .14;
+        const double AttackArtLifetime = .15 + 2d / 15;
+        static readonly int FirstFadeFrame = 3;
         static readonly Color Rim = new Color32(29, 26, 20, 255);
         static readonly Color Voice = new Color32(255, 242, 178, 255);
         static readonly Color Lightning = new Color32(255, 252, 225, 255);
@@ -26,21 +29,26 @@ namespace BibleSurvivor.Unity
             new List<(double, Vector2, float, Stroke)>();
         readonly List<(double At, Vector2 Center, float Radius, bool Guardian)> roars =
             new List<(double, Vector2, float, bool)>();
+        readonly List<(double At, Vector2 Center, string Clip)> ended = new List<(double, Vector2, string)>();
+        readonly Dictionary<long, Vector2> movingFire = new Dictionary<long, Vector2>();
 
         public void Clear()
         {
             actualAreas.Clear();
             echoes.Clear();
             roars.Clear();
+            ended.Clear();
+            movingFire.Clear();
         }
 
         public void Observe(BattleWorld source, BattleSnapshot previous, BattleSnapshot next, float packRoarRadius, float guardianRoarRadius)
         {
             source.ReadRecentAreaEffects(actualAreas);
             if (previous == null || next.Time <= previous.Time) return;
+            ObserveEnds(previous, next);
 
             for (var i = echoes.Count - 1; i >= 0; i--)
-                if (next.Time >= echoes[i].At + MarkerLifetime) echoes.RemoveAt(i);
+                if (next.Time >= echoes[i].At + AttackArtLifetime) echoes.RemoveAt(i);
             if (previous.WildernessVoice?.Evolved == true && next.WildernessVoice?.Evolved == true)
                 foreach (var cast in previous.WildernessVoice.Active)
                 {
@@ -78,7 +86,46 @@ namespace BibleSurvivor.Unity
             }
         }
 
-        public void DrawGround(AdamWorldProjection projection, BattleSnapshot snap)
+        void ObserveEnds(BattleSnapshot previous, BattleSnapshot next)
+        {
+            ended.RemoveAll(item => next.Time >= item.At + 2d / 15);
+            movingFire.Clear();
+            if (previous.FirePillar != null && next.FirePillar != null && previous.FirePillar.Evolved == next.FirePillar.Evolved)
+                foreach (var prior in previous.FirePillar.Regions)
+                {
+                    var center = new Vector2(prior.X, prior.Y);
+                    if (prior.Ember) continue;
+                    var current = next.FirePillar.Regions.Find(region => region.Id == prior.Id);
+                    if (current == null && previous.Time < prior.EndsAt && prior.EndsAt <= next.Time)
+                        ended.Add((prior.EndsAt, center, "fx_fire-pillar_column-end_64"));
+                    else if (current != null)
+                    {
+                        var delta = new Vector2(current.X, current.Y) - center;
+                        if (delta.sqrMagnitude > 1e-10f) movingFire[prior.Id] = delta;
+                    }
+                }
+
+            if (previous.MosesStaff != null && next.MosesStaff != null && previous.MosesStaff.Evolved == next.MosesStaff.Evolved)
+                foreach (var wave in previous.MosesStaff.Waves)
+                {
+                    var endAt = wave.EmittedAt + wave.Range / wave.Speed;
+                    if (previous.Time < endAt && endAt <= next.Time)
+                    {
+                        var distance = wave.TurnAtDistance.GetValueOrDefault();
+                        var endpoint = wave.TurnAtDistance.HasValue
+                            ? V(wave.TurnPosition) + V(wave.TravelDirection) * (float)(wave.Range - distance)
+                            : V(wave.Origin) + V(wave.Direction) * (float)wave.Range;
+                        ended.Add((endAt, endpoint, "fx_moses-staff_wave-end_32"));
+                    }
+                }
+
+            if (previous.ElijahChariot != null && next.ElijahChariot != null && previous.ElijahChariot.Evolved == next.ElijahChariot.Evolved)
+                foreach (var path in previous.ElijahChariot.Paths)
+                    if (previous.Time < path.EndAt && path.EndAt <= next.Time)
+                        ended.Add((path.EndAt, V(path.Endpoint), "fx_elijah-chariot_end_64"));
+        }
+
+        public void DrawGround(AdamWorldProjection projection, BattleSnapshot snap, bool feedback)
         {
             if (Event.current.type != EventType.Repaint) return;
             if (snap.WildernessVoice != null)
@@ -91,6 +138,19 @@ namespace BibleSurvivor.Unity
                     var warning = cast.PrimaryPulses == 0 ? Stroke.Dash : Stroke.Solid;
                     if (age < cast.Duration)
                     {
+                        var facingDirection = new Vector2(Mathf.Cos(facing), Mathf.Sin(facing));
+                        var firstDelay = cast.FirstDelay ?? .15;
+                        var crown = player + facingDirection * (float)Math.Min(1, cast.Reach * .45);
+                        if (age < firstDelay)
+                            Paint(projection, "fx_wilderness-voice_mouth_32", crown, age,
+                                left: facingDirection.x < 0, frame: age < firstDelay * .5 ? 0 : 1);
+                        else if (cast.PrimaryPulses > 0)
+                        {
+                            var lastPulse = firstDelay + (cast.PrimaryPulses - 1) * (cast.ShortenedPrimaryInterval ? .48 : .5);
+                            PaintAttack(projection, "fx_wilderness-voice_crest_32", crown, age - lastPulse, facingDirection.x < 0);
+                        }
+                        if (cast.LockedFacingX.HasValue)
+                            Paint(projection, "fx_wilderness-voice_aim-lock_32", player + facingDirection * (float)cast.Reach, 0);
                         if (snap.WildernessVoice.Evolved) Ring(projection, player, (float)cast.Reach, Voice, warning);
                         else Fan(projection, player, facing, (float)cast.HalfAngle * Mathf.Deg2Rad, (float)cast.Reach, warning);
                     }
@@ -105,42 +165,88 @@ namespace BibleSurvivor.Unity
                 }
             }
             foreach (var echo in echoes)
-                Ring(projection, echo.Center, echo.Radius, Voice, echo.Stroke);
+            {
+                var age = snap.Time - echo.At;
+                if (age < MarkerLifetime)
+                    Ring(projection, echo.Center, echo.Radius, Voice, echo.Stroke);
+                var id = echo.Stroke == Stroke.Dash ? 1 : echo.Stroke == Stroke.Dot ? 2 : 3;
+                PaintAttack(projection, $"fx_wilderness-proclamation_echo-{id}_32",
+                    echo.Center + Vector2.right * echo.Radius, age);
+            }
 
             if (snap.Lightning != null)
             {
-                foreach (var bolt in snap.Lightning.Pending) DrawBolt(projection, bolt, Stroke.Dash);
+                foreach (var bolt in snap.Lightning.Pending)
+                {
+                    DrawBolt(projection, bolt, Stroke.Dash);
+                    if (bolt.IsPrimary)
+                        Paint(projection, "fx_lightning-mark_32", new Vector2(bolt.X, bolt.Y), 0,
+                            frame: bolt.At - snap.Time > .075 ? 0 : 1);
+                }
                 if (snap.Lightning.GroundCurrents != null)
                     foreach (var ground in snap.Lightning.GroundCurrents)
                         Ring(projection, V(ground.Center), (float)ground.Radius, Lightning, Stroke.Dot);
             }
             foreach (var area in actualAreas)
             {
-                if (snap.Time >= area.At + MarkerLifetime) continue;
-                var isLightning = area.Kind <= BattleAreaEffectKind.LightningEliteThunder;
-                Ring(projection, V(area.Center), (float)area.Radius, isLightning ? Lightning : Cross, Stroke.Solid);
+                if (snap.Time >= area.At + MarkerLifetime || area.Radius <= 0) continue;
+                var color = area.Kind switch
+                {
+                    BattleAreaEffectKind.LightningStrike or BattleAreaEffectKind.LightningAftershock or
+                        BattleAreaEffectKind.LightningEliteThunder => Lightning,
+                    BattleAreaEffectKind.ChariotEndExplosion or BattleAreaEffectKind.ChariotCrossingWhirlwind or
+                        BattleAreaEffectKind.ChariotEndFlame => Chariot,
+                    _ => Cross,
+                };
+                Ring(projection, V(area.Center), (float)area.Radius, color, Stroke.Solid);
                 if (area.Kind == BattleAreaEffectKind.LightningAftershock || area.Kind == BattleAreaEffectKind.LightningEliteThunder)
                     Ring(projection, V(area.Center), (float)area.Radius - .1f, Lightning, Stroke.Solid);
             }
 
             if (snap.MosesStaff != null)
                 foreach (var wave in snap.MosesStaff.Waves)
+                {
                     if (wave.HasLane && wave.LaneStartedAt.HasValue)
-                        Band(projection, V(wave.Origin), V(wave.Origin) + V(wave.Direction) * (float)wave.LaneLength,
-                            (float)wave.LaneWidth, Staff, Stroke.Dash);
+                    {
+                        DrawStaffLane(projection, wave, wave.LaneLength, wave.LaneWidth, Stroke.Dash);
+                        if (feedback)
+                            Paint(projection, "fx_red-sea-path_channel_32", StaffPosition(wave, wave.LaneLength * .5),
+                                snap.Time - wave.LaneStartedAt.Value);
+                    }
+                    if (wave.HasResidualLane && wave.ResidualLaneStartedAt.HasValue)
+                        DrawStaffLane(projection, wave, wave.ResidualLaneLength, wave.ResidualLaneWidth, Stroke.Dot);
+                }
 
             if (snap.FirePillar != null)
                 foreach (var region in snap.FirePillar.Regions)
                 {
                     var stroke = region.Ember ? Stroke.Dot : snap.Time < region.IgnitionAt ? Stroke.Dash : Stroke.Solid;
-                    Ring(projection, new Vector2(region.X, region.Y), (float)region.Radius, Pillar, stroke);
+                    var center = new Vector2(region.X, region.Y);
+                    Ring(projection, center, (float)region.Radius,
+                        region.Ember ? Tint(Pillar, .64f) : Pillar, stroke);
+                    if (region.Ember)
+                    {
+                        var remaining = region.EndsAt - snap.Time;
+                        var frame = remaining < 2d / 15 ? (remaining < 1d / 15 ? 5 : 4) :
+                            ((int)((snap.Time - region.StartedAt) * 8) % 4);
+                        Paint(projection, "fx_wilderness-guidance_ember_32", center, 0, frame: frame);
+                    }
+                    else if (snap.Time < region.IgnitionAt)
+                        Paint(projection, "fx_fire-pillar_ignite_64", center, 0,
+                            frame: snap.Time - region.StartedAt < (region.IgnitionAt - region.StartedAt) * .5 ? 0 : 1);
                 }
 
             if (snap.Cross != null)
                 foreach (var shot in snap.Cross.Shots)
                 {
-                    DrawTrail(projection, shot.Thorns, (float)shot.ThornRadius, Cross, Stroke.Dash);
-                    if (shot.Afterglow != null) DrawTrail(projection, shot.Afterglow, (float)shot.AfterglowRadius, Cross, Stroke.Dot);
+                    DrawTrail(projection, shot.Thorns, (float)shot.ThornRadius, Tint(Cross, .68f), Stroke.Dash);
+                    if (feedback && shot.Thorns.Count > 0)
+                    {
+                        var piece = shot.Thorns[shot.Thorns.Count - 1];
+                        Paint(projection, "fx_passion-radiance_thorn_32", new Vector2(piece.EndX, piece.EndY), snap.Time);
+                    }
+                    if (shot.Afterglow != null)
+                        DrawTrail(projection, shot.Afterglow, (float)shot.AfterglowRadius, Tint(Cross, .62f), Stroke.Dot);
                     if (shot.IsSpinning) Ring(projection, new Vector2(shot.X, shot.Y), (float)shot.SpinRadius, Cross, Stroke.Solid);
                 }
 
@@ -148,16 +254,32 @@ namespace BibleSurvivor.Unity
                 foreach (var path in snap.ElijahChariot.Paths)
                 {
                     var start = V(path.Origin);
-                    var direction = V(path.Direction);
                     if (snap.Time < path.WarningAt) continue;
                     if (snap.Time < path.MoveAt)
-                        Band(projection, start, start + direction * (float)path.Range, (float)path.Width, Chariot, Stroke.Dash);
-                    else if (snap.ElijahChariot.Evolved && !path.SuppressedTrail)
+                    {
+                        var latter = snap.Time - path.WarningAt >= (path.MoveAt - path.WarningAt) * .5;
+                        var knownEnd = V(path.TurnsMidway && !path.MidpointTurnResolved ? path.Pivot : path.Endpoint);
+                        Band(projection, start, knownEnd, (float)path.Width, Chariot, latter ? Stroke.Solid : Stroke.Dash);
+                        Paint(projection, "fx_elijah-chariot_lane_32", start, 0, frame: latter ? 1 : 0);
+                        Paint(projection, "fx_elijah-chariot_lane-end_32", knownEnd, 0, frame: latter ? 1 : 0);
+                    }
+                    else if (path.MakesBasicTrail || (snap.ElijahChariot.Evolved && !path.SuppressedTrail))
                     {
                         // Core expires each point individually as the dash lays the flame strip.
                         var expired = Mathf.Clamp((float)((snap.Time - path.MoveAt - path.TrailDuration) * path.Speed), 0, (float)path.Distance);
-                        Band(projection, start + direction * expired, V(path.Position), (float)path.TrailWidth, Chariot, Stroke.Dot);
+                        var trailStart = V(path.PositionAtDistance(expired));
+                        var trailEnd = V(path.Position);
+                        if (path.TurnDirection.HasValue && expired < path.PivotDistance && path.Distance > path.PivotDistance)
+                        {
+                            var pivot = V(path.Pivot);
+                            Band(projection, trailStart, pivot, (float)path.TrailWidth, Chariot, Stroke.Dot);
+                            trailStart = pivot;
+                        }
+                        Band(projection, trailStart, trailEnd, (float)path.TrailWidth, Chariot, Stroke.Dot);
+                        Paint(projection, "fx_ascending-chariot_flame_32", V(path.Position), snap.Time);
                     }
+                    if (path.MakesOriginFire && snap.Time >= path.MoveAt && snap.Time < path.MoveAt + path.OriginFireDuration)
+                        Ring(projection, start, (float)path.OriginFireRadius, Chariot, Stroke.Dot);
                 }
         }
 
@@ -166,19 +288,39 @@ namespace BibleSurvivor.Unity
             if (Event.current.type != EventType.Repaint) return;
             foreach (var area in actualAreas)
             {
-                if (area.Kind != BattleAreaEffectKind.LightningStrike || snap.Time >= area.At + MarkerLifetime) continue;
+                var age = snap.Time - area.At;
                 var center = V(area.Center);
-                var elbow = center + new Vector2(-.12f, .34f);
-                Line(projection, center, elbow, Lightning);
-                Line(projection, elbow, center + new Vector2(.13f, .68f), Lightning);
+                if (area.Kind == BattleAreaEffectKind.LightningStrike)
+                {
+                    PaintAttack(projection, "fx_lightning-bolt_64", center, age);
+                    if (feedback && age < .05) Paint(projection, "fx_lightning-flash_64", center, 0);
+                }
+                else if (area.Kind is BattleAreaEffectKind.LightningAftershock or BattleAreaEffectKind.LightningEliteThunder)
+                    PaintAttack(projection, "fx_thunder-judgment_wave-spark_32", center + Vector2.right * (float)area.Radius, age);
+                else if (area.Kind is BattleAreaEffectKind.CrossRecovery or BattleAreaEffectKind.CrossReturnSpin)
+                {
+                    if (age < 2d / 15) Paint(projection, "fx_cross_recover_32", center, age, frame: age < 1d / 15 ? 0 : 1);
+                }
+                else if (area.Kind == BattleAreaEffectKind.LightningChain)
+                    PaintAttack(projection, "fx_thunder-judgment_chain-node_32", center, age);
+                else if (area.Kind == BattleAreaEffectKind.LionClaw)
+                    PaintAttack(projection, "fx_daniel-lion_claw_32", center, age);
+                else if (age >= 0 && age < .15)
+                {
+                    if (area.Kind == BattleAreaEffectKind.StaffHit) Paint(projection, "fx_moses-staff_hit_32", center, age);
+                    if (area.Kind == BattleAreaEffectKind.CrossHit) Paint(projection, "fx_cross_hit_32", center, age);
+                }
             }
+            foreach (var item in ended)
+                Paint(projection, item.Clip, item.Center, snap.Time - item.At, frame: snap.Time - item.At < 1d / 15 ? 0 : 1);
 
             if (snap.MosesStaff != null)
                 foreach (var wave in snap.MosesStaff.Waves)
                 {
                     if (!wave.IsMoving) continue;
                     var center = V(wave.Position);
-                    var direction = V(wave.Direction);
+                    var direction = V(wave.TravelDirection);
+                    Paint(projection, "wpn_moses-staff_wave_32", center, snap.Time - wave.EmittedAt, left: direction.x < 0);
                     var side = Perpendicular(direction) * (float)(wave.Width * .5);
                     Line(projection, center - side, center + side, Staff);
                     Line(projection, center - side, center - side - direction * .18f, Staff);
@@ -190,6 +332,9 @@ namespace BibleSurvivor.Unity
                 {
                     if (region.Ember || snap.Time < region.IgnitionAt) continue;
                     var center = new Vector2(region.X, region.Y);
+                    var move = movingFire.TryGetValue(region.Id, out var displacement);
+                    Paint(projection, move ? "fx_wilderness-guidance_column-move_64" : "fx_fire-pillar_column_64",
+                        center, snap.Time - region.IgnitionAt, left: move && displacement.x < 0);
                     Line(projection, center, center + Vector2.up * .68f, Pillar);
                     if (feedback && EnemyPosition(snap, region.TargetId, out var target))
                     {
@@ -205,18 +350,46 @@ namespace BibleSurvivor.Unity
 
             if (snap.DanielLion != null)
             {
-                foreach (var lion in snap.DanielLion.Lions)
+                var frontGuardian = snap.DanielLion.Evolved ? snap.DanielLion.Lions.FirstOrDefault(actor => actor.Index == 0) : null;
+                var player = new Vector2(snap.PlayerX, snap.PlayerY);
+                foreach (var lion in snap.DanielLion.Lions.OrderByDescending(actor => actor.Y).ThenByDescending(actor => actor.Index))
                 {
                     var guardian = snap.DanielLion.Evolved && lion.Index == 0;
                     var center = new Vector2(lion.X, lion.Y);
                     var radius = guardian ? .28f : .20f;
-                    Ring(projection, center, radius, Lion, lion.Returning ? Stroke.Dash : Stroke.Solid);
+                    var target = player;
+                    if (!lion.Returning && EnemyPosition(snap, lion.TargetId, out var chosen)) target = chosen;
+                    var pose = guardian ? (lion.Returning ? "wpn_den-guardian_return_48" : "wpn_den-guardian_walk_48")
+                        : (lion.Returning ? "wpn_daniel-lion_return_32" : "wpn_daniel-lion_walk_32");
+                    var age = snap.Time;
+                    foreach (var roar in roars)
+                    {
+                        if (roar.Guardian != guardian || (roar.Center - center).sqrMagnitude > .05f) continue;
+                        pose = guardian ? "wpn_den-guardian_roar_48" : "wpn_daniel-lion_roar_32";
+                        age = snap.Time - roar.At;
+                        break;
+                    }
+                    if (guardian && snap.DanielLion.Leap is { } leap && leap.At - snap.Time < .15)
+                    {
+                        pose = "wpn_den-guardian_leap_48";
+                        age = Math.Max(0, snap.Time - (leap.At - .15));
+                    }
+                    var display = !guardian && frontGuardian != null
+                        ? LionDisplayFoot(center, new Vector2(frontGuardian.X, frontGuardian.Y), player) : center;
+                    if (display != center)
+                        Line(projection, center, display, Tint(Lion, .65f), Stroke.Dot);
+                    if (!Paint(projection, pose, display, age, left: target.x < center.x))
+                        Ring(projection, center, radius, Lion, lion.Returning ? Stroke.Dash : Stroke.Solid);
                     Line(projection, center - Vector2.right * radius * .55f, center + Vector2.right * radius * .55f, Lion);
                 }
                 if (snap.DanielLion.Leap != null)
                     Ring(projection, new Vector2(snap.DanielLion.Leap.OriginX, snap.DanielLion.Leap.OriginY), 2.5f, Lion, Stroke.Dot);
                 foreach (var roar in roars)
+                {
                     Ring(projection, roar.Center, roar.Radius, Lion, roar.Guardian ? Stroke.Solid : Stroke.Dash);
+                    Paint(projection, "fx_daniel-lion_roar-piece_32", roar.Center + Vector2.right * roar.Radius,
+                        snap.Time - roar.At);
+                }
             }
 
             if (snap.Cross != null)
@@ -228,6 +401,8 @@ namespace BibleSurvivor.Unity
                     var direction = returning && !shot.CurvedReturn
                         ? (new Vector2(snap.PlayerX, snap.PlayerY) - center).normalized
                         : new Vector2(shot.DirectionX, shot.DirectionY);
+                    Paint(projection, returning ? "wpn_cross_fly-back_32" : "wpn_cross_fly-out_32", center,
+                        snap.Time - (shot.ReturnStartedAt ?? shot.EmittedAt), left: direction.x < 0);
                     var outer = Mathf.Max(.10f, (float)shot.Radius);
                     var horizontal = Vector2.right * outer;
                     var vertical = Vector2.up * outer;
@@ -248,13 +423,77 @@ namespace BibleSurvivor.Unity
                 {
                     if (snap.Time < path.MoveAt || path.BodyEnded) continue;
                     var center = V(path.Position);
-                    var direction = V(path.Direction);
+                    var direction = V(path.CurrentDirection);
+                    Paint(projection, "wpn_elijah-chariot_body_64", center, snap.Time - path.MoveAt, left: direction.x < 0);
                     var side = Perpendicular(direction) * (float)(path.Width * .5);
                     Line(projection, center - side, center + side, Chariot);
                     Line(projection, center - side - direction * .32f, center - side, Chariot);
                     Line(projection, center + side - direction * .32f, center + side, Chariot);
-                    if (snap.ElijahChariot.Evolved) Ring(projection, center, (float)path.WhirlwindRadius, Chariot, Stroke.Solid);
+                    if (snap.ElijahChariot.Evolved)
+                    {
+                        Ring(projection, center, (float)path.WhirlwindRadius, Chariot, Stroke.Solid);
+                        Paint(projection, "fx_ascending-chariot_whirl-piece_32",
+                            center + Vector2.right * (float)path.WhirlwindRadius, snap.Time - path.MoveAt);
+                    }
                 }
+        }
+
+        static Vector2 StaffPosition(ExpandedMosesStaffWaveState wave, double distance)
+        {
+            if (wave.TurnAtDistance is double turn && distance > turn)
+                return V(wave.TurnPosition) + V(wave.TravelDirection) * (float)(distance - turn);
+            return V(wave.Origin) + V(wave.Direction) * (float)distance;
+        }
+
+        static Vector2 LionDisplayFoot(Vector2 lion, Vector2 guardian, Vector2 player)
+        {
+            var delta = lion - guardian;
+            const float width = .88f;
+            const float height = .70f;
+            var x = Mathf.Abs(delta.x);
+            var y = Mathf.Abs(delta.y);
+            if (x >= width || y >= height) return lion;
+            var side = x > .12f ? Mathf.Sign(delta.x) : guardian.x >= player.x ? 1f : -1f;
+            var offset = (width - x) * (1 - y / height);
+            return lion + Vector2.right * (side * offset);
+        }
+
+        static Color Tint(Color color, float alpha)
+        {
+            color.a *= alpha;
+            return color;
+        }
+
+        void DrawStaffLane(AdamWorldProjection projection, ExpandedMosesStaffWaveState wave, double length,
+            double width, Stroke stroke)
+        {
+            var origin = V(wave.Origin);
+            var end = StaffPosition(wave, length);
+            var color = Tint(Staff, stroke == Stroke.Dot ? .60f : .76f);
+            if (wave.TurnAtDistance is double turn && turn < length)
+            {
+                var pivot = V(wave.TurnPosition);
+                Band(projection, origin, pivot, (float)width, color, stroke);
+                Band(projection, pivot, end, (float)width, color, stroke);
+            }
+            else Band(projection, origin, end, (float)width, color, stroke);
+        }
+
+        static void PaintAttack(AdamWorldProjection projection, string id, Vector2 anchor, double age, bool left = false)
+        {
+            if (age < 0 || age >= AttackArtLifetime) return;
+            var frame = age < .15 ? Math.Min(2, (int)(age * 20)) : FirstFadeFrame + Math.Min(1, (int)((age - .15) * 15));
+            Paint(projection, id, anchor, age, left, frame);
+        }
+
+        static bool Paint(AdamWorldProjection projection, string id, Vector2 anchor, double age, bool left = false, int frame = -1)
+        {
+            if (!AdamVisualQualityArt.TryGetClip(id, out var clip)) return false;
+            if (age < 0) return true;
+            var sprite = AdamVisualQualityArt.Sprite(id, frame < 0 ? clip.Frame(age) : frame);
+            var target = AdamArt.PlacedRect(clip, projection.Point(anchor.x, anchor.y), projection.Scale);
+            AdamArt.Blit(sprite, target, left);
+            return true;
         }
 
         static bool EnemyPosition(BattleSnapshot snap, int id, out Vector2 point)
@@ -363,7 +602,7 @@ namespace BibleSurvivor.Unity
 
             void Segment(Vector2 from, Vector2 to)
             {
-                AdamVisualQualityWorld.Line(projection.Arena, from, to, 3 * scale, Rim);
+                AdamVisualQualityWorld.Line(projection.Arena, from, to, 3 * scale, Tint(Rim, color.a));
                 AdamVisualQualityWorld.Line(projection.Arena, from, to, scale, color);
             }
         }

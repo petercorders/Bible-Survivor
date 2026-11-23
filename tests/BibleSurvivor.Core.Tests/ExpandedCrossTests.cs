@@ -11,6 +11,112 @@ internal static class ExpandedCrossTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Common duration Cross persists its longer return timeout but still catches at actual fixed travel", () =>
+        {
+            var rules = PermanentDurationRules.FromRanks(new Dictionary<string, int> { ["common.duration.09"] = 1 });
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            void Tick(double now, Vector2 player, PermanentDurationRules selected = default) =>
+                ExpandedCross.Step(state, now, player, Vector2.UnitX, 8, false, 30, 1.5, 1, .28, 5, 6,
+                    () => targets, targets, _ => true, reserveOriginal: () => state.Cycle == 1, durationRules: selected);
+
+            Tick(0, Vector2.Zero, rules);
+            var distant = new Vector2(100, 0);
+            Tick(.85, distant);
+            state = RoundTrip(state);
+            Check.True(state.Shots.Single().LongerReturnLifetime);
+            Check.Near(3.24, state.Shots.Single().ReturnLifetime);
+            Tick(3.84, distant);
+            state.Validate(3.84, false);
+            Check.Equal(1, state.Shots.Count);
+            var expiry = 5 / 6d + 3.24;
+            Tick(expiry - .0001, distant);
+            Check.Equal(1, state.Shots.Count);
+            Tick(expiry, distant);
+            Check.Equal(0, state.Shots.Count);
+
+            state = new ExpandedCrossState();
+            Tick(0, Vector2.Zero, rules);
+            Tick(1.62, Vector2.Zero);
+            Check.Equal(0, state.Shots.Count);
+        });
+
+        test("Common projectile Cross restores separate launch speed, radius, return speed and evolution budget", () =>
+        {
+            var rules = SharedShots("05", "06", "09", "10");
+            var state = new ExpandedCrossState { Evolved = true };
+            var targets = new Dictionary<int, Vector2>();
+            ExpandedCross.Step(state, 0, Vector2.Zero, Vector2.UnitX, 8, true, 30, 1.5, 2, .35, 5, 7.5,
+                () => targets, targets, _ => true,
+                rankOptions: ExpandedCrossRankOptions.FromRanks(new Dictionary<string,int> { ["weapon.cross.b.01"] = 1 }),
+                shotRules: rules);
+            state = RoundTrip(state);
+            state.Validate(0, true);
+            Check.Near(8.1, state.Shots[0].OutboundSpeed);
+            Check.Near(7.5, state.Shots[1].OutboundSpeed);
+            Check.Near(.35, state.Shots[0].Radius);
+            Check.Near(.3668, state.Shots[1].Radius);
+            Check.Near(9.75, state.Shots[0].ReturnSpeed);
+            Check.Near(9.15, state.Shots[1].ReturnSpeed);
+            Check.True(state.Shots.All(shot => shot.IncreasedEvolvedLegBudget && shot.HitBudget(true) == 7 && shot.ReturnBudget(true) == 7));
+
+            state = new ExpandedCrossState { Evolved = true };
+            var otherRanks = ExpandedCrossRankOptions.FromRanks(new Dictionary<string, int>
+                { ["weapon.cross.c.01"] = 1, ["common.shot.03"] = 1 });
+            ExpandedCross.Step(state, 0, Vector2.Zero, Vector2.UnitX, 8, true, 30, 1.5, 1, .35, 5, 7.5,
+                () => targets, targets, _ => true, rankOptions: otherRanks, shotRules: rules);
+            Check.True(!state.Shots.Single().IncreasedEvolvedLegBudget);
+            Check.Equal(8, state.Shots.Single().HitBudget(true));
+            RoundTrip(state).Validate(0, true);
+        });
+
+        test("Common projectile Cross bonuses use the accepted last hit and actual contact before end of step", () =>
+        {
+            var rules = SharedShots("07", "08");
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1, 0), [2] = new Vector2(2, 0), [3] = new Vector2(3, 0),
+                [4] = new Vector2(4.25f, 0), [5] = new Vector2(4.6f, 0),
+            };
+            var attempts = new List<ExpandedCrossHit>();
+            void Tick(double now, PermanentShotRules selected = default) =>
+                ExpandedCross.Step(state, now, Vector2.Zero, Vector2.UnitX, 8, false, 30, 1.5, 1, .28, 5, 6,
+                    () => targets, targets, hit => { attempts.Add(hit); return hit.TargetId != 4; }, shotRules: selected);
+            Tick(0, rules);
+            state = RoundTrip(state);
+            Tick(.8);
+            Check.True(attempts.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
+            Check.True(attempts.Take(3).All(hit => hit.Damage == 30));
+            Check.Near(32.1, attempts[3].Damage);
+            Check.Near(33.9, attempts[4].Damage);
+            Check.Equal(4, state.Shots.Single().OutboundHits);
+            state.Validate(.8, false);
+        });
+
+        test("Common projectile Cross return measures cumulative distance through restored turn and actual contact", () =>
+        {
+            var rules = SharedShots("08", "10");
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            void Tick(double now, PermanentShotRules selected = default) =>
+                ExpandedCross.Step(state, now, Vector2.Zero, Vector2.UnitX, 8, false, 30, 1.5, 1, .28, 3.5, 6,
+                    () => targets, targets, hit => { hits.Add(hit); return true; }, shotRules: selected);
+            Tick(0, rules);
+            Tick(.59);
+            Check.True(state.Shots.Single().Returning);
+            Check.Near(6.75, state.Shots.Single().ReturnSpeed);
+            state = RoundTrip(state);
+            state.Validate(.59, false);
+            targets[1] = new Vector2(3.4f, 0);
+            targets[2] = new Vector2(2.6f, 0);
+            Tick(.75);
+            Check.True(hits.All(hit => hit.Kind == ExpandedCrossHitKind.Return));
+            Check.Near(30, hits.Single(hit => hit.TargetId == 1).Damage);
+            Check.Near(31.8, hits.Single(hit => hit.TargetId == 2).Damage);
+        });
+
         test("Cross a.05 returns with a saved two-second rotation cooldown at the exact reversal", () =>
         {
             var ranks = Rank("a.05");
@@ -1075,6 +1181,9 @@ internal static class ExpandedCrossTests
 
     private static (ExpandedCrossHitKind, int, Vector2, long, double) HitSignature(ExpandedCrossHit hit) =>
         (hit.Kind, hit.TargetId, hit.Origin, hit.ShotId, hit.Damage);
+
+    private static PermanentShotRules SharedShots(params string[] ids) =>
+        PermanentShotRules.FromRanks(ids.ToDictionary(id => "common.shot." + id, _ => 1));
 
     private static int Step(ExpandedCrossState state, double now, IReadOnlyDictionary<int, Vector2> targets,
         List<ExpandedCrossHit> hits, bool evolved = false, double cycle = 2, int count = 1,

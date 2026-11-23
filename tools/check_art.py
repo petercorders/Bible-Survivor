@@ -25,6 +25,9 @@ def main():
         package = art / 'art-concept-03'
         catalog = ROOT / 'content/genesis/catalog.json'
         commands = [('catalog + art contract', ['scripts/check_art03.py', '--catalog', str(catalog), '--quiet'])]
+        issue47_verifier = ROOT / 'art/art-issue47/verify.py'
+        if issue47_verifier.is_file():
+            commands.append(('issue 47 reviewed art', [str(issue47_verifier)]))
         if args.full:
             # Compare the committed export before verify_all's build can overwrite it.
             commands += [('committed export regeneration', ['scripts/regen_check.py']),

@@ -192,11 +192,21 @@ namespace BibleSurvivor.Core
             ? PermanentAreaRules.Evaluate(run.PermanentSnapshot, HealthRatio <= .30, surrounded, evolved) : default;
         internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
         internal long BossEntryJawboneCycle => run.Stage == "boss" ? run.BossEntryJawboneCycle : 0;
+        internal (long Cycle, double? NextLeap) BossEntryLionCadence =>
+            run.Stage == "boss" ? (run.BossEntryLionPackCycle, run.BossEntryLionNextPackLeapAt) : default;
+        internal void RecordLionCadenceAtBossEntry(ExpandedDanielLionState state)
+        {
+            if (CombatRulesVersion != 2) return;
+            run.BossEntryLionPackCycle = state.PackCycle;
+            run.BossEntryLionNextPackLeapAt = state.NextPackLeapAt;
+        }
         internal void RecordJawboneCyclesAtBossEntry(long cycle)
         {
             if (CombatRulesVersion == 2) run.BossEntryJawboneCycle = cycle;
         }
         internal ExpandedJawboneRanks JawboneRanks() => ExpandedJawboneRanks.FromRanks(run.PermanentSnapshot);
+        internal PermanentShotRules ShotRules() => PermanentShotRules.FromRanks(run.PermanentSnapshot);
+        internal PermanentDurationRules DurationRules() => PermanentDurationRules.FromRanks(run.PermanentSnapshot);
         internal void RecordVoiceCyclesAtBossEntry(long cycle)
         {
             if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
@@ -520,6 +530,8 @@ namespace BibleSurvivor.Core
             target.TempoOpeningUsed = false;
             target.BossEntryVoiceCycle = 0;
             target.BossEntryJawboneCycle = 0;
+            target.BossEntryLionPackCycle = 0;
+            target.BossEntryLionNextPackLeapAt = null;
             target.BossEntryLightningCycle = 0;
             target.BossEntryLightningStrikes = 0;
             target.BossEntryFireCycle = 0;
@@ -673,25 +685,25 @@ namespace BibleSurvivor.Core
         internal int EffectiveContactDamage(int incoming) =>
             EffectiveIncomingDamage(incoming, IncomingDamageKind.Contact, false, false);
 
-        private int EffectiveIncomingDamage(int incoming, IncomingDamageKind kind, bool eliteOrBoss, bool surrounded)
+        private int EffectiveIncomingDamage(int incoming, IncomingDamageKind kind, bool eliteOrBoss, bool surrounded, int defenseBonus = 0)
         {
             var armor = CombatRulesVersion == 2
                 ? PermanentCombatRules.Armor(run.PermanentSnapshot, Passive("seal"), kind, run.Health / run.MaxHealth,
                     CombatTime - Math.Max(0, run.LastHitTime), eliteOrBoss, surrounded, run.Stage == "boss")
                 : PermanentRules.Rank(run.PermanentSnapshot, "armor") + Passive("seal");
-            return Math.Max(1, incoming - armor);
+            return Math.Max(1, incoming - armor - defenseBonus);
         }
 
         public void Damage(int incoming) => Damage(incoming, IncomingDamageKind.Contact, false, false);
 
-        internal void Damage(int incoming, IncomingDamageKind kind, bool eliteOrBoss, bool surrounded)
+        internal void Damage(int incoming, IncomingDamageKind kind, bool eliteOrBoss, bool surrounded, int defenseBonus = 0)
         {
             LastRetaliationDamage=0;
             LastDamageReceived=0;
             if (incoming < 0) throw new ArgumentOutOfRangeException(nameof(incoming));
             if (incoming == 0 || !CanAttack || CombatTime - run.LastHitTime < (run.Boss==null?0.5:0.5-1e-9)) return;
             var healthBefore = run.Health;
-            run.Health -= EffectiveIncomingDamage(incoming, kind, eliteOrBoss, surrounded); run.LastHitTime = CombatTime;
+            run.Health -= EffectiveIncomingDamage(incoming, kind, eliteOrBoss, surrounded, defenseBonus); run.LastHitTime = CombatTime;
             LastDamageReceived = Math.Min(healthBefore, healthBefore - run.Health);
             if (CombatRulesVersion == 2 && kind == IncomingDamageKind.Contact) Actions.LastContactAt = CombatTime;
             LastRetaliationDamage=5*Passive("crown")*DamageMultiplier;

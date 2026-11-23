@@ -60,6 +60,8 @@ internal static class Program
         PermanentOriginalHitRulesTests.Register(Test);
         PermanentRecoveryRulesTests.Register(Test);
         PermanentTempoRulesTests.Register(Test);
+        PermanentShotRulesTests.Register(Test);
+        PermanentDurationRulesTests.Register(Test);
         CombatTests.Register(Test);
         SaveTests.Register(Test);
         SaveSchemaTests.Register(Test);

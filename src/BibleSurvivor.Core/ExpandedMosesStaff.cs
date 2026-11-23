@@ -220,6 +220,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public List<long>? HostileEraseAttemptIds { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ReturnsEvolvedLane { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool LeavesEliteKillLane { get; set; }
+        [DataMember(EmitDefaultValue = false)] public PermanentShotHitBonuses SharedShotHitBonuses { get; set; }
 
         public Vector2 Origin => new Vector2(OriginX, OriginY);
         public Vector2 Direction => new Vector2(DirectionX, DirectionY);
@@ -438,6 +439,8 @@ namespace BibleSurvivor.Core
                     !ExpandedMosesStaff.Finite(wave.Damage) || wave.Damage < 1 || wave.Damage > ExpandedMosesStaff.MaximumDamage ||
                     !ExpandedMosesStaff.ValidOriginalBaseDamage(wave.OriginalBaseDamage, evolved) ||
                     !ExpandedMosesStaff.ValidTechniques(wave) ||
+                    (wave.SharedShotHitBonuses & ~PermanentShotHitBonuses.LongFlight) != 0 ||
+                    wave.SharedShotHitBonuses != PermanentShotHitBonuses.None && wave.OriginalBaseDamage <= 0 ||
                     (wave.TechniqueRanks & ExpandedMosesStaff.FourthCycleFirstWave) != 0 && !fourthWaves.Add(wave.Cycle) ||
                     wave.OriginalHitCount < 0 || wave.OriginalHitCount > ExpandedMosesStaff.MaximumOriginalHits ||
                     !ExpandedMosesStaff.Finite(wave.Width) || wave.Width <= 0 || wave.Width > ExpandedMosesStaff.MaximumWidth ||
@@ -620,7 +623,7 @@ namespace BibleSurvivor.Core
             double placedCircleBonus = 0, double? lastPlayerHurtAt = null,
             Func<IReadOnlyList<ExpandedMosesStaffHostileSweep>>? hostileSweeps = null,
             Func<bool>? canEraseHostile = null, Func<long, bool>? eraseHostile = null,
-            Func<uint?, uint>? nextHostileEraseRandom = null)
+            Func<uint?, uint>? nextHostileEraseRandom = null, PermanentShotRules shotRules = default)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -679,7 +682,8 @@ namespace BibleSurvivor.Core
             state.Cycle = checked(state.Cycle + 1);
             if (rankOptions.AdvanceOnHurt) state.LastCycleStartedAt = state.NextCycle;
             state.NextCycle += nextCycleDuration?.Invoke() ?? cycle;
-            var widthBonus = rankOptions.WidenWave ? Profile.AtLevel(1).Width * .10 : 0;
+            var baseWidth = Profile.AtLevel(1).Width;
+            var widthBonus = baseWidth * ((rankOptions.WidenWave ? .10 : 0) + shotRules.CollisionBonus);
             var formationWidth = widthBeforeForm + widthBonus;
             var originalBaseDamage = Profile.AtLevel(level).Damage;
             var forward = facing.LengthSquared() > 0 ? Vector2.Normalize(facing) : Vector2.UnitX;
@@ -704,8 +708,9 @@ namespace BibleSurvivor.Core
                 var techniques = rankOptions.TechniqueRanks;
                 var fourthFirst = (techniques & FourthCycleFirstWave) != 0 && index == 0 && state.Cycle % 4 == 0;
                 if (!fourthFirst) techniques = (byte)(techniques & ~FourthCycleFirstWave);
-                var width = Math.Min(MaximumWidth, (formationWidth +
-                    (fourthFirst ? Profile.AtLevel(1).Width * .15 : 0)) * (evolved ? 1.2 : 1));
+                var swingWidth = formationWidth + (fourthFirst ? baseWidth * .15 : 0);
+                var width = Math.Min(MaximumWidth, shotRules.LaunchCollisionDimension(baseWidth, swingWidth, emitted == 0) *
+                    (evolved ? 1.2 : 1));
                 var waveDamage = fourthFirst ? Math.Min(originalBaseDamage * 2.25, damage + originalBaseDamage * .10) : damage;
                 var makesLane = evolved && lanes < MaximumLanes && (reserveLane?.Invoke() ?? true);
                 if (makesLane) lanes++;
@@ -726,7 +731,8 @@ namespace BibleSurvivor.Core
                     ErasesHostileProjectiles = rankOptions.EraseHostileProjectiles,
                     Width = width,
                     Range = range,
-                    Speed = speed,
+                    Speed = shotRules.LaunchSpeed(Profile.AtLevel(level).Speed, speed, emitted == 0),
+                    SharedShotHitBonuses = shotRules.HitBonuses & PermanentShotHitBonuses.LongFlight,
                     MakesLane = makesLane,
                     ReturnsEvolvedLane = makesLane && rankOptions.EvolvedLaneReturn,
                     LeavesEliteKillLane = evolved && rankOptions.EliteKillLane,
@@ -815,6 +821,9 @@ namespace BibleSurvivor.Core
                 var close = (wave.TechniqueRanks & CloseDamage) != 0 &&
                     Vector2.DistanceSquared(current, wave.Origin) <= 4;
                 var damage = close ? Math.Min(wave.OriginalBaseDamage * 2.25, wave.Damage + wave.OriginalBaseDamage * .08) : wave.Damage;
+                var travelledAtContact = previousDistance + (wave.Distance - previousDistance) * contact;
+                damage = PermanentShotRules.HitDamage(wave.SharedShotHitBonuses, wave.OriginalBaseDamage,
+                    damage, null, travelledAtContact);
                 var canSplash = (wave.TechniqueRanks & EliteSplash) != 0 && IsReady(state.NextEliteSplashAt, now);
                 var canLeaveLane = wave.LeavesEliteKillLane && IsReady(state.NextEliteKillLaneAt, now);
                 var elite = (canSplash || canLeaveLane) && isElite?.Invoke(id) == true;

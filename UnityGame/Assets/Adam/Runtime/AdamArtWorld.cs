@@ -375,7 +375,7 @@ namespace BibleSurvivor.Unity
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
             if(host.Session.IsActive)
             {
-                if(host.Session.CombatRulesVersion==2)expandedWeapons.DrawGround(projection,snap);
+                if(host.Session.CombatRulesVersion==2)expandedWeapons.DrawGround(projection,snap,FeedbackEnabled);
                 var monsters=host.Session.Targets;var experience=host.Session.DroppedExperience;
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
