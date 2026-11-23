@@ -58,6 +58,9 @@ internal static class Program
         ExpandedDanielLionTests.Register(Test);
         ExpandedJawboneRanksTests.Register(Test);
         ExpandedBibleRanksTests.Register(Test);
+        ExpandedBibleLifecycleTests.Register(Test);
+        ExpandedBibleSupportsTests.Register(Test);
+        ExpandedBibleEvolutionTests.Register(Test);
         PermanentOriginalHitRulesTests.Register(Test);
         PermanentRecoveryRulesTests.Register(Test);
         PermanentTempoRulesTests.Register(Test);

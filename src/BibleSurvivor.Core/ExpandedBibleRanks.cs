@@ -65,12 +65,14 @@ namespace BibleSurvivor.Core
         }
 
         public ExpandedBibleBookPose Book(Vector2 player, int index, int count, double simulationTime, double rotationMultiplier,
-            double cycleStart, double motionCycle, double orbitRadius, double nativeOrbitRadius, Vector2 crowdedDirection = default)
+            double cycleStart, double motionCycle, double orbitRadius, double nativeOrbitRadius, Vector2 crowdedDirection = default,
+            double innerAngleOffset = 0)
         {
             // The added specialization book is the last phase slot.
             var inner = innerBook && index == count - 1;
             var rotationSign = inner && reverseInnerBook ? -1 : 1;
             var angle = rotationSign * simulationTime * 2.5 * rotationMultiplier + index * 2 * Math.PI / count;
+            if (inner) angle += innerAngleOffset;
             var direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
             if (ExpandsCrowdedSide && Vector2.Dot(direction, crowdedDirection) > 1e-6f)
                 orbitRadius += nativeOrbitRadius * .15;

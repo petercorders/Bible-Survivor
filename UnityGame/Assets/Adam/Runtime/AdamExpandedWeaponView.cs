@@ -189,6 +189,21 @@ namespace BibleSurvivor.Unity
                     foreach (var ground in snap.Lightning.GroundCurrents)
                         Ring(projection, V(ground.Center), (float)ground.Radius, Lightning, Stroke.Dot);
             }
+            var bible = snap.Weapons.Find(weapon => weapon.WeaponId == "bible");
+            if (bible != null && snap.Time < bible.PulseUntil && bible.FrozenPulseRadius > 0)
+                Ring(projection, new Vector2(snap.PlayerX, snap.PlayerY), (float)bible.FrozenPulseRadius, Voice, Stroke.Solid);
+            if (bible?.BibleEvolution?.Sanctuary is { } sanctuary)
+                Ring(projection, V(sanctuary.Position), (float)ExpandedBibleSanctuary.Radius, Voice, Stroke.Dot);
+            if (bible?.BibleSupports is { } books)
+            {
+                foreach (var shot in books.Projectiles)
+                {
+                    Paint(projection, "wpn_bible-book_spin_16", V(shot.Position), snap.Time);
+                    Ring(projection, V(shot.Position), (float)shot.Radius, Voice, Stroke.Solid);
+                }
+                foreach (var ink in books.Inks)
+                    Band(projection, V(ink.Start), V(ink.End), (float)ExpandedBibleInk.Width, Voice, Stroke.Dot);
+            }
             foreach (var area in actualAreas)
             {
                 if (snap.Time >= area.At + MarkerLifetime || area.Radius <= 0) continue;
@@ -198,6 +213,7 @@ namespace BibleSurvivor.Unity
                         BattleAreaEffectKind.LightningEliteThunder => Lightning,
                     BattleAreaEffectKind.ChariotEndExplosion or BattleAreaEffectKind.ChariotCrossingWhirlwind or
                         BattleAreaEffectKind.ChariotEndFlame => Chariot,
+                    BattleAreaEffectKind.BibleBarrier or BattleAreaEffectKind.JawboneBreakthrough => Voice,
                     _ => Cross,
                 };
                 Ring(projection, V(area.Center), (float)area.Radius, color, Stroke.Solid);

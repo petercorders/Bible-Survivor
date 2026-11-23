@@ -20,7 +20,8 @@ routes = {
     "common.power": "BattleWorld.Hit → AdamSession.ResolveOriginalDamage → PermanentOriginalHitRules.ApplyPower",
     "common.tempo": "AdamSession.AttackProfile → CombatStats cycle",
     "common.area": "AdamSession.AttackProfile → BattleWorld collision, attack geometry and schedules",
-    "common.shot": "AdamSession.AttackProfile → BattleWorld projectile launch and ExpandedCross",
+    "common.shot": "BattleWorld.Attack / RunExpandedAttack → PermanentShotRules → launch or late contact",
+    "common.duration": "BattleWorld.Attack / RunExpandedAttack → PermanentDurationRules → cohort clock or Cross return",
 }
 actors = {
     "cross": "ExpandedCross",
@@ -35,10 +36,19 @@ actors = {
 def implementation_route(key, tree):
     if tree in actors:
         return "AdamSession.AttackProfile → BattleWorld.RunExpandedAttack → " + actors[tree]
-    if key in {"weapon.bible.base.04", "weapon.bible.base.05"}:
-        return "AdamSession.AttackProfile → BattleWorld.Attack / Pulse → BattleWeaponState"
-    if key == "weapon.jawbone.base.05":
-        return "BattleWorld.Attack → AdamSession.JawboneDamage → BattleWorld.Hit"
+    if tree == "bible":
+        branch = key.split(".")[2]
+        if branch == "c" or key in {"weapon.bible.d.03", "weapon.bible.d.04"}:
+            return "BattleWorld.Attack → BattleWorldBible → ExpandedBibleSupportsState"
+        if branch == "e":
+            return "BattleWorld.Pulse / RecordBibleEliteSanctuary → ExpandedBibleEvolutionState"
+        if branch == "d" or key in {"weapon.bible.b.03", "weapon.bible.b.04", "weapon.bible.b.05"}:
+            return "BattleWorld.Attack / ApplyPlayerDamage → ExpandedBibleLifecycleState"
+        return "AdamSession.AttackProfile → BattleWorld.Attack / Pulse → ExpandedBibleRanks"
+    if tree == "jawbone":
+        return "BattleWorld.Attack / ApplyPlayerDamage → ResolveExpandedJawbone → ExpandedJawboneRanks / Lifecycle"
+    if tree == "sling":
+        return "BattleWorld.Attack / MoveProjectiles → BattleWorldSling → ExpandedSlingRanks / CombatState"
     return routes.get(tree, "AdamSession.AttackProfile → BattleWorld.Attack")
 
 allowlist = ui.read_text().split("PlayablePermanentSkills =", 1)[1].split("};", 1)[0]

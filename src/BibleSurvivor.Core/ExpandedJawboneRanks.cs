@@ -20,10 +20,13 @@ namespace BibleSurvivor.Core
 
         public const double GroundShockCooldown = 2;
         public bool TracksEliteMark { get; }
+        public ExpandedJawboneLifecycleEffects Lifecycle { get; }
+
+        public bool Has(ExpandedJawboneLifecycleEffects effect) => (Lifecycle & effect) != 0;
 
         private ExpandedJawboneRanks(bool widerArc, bool reverseSecond, bool rearFourthCycle, bool smashLast,
             bool fourWaySixthCycle, bool strongWrist, bool highHealthDamage, bool eliteMark, bool groundShock,
-            bool crowdKnockback)
+            bool crowdKnockback, ExpandedJawboneLifecycleEffects lifecycle)
         {
             this.widerArc = widerArc;
             this.reverseSecond = reverseSecond;
@@ -35,18 +38,36 @@ namespace BibleSurvivor.Core
             this.groundShock = groundShock;
             this.crowdKnockback = crowdKnockback;
             TracksEliteMark = eliteMark;
+            Lifecycle = lifecycle;
         }
 
         public static ExpandedJawboneRanks FromRanks(IReadOnlyDictionary<string, int> ranks)
         {
             if (ranks == null) throw new ArgumentNullException(nameof(ranks));
             bool Has(string id) => ranks.TryGetValue("weapon.jawbone." + id, out var rank) && rank > 0;
+            ExpandedJawboneLifecycleEffects Effect(string id, ExpandedJawboneLifecycleEffects effect) =>
+                Has(id) ? effect : 0;
+            var lifecycle = Effect("c.01", ExpandedJawboneLifecycleEffects.FirstKillPower) |
+                Effect("c.02", ExpandedJawboneLifecycleEffects.RapidKillWait) |
+                Effect("c.03", ExpandedJawboneLifecycleEffects.EliteAdvance) |
+                Effect("c.04", ExpandedJawboneLifecycleEffects.CrowdReach) |
+                Effect("c.05", ExpandedJawboneLifecycleEffects.Breakthrough) |
+                Effect("d.01", ExpandedJawboneLifecycleEffects.CloseKnockback) |
+                Effect("d.02", ExpandedJawboneLifecycleEffects.HurtPower) |
+                Effect("d.03", ExpandedJawboneLifecycleEffects.EliteRecovery) |
+                Effect("d.04", ExpandedJawboneLifecycleEffects.ContactGuard) |
+                Effect("d.05", ExpandedJawboneLifecycleEffects.SurroundStrike) |
+                Effect("e.01", ExpandedJawboneLifecycleEffects.EvolvedReach) |
+                Effect("e.02", ExpandedJawboneLifecycleEffects.PushedCollision) |
+                Effect("e.03", ExpandedJawboneLifecycleEffects.EliteFinalPower) |
+                Effect("e.04", ExpandedJawboneLifecycleEffects.SmashWave) |
+                Effect("e.05", ExpandedJawboneLifecycleEffects.EvolvedExtraSwing);
             return new ExpandedJawboneRanks(Has("a.01"), Has("a.02"), Has("a.03"), Has("a.04"), Has("a.05"),
-                Has("b.01"), Has("b.02"), Has("b.03"), Has("b.04"), Has("b.05"));
+                Has("b.01"), Has("b.02"), Has("b.03"), Has("b.04"), Has("b.05"), lifecycle);
         }
 
         public ExpandedJawboneSwing ForSwing(long cycle, int slot, int amount, Vector2 facing,
-            double extraHalfAngle = 0)
+            double extraHalfAngle = 0, bool fullCircle = false)
         {
             if (cycle < 1) throw new ArgumentOutOfRangeException(nameof(cycle));
             if (amount < 1 || amount > CombatStats.ExpandedAmountLimit("jawbone"))
@@ -62,24 +83,35 @@ namespace BibleSurvivor.Core
             var groundSmash = smashLast && slot == amount;
             var halfAngle = Math.Min(90, baseHalfAngle * (groundSmash ? .60 : 1) + bonusAngle);
             var rearHalfAngle = Math.Min(90, baseHalfAngle + bonusAngle);
-            return new ExpandedJawboneSwing(direction, reverseSecond && slot == 2, halfAngle, rearHalfAngle,
+            return new ExpandedJawboneSwing(direction, reverseSecond && slot == 2, fullCircle ? 180 : halfAngle, rearHalfAngle,
                 groundSmash, rearFourthCycle && cycle % 4 == 0 && slot == 1,
                 fourWaySixthCycle && cycle % 6 == 0 && slot == 1);
         }
 
         public double ApplyOriginalDamage(ExpandedJawboneSwing swing, double damage, double originalBaseDamage,
-            double targetHealthRatio, bool marked)
+            double targetHealthRatio, bool marked, double additionalDamageBonus = 0)
         {
-            var bonus = swing.DamageBonus + (highHealthDamage && targetHealthRatio >= .75 ? .06 : 0) +
+            var bonus = swing.DamageBonus + additionalDamageBonus + (highHealthDamage && targetHealthRatio >= .75 ? .06 : 0) +
                 (TracksEliteMark && marked ? .08 : 0);
             return bonus > 0 ? Math.Min(2.25 * originalBaseDamage, damage + originalBaseDamage * bonus) : damage;
         }
 
-        public double Knockback(double baseKnockback, int originalTargetCount)
+        public double Knockback(double baseKnockback, int originalTargetCount, double targetDistance = double.PositiveInfinity)
         {
             return Math.Min(1, baseKnockback + (strongWrist ? .25 : 0) +
-                (crowdKnockback && originalTargetCount >= 4 ? .20 : 0));
+                (crowdKnockback && originalTargetCount >= 4 ? .20 : 0) +
+                (Has(ExpandedJawboneLifecycleEffects.CloseKnockback) && targetDistance <= 1 + 1e-6 ? .25 : 0));
         }
+
+        public double OriginalReach(double nativeReach, double computedReach, bool evolved, double crowdBonus = 0) =>
+            Math.Min(2.5 * nativeReach, computedReach + nativeReach *
+                (crowdBonus + (evolved && Has(ExpandedJawboneLifecycleEffects.EvolvedReach) ? .15 : 0)));
+
+        public double GroundShockLength(bool evolved) =>
+            evolved && Has(ExpandedJawboneLifecycleEffects.EvolvedReach) ? 2 * 1.15 : 2;
+
+        public double EliteFinalDamageBonus(bool evolved, bool isFinal, bool elite) =>
+            evolved && isFinal && elite && Has(ExpandedJawboneLifecycleEffects.EliteFinalPower) ? .10 : 0;
 
         public bool CanEmitGroundShock(ExpandedJawboneSwing swing, double now, double? nextAt) =>
             groundShock && swing.IsGroundSmash && (!nextAt.HasValue || nextAt.Value <= now + 1e-9);
@@ -140,12 +172,15 @@ namespace BibleSurvivor.Core
             return along >= -1e-6 && along <= length + 1e-6 && Math.Abs(side) <= width / 2 + 1e-6;
         }
 
+        public bool HitsSmashWave(Vector2 relative, double reach = 2.4) =>
+            IsGroundSmash && InArc(relative, Direction, reach, 45);
+
         private static bool InArc(Vector2 relative, Vector2 direction, double reach, double halfAngle)
         {
             // Input positions are floats. Keep repository arc limits while allowing
             // their rounding at an inclusive geometric boundary.
             return HitGeometry.InArc(relative.X, relative.Y, direction.X, direction.Y,
-                reach + 1e-6, 2 * halfAngle + 1e-5);
+                reach + 1e-6, Math.Min(360, 2 * halfAngle + 1e-5));
         }
     }
 

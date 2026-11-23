@@ -76,11 +76,18 @@ namespace BibleSurvivor.Core
         internal int SpeciesOrdinal(int id) => Arena!.SpeciesOrdinal(id);
         public IReadOnlyDictionary<int,int> DroppedExperience => new System.Collections.ObjectModel.ReadOnlyDictionary<int,int>(run.Drops);
         public double CurrentHealth => state.Run == run ? run.Health : 0;
+        internal double PlayerMaximumHealth => run.MaxHealth;
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
         public double BibleRotationMultiplier => WeaponRules.Get("bible", Inventory.Weapons["bible"]).RotationSpeedMultiplier +
             (HasExpandedSkill("weapon.bible.a.01") ? .12 : 0);
         public ExpandedBibleRanks BibleRanks() => CombatRulesVersion == 2
             ? ExpandedBibleRanks.FromRanks(run.PermanentSnapshot) : default;
+        internal ExpandedBibleLifecycleRules BibleLifecycleRules() => CombatRulesVersion == 2
+            ? ExpandedBibleLifecycleRules.FromRanks(run.PermanentSnapshot) : default;
+        internal ExpandedBibleSupportRanks BibleSupportRanks() => CombatRulesVersion == 2
+            ? ExpandedBibleSupportRanks.FromRanks(run.PermanentSnapshot) : default;
+        internal ExpandedBibleEvolutionRanks BibleEvolutionRanks() => CombatRulesVersion == 2
+            ? ExpandedBibleEvolutionRanks.FromRanks(run.PermanentSnapshot) : default;
         public double JawboneArcDegrees =>
             (HasExpandedSkill("weapon.jawbone.a.01") ? 140 : 120) + 2 * AreaProfile().HalfAngleBonus;
         public double MoveSpeedMultiplier => MoveSpeedAt(false);
@@ -195,6 +202,37 @@ namespace BibleSurvivor.Core
             ? PermanentAreaRules.Evaluate(run.PermanentSnapshot, HealthRatio <= .30, surrounded, evolved) : default;
         internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
         internal long BossEntryJawboneCycle => run.Stage == "boss" ? run.BossEntryJawboneCycle : 0;
+        internal void ResumeBibleAtBossEntry(BattleWeaponState clock)
+        {
+            if (run.Stage != "boss") return;
+            clock.StarterCycle = run.BossEntryBibleCycle;
+            clock.BibleLifecycle = run.BossEntryBibleLifecycle?.Copy();
+            clock.BibleSupports = run.BossEntryBibleSupports?.Copy();
+            if (clock.WeaponForm == EvolutionRules.Bible) clock.BibleEvolution = run.BossEntryBibleEvolution?.Copy();
+        }
+        internal void RecordBibleAtBossEntry(BattleWeaponState clock)
+        {
+            if (CombatRulesVersion != 2) return;
+            run.BossEntryBibleCycle = clock.StarterCycle;
+            run.BossEntryBibleLifecycle = clock.BibleLifecycle?.Copy();
+            run.BossEntryBibleLifecycle?.BeginBooks();
+            if (clock.BibleSupports is { } supports)
+            {
+                var entry = supports.Copy();
+                entry.Projectiles.Clear();
+                entry.Inks.Clear();
+                entry.Bookmarks = null;
+                entry.OnBooksOpening();
+                run.BossEntryBibleSupports = entry;
+            }
+            if (clock.BibleEvolution is { } evolution)
+            {
+                var entry = evolution.Copy();
+                entry.PendingEcho = null;
+                entry.Sanctuary = null;
+                run.BossEntryBibleEvolution = entry;
+            }
+        }
         internal (long Cycle, int NormalHits) BossEntrySlingCadence =>
             run.Stage == "boss" ? (run.BossEntrySlingCycle, run.BossEntrySlingNormalHits) : default;
         internal void RecordSlingCadenceAtBossEntry(BattleWeaponState state)
@@ -211,18 +249,31 @@ namespace BibleSurvivor.Core
             run.BossEntryLionPackCycle = state.PackCycle;
             run.BossEntryLionNextPackLeapAt = state.NextPackLeapAt;
         }
-        internal void RecordJawboneCyclesAtBossEntry(long cycle)
+        internal ExpandedJawboneLifecycle? BossEntryJawboneLifecycle =>
+            run.Stage == "boss" ? run.BossEntryJawboneLifecycle?.Copy() : null;
+        internal void RecordJawboneAtBossEntry(BattleWeaponState clock)
         {
-            if (CombatRulesVersion == 2) run.BossEntryJawboneCycle = cycle;
+            if (CombatRulesVersion != 2) return;
+            run.BossEntryJawboneCycle = clock.StarterCycle;
+            run.BossEntryJawboneLifecycle = clock.JawboneLifecycle?.Copy();
+            if (run.BossEntryJawboneLifecycle != null) run.BossEntryJawboneLifecycle.Pushes = null;
         }
         internal ExpandedJawboneRanks JawboneRanks() => ExpandedJawboneRanks.FromRanks(run.PermanentSnapshot);
         internal PermanentShotRules ShotRules() => PermanentShotRules.FromRanks(run.PermanentSnapshot);
         internal PermanentDurationRules DurationRules() => PermanentDurationRules.FromRanks(run.PermanentSnapshot);
         internal ExpandedSlingRanks SlingRanks() => new ExpandedSlingRanks(run.PermanentSnapshot);
-        internal void RecordVoiceCyclesAtBossEntry(long cycle)
+        internal ExpandedWildernessVoiceState? BossEntryVoiceState =>
+            run.Stage == "boss" ? run.BossEntryVoiceState?.Copy() : null;
+        internal void RecordVoiceAtBossEntry(ExpandedWildernessVoiceState voice)
         {
+            if (CombatRulesVersion != 2) return;
             if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
-                run.BossEntryVoiceCycle = cycle;
+                run.BossEntryVoiceCycle = voice.Cycle;
+            var entry = voice.Copy();
+            if (entry.PendingWait?.Applied == true) entry.NextWaitReady = true;
+            entry.ResetForForm(voice.Evolved, 0);
+            entry.EliteSeries = null;
+            run.BossEntryVoiceState = entry;
         }
         internal (long Cycle, long Strikes) BossEntryLightningCadence =>
             run.Stage == "boss" ? (run.BossEntryLightningCycle, run.BossEntryLightningStrikes) : default;
@@ -282,6 +333,7 @@ namespace BibleSurvivor.Core
                 else bonuses.CooldownReduction += weaponWaitReduction;
                 if (HasExpandedSkill("common.duration.01")) bonuses.DurationBonus += .05;
                 if (HealthRatio <= .30 && HasExpandedSkill("common.duration.03")) bonuses.DurationBonus += .06;
+                if (weaponId == "bible") bonuses.DurationBonus += BibleLifecycleRules().DurationBonus;
                 if ((weaponId == "sling" || weaponId == "cross" || weaponId == "moses_staff" || weaponId == "elijah_chariot") &&
                     HasExpandedSkill("common.shot.01")) bonuses.ProjectileSpeedBonus += .05;
                 var specialization = PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");
@@ -550,6 +602,12 @@ namespace BibleSurvivor.Core
             target.BossEntryVoiceCycle = 0;
             target.BossEntryJawboneCycle = 0;
             target.BossEntrySlingCycle = 0;
+            target.BossEntryBibleLifecycle = null;
+            target.BossEntryBibleCycle = 0;
+            target.BossEntryBibleSupports = null;
+            target.BossEntryBibleEvolution = null;
+            target.BossEntryJawboneLifecycle = null;
+            target.BossEntryVoiceState = null;
             target.BossEntrySlingNormalHits = 0;
             target.BossEntryLionPackCycle = 0;
             target.BossEntryLionNextPackLeapAt = null;
@@ -657,6 +715,16 @@ namespace BibleSurvivor.Core
             Capture();
         }
 
+        internal void ApplyImmediateWeaponRecovery(double requested)
+        {
+            if (requested <= 0 || !IsActive || CombatRulesVersion != 2) return;
+            var actual = PermanentRecoveryRules.OnWeaponRecovery(Recovery, run.PermanentSnapshot, CombatTime,
+                requested, run.Health, run.MaxHealth);
+            if (actual <= 0) return;
+            run.Health += actual;
+            Capture();
+        }
+
         private void RecoverOnKill(PermanentRecoveryKillKind kind, bool original)
         {
             if (!original || CombatRulesVersion != 2 ||
@@ -713,7 +781,8 @@ namespace BibleSurvivor.Core
                 ? PermanentCombatRules.Armor(run.PermanentSnapshot, Passive("seal"), kind, run.Health / run.MaxHealth,
                     CombatTime - Math.Max(0, run.LastHitTime), eliteOrBoss, surrounded, run.Stage == "boss")
                 : PermanentRules.Rank(run.PermanentSnapshot, "armor") + Passive("seal");
-            return Math.Max(1, incoming - armor - defenseBonus);
+            var totalArmor = CombatRulesVersion == 2 ? Math.Min(12, armor + defenseBonus) : armor;
+            return Math.Max(1, incoming - totalArmor);
         }
 
         public void Damage(int incoming) => Damage(incoming, IncomingDamageKind.Contact, false, false);

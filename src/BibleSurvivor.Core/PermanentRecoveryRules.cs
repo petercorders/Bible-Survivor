@@ -145,6 +145,15 @@ namespace BibleSurvivor.Core
             return Restore(state, now, 2, healthAfter, maxHealth);
         }
 
+        internal static double OnWeaponRecovery(PermanentRecoveryState state, IReadOnlyDictionary<string, int> ranks,
+            double now, double requested, double health, double maxHealth)
+        {
+            ValidateHealth(health, maxHealth);
+            if (!NonNegative(requested)) throw new ArgumentOutOfRangeException(nameof(requested));
+            AdvanceBudget(state, ranks, now);
+            return Restore(state, now, requested, health, maxHealth);
+        }
+
         private static void ValidateHealth(double health, double maxHealth)
         {
             if (!NonNegative(health) || !NonNegative(maxHealth) || maxHealth <= 0 || health > maxHealth)

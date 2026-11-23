@@ -558,7 +558,8 @@ namespace BibleSurvivor.Unity
                     {
                         var pose = ranks.Book(new System.Numerics.Vector2(snap.PlayerX, snap.PlayerY), i, amount, snap.Time,
                             host.Session.BibleRotationMultiplier, weapon.ActiveSince, weapon.BibleMotionCycle, nativeRadius,
-                            snap.Tuning.BibleOrbitRadius, new System.Numerics.Vector2(weapon.BibleCrowdX, weapon.BibleCrowdY));
+                            snap.Tuning.BibleOrbitRadius, new System.Numerics.Vector2(weapon.BibleCrowdX, weapon.BibleCrowdY),
+                            weapon.BibleEvolution?.InnerAngleOffset ?? 0);
                         var angle = pose.Angle;
                         var radius = pose.Radius;
                         var pos = Point(pose.Position.X, pose.Position.Y);

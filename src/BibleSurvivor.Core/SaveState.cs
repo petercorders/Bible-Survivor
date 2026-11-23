@@ -70,6 +70,12 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public long BossEntryVoiceCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryJawboneCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntrySlingCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedBibleLifecycleState? BossEntryBibleLifecycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryBibleCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedBibleSupportsState? BossEntryBibleSupports { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedBibleEvolutionState? BossEntryBibleEvolution { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedJawboneLifecycle? BossEntryJawboneLifecycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedWildernessVoiceState? BossEntryVoiceState { get; set; }
         [DataMember(EmitDefaultValue=false)] public int BossEntrySlingNormalHits { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryLionPackCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public double? BossEntryLionNextPackLeapAt { get; set; }
@@ -150,7 +156,9 @@ namespace BibleSurvivor.Core
                 Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
                 Run.BossEntryVoiceCycle != 0 || Run.BossEntryJawboneCycle != 0 || Run.BossEntryLightningCycle != 0 ||
                 Run.BossEntryLionPackCycle != 0 || Run.BossEntryLionNextPackLeapAt.HasValue ||
-                Run.BossEntrySlingCycle != 0 || Run.BossEntrySlingNormalHits != 0 ||
+                Run.BossEntrySlingCycle != 0 || Run.BossEntrySlingNormalHits != 0 || Run.BossEntryBibleLifecycle != null ||
+                Run.BossEntryBibleCycle != 0 || Run.BossEntryBibleSupports != null || Run.BossEntryBibleEvolution != null ||
+                Run.BossEntryJawboneLifecycle != null || Run.BossEntryVoiceState != null ||
                 Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0 ||
                 Run.BossEntryStaffCycle != 0 || Run.BossEntryStaffWaves != 0 || Run.BossEntryChariot != null))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
@@ -215,6 +223,47 @@ namespace BibleSurvivor.Core
                     !Run.Weapons.Keys.Any(id => id == "bible" || id == "wilderness_voice" || id == "fire_pillar")))
                     throw new InvalidDataException("Sustained attack receipt requires its frozen rank");
                 var combatTime = Run.Boss?.CombatTime ?? Run.Wave?.Elapsed ?? Run.NormalEndedAt ?? 180;
+                if (Run.BossEntryBibleLifecycle is { } bibleEntry)
+                {
+                    if (Run.Boss == null || !Run.Weapons.ContainsKey("bible") || bibleEntry.BookKillCounts != null ||
+                        bibleEntry.DeflectionAttempts != null || !BibleLifecycleMatchesRanks(bibleEntry, Run.PermanentSnapshot))
+                        throw new InvalidDataException("Invalid Bible passive state at boss entry");
+                    bibleEntry.Validate(combatTime, 0);
+                }
+                if (Run.BossEntryBibleSupports is { } supportEntry)
+                {
+                    if (Run.Boss == null || !Run.Weapons.ContainsKey("bible") || supportEntry.Projectiles == null ||
+                        supportEntry.Inks == null || supportEntry.Projectiles.Count != 0 || supportEntry.Inks.Count != 0 ||
+                        supportEntry.Bookmarks != null || supportEntry.NextInactiveGlowAt.HasValue ||
+                        !BibleSupportsMatchRanks(supportEntry, Run.PermanentSnapshot))
+                        throw new InvalidDataException("Invalid Bible support rules at boss entry");
+                    supportEntry.Validate(combatTime, Run.BossEntryBibleCycle);
+                }
+                if (Run.BossEntryBibleEvolution is { } evolutionEntry)
+                {
+                    if (Run.Boss == null || Run.Forms?.ContainsKey("bible") != true || evolutionEntry.PendingEcho != null ||
+                        evolutionEntry.Sanctuary != null || !BibleEvolutionMatchesRanks(evolutionEntry, Run.PermanentSnapshot))
+                        throw new InvalidDataException("Invalid Bible evolution state at boss entry");
+                    evolutionEntry.Validate(combatTime);
+                }
+                if (Run.BossEntryJawboneLifecycle is { } jawboneEntry)
+                {
+                    if (Run.Boss == null || !Run.Weapons.ContainsKey("jawbone") || jawboneEntry.Pushes != null ||
+                        !JawboneLifecycleMatchesRanks(jawboneEntry, Run.PermanentSnapshot))
+                        throw new InvalidDataException("Invalid Jawbone lifecycle at boss entry");
+                    jawboneEntry.Validate(combatTime, Run.BossEntryJawboneCycle, Run.Forms?.ContainsKey("jawbone") == true);
+                }
+                if (Run.BossEntryVoiceState is { } voiceEntry)
+                {
+                    if (Run.Boss == null || !Run.Weapons.ContainsKey("wilderness_voice") ||
+                        voiceEntry.Active == null || voiceEntry.Active.Count != 0 || voiceEntry.PendingWait != null ||
+                        voiceEntry.EliteSeries != null || voiceEntry.NextCycle != 0 ||
+                        voiceEntry.Cycle < Run.BossEntryVoiceCycle || voiceEntry.Cycle > 1201 ||
+                        voiceEntry.Evolved && Run.Forms?.ContainsKey("wilderness_voice") != true ||
+                        !VoiceReceiptsMatchRanks(voiceEntry, Run.PermanentSnapshot))
+                        throw new InvalidDataException("Invalid Wilderness Voice state at boss entry");
+                    voiceEntry.Validate(combatTime, voiceEntry.Evolved);
+                }
                 if (!Finite(Run.NoHitCarrySeconds) || Run.NoHitCarrySeconds < 0 || Run.NoHitCarrySeconds > 10 ||
                     Run.NoHitCarrySeconds > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.07") == 0 ||
                     Run.LastTempoEliteKillAt is double killAt && (!Finite(killAt) || killAt < 0 || killAt > combatTime ||
@@ -229,6 +278,7 @@ namespace BibleSurvivor.Core
                 bool InvalidBossCadence(long value, string equipped) => value < 0 || value > 1201 ||
                     value > 0 && (Run.Boss == null || !Run.Weapons.ContainsKey(equipped));
                 if (InvalidBossCadence(Run.BossEntryJawboneCycle, "jawbone") ||
+                    InvalidBossCadence(Run.BossEntryBibleCycle, "bible") ||
                     InvalidBossCadence(Run.BossEntrySlingCycle, "sling") ||
                     Run.BossEntrySlingNormalHits < 0 || Run.BossEntrySlingNormalHits > 14 ||
                     Run.BossEntrySlingNormalHits > 0 && (Run.BossEntrySlingCycle == 0 ||
@@ -400,13 +450,19 @@ namespace BibleSurvivor.Core
                 bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
                 if (Run.World.Weapons.Any(clock => clock.WeaponId == "jawbone" &&
                     (clock.StarterCycle < Run.BossEntryJawboneCycle || clock.JawboneMarks != null && !HasRank("weapon.jawbone.b.03") ||
-                        clock.NextJawboneShockAt.HasValue && !HasRank("weapon.jawbone.b.04"))))
+                        clock.NextJawboneShockAt.HasValue && !HasRank("weapon.jawbone.b.04") ||
+                        clock.LastJawboneHalfAngle == 180 && !HasRank("weapon.jawbone.d.05") ||
+                        clock.JawboneLifecycle != null && !JawboneLifecycleMatchesRanks(clock.JawboneLifecycle, permanentRanks))))
                     throw new InvalidDataException("Jawbone state requires its frozen ranks and cadence");
                 if (Run.World.Weapons.Any(clock => clock.WeaponId == "sling" && clock.StarterCycle < Run.BossEntrySlingCycle))
                     throw new InvalidDataException("Sling cadence precedes boss entry");
                 if (Run.World.Weapons.Any(clock => clock.WeaponId == "bible" &&
                     (clock.BibleMotionCycle > 0 && !HasRank("weapon.bible.a.05") ||
                         (clock.BibleCrowdX != 0 || clock.BibleCrowdY != 0) && !HasRank("weapon.bible.a.02") ||
+                        clock.BibleLifecycle != null && !BibleLifecycleMatchesRanks(clock.BibleLifecycle, permanentRanks) ||
+                        clock.BibleSupports != null && !BibleSupportsMatchRanks(clock.BibleSupports, permanentRanks) ||
+                        clock.StarterCycle < Run.BossEntryBibleCycle ||
+                        clock.BibleEvolution is { } evolution && !BibleEvolutionMatchesRanks(evolution, permanentRanks) ||
                         clock.BibleDuration is { } duration &&
                         (duration.Extensions != PermanentDurationRules.FromRanks(permanentRanks).Extensions ||
                             !Enumerable.Range(1, 8).Any(level => WeaponRules.Get("bible", level).Duration == duration.NativeDuration)))))
@@ -419,10 +475,13 @@ namespace BibleSurvivor.Core
                     return flags;
                 }
                 if (Run.World.LionDeflectRandom.HasValue && !HasRank("weapon.daniel_lion.e.04") ||
+                    (Run.World.VoiceDeflectRandom.HasValue || Run.World.NextVoiceDeflectAt.HasValue) &&
+                        !HasRank("weapon.wilderness_voice.c.04") ||
                     (Run.World.ChariotDeflectRandom.HasValue || Run.World.ChariotDeflectionAttempts != null) &&
                     !HasRank("weapon.elijah_chariot.d.04") ||
                     Run.World.NextHostileEraseAt.HasValue && !HasRank("weapon.elijah_chariot.d.04") &&
-                    !HasRank("weapon.moses_staff.d.02") && !HasRank("weapon.bible.b.03") && !HasRank("weapon.daniel_lion.e.04"))
+                    !HasRank("weapon.moses_staff.d.02") && !HasRank("weapon.bible.b.03") &&
+                    !HasRank("weapon.daniel_lion.e.04") && !HasRank("weapon.wilderness_voice.c.04"))
                     throw new InvalidDataException("Hostile erase state requires a frozen defensive rank");
                 var lightningCurrentRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.c.");
                 var lightningGroundRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.d.");
@@ -559,13 +618,19 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Fire pillar region bonuses require their frozen ranks");
                 if (Run.World.WildernessVoice is { } voice)
                 {
+                    var ownedVoiceEffects = ExpandedWildernessVoiceRankOptions.FromRanks(permanentRanks).KillEffects;
                     var maximumEchoBonus = possibleArea.HitShapeBonus + permanentArea.RegionShapeBonus +
                         (voice.Evolved && HasRank("weapon.wilderness_voice.e.02") ? .12 : 0);
                     if (voice.Cycle < Run.BossEntryVoiceCycle ||
-                        (voice.EliteSeries != null || voice.ElitePulseSequence != 0) && !HasRank("weapon.wilderness_voice.c.03") ||
-                        (voice.FinishHits != 0 || voice.FinishReady || voice.NextFinishAt.HasValue) &&
-                            !HasRank("weapon.wilderness_voice.c.05") || voice.Active.Any(cast =>
+                        !VoiceReceiptsMatchRanks(voice, permanentRanks) ||
+                        voice.Active.Any(cast =>
                         cast.EchoRadiusBonus > maximumEchoBonus + 1e-8 ||
+                        (cast.KillEffects & ~ownedVoiceEffects) != 0 ||
+                        cast.AddedReachBoost && !HasRank("weapon.wilderness_voice.d.04") ||
+                        cast.AddedCallDuration && !HasRank("weapon.wilderness_voice.d.05") ||
+                        cast.BoostFirstEcho && !HasRank("weapon.wilderness_voice.e.05") ||
+                        cast.DurationProgress != null &&
+                            cast.DurationProgress.Extensions != PermanentDurationRules.FromRanks(permanentRanks).Extensions ||
                         cast.FirstPulseDamage && !HasRank("weapon.wilderness_voice.a.02") ||
                         cast.FinalPulseKnockback && !HasRank("weapon.wilderness_voice.a.03") ||
                         cast.LockedFacingX.HasValue && !HasRank("weapon.wilderness_voice.a.04") ||
@@ -783,7 +848,67 @@ namespace BibleSurvivor.Core
             if (Run.Wave != null && (!Finite(Run.Wave.Elapsed) || Run.Wave.Elapsed < 0 || Run.Wave.Elapsed >= 180))
                 throw new InvalidDataException("Invalid running clock");
         }
+        private static bool BibleEvolutionMatchesRanks(ExpandedBibleEvolutionState state, IReadOnlyDictionary<string, int> ranks)
+        {
+            var rules = ExpandedBibleEvolutionRanks.FromRanks(ranks);
+            return (rules.ExtraPulse || state.PendingEcho == null) &&
+                (rules.SteerInnerBook || state.LastSteeredPulse == 0 && state.InnerAngleOffset == 0) &&
+                (rules.EliteSanctuary || state.Sanctuary == null && state.NextSanctuaryAt == null);
+        }
+
+        private static bool VoiceReceiptsMatchRanks(ExpandedWildernessVoiceState voice, IReadOnlyDictionary<string, int> ranks)
+        {
+            bool Has(string id) => PermanentRules.Rank(ranks, "weapon.wilderness_voice." + id) > 0;
+            return (Has("c.03") || voice.EliteSeries == null && voice.ElitePulseSequence == 0) &&
+                (Has("c.05") || voice.FinishHits == 0 && !voice.FinishReady && !voice.NextFinishAt.HasValue) &&
+                (Has("d.01") || !voice.NextWaitReady && !voice.NextWaitAt.HasValue && voice.PendingWait == null) &&
+                (Has("d.02") || !voice.HasteUntil.HasValue && !voice.NextHasteAt.HasValue) &&
+                (Has("d.04") || !voice.ReachBoostUntil.HasValue && !voice.NextReachAt.HasValue) &&
+                (Has("d.05") || !voice.LongCallReady && voice.LongCallKills == 0 && !voice.NextLongCallAt.HasValue) &&
+                (Has("e.05") || !voice.EchoBoostUntil.HasValue && !voice.NextEchoBoostAt.HasValue);
+        }
+
+        private static bool JawboneLifecycleMatchesRanks(ExpandedJawboneLifecycle state, IReadOnlyDictionary<string, int> ranks)
+        {
+            bool Has(string id) => PermanentRules.Rank(ranks, "weapon.jawbone." + id) > 0;
+            return (Has("c.01") || state.FirstKillCycle == 0 && state.FirstKillUntil == null) &&
+                (Has("c.02") || state.RapidKills == null && state.RapidWaitUntil == null && state.NextRapidWaitAt == null) &&
+                (Has("c.03") || !state.AdvanceReady && state.NextAdvanceAt == null) &&
+                (Has("c.04") || state.CrowdReachUntil == null) &&
+                (Has("c.05") || state.BreakthroughCount == 0 && state.NextBreakthroughAt == null) &&
+                (Has("d.02") || state.HurtPowerUntil == null && state.NextHurtPowerAt == null) &&
+                (Has("d.03") || state.NextRecoveryAt == null) &&
+                (Has("d.04") || state.GuardUntil == null) &&
+                (Has("d.05") || state.NextSurroundAt == null) &&
+                (Has("e.02") || state.NextPushAt == null && state.Pushes == null) &&
+                (Has("e.04") || state.NextWaveAt == null) &&
+                (Has("e.05") || state.ExtraSwingUntil == null && state.NextExtraSwingAt == null);
+        }
+
+        private static bool BibleSupportsMatchRanks(ExpandedBibleSupportsState state, IReadOnlyDictionary<string, int> ranks)
+        {
+            var rules = ExpandedBibleSupportRanks.FromRanks(ranks);
+            return (rules.ContactPages || !state.NextContactPageAt.HasValue && !state.PageRandomState.HasValue) &&
+                (rules.ClosingPages || !state.NextClosingPageAt.HasValue) &&
+                (rules.InactiveGlow || !state.NextInactiveGlowAt.HasValue) &&
+                (rules.Bookmarks || state.Bookmarks == null) && (rules.Ink || state.Inks.Count == 0) &&
+                state.Projectiles.All(shot => shot.Returning ? rules.ReturningBooks :
+                    (rules.ContactPages || rules.ClosingPages) && (rules.Ink || !shot.InkEligible) &&
+                    (rules.PiercePages || shot.HitBudget == 1) && (rules.Bookmarks || !shot.BookmarkEligible));
+        }
+
+        private static bool BibleLifecycleMatchesRanks(ExpandedBibleLifecycleState state, IReadOnlyDictionary<string, int> ranks)
+        {
+            var rules = ExpandedBibleLifecycleRules.FromRanks(ranks);
+            return (rules.DeflectsHostile || state.DeflectionRandomState == null && state.NextDeflectionAt == null && state.DeflectionAttempts == null) &&
+                (rules.CriticalCover || state.CriticalCoverUntil == null && state.NextCriticalCoverAt == null) &&
+                (rules.DamageBarrier || state.NextDamageBarrierAt == null) &&
+                (rules.ExtendsAfterBookKills || state.BookKillCounts == null) &&
+                (rules.ReducesWaitAfterEliteKill || !state.NextWaitReductionArmed && state.NextEliteWaitAt == null);
+        }
+
         private static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+
     }
 
     public sealed class UnsupportedSaveVersionException : IOException

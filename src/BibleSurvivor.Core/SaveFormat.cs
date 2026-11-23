@@ -58,6 +58,23 @@ namespace BibleSurvivor.Core
             var wave = Object("Elapsed Cursor Paused Expired", ("Active", Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))));
             var entity = Object("Id X Y");
             var projectile = Object("Id X Y VelocityX VelocityY Lifetime Damage RemainingPierce Radius HitIds");
+            var bibleLifecycle = Object("NextDeflectionAt DeflectionRandomState CriticalCoverUntil NextCriticalCoverAt NextDamageBarrierAt NextWaitReductionArmed NextEliteWaitAt",
+                ("DeflectionAttempts", Array(Object("ProjectileId BooksMask"))), ("BookKillCounts", Array(Value)));
+            var jawboneLifecycle = Object("FirstKillCycle FirstKillUntil RapidWaitUntil NextRapidWaitAt AdvanceReady NextAdvanceAt CrowdReachUntil BreakthroughCount NextBreakthroughAt HurtPowerUntil NextHurtPowerAt NextRecoveryAt GuardUntil NextSurroundAt NextWaveAt NextPushAt ExtraSwingUntil NextExtraSwingAt",
+                ("RapidKills", Array(Value)), ("Pushes", Array(Object("Id At PreCriticalDamage"))));
+            var bibleSupports = Object("NextId LastClosedCycle NextContactPageAt NextClosingPageAt NextInactiveGlowAt PageRandomState",
+                ("Projectiles", Array(Object("Id Returning X Y DirectionX DirectionY LastAt Travelled ParentDamage HitBudget InkEligible InkAttempted BookmarkEligible",
+                    ("HitIds", Array(Value))))),
+                ("Inks", Array(Object("Id StartX StartY EndX EndY BornAt NextHitAt Damage"))),
+                ("Bookmarks", Array(Object("TargetId ExpiresAt"))));
+            var bibleEvolution = Object("PulseOrdinal LastSteeredPulse InnerAngleOffset NextSanctuaryAt",
+                ("PendingEcho", Object("DueAt Radius Damage")), ("Sanctuary", Object("X Y StartedAt NextHitAt Damage")));
+            var voice = Object("Evolved Cycle NextCycle ElitePulseSequence FinishHits FinishReady NextFinishAt NextWaitReady NextWaitAt HasteUntil NextHasteAt ReachBoostUntil NextReachAt LongCallReady LongCallKills NextLongCallAt EchoBoostUntil NextEchoBoostAt",
+                ("PendingWait", Object("NativeDuration FloorAt UnshortenedAt Applied")),
+                ("EliteSeries", Array(Object("TargetId LastPulse Consecutive MarkUntil"))),
+                ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho OriginalBaseDamage InitialFacingX InitialFacingY EvolvedCloseKnockback TracksEliteSeries CountsHitsForFinish StrengthensRepeatedTargets NativeDuration FinalEffectsUsed KillEffects WaitNormalKills AddedReachBoost AddedCallDuration BoostFirstEcho",
+                    ("DurationProgress", Object("NativeDuration Extensions NormalKills EliteUsed")),
+                    ("OriginalTargetCounts", Array(Object("TargetId Count")))))));
             var weapon = Object("WeaponId WeaponForm NextCycle ActiveUntil ActiveSince NextBurst BurstsRemaining PendingBursts NextPulse PulseUntil FocusTargetId PulseHitIds",
                 ("OrbitHits", Array(Object("Id At"))),("FormHits",Array(Object("Id At"))));
             if (skillTree)
@@ -70,6 +87,7 @@ namespace BibleSurvivor.Core
                 weapon.Members.Add("LastJawboneDirectionY", Value);
                 weapon.Members.Add("JawboneCycleAmount", Value);
                 weapon.Members.Add("NextJawboneShockAt", Value);
+                weapon.Members.Add("JawboneLifecycle", jawboneLifecycle);
                 weapon.Members.Add("JawboneMarks", Object("LastEliteId ConsecutiveHits", ("Marks", Array(Object("Id At")))));
                 weapon.Members.Add("FrozenOrbitCount", Value);
                 weapon.Members.Add("FrozenOrbitRadius", Value);
@@ -92,8 +110,11 @@ namespace BibleSurvivor.Core
                 weapon.Members.Add("FrozenOrbitDamage", Value);
                 weapon.Members.Add("FrozenOrbitBaseDamage", Value);
                 weapon.Members.Add("BibleMotionCycle", Value);
+                weapon.Members.Add("BibleLifecycle", bibleLifecycle);
+                weapon.Members.Add("BibleSupports", bibleSupports);
                 weapon.Members.Add("BibleCrowdX", Value);
                 weapon.Members.Add("BibleCrowdY", Value);
+                weapon.Members.Add("BibleEvolution", bibleEvolution);
                 weapon.Members.Add("BibleDuration", Object("NativeDuration Extensions NormalKills EliteUsed"));
             }
             var tuning = Object("PlayerSpeed CameraHalfWidth CameraHalfHeight SpawnMargin PlayerRadius EnemyRadius BibleOrbitRadius BookRadius JawboneRange SlingSpeed SlingLifetime PickupRadius MaxProjectiles");
@@ -108,15 +129,14 @@ namespace BibleSurvivor.Core
                 world.Members.Add("NextHostileEraseAt", Value);
                 world.Members.Add("ChariotDeflectRandom", Value);
                 world.Members.Add("LionDeflectRandom", Value);
+                world.Members.Add("VoiceDeflectRandom", Value);
+                world.Members.Add("NextVoiceDeflectAt", Value);
                 world.Members.Add("ChariotDeflectionAttempts", Array(Object("PathId ProjectileId")));
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle NextCurrentAt NextGroundLinkAt NextGroundBurstAt NextEvolutionForkAt NextEliteChainMarkAt EliteChainDamageUntil",
                     ("RecentStrikeHits", Array(Object("Id At"))), ("CurrentMarks", Array(Object("Id At"))),
                     ("GroundCurrents", Array(Object("Id Cycle X Y StartedAt EndsAt NextPulse Radius Damage"))),
                     ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain UsesFarthestReuse PredecessorTargetId PredecessorX PredecessorY OriginalBaseDamage IsolatedDamage HighHealthDamage RepeatStrikeDamage WiderLastStrike EliteThunderOnHit EliteThunder CurrentRanks GroundRanks EvolutionRanks")))));
-                world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle ElitePulseSequence FinishHits FinishReady NextFinishAt",
-                    ("EliteSeries", Array(Object("TargetId LastPulse Consecutive MarkUntil"))),
-                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho OriginalBaseDamage InitialFacingX InitialFacingY EvolvedCloseKnockback TracksEliteSeries CountsHitsForFinish StrengthensRepeatedTargets",
-                        ("OriginalTargetCounts", Array(Object("TargetId Count"))))))));
+                world.Members.Add("WildernessVoice", voice);
                 world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle NextClosingEmberAt NextClosingAshAt NextCloseRangeAt NextEliteExtensionAt NormalBurstKills NextNormalBurstAt NextEliteReignitionAt NextCyclePulseAt SparkHitCount NextSparkAt NextLinkAt RadiusKillCount RadiusBoostUntil NextRadiusBoostAt NextGroupRushAt NextMovingFireAt",
                     ("Spark", Object("TargetId X Y StartedAt LastStepAt ParentDamage MakesFire RegionShapeBonus RegionDurationBonus")),
                     ("Regions", Array(Object("Id Ember SupportKind X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage OriginalBaseDamage RepeatedHeat NativeDuration EliteExtensionUsed AdaptiveHeat PursuedGroup RushUntil NextRimHitAt TravelSinceMovingFire",
@@ -169,6 +189,12 @@ namespace BibleSurvivor.Core
                 run.Members.Add("BossEntryVoiceCycle", Value);
                 run.Members.Add("BossEntryJawboneCycle", Value);
                 run.Members.Add("BossEntrySlingCycle", Value);
+                run.Members.Add("BossEntryBibleLifecycle", bibleLifecycle);
+                run.Members.Add("BossEntryBibleCycle", Value);
+                run.Members.Add("BossEntryBibleSupports", bibleSupports);
+                run.Members.Add("BossEntryBibleEvolution", bibleEvolution);
+                run.Members.Add("BossEntryJawboneLifecycle", jawboneLifecycle);
+                run.Members.Add("BossEntryVoiceState", voice);
                 run.Members.Add("BossEntrySlingNormalHits", Value);
                 run.Members.Add("BossEntryLionPackCycle", Value);
                 run.Members.Add("BossEntryLionNextPackLeapAt", Value);

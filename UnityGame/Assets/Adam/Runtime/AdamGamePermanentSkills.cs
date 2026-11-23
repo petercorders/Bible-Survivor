@@ -18,7 +18,8 @@ namespace BibleSurvivor.Unity
             "common.power.07", "common.power.08", "common.power.09", "common.power.10",
             "common.crit.01", "common.crit.02", "common.crit.03", "common.crit.04", "common.crit.05",
             "common.crit.06", "common.crit.07", "common.crit.08", "common.crit.09", "common.crit.10",
-            "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04", "common.duration.09",
+            "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04", "common.duration.05",
+            "common.duration.06", "common.duration.07", "common.duration.08", "common.duration.09", "common.duration.10",
             "common.shot.01", "common.shot.02", "common.shot.03",
             "common.shot.05", "common.shot.06", "common.shot.07", "common.shot.08", "common.shot.09", "common.shot.10",
             "common.tempo.02", "common.tempo.03", "common.tempo.04", "common.tempo.05", "common.tempo.06",
@@ -28,11 +29,17 @@ namespace BibleSurvivor.Unity
             "weapon.bible.base.01", "weapon.bible.base.02", "weapon.bible.base.03",
             "weapon.bible.base.04", "weapon.bible.base.05",
             "weapon.bible.a.01", "weapon.bible.a.02", "weapon.bible.a.03", "weapon.bible.a.04", "weapon.bible.a.05",
-            "weapon.bible.b.01", "weapon.bible.b.02",
+            "weapon.bible.b.01", "weapon.bible.b.02", "weapon.bible.b.03", "weapon.bible.b.04", "weapon.bible.b.05",
+            "weapon.bible.c.01", "weapon.bible.c.02", "weapon.bible.c.03", "weapon.bible.c.04", "weapon.bible.c.05",
+            "weapon.bible.d.01", "weapon.bible.d.02", "weapon.bible.d.03", "weapon.bible.d.04", "weapon.bible.d.05",
+            "weapon.bible.e.01", "weapon.bible.e.02", "weapon.bible.e.03", "weapon.bible.e.04", "weapon.bible.e.05",
             "weapon.jawbone.base.01", "weapon.jawbone.base.02", "weapon.jawbone.base.03",
             "weapon.jawbone.base.04", "weapon.jawbone.base.05",
             "weapon.jawbone.a.01", "weapon.jawbone.a.02", "weapon.jawbone.a.03", "weapon.jawbone.a.04", "weapon.jawbone.a.05",
             "weapon.jawbone.b.01", "weapon.jawbone.b.02", "weapon.jawbone.b.03", "weapon.jawbone.b.04", "weapon.jawbone.b.05",
+            "weapon.jawbone.c.01", "weapon.jawbone.c.02", "weapon.jawbone.c.03", "weapon.jawbone.c.04", "weapon.jawbone.c.05",
+            "weapon.jawbone.d.01", "weapon.jawbone.d.02", "weapon.jawbone.d.03", "weapon.jawbone.d.04", "weapon.jawbone.d.05",
+            "weapon.jawbone.e.01", "weapon.jawbone.e.02", "weapon.jawbone.e.03", "weapon.jawbone.e.04", "weapon.jawbone.e.05",
             "weapon.sling.base.01", "weapon.sling.base.02", "weapon.sling.base.03",
             "weapon.sling.base.04", "weapon.sling.base.05",
             "weapon.sling.a.01", "weapon.sling.a.02", "weapon.sling.a.03",
@@ -62,12 +69,12 @@ namespace BibleSurvivor.Unity
             "weapon.wilderness_voice.base.01", "weapon.wilderness_voice.base.02", "weapon.wilderness_voice.base.03",
             "weapon.wilderness_voice.base.04", "weapon.wilderness_voice.base.05",
             "weapon.wilderness_voice.a.01", "weapon.wilderness_voice.b.01",
-            "weapon.wilderness_voice.c.01", "weapon.wilderness_voice.c.02", "weapon.wilderness_voice.c.03", "weapon.wilderness_voice.c.05",
-            "weapon.wilderness_voice.d.03",
+            "weapon.wilderness_voice.c.01", "weapon.wilderness_voice.c.02", "weapon.wilderness_voice.c.03", "weapon.wilderness_voice.c.04", "weapon.wilderness_voice.c.05",
+            "weapon.wilderness_voice.d.01", "weapon.wilderness_voice.d.02", "weapon.wilderness_voice.d.03", "weapon.wilderness_voice.d.04", "weapon.wilderness_voice.d.05",
             "weapon.wilderness_voice.a.02", "weapon.wilderness_voice.a.03",
             "weapon.wilderness_voice.a.04", "weapon.wilderness_voice.a.05",
             "weapon.wilderness_voice.b.02", "weapon.wilderness_voice.b.03", "weapon.wilderness_voice.b.04", "weapon.wilderness_voice.b.05",
-            "weapon.wilderness_voice.e.01", "weapon.wilderness_voice.e.02", "weapon.wilderness_voice.e.03", "weapon.wilderness_voice.e.04",
+            "weapon.wilderness_voice.e.01", "weapon.wilderness_voice.e.02", "weapon.wilderness_voice.e.03", "weapon.wilderness_voice.e.04", "weapon.wilderness_voice.e.05",
             "weapon.lightning.base.01", "weapon.lightning.base.02", "weapon.lightning.base.03",
             "weapon.lightning.base.04", "weapon.lightning.base.05",
             "weapon.lightning.a.01", "weapon.lightning.a.02", "weapon.lightning.e.01",
@@ -139,6 +146,7 @@ namespace BibleSurvivor.Unity
         private bool skillRevealDetails;
         private Vector2 skillListScroll;
         private Vector2 skillDetailScroll;
+        private Vector2 skillBrowserSize;
         private bool skillEntryFocused;
         private string skillEntryScreen;
         private PermanentSkillCommand skillConfirmation;
@@ -431,6 +439,13 @@ namespace BibleSurvivor.Unity
 
         private void DrawPermanentSkillBrowser(float width, float height)
         {
+            var size = new Vector2(width, height);
+            if (skillBrowserSize != size)
+            {
+                skillBrowserSize = size;
+                skillRevealRow = true;
+                skillRevealDetails = true;
+            }
             var tree = skillTrees[skillTree];
             AdamHud.Fill(new Rect(0, 0, width, 96), AdamHud.Ink1);
             AdamHud.Rule(art, new Rect(0, 95, width, 2), true);

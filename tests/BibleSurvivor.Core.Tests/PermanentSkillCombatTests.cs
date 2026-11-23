@@ -14,6 +14,77 @@ internal static class PermanentSkillCombatTests
 
     public static void Register(Action<string, Action> test)
     {
+        test("Every purchased rank survives mixed six-weapon checkpoints in both forms", () =>
+        {
+            var all = PermanentSkillCatalog.Current.Nodes.Select(node => node.Id).ToArray();
+            foreach (var equipped in new[]
+            {
+                new[] { "bible", "jawbone", "sling", "fire_pillar", "wilderness_voice", "lightning" },
+                new[] { "bible", "moses_staff", "elijah_chariot", "cross", "daniel_lion", "fire_pillar" }
+            })
+            WithStore(store =>
+            {
+                var profile = ExpandedProfile(store, true, all);
+                Check.Equal(442, profile.Profile.Upgrades.Values.Sum());
+                foreach (var evolved in new[] { false, true })
+                {
+                    profile.Run = null;
+                    const string catalog = "content/genesis/catalog.json";
+                    var speeds = CatalogReader.MonsterSpeeds(catalog);
+                    var definition = CatalogReader.Round(catalog, 3);
+                    var session = new AdamSession(profile, WaveTests.Adam(), equipped[0]);
+                    for (var round = 2; round <= 3; round++)
+                    {
+                        session.Advance(180);
+                        while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                        session = session.StartNextRound(CatalogReader.Round(catalog, round));
+                    }
+                    foreach (var id in equipped)
+                    {
+                        for (var level = id == equipped[0] ? 1 : 0; level < 8; level++)
+                            Check.True(session.Inventory.TryChoose(id, false));
+                        if (!evolved) continue;
+                        var form = EvolutionRules.Form(id);
+                        Check.True(session.Inventory.TryChoose(EvolutionRules.Passive(id), true));
+                        Check.True(session.Inventory.TryEvolve(form));
+                    }
+                    var world = new BattleWorld(session, speeds, 419);
+                    string scenario = string.Join(",", equipped) + (evolved ? " evolved" : " base");
+                    for (var checkpoint = 0; checkpoint < 20; checkpoint++)
+                    {
+                        try
+                        {
+                            for (var tick = 0; tick < 51; tick++) world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                            Check.True(session.IsActive);
+                            session.Capture();
+                            profile.Run!.World = world.Capture();
+                            profile.Revision = store.Commit(profile, profile.Revision, $"all-rank-combat-{evolved}-{checkpoint}");
+                            var loaded = store.Load()!;
+                            var resumedSession = AdamSession.Resume(loaded, definition);
+                            var replay = BattleWorld.Restore(resumedSession, speeds, loaded.Run!.World!);
+                            for (var tick = 0; tick < 9; tick++)
+                            {
+                                var move = checkpoint % 2 == 0 ? Vector2.UnitX : -Vector2.UnitX;
+                                replay.Advance(BattleWorld.FixedStep, move);
+                                world.Advance(BattleWorld.FixedStep, move);
+                            }
+                            var live = JsonSerializer.SerializeToElement(world.Capture());
+                            var resumed = JsonSerializer.SerializeToElement(replay.Capture());
+                            foreach (var property in live.EnumerateObject())
+                                if (!JsonElement.DeepEquals(property.Value, resumed.GetProperty(property.Name)))
+                                    throw new InvalidOperationException($"Replay diverged at {property.Name}");
+                            Check.Equal(442, loaded.Run.PermanentSnapshot.Values.Sum());
+                        }
+                        catch (Exception failure)
+                        {
+                            throw new InvalidOperationException($"{scenario}, checkpoint {checkpoint}, battle t={world.SimulationTime:R}", failure);
+                        }
+                    }
+                    Check.True(world.Hits > 0);
+                }
+            });
+        });
+
         test("Expanded armor applies per-source, health, time, crowd and boss conditions before capping", () =>
         {
             var ranks = new Dictionary<string, int> { ["armor"] = 3 };
@@ -732,12 +803,12 @@ internal static class PermanentSkillCombatTests
             });
         });
 
-        test("Voice rank cadence survives a boss-intro checkpoint and old casts are canceled", () =>
+        test("Voice and Bible cadence survive a boss-intro checkpoint while old attacks are canceled", () =>
         {
             WithStore(store =>
             {
                 var state = ExpandedProfile(store, "weapon.wilderness_voice.a.05", "weapon.wilderness_voice.b.03",
-                    "weapon.wilderness_voice.e.03", "common.area.01");
+                    "weapon.wilderness_voice.e.03", "weapon.bible.e.02", "common.area.01");
                 var session = new AdamSession(state, WaveTests.Adam(), "bible");
                 for (var round = 2; round <= 3; round++)
                 {
@@ -750,13 +821,19 @@ internal static class PermanentSkillCombatTests
                 var weapon = ExpandedWeaponRules.Get("wilderness_voice");
                 Check.True(session.Inventory.TryChoose(weapon.PassiveId, true));
                 Check.True(session.Inventory.TryEvolve(weapon.EvolutionId));
+                while (session.Inventory.TryChoose("bible", false)) { }
+                Check.True(session.Inventory.TryChoose("scroll", true));
+                Check.True(session.Inventory.TryEvolve(EvolutionRules.Bible));
                 var speeds = CatalogReader.MonsterSpeeds("content/genesis/catalog.json");
                 session.Advance(175);
                 var prepared = new BattleWorld(session, speeds, 7).Capture();
                 foreach (var enemy in prepared.Enemies) enemy.X = 100;
                 var world = BattleWorld.Restore(session, speeds, prepared);
                 world.Advance(4.6, Vector2.UnitY);
-                var beforeBoundary = world.Capture().WildernessVoice!;
+                var closing = world.Capture();
+                var beforeBoundary = closing.WildernessVoice!;
+                var beforeBible = closing.Weapons.Single(clock => clock.WeaponId == "bible");
+                Check.Equal(3L, beforeBible.BibleEvolution!.PulseOrdinal);
                 Check.True(beforeBoundary.Cycle > 0);
                 var cast = beforeBoundary.Active.Last();
                 Check.Near(1, cast.LockedFacingY!.Value);
@@ -771,6 +848,8 @@ internal static class PermanentSkillCombatTests
                 Check.Equal("boss_intro", session.Stage);
                 Check.True(world.Capture().WildernessVoice == null);
                 Check.Equal(beforeBoundary.Cycle, state.Run.BossEntryVoiceCycle);
+                Check.Equal(3L, state.Run.BossEntryBibleEvolution!.PulseOrdinal);
+                Check.True(state.Run.BossEntryBibleEvolution.PendingEcho == null);
                 state.Run.World = world.Capture();
                 store.Commit(state, state.Revision, "voice-boss-intro");
                 state = store.Load()!;
@@ -781,6 +860,9 @@ internal static class PermanentSkillCombatTests
                 var bossVoice = world.Capture().WildernessVoice!;
                 Check.Equal(beforeBoundary.Cycle + 1, bossVoice.Cycle);
                 Check.Near(1, bossVoice.Active.Single().LockedFacingX!.Value);
+                var bible = world.Capture().Weapons.Single(clock => clock.WeaponId == "bible").BibleEvolution!;
+                Check.Equal(4L, bible.PulseOrdinal);
+                Check.True(bible.PendingEcho != null);
             });
         });
 
@@ -1376,11 +1458,14 @@ internal static class PermanentSkillCombatTests
         return arena.Collected;
     }
 
-    private static GameSnapshot ExpandedProfile(SaveStore store, params string[] desired)
+    private static GameSnapshot ExpandedProfile(SaveStore store, params string[] desired) =>
+        ExpandedProfile(store, false, desired);
+
+    private static GameSnapshot ExpandedProfile(SaveStore store, bool maxRanks, params string[] desired)
     {
         var state = SaveStore.PrepareNewChallenge(GameSnapshot.New());
         state.Profile.HighestSettledRound = 180;
-        state.Profile.Gold = 100_000;
+        state.Profile.Gold = maxRanks ? 500_000 : 100_000;
         foreach (var expanded in ExpandedWeaponRules.All)
             if (desired.Any(id => id.StartsWith($"weapon.{expanded.WeaponId}.", StringComparison.Ordinal)))
                 state.Profile.UnlockedWeapons.Add(expanded.WeaponId);
@@ -1389,7 +1474,8 @@ internal static class PermanentSkillCombatTests
                 !state.Profile.EvolvedWeapons!.Contains(evolution)) state.Profile.EvolvedWeapons.Add(evolution);
         store.Commit(state, state.Revision, "seed-settled-profile");
         state = store.Load()!;
-        foreach (var id in desired) BuyPrerequisites(id, 1);
+        foreach (var id in desired)
+            BuyPrerequisites(id, maxRanks ? PermanentSkillCatalog.Current.Find(id).Prices.Count : 1);
         return state;
 
         void BuyPrerequisites(string id, int rank)
