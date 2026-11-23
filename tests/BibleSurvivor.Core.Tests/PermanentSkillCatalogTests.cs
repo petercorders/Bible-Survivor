@@ -9,6 +9,44 @@ internal static class PermanentSkillCatalogTests
 {
     public static void Register(Action<string, Action> test)
     {
+        foreach (var node in PermanentSkillCatalog.Current.Nodes)
+        for (var index = 0; index < node.Prices.Count; index++)
+        {
+            var owned = index;
+            test($"Purchase boundary {node.Id}@{owned + 1}", () =>
+            {
+                var ranks = node.Prerequisites.ToDictionary(entry => entry.Key, entry => entry.Value);
+                if (owned > 0) ranks.Add(node.Id, owned);
+                var price = node.Prices[owned];
+                var round = node.RequiredSettledRound;
+                var unlocked = node.RequiredWeapon == null ? Array.Empty<string>() : new[] { node.RequiredWeapon };
+                var evolved = node.RequiredEvolution == null ? Array.Empty<string>() : new[] { node.RequiredEvolution };
+
+                Check.Equal(PermanentSkillAvailability.Available, Availability(price, round, unlocked, evolved));
+                Check.Equal(PermanentSkillAvailability.InsufficientGold, Availability(price - 1, round, unlocked, evolved));
+                if (round > 0)
+                    Check.Equal(PermanentSkillAvailability.RequiresSettledRound, Availability(price, round - 1, unlocked, evolved));
+                if (unlocked.Length > 0)
+                    Check.Equal(PermanentSkillAvailability.RequiresWeapon, Availability(price, round, Array.Empty<string>(), evolved));
+                if (evolved.Length > 0)
+                    Check.Equal(PermanentSkillAvailability.RequiresEvolution, Availability(price, round, unlocked, Array.Empty<string>()));
+                foreach (var required in node.Prerequisites)
+                {
+                    ranks[required.Key] = required.Value - 1;
+                    Check.Equal(PermanentSkillAvailability.RequiresSkill, Availability(price, round, unlocked, evolved));
+                    ranks[required.Key] = required.Value;
+                }
+                if (owned + 1 == node.Prices.Count)
+                {
+                    ranks[node.Id] = owned + 1;
+                    Check.Equal(PermanentSkillAvailability.MaximumRank, Availability(price, round, unlocked, evolved));
+                }
+
+                PermanentSkillAvailability Availability(long gold, int settled, string[] weapons, string[] forms) =>
+                    node.Availability(ranks, gold, settled, weapons, forms);
+            });
+        }
+
         test("Permanent catalog matches the launch counts, prices and reachable prerequisite graph", () =>
         {
             var nodes = PermanentSkillCatalog.Current.Nodes;

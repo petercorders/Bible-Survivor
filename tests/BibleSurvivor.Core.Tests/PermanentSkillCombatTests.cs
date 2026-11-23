@@ -14,6 +14,110 @@ internal static class PermanentSkillCombatTests
 
     public static void Register(Action<string, Action> test)
     {
+        var starters = new[] { "bible", "jawbone", "sling" };
+        foreach (var weapon in starters.Concat(ExpandedWeaponRules.All.Select(profile => profile.WeaponId)))
+        foreach (var upgrade in new[] { "01", "02", "03" })
+        {
+            var id = $"weapon.{weapon}.base.{upgrade}";
+            test($"Mastery profile {id}@1 changes only its equipped weapon and survives reload", () =>
+            {
+                WithStore(store =>
+                {
+                    var node = PermanentSkillCatalog.Current.Find(id);
+                    var prior = ExpandedProfile(store, node.Prerequisites.Keys.ToArray());
+                    if (!prior.Profile.UnlockedWeapons.Contains(weapon))
+                    {
+                        prior.Profile.UnlockedWeapons.Add(weapon);
+                        store.Commit(prior, prior.Revision, "issue53-mastery-unlock");
+                        prior = store.Load()!;
+                    }
+                    var purchased = Buy(store, prior, id, node.Prices[0]);
+                    var definition = WaveTests.Adam();
+                    var other = weapon == "bible" ? "sling" : "bible";
+                    var before = Start(prior);
+                    var after = Start(purchased);
+                    var initial = before.AttackProfile(weapon);
+                    var acquired = after.AttackProfile(weapon);
+                    var expected = upgrade switch
+                    {
+                        "01" => initial.Damage + initial.OriginalBaseDamage * .10,
+                        "02" => initial.Cycle - (ExpandedWeaponRules.TryGet(weapon, out _)
+                            ? initial.Cycle : initial.Cycle - initial.Duration) * .05,
+                        _ when weapon == "wilderness_voice" => initial.AttackReach * 1.20,
+                        _ => initial.Amount + 1,
+                    };
+                    Check.Near(expected, Value(acquired));
+                    Check.True(Math.Abs(expected - Value(initial)) > 1e-6);
+                    Check.Near(Value(before.AttackProfile(other)), Value(after.AttackProfile(other)));
+
+                    store.Commit(purchased, purchased.Revision, "issue53-mastery-profile");
+                    var restored = AdamSession.Resume(store.Load()!, definition);
+                    Check.Near(expected, Value(restored.AttackProfile(weapon)));
+                    Check.Near(Value(before.AttackProfile(other)), Value(restored.AttackProfile(other)));
+
+                    AdamSession Start(GameSnapshot state)
+                    {
+                        var session = new AdamSession(state, definition, other);
+                        Check.True(session.Inventory.TryChoose(weapon, false));
+                        session.Advance(BattleWorld.FixedStep);
+                        return session;
+                    }
+
+                    double Value(CombatStats stats) => upgrade switch
+                    {
+                        "01" => stats.Damage,
+                        "02" => stats.Cycle,
+                        _ when weapon == "wilderness_voice" => stats.AttackReach,
+                        _ => stats.Amount,
+                    };
+                });
+            });
+        }
+
+        for (var rank = 1; rank <= 5; rank++)
+        {
+            var purchasedRank = rank;
+            test($"Health rank health@{purchasedRank} sets starting HP and replays incoming damage", () =>
+            {
+                WithStore(store =>
+                {
+                    var profile = SaveStore.PrepareNewChallenge(GameSnapshot.New());
+                    profile.Profile.Gold = 1_600;
+                    store.Commit(profile, 0, "issue53-health-profile");
+                    profile = store.Load()!;
+                    var definition = WaveTests.Adam();
+                    var expectedPrices = new[] { 80, 160, 280, 440, 640 };
+                    for (var owned = 0; owned < purchasedRank; owned++)
+                    {
+                        profile = store.TransactPermanent(PermanentSkillCommand.Purchase(
+                            PermanentSkillCommand.NewOperationId(profile.Revision), profile.Revision, "health",
+                            owned, expectedPrices[owned]));
+                    }
+                    var hp = 100 + 10 * purchasedRank;
+                    CheckHealthReplay(store, profile, definition, "health", purchasedRank, hp);
+                });
+            });
+        }
+        var laterHealth = new[] { 4, 4, 5, 5, 5, 6, 6, 7, 8 };
+        for (var index = 0; index < laterHealth.Length; index++)
+        {
+            var id = $"common.health.{index + 2:D2}";
+            var expectedBefore = 110 + laterHealth.Take(index).Sum();
+            var expectedAfter = expectedBefore + laterHealth[index];
+            test($"Health upgrade {id}@1 adds its bonus and replays incoming damage", () =>
+            {
+                WithStore(store =>
+                {
+                    var node = PermanentSkillCatalog.Current.Find(id);
+                    var profile = ExpandedProfile(store, node.Prerequisites.Keys.ToArray());
+                    var purchased = Buy(store, profile, id, node.Prices[0]);
+                    var definition = WaveTests.Adam();
+                    Check.Near(expectedBefore, new AdamSession(profile, definition, "bible").CurrentHealth);
+                    CheckHealthReplay(store, purchased, definition, id, 1, expectedAfter);
+                });
+            });
+        }
+
         test("Purchased aim correction changes real Cross and Staff fan contacts and survives a mid-flight save", () =>
         {
             foreach (var weapon in new[] { "cross", "moses_staff" })
@@ -1651,6 +1755,28 @@ internal static class PermanentSkillCombatTests
         var arena = BattleWorld.Restore(session, Speeds, state.Run!.World!);
         arena.Advance(BattleWorld.FixedStep, Vector2.Zero);
         return arena.Collected;
+    }
+
+    private static void CheckHealthReplay(SaveStore store, GameSnapshot profile, RoundDefinition definition,
+        string skill, int rank, double hp)
+    {
+        var session = new AdamSession(profile, definition, "bible");
+        Check.Near(hp, session.CurrentHealth);
+        Check.Near(hp, session.PlayerMaximumHealth);
+        session.Damage(20);
+        Check.Near(hp - 20, session.CurrentHealth);
+        store.Commit(profile, profile.Revision, "issue53-health-checkpoint");
+        var loaded = store.Load()!;
+        var resumed = AdamSession.Resume(loaded, definition);
+        Check.Equal(rank, loaded.Run!.PermanentSnapshot[skill]);
+        Check.Near(hp, resumed.PlayerMaximumHealth);
+        Check.Near(hp - 20, resumed.CurrentHealth);
+        session.Advance(2);
+        resumed.Advance(2);
+        session.Damage(15);
+        resumed.Damage(15);
+        Check.Near(hp - 35, session.CurrentHealth);
+        Check.Near(session.CurrentHealth, resumed.CurrentHealth);
     }
 
     private static GameSnapshot ExpandedProfile(SaveStore store, params string[] desired) =>
