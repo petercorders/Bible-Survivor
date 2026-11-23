@@ -468,7 +468,8 @@ namespace BibleSurvivor.Unity
                     }
                     else
                     {
-                        Modal(width,height,heading,session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
+                        Modal(width,height,heading,session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지",
+                            session==null?AdamGameTitle.Korean:null);
                         for(var i=0;i<Weapons.Length;i++)
                             if(ArtButton(new Rect(width/2-240,height/2-15+i*58,480,50),AdamChoiceText.StartCard(Weapons[i],i),button,Weapons[i])) SelectSlot(i);
                     }
@@ -600,7 +601,7 @@ namespace BibleSurvivor.Unity
                 AdamBookTitle.DrawBand(width,Host.Session?.RoundNumber,death,HudText(16,death?AdamHud.Secondary:AdamHud.Lapis),HudText(36,AdamHud.Primary,true),HudText(16,AdamHud.Muted));
             else
             {
-            GUI.Label(new Rect(20,14,width-40,22),death?"도전 기록":"새 도전",HudText(16,AdamHud.Lapis,false,TextAnchor.MiddleCenter));
+            GUI.Label(new Rect(20,14,width-40,22),death?"도전 기록":AdamGameTitle.Korean,HudText(16,AdamHud.Lapis,false,TextAnchor.MiddleCenter));
             GUI.Label(new Rect(20,38,width-40,34),death?"사망 · 이번 도전 종료":"시작 무기를 선택하세요",title);
             GUI.Label(new Rect(20,78,width-40,22),death?"새 도전은 성장 초기화 · 영구 골드와 해금 유지":"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요",HudText(16,AdamHud.Secondary,false,TextAnchor.MiddleCenter));
             }
@@ -938,7 +939,8 @@ namespace BibleSurvivor.Unity
         void CompletionHeader(Rect panel,string heading,string detail)
         {
             var split=heading.IndexOf(" · ",StringComparison.Ordinal);
-            var eyebrow=split<0?"진행 저장됨":heading.Substring(0,split);
+            var status=split<0?"진행 저장됨":heading.Substring(0,split);
+            var eyebrow=drawingMobile?status:AdamGameTitle.Korean+" · "+status;
             var headline=split<0?heading:heading.Substring(split+3);
             ChoiceHeader(panel,eyebrow,headline,"");
             var lines=detail.Split('\n');var caution=lines[lines.Length-1];
@@ -947,12 +949,12 @@ namespace BibleSurvivor.Unity
             GUI.Label(MotionRect(new Rect(panel.x+24,panel.y+72,panel.width-48,66)),summary,style);
             PanelFooter(panel,"◆ "+caution,drawingMobile?"":"↑ ↓ 선택 · Enter 확인",true);
         }
-        void Modal(float width, float height, string heading, string detail)
+        void Modal(float width, float height, string heading, string detail, string eyebrow = null)
         {
             var panel = drawingMobile ? AdamMobileLayout.Panel(width, height) : new Rect(width / 2 - 310, height / 2 - 160, 620, 340);
             FillPanel(panel);
             AdamHud.Panel(art,MotionRect(panel));
-            GUI.Label(MotionRect(new Rect(panel.x+16,panel.y+10,panel.width-32,20)),Host?.Error!=null?"진행 보호":"도전 기록",HudText(16,AdamHud.Lapis,false,TextAnchor.MiddleCenter));
+            GUI.Label(MotionRect(new Rect(panel.x+16,panel.y+10,panel.width-32,20)),eyebrow ?? (Host?.Error!=null?"진행 보호":"도전 기록"),HudText(16,AdamHud.Lapis,false,TextAnchor.MiddleCenter));
             GUI.Label(MotionRect(new Rect(panel.x+16,panel.y+32,panel.width-32,40)),heading,title);
             var detailStyle = new GUIStyle(label) { wordWrap = true, fontSize = 20 };
             GUI.Label(MotionRect(new Rect(panel.x + 24, panel.y + 78, panel.width - 48, 58)), detail, detailStyle);

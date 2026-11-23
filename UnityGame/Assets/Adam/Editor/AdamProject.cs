@@ -27,7 +27,7 @@ namespace BibleSurvivor.Unity.Editor
             PlayerSettings.fullScreenMode = UnityEngine.FullScreenMode.Windowed;
             PlayerSettings.resizableWindow = true;
             AssetDatabase.SaveAssets();
-            var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/Adam.unity" }, "Builds/Adam.app", BuildTarget.StandaloneOSX, BuildOptions.Development);
+            var report = BuildPipeline.BuildPlayer(new[] { "Assets/Scenes/Adam.unity" }, "Builds/" + AdamMacAppName.AppFileName, BuildTarget.StandaloneOSX, BuildOptions.Development);
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new System.Exception("Adam player build failed: " + report.summary.result);
         }

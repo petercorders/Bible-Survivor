@@ -66,7 +66,7 @@ namespace BibleSurvivor.Unity
             GUI.EndGroup();
             AdamArt.Blit(AdamVisualQualityArt.Sprite(Fade,0),new Rect(300,0,32,110));
             AdamArt.Blit(AdamVisualQualityArt.Sprite(Crest,ArtFrame(round)),new Rect(20,22,64,64));
-            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":"성경 서바이버",eyebrow);
+            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":AdamGameTitle.Korean,eyebrow);
             var bookName=Name(round);GUI.Label(new Rect(96,34,204,44),bookName,name);
             if(round.HasValue)
             {
