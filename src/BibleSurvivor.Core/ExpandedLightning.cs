@@ -224,7 +224,7 @@ namespace BibleSurvivor.Core
         public static void Step(ExpandedLightningState state, double now, Vector2 playerPosition, int level,
             bool evolved, double damage, double cycle, int amount, double radius,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
-            ExpandedLightningSettings settings = default)
+            ExpandedLightningSettings settings = default, Func<double>? nextCycleDuration = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -252,7 +252,7 @@ namespace BibleSurvivor.Core
             var start = state.WaitingForTarget ? now : state.NextCycle;
             state.WaitingForTarget = false;
             state.Cycle = checked(state.Cycle + 1);
-            state.NextCycle = start + cycle;
+            state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - settings.DelayAdvance);
             var strikeRadius = Math.Min(MaximumStrikeRadius, radius + Profile.AtLevel(1).Radius * settings.RadiusBonus);
             var previous = 0;

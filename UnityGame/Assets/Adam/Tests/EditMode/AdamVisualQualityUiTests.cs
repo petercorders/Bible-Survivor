@@ -117,7 +117,7 @@ public sealed class AdamVisualQualityUiTests
 
     [Test] public void PermanentShopOffersOnlyTheLinkedCommonAndWeaponEffects()
     {
-        Assert.AreEqual(134,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
+        Assert.AreEqual(165,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
         foreach(var profile in ExpandedWeaponRules.All)
         {
             for(var rank=1;rank<=5;rank++)
@@ -139,6 +139,8 @@ public sealed class AdamVisualQualityUiTests
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.fire_pillar.e.01"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.wilderness_voice.c.02"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.moses_staff.e.03"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.sling.a.02"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.shot.03"));
     }
 
     [TestCase(false)][TestCase(true)]

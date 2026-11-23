@@ -91,8 +91,14 @@ namespace BibleSurvivor.Core
     public static class PermanentOriginalHitRules
     {
         internal static PermanentOriginalHitProfile BaseCritical(IReadOnlyDictionary<string, int> ranks,
-            double damage) => new PermanentOriginalHitProfile(damage, BasicCriticalChance(ranks),
+            string weapon, double damage) => new PermanentOriginalHitProfile(damage, BaseCriticalChance(ranks, weapon),
                 1.5 + BasicCriticalMultiplier(ranks), false);
+
+        internal static bool HasBaseCriticalChance(IReadOnlyDictionary<string, int> ranks) =>
+            BasicCriticalChance(ranks) > 0 || Has(ranks, "weapon.sling.a.02");
+
+        internal static double BaseCriticalChance(IReadOnlyDictionary<string, int> ranks, string weapon) =>
+            BasicCriticalChance(ranks) + (weapon == "sling" && Has(ranks, "weapon.sling.a.02") ? .06 : 0);
 
         internal static uint NextCriticalState(string runId, int round, string weaponId, uint state)
         {

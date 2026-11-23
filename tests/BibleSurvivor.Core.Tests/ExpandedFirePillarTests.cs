@@ -123,5 +123,18 @@ internal static class ExpandedFirePillarTests
             var ember = evolved.Regions.Single(region => region.Ember);
             Check.Near(1.20, ember.EndsAt - ember.StartedAt);
         });
+
+        test("Evolved fire does not allocate an ember when shared support regions are full", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            void Tick(double now) => ExpandedFirePillar.Step(state, now, Vector2.Zero, true, 20, 3, 1, 1.125, 3,
+                () => targets, _ => { }, reserveEmber: () => false);
+            Tick(0);
+            targets[1] = new Vector2(7, 0);
+            for (var tick = 1; tick <= 55; tick++) Tick(tick / 60d);
+            Check.True(state.Regions.Single().X > 2);
+            Check.True(!state.Regions.Single().Ember);
+        });
     }
 }

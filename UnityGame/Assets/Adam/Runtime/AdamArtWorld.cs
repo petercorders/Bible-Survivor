@@ -134,7 +134,10 @@ namespace BibleSurvivor.Unity
             var nextBoss=host.Session.Boss;
             VisualQuality.Observe(next);
             if(host.Session.Inventory.Weapons.ContainsKey("jawbone"))
-                JawboneSwing.Observe(next,host.Session.AttackProfile("jawbone").Amount,WeaponRules.Get("jawbone",host.Session.Inventory.Weapons["jawbone"]).BurstInterval);
+            {
+                var jawbone = host.Session.AttackProfile("jawbone");
+                JawboneSwing.Observe(next, jawbone.Amount, jawbone.BurstInterval);
+            }
             if(bossVisual!=null && nextBoss!=null)
             {
                 if(nextBoss.NextAttackAt>bossVisual.NextAttackAt)bossImpactAt=next.Time;

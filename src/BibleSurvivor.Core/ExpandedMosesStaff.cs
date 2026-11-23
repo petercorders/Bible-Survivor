@@ -242,7 +242,8 @@ namespace BibleSurvivor.Core
             bool evolved, double damage, double cycle, int amount, double widthBeforeForm, double range, double speed,
             Func<IReadOnlyDictionary<int, Vector2>> targets, IReadOnlyDictionary<int, Vector2> previousTargets,
             Func<ExpandedMosesStaffHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveLane = null,
-            ExpandedMosesStaffRankOptions rankOptions = default, Func<int, bool>? isElite = null)
+            ExpandedMosesStaffRankOptions rankOptions = default, Func<int, bool>? isElite = null,
+            Func<double>? nextCycleDuration = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -268,7 +269,7 @@ namespace BibleSurvivor.Core
             if (state.NextCycle > now + TimeEpsilon) return 0;
 
             state.Cycle = checked(state.Cycle + 1);
-            state.NextCycle += cycle;
+            state.NextCycle += nextCycleDuration?.Invoke() ?? cycle;
             var widthBonus = rankOptions.WidenWave ? Profile.AtLevel(1).Width * .10 : 0;
             var width = Math.Min(MaximumWidth, (widthBeforeForm + widthBonus) * (evolved ? 1.2 : 1));
             var forward = facing.LengthSquared() > 0 ? Vector2.Normalize(facing) : Vector2.UnitX;

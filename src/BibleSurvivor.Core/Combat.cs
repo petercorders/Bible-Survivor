@@ -12,6 +12,8 @@ namespace BibleSurvivor.Core
         public double DurationBonus {get;set;}
         public double ProjectileSpeedBonus {get;set;}
         public int ExtraAmount {get;set;}
+        internal int ExtraPierce { get; set; }
+        internal double BurstReduction { get; set; }
     }
     public sealed class CombatStats
     {
@@ -72,12 +74,16 @@ namespace BibleSurvivor.Core
             stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + collisionBonus);
             stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
             if (id == "sling") stats.AreaMultiplier += collisionBonus;
+            if (id == "sling") stats.Pierce = Math.Min(8, stats.Pierce + bonuses.ExtraPierce);
             // Choose the evolved sling's base volley before adding stones and specialization.
             // EvolutionRules.Evolved retains the v1 final-count maximum for older runs.
             if (form == EvolutionRules.Sling) stats.Amount = EvolutionRules.SlingMinimum + bonuses.ExtraAmount;
             else if (form != null) stats = stats.Evolved(form);
             stats.Amount = Math.Min(ExpandedAmountLimit(id), stats.Amount);
             stats.AreaMultiplier = Math.Min(2.5, stats.AreaMultiplier);
+            if (!stats.IsOrbit && bonuses.BurstReduction > 0)
+                stats.BurstInterval = new PermanentTempoProfile(0, bonuses.BurstReduction, 0)
+                    .BurstInterval(stats.BurstInterval);
             var batch = stats.IsOrbit ? 0 : (stats.Amount - 1) * stats.BurstInterval;
             stats.Cycle = Math.Max(stats.Cycle, Math.Max(.15, batch + BattleWorld.FixedStep));
             return stats;
@@ -86,7 +92,7 @@ namespace BibleSurvivor.Core
         internal static int ExpandedAmountLimit(string id) => id == "bible" ? 7 : id == "jawbone" ? 6 : 8;
 
         internal static CombatStats ForScheduled(ExpandedWeaponProfile profile, int level, CombatBonuses bonuses,
-            int specialization, bool masteryFour = false, bool masteryFive = false)
+            int specialization, bool masteryFour = false, bool masteryFive = false, double collisionBonus = 0)
         {
             var basis = profile.AtLevel(level);
             var original = profile.AtLevel(1);
@@ -97,7 +103,7 @@ namespace BibleSurvivor.Core
                 "cross" or "daniel_lion" => masteryFive,
                 _ => false,
             };
-            var radiusBonus = (weapon == "cross" ? 0 : bonuses.AreaBonus) + (radiusMastery ? .10 : 0);
+            var radiusBonus = (weapon == "cross" ? collisionBonus : bonuses.AreaBonus) + (radiusMastery ? .10 : 0);
             var reachBonus = bonuses.AreaBonus +
                 (weapon == "wilderness_voice" ? .20 * specialization + (masteryFour ? .10 : 0) : 0);
             var widthBonus = bonuses.AreaBonus + (weapon == "elijah_chariot" && masteryFour ? .10 : 0);

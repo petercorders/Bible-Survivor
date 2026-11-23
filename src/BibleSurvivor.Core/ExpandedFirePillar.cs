@@ -47,6 +47,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public double EndsAt { get; set; }
         [DataMember(IsRequired = true)] public double NextHit { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool ShortenedPrimaryInterval { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
         [DataMember(IsRequired = true)] public double Radius { get; set; }
         [DataMember(EmitDefaultValue = false)] public int TargetId { get; set; }
@@ -105,6 +106,7 @@ namespace BibleSurvivor.Core
                     region.EndsAt <= region.StartedAt || region.EndsAt - region.StartedAt > 5.25 + epsilon ||
                     !BattleSnapshot.Finite(region.NextHit) || region.NextHit < now - epsilon ||
                     region.NextHit < region.IgnitionAt - epsilon || !ExpandedFirePillar.ValidDelay(region.FirstDelay) ||
+                    region.Ember && region.ShortenedPrimaryInterval ||
                     region.Ember && region.FirstDelay.HasValue ||
                     !BattleSnapshot.Finite(region.Radius) || region.Radius <= 0 || region.Radius > 2.25 ||
                     !BattleSnapshot.Finite(region.Damage) || region.Damage <= 0 || region.Damage > 45 ||
@@ -130,12 +132,14 @@ namespace BibleSurvivor.Core
         public static int Step(ExpandedFirePillarState state, double now, Vector2 player, bool evolved,
             double damage, double cycle, int amount, double radius, double duration,
             Func<IReadOnlyDictionary<int, Vector2>> getTargets, Action<ExpandedFirePillarHit> hit,
-            double delayAdvance = 0, ExpandedFirePillarSettings settings = default)
+            double delayAdvance = 0, ExpandedFirePillarSettings settings = default, Func<bool>? reserveEmber = null,
+            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null)
         {
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
             state.Regions.RemoveAll(region => now + TimeEpsilon >= region.EndsAt);
-            if (evolved) MovePillars(state, now, getTargets(), settings.ExtendedEmbers ? 1.20 * EmberLifetime : EmberLifetime);
+            if (evolved) MovePillars(state, now, getTargets(), settings.ExtendedEmbers ? 1.20 * EmberLifetime : EmberLifetime,
+                reserveEmber);
             state.LastStep = now;
             ResolveDue(state, now, getTargets(), hit);
 
@@ -153,7 +157,7 @@ namespace BibleSurvivor.Core
 
             var start = state.WaitingForTarget ? now : state.NextCycle;
             state.WaitingForTarget = false;
-            state.NextCycle = start + cycle;
+            state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var capacity = 32 - state.Regions.Count(region => !region.Ember);
             var accepted = Math.Min(capacity, amount);
             state.SuppressedOriginal |= accepted != amount;
@@ -169,6 +173,7 @@ namespace BibleSurvivor.Core
                 }
                 var region = Create(state, center, start, damage, radius, duration, false);
                 region.FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay;
+                region.ShortenedPrimaryInterval = shortenedPrimaryInterval;
                 region.NextHit = region.IgnitionAt;
             }
             return accepted;
@@ -187,7 +192,7 @@ namespace BibleSurvivor.Core
         }
 
         private static void MovePillars(ExpandedFirePillarState state, double now,
-            IReadOnlyDictionary<int, Vector2> targets, double emberDuration)
+            IReadOnlyDictionary<int, Vector2> targets, double emberDuration, Func<bool>? reserveEmber)
         {
             foreach (var pillar in state.Regions.Where(region => !region.Ember).OrderBy(region => region.Id).ToArray())
             {
@@ -213,7 +218,7 @@ namespace BibleSurvivor.Core
                 var firstEmber = 1 - pillar.TravelSinceEmber;
                 for (var offset = firstEmber; offset <= movement; offset++)
                 {
-                    if (state.Regions.Count(region => region.Ember) < 16)
+                    if (state.Regions.Count(region => region.Ember) < 16 && reserveEmber?.Invoke() != false)
                         Create(state, from + direction * (float)offset, now, pillar.Damage * EmberDamage,
                             EmberRadius, emberDuration, true);
                 }
@@ -230,7 +235,7 @@ namespace BibleSurvivor.Core
             var due = state.Regions.Where(region => region.NextHit <= now + TimeEpsilon && region.NextHit < region.EndsAt)
                 .OrderBy(region => region.Id).ToArray();
             if (due.Length == 0) return;
-            foreach (var region in due) region.NextHit += HitInterval;
+            foreach (var region in due) region.NextHit += region.ShortenedPrimaryInterval ? HitInterval * .96 : HitInterval;
             var hits = new List<(ExpandedFireRegion Region, int Id, Vector2 Position)>();
             foreach (var target in targets.OrderBy(target => target.Key))
                 foreach (var category in new[] { false, true })

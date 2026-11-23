@@ -63,6 +63,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public PermanentRecoveryState? PermanentRecovery { get; set; }
         [DataMember(EmitDefaultValue=false)] public Dictionary<string, uint>? CriticalRandomStates { get; set; }
         [DataMember(EmitDefaultValue=false)] public bool FirstBibleAttackUsed { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double NoHitCarrySeconds { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? LastTempoEliteKillAt { get; set; }
+        [DataMember(EmitDefaultValue=false)] public bool TempoOpeningUsed { get; set; }
     }
 
     [DataContract]
@@ -119,7 +122,8 @@ namespace BibleSurvivor.Core
                 !PermanentSkillCatalog.SupportsVersion(catalog)))
                 throw new UnsupportedSaveVersionException();
             if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null ||
-                Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed))
+                Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
+                Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
             foreach (var encounter in PermanentProfile.EncounterHistory(Run))
                 if (encounter.Reward is { } reward &&
@@ -169,14 +173,22 @@ namespace BibleSurvivor.Core
                 PermanentSkillCatalog.ForVersion(Run.PermanentCatalogVersion!.Value).ValidateRanks(Run.PermanentSnapshot);
                 if (Run.PermanentActions == null || Run.PermanentRecovery == null)
                     throw new InvalidDataException("Expanded run requires permanent action and recovery state");
-                var hasCriticalRank = PermanentRules.Rank(Run.PermanentSnapshot, "common.crit.01") > 0;
+                var hasCriticalRank = PermanentOriginalHitRules.HasBaseCriticalChance(Run.PermanentSnapshot);
                 if (hasCriticalRank != (Run.CriticalRandomStates != null) ||
                     Run.CriticalRandomStates != null && (Run.CriticalRandomStates.Count > 6 ||
-                        Run.CriticalRandomStates.Any(stream => stream.Value == 0 || !Run.Weapons.ContainsKey(stream.Key))))
+                        Run.CriticalRandomStates.Any(stream => stream.Value == 0 || !Run.Weapons.ContainsKey(stream.Key) ||
+                            PermanentOriginalHitRules.BaseCriticalChance(Run.PermanentSnapshot, stream.Key) == 0)))
                     throw new InvalidDataException("Invalid permanent critical attack stream");
                 if (Run.FirstBibleAttackUsed && (PermanentRules.Rank(Run.PermanentSnapshot, "weapon.bible.base.04") == 0 ||
                     !Run.Weapons.ContainsKey("bible")))
                     throw new InvalidDataException("Unexpected first-bible-attack receipt");
+                var combatTime = Run.Boss?.CombatTime ?? Run.Wave?.Elapsed ?? Run.NormalEndedAt ?? 180;
+                if (!Finite(Run.NoHitCarrySeconds) || Run.NoHitCarrySeconds < 0 || Run.NoHitCarrySeconds > 10 ||
+                    Run.NoHitCarrySeconds > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.07") == 0 ||
+                    Run.LastTempoEliteKillAt is double killAt && (!Finite(killAt) || killAt < 0 || killAt > combatTime ||
+                        PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.08") == 0) ||
+                    Run.TempoOpeningUsed && PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.02") == 0)
+                    throw new InvalidDataException("Invalid permanent tempo history");
                 if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
                     throw new InvalidDataException("Expanded run health does not match its starting ranks");
             }
@@ -313,23 +325,52 @@ namespace BibleSurvivor.Core
                     strike.CanRetarget && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.04") == 0 ||
                     strike.LongerChain && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.e.01") == 0) == true)
                     throw new InvalidDataException("Lightning strike flags require their frozen ranks");
-                if (Run.World.WildernessVoice?.Active.Any(cast => cast.FirstDelay.HasValue) == true &&
-                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.base.05") == 0 ||
-                    Run.World.FirePillar?.Regions.Any(region => region.FirstDelay.HasValue) == true &&
-                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.fire_pillar.base.05") == 0 ||
-                    Run.World.ElijahChariot?.Paths.Any(path => path.FirstDelay.HasValue) == true &&
-                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.elijah_chariot.base.05") == 0)
+                var permanentRanks = Run.PermanentSnapshot;
+                bool InvalidDelay(double? delay, string nodeId) => delay.HasValue &&
+                    (Math.Abs(delay.Value - .07) > 1e-9 || PermanentRules.Rank(permanentRanks, nodeId) == 0);
+                if (Run.World.WildernessVoice?.Active.Any(cast => InvalidDelay(cast.FirstDelay, "weapon.wilderness_voice.base.05")) == true ||
+                    Run.World.FirePillar?.Regions.Any(region => InvalidDelay(region.FirstDelay, "weapon.fire_pillar.base.05")) == true ||
+                    Run.World.ElijahChariot?.Paths.Any(path => InvalidDelay(path.FirstDelay, "weapon.elijah_chariot.base.05")) == true)
                     throw new InvalidDataException("Advanced weapon delay requires its frozen rank");
+                bool InvalidVoiceKnockback(double bonus, string nodeId) => bonus != 0 &&
+                    (bonus != .25 || PermanentRules.Rank(permanentRanks, nodeId) == 0);
                 if (Run.World.WildernessVoice?.Active.Any(cast =>
-                    cast.KnockbackBonus > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.c.01") == 0 ||
-                    cast.CloseKnockbackBonus > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.c.02") == 0) == true)
+                    InvalidVoiceKnockback(cast.KnockbackBonus, "weapon.wilderness_voice.c.01") ||
+                    InvalidVoiceKnockback(cast.CloseKnockbackBonus, "weapon.wilderness_voice.c.02")) == true)
                     throw new InvalidDataException("Voice cast knockback requires its frozen rank");
+                if (PermanentRules.Rank(permanentRanks, "common.tempo.05") == 0 &&
+                    (Run.World.WildernessVoice?.Active.Any(cast => cast.ShortenedPrimaryInterval) == true ||
+                     Run.World.FirePillar?.Regions.Any(region => region.ShortenedPrimaryInterval) == true ||
+                     Run.World.Cross?.Shots.Any(shot => shot.ShortenedRehitInterval) == true))
+                    throw new InvalidDataException("Shortened primary hit intervals require their frozen rank");
+                var emberLifetime = PermanentRules.Rank(permanentRanks, "weapon.fire_pillar.e.01") > 0 ? 1.2 : 1;
+                if (Run.World.FirePillar?.Regions.Any(region =>
+                    region.Ember && Math.Abs(region.EndsAt - region.StartedAt - emberLifetime) > 1e-8) == true)
+                    throw new InvalidDataException("Fire pillar ember lifetime does not match its frozen ranks");
                 if (Run.World.MosesStaff?.Waves.Any(wave =>
                     wave.IncreasedKnockback && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.b.01") == 0 ||
                     wave.WidenedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.01") == 0 ||
                     wave.EmpoweredLaneEdge && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.02") == 0 ||
                     wave.ExtendedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.03") == 0) == true)
                     throw new InvalidDataException("Moses staff wave bonuses require their frozen ranks");
+                if (Run.World.Cross?.Shots.Any(shot =>
+                    shot.TrainedOutboundSpeed.HasValue && PermanentRules.Rank(permanentRanks, "weapon.cross.a.01") == 0 ||
+                    shot.TrainedReturnSpeed.HasValue && PermanentRules.Rank(permanentRanks, "weapon.cross.b.01") == 0 ||
+                    shot.IncreasedLegBudget && PermanentRules.Rank(permanentRanks, "weapon.cross.c.01") == 0 ||
+                    shot.IncreasedSharedLegBudget && PermanentRules.Rank(permanentRanks, "common.shot.03") == 0 ||
+                    shot.ExtendedThorns && PermanentRules.Rank(permanentRanks, "weapon.cross.e.01") == 0) == true)
+                    throw new InvalidDataException("Cross projectile bonuses require their frozen ranks");
+                if (Run.World.DanielLion is { } lion &&
+                    (lion.Lions.Any(actor => actor.ExtendedLeash && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.a.02") == 0 ||
+                        actor.FirstClawPhaseResolved && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.b.02") == 0) ||
+                    lion.Leap?.EmpoweredDamage == true && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.01") == 0))
+                    throw new InvalidDataException("Daniel lion bonuses require their frozen ranks");
+                if (Run.World.ElijahChariot?.Paths.Any(path =>
+                    path.Range > 10 + 1e-9 && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.a.01") == 0 ||
+                    path.ForwardKnockback && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.d.01") == 0 ||
+                    path.WiderWhirlwind && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.01") == 0 ||
+                    path.ExtendedTrail && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.02") == 0) == true)
+                    throw new InvalidDataException("Elijah chariot paths require their frozen ranks");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if (expandedCombat && ((Run.World.Charges != null) != (normalRound >= 4) ||
                     (Run.World.HostileProjectiles != null) != chainWorld))

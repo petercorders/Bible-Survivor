@@ -15,6 +15,9 @@ namespace BibleSurvivor.Unity
         {
             "attack", "health", "armor", "move", "pickup", "growth", "cooldown", "regen",
             "common.crit.01", "common.crit.02",
+            "common.duration.01", "common.shot.01", "common.shot.02", "common.shot.03",
+            "common.tempo.02", "common.tempo.03", "common.tempo.04", "common.tempo.05", "common.tempo.06",
+            "common.tempo.07", "common.tempo.08", "common.tempo.09", "common.tempo.10",
             "weapon.bible.base.01", "weapon.bible.base.02", "weapon.bible.base.03",
             "weapon.bible.base.04", "weapon.bible.base.05",
             "weapon.bible.a.01",
@@ -23,6 +26,7 @@ namespace BibleSurvivor.Unity
             "weapon.jawbone.a.01",
             "weapon.sling.base.01", "weapon.sling.base.02", "weapon.sling.base.03",
             "weapon.sling.base.04", "weapon.sling.base.05",
+            "weapon.sling.a.01", "weapon.sling.a.02",
             "common.health.02", "common.health.03", "common.health.04",
             "common.health.05", "common.health.06", "common.health.07",
             "common.health.08", "common.health.09", "common.health.10",
@@ -57,10 +61,16 @@ namespace BibleSurvivor.Unity
             "weapon.fire_pillar.a.01", "weapon.fire_pillar.a.02", "weapon.fire_pillar.b.01", "weapon.fire_pillar.e.01",
             "weapon.daniel_lion.base.01", "weapon.daniel_lion.base.02", "weapon.daniel_lion.base.03",
             "weapon.daniel_lion.base.04", "weapon.daniel_lion.base.05",
+            "weapon.daniel_lion.a.01", "weapon.daniel_lion.a.02", "weapon.daniel_lion.b.01",
+            "weapon.daniel_lion.b.02", "weapon.daniel_lion.e.01",
             "weapon.cross.base.01", "weapon.cross.base.02", "weapon.cross.base.03",
             "weapon.cross.base.04", "weapon.cross.base.05",
+            "weapon.cross.a.01", "weapon.cross.a.02", "weapon.cross.b.01",
+            "weapon.cross.c.01", "weapon.cross.c.02", "weapon.cross.e.01",
             "weapon.elijah_chariot.base.01", "weapon.elijah_chariot.base.02", "weapon.elijah_chariot.base.03",
             "weapon.elijah_chariot.base.04", "weapon.elijah_chariot.base.05",
+            "weapon.elijah_chariot.a.01", "weapon.elijah_chariot.b.01", "weapon.elijah_chariot.d.01",
+            "weapon.elijah_chariot.e.01", "weapon.elijah_chariot.e.02",
         };
 
         public static bool OffersPermanentSkillPurchase(string id) => PlayablePermanentSkills.Contains(id);

@@ -101,8 +101,9 @@ namespace BibleSurvivor.Core
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
         internal double RollOriginalDamage(string weaponId, double damage)
         {
-            if (!HasExpandedSkill("common.crit.01") || damage <= 0) return damage;
-            var profile = PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, damage);
+            if (CombatRulesVersion != 2 || damage <= 0 || run.CriticalRandomStates == null) return damage;
+            var profile = PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, weaponId, damage);
+            if (!profile.RequiresCriticalRoll) return damage;
             var streams = run.CriticalRandomStates!;
             streams.TryGetValue(weaponId, out var previous);
             var current = PermanentOriginalHitRules.NextCriticalState(run.RunId, definition.Number, weaponId, previous);
@@ -110,22 +111,27 @@ namespace BibleSurvivor.Core
             return profile.Resolve(current / 4294967296d).Damage;
         }
         internal bool IsEliteActor(int id) =>
-            Encounter != null ? id == BossRules!.BossActorId :
+            Encounter != null ? IsBossActor(id) :
             TargetMaxHealth(id) >= 3L * definition.Waves.SelectMany(wave => wave.Groups).Min(group => group.Health);
+        internal bool IsBossActor(int id) => Encounter != null && id == BossRules!.BossActorId;
         internal ExpandedLightningSettings LightningSettings() =>
-            ExpandedLightningSettings.FromRanks(run.PermanentSnapshot,
-                id => Encounter != null && id == BossRules!.BossActorId, IsEliteActor);
+            ExpandedLightningSettings.FromRanks(run.PermanentSnapshot, IsBossActor, IsEliteActor);
         internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
             HasExpandedSkill("weapon.fire_pillar.a.01"),
             HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
             HasExpandedSkill("weapon.fire_pillar.e.01"));
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
             ExpandedMosesStaffRankOptions.FromRanks(run.PermanentSnapshot);
+        internal ExpandedCrossRankOptions CrossRankOptions() => ExpandedCrossRankOptions.FromRanks(run.PermanentSnapshot);
+        internal ExpandedDanielLionRankOptions DanielLionRankOptions() =>
+            ExpandedDanielLionRankOptions.FromRanks(run.PermanentSnapshot);
+        internal ExpandedElijahChariotRankOptions ElijahChariotRankOptions() =>
+            ExpandedElijahChariotRankOptions.FromRanks(run.PermanentSnapshot);
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
         public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
 
-        internal CombatStats AttackProfile(string weaponId, bool firstBibleWait)
+        internal CombatStats AttackProfile(string weaponId, bool firstBibleWait, bool firstTempoWait = false)
         {
             if(!Inventory.Weapons.TryGetValue(weaponId,out var level)) throw new InvalidOperationException("Weapon not equipped");
             var bonuses = new CombatBonuses {
@@ -137,36 +143,69 @@ namespace BibleSurvivor.Core
             {
                 var skillPrefix = "weapon." + weaponId + ".base.";
                 bonuses.DamageBonus += .10 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "01");
-                bonuses.CooldownReduction += .05 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "02");
+                var weaponWaitReduction = .05 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "02");
+                if (firstBibleWait) weaponWaitReduction += .25;
+                var tempo = PermanentTempoRules.Evaluate(run.PermanentSnapshot, TempoContext(firstTempoWait), Passive("thunder"),
+                    otherCycleReduction: weaponWaitReduction);
+                bonuses.CooldownReduction = tempo.CycleReduction;
+                bonuses.BurstReduction = tempo.BurstReduction;
+                if (HasExpandedSkill("common.duration.01")) bonuses.DurationBonus += .05;
+                if ((weaponId == "sling" || weaponId == "cross" || weaponId == "moses_staff" || weaponId == "elijah_chariot") &&
+                    HasExpandedSkill("common.shot.01")) bonuses.ProjectileSpeedBonus += .05;
                 var specialization = PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");
+                var collisionBonus = (weaponId == "sling" || weaponId == "cross") && HasExpandedSkill("common.shot.02")
+                    ? .04 : 0;
                 if (ExpandedWeaponRules.TryGet(weaponId, out var expanded))
                 {
                     bonuses.ExtraAmount = weaponId == "wilderness_voice" ? 0 : specialization;
                     if (weaponId == "wilderness_voice" && HasExpandedSkill("weapon.wilderness_voice.a.01") ||
                         weaponId == "fire_pillar" && HasExpandedSkill("weapon.fire_pillar.b.01")) bonuses.DurationBonus += .12;
                     return CombatStats.ForScheduled(expanded, level, bonuses, specialization,
-                        HasExpandedSkill(skillPrefix + "04"), HasExpandedSkill(skillPrefix + "05"));
+                        HasExpandedSkill(skillPrefix + "04"), HasExpandedSkill(skillPrefix + "05"), collisionBonus);
                 }
                 bonuses.ExtraAmount += specialization;
-                var collisionBonus = 0d;
                 switch (weaponId)
                 {
                     case "bible":
                         if (HasExpandedSkill(skillPrefix + "05")) collisionBonus = .12;
-                        if (firstBibleWait) bonuses.CooldownReduction += .25;
                         break;
                     case "jawbone":
                         if (HasExpandedSkill(skillPrefix + "04")) bonuses.AreaBonus += .10;
                         break;
                     case "sling":
-                        if (HasExpandedSkill(skillPrefix + "04")) collisionBonus = .10;
+                        if (HasExpandedSkill(skillPrefix + "04")) collisionBonus += .10;
                         if (HasExpandedSkill(skillPrefix + "05")) bonuses.ProjectileSpeedBonus += .12;
+                        if (HasExpandedSkill("common.shot.03")) bonuses.ExtraPierce = 1;
                         break;
                 }
                 return CombatStats.ForExpanded(weaponId, level, bonuses, form, collisionBonus);
             }
             var profile = CombatStats.For(weaponId, level, bonuses);
             return form != null ? profile.Evolved(form) : profile;
+        }
+
+        internal bool TempoOpeningAvailable => HasExpandedSkill("common.tempo.02") && !run.TempoOpeningUsed;
+
+        internal void ObserveTempoOpening()
+        {
+            if (TempoOpeningAvailable) run.TempoOpeningUsed = true;
+        }
+
+        private double ActiveRoundTime(double combatTime) => run.Boss is { } boss
+            ? combatTime - Math.Min(boss.IntroElapsed, Math.Max(0, combatTime - boss.NormalEndedAt))
+            : combatTime;
+
+        private PermanentTempoContext TempoContext(bool firstTempoWait)
+        {
+            if (!IsActive) return default;
+            double ContextTime(double time) => Math.Round(ActiveRoundTime(time), 9);
+            var now = ContextTime(CombatTime);
+            double? sinceHurt = run.LastHitTime >= 0 ? Math.Round(now - ContextTime(run.LastHitTime), 9) : (double?)null;
+            double? sinceEliteKill = run.LastTempoEliteKillAt is double killAt
+                ? Math.Round(now - ContextTime(killAt), 9) : (double?)null;
+            return new PermanentTempoContext(firstTempoWait, now, sinceHurt,
+                sinceHurt ?? Math.Round(run.NoHitCarrySeconds + now, 9),
+                sinceEliteKill, run.Stage == "boss");
         }
         public IReadOnlyList<string> PendingChoices => run.Choices.AsReadOnly();
 
@@ -361,9 +400,11 @@ namespace BibleSurvivor.Core
             if (target.CombatRulesVersion != 2) return;
             target.PermanentActions = new PermanentActionState();
             target.PermanentRecovery = new PermanentRecoveryState();
-            target.CriticalRandomStates = PermanentRules.Rank(target.PermanentSnapshot, "common.crit.01") > 0
+            target.CriticalRandomStates = PermanentOriginalHitRules.HasBaseCriticalChance(target.PermanentSnapshot)
                 ? new Dictionary<string, uint>(StringComparer.Ordinal) : null;
             target.FirstBibleAttackUsed = false;
+            target.LastTempoEliteKillAt = null;
+            target.TempoOpeningUsed = false;
         }
 
         public void Advance(double seconds)
@@ -447,8 +488,13 @@ namespace BibleSurvivor.Core
         {
             if(run.Boss!=null){if(Targets.TryGetValue(id,out var target))Hit(id,target.Health,null,original);return;}
             if (!IsActive || Wave == null || Wave.Paused || run.PendingLevels > 0 || !Wave.Active.ContainsKey(id)) return;
-            if (original && (HasExpandedSkill("common.regen.05") || HasExpandedSkill("common.regen.06")))
-                RecoverOnKill(IsEliteActor(id) ? PermanentRecoveryKillKind.Elite : PermanentRecoveryKillKind.Normal, true);
+            if (original && (HasExpandedSkill("common.regen.05") || HasExpandedSkill("common.regen.06") ||
+                HasExpandedSkill("common.tempo.08")))
+            {
+                var elite = IsEliteActor(id);
+                if (elite && HasExpandedSkill("common.tempo.08")) run.LastTempoEliteKillAt = CombatTime;
+                RecoverOnKill(elite ? PermanentRecoveryKillKind.Elite : PermanentRecoveryKillKind.Normal, true);
+            }
             var xp = Arena!.Kill(id); run.Drops.Add(id,xp);
             CreditKill();
             if (Wave.IsNormalComplete) Finish();
@@ -630,6 +676,9 @@ namespace BibleSurvivor.Core
         { if (++run.KillRemainder == 5) { state.Profile.Gold = checked(state.Profile.Gold + 1); run.KillRemainder = 0; } }
         private void RecordSettlement()
         {
+            if (HasExpandedSkill("common.tempo.07"))
+                run.NoHitCarrySeconds = Math.Min(10, ActiveRoundTime(CombatTime) +
+                    (run.LastHitTime >= 0 ? -ActiveRoundTime(run.LastHitTime) : run.NoHitCarrySeconds));
             if (state.Profile.HighestSettledRound is int settled)
                 state.Profile.HighestSettledRound = Math.Max(settled, definition.Number);
         }

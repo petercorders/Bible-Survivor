@@ -53,13 +53,15 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
         [DataMember(EmitDefaultValue = false)] public double KnockbackBonus { get; set; }
         [DataMember(EmitDefaultValue = false)] public double CloseKnockbackBonus { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool ShortenedPrimaryInterval { get; set; }
         [DataMember(IsRequired = true)] public int PrimaryPulses { get; set; }
         [DataMember(IsRequired = true)] public int EchoesFired { get; set; }
 
         internal double End => StartedAt + Duration;
         internal double InitialDelay => FirstDelay ?? ExpandedWildernessVoice.Profile.FirstAttackDelay;
         internal double PrimaryAt(int pulse) =>
-            StartedAt + InitialDelay + pulse * ExpandedWildernessVoice.Profile.RepeatHitInterval;
+            StartedAt + InitialDelay + pulse * (ShortenedPrimaryInterval
+                ? ExpandedWildernessVoice.ShortenedInterval : ExpandedWildernessVoice.Profile.RepeatHitInterval);
         internal double EchoAt(int echo) => StartedAt + (echo + 1) * ExpandedWildernessVoice.EchoInterval;
         internal double ExpiresAt(bool evolved) => evolved ? Math.Max(End, EchoAt(1)) : End;
 
@@ -140,7 +142,8 @@ namespace BibleSurvivor.Core
         internal static readonly double MaximumDuration = Profile.AtLevel(8).Duration * 1.75;
         internal static readonly int MaximumActiveCasts = (int)Math.Ceiling(MaximumDuration / MinimumCycle);
         internal static readonly int MaximumPrimaryPulses =
-            (int)Math.Ceiling((MaximumDuration - MinimumDelay) / Profile.RepeatHitInterval);
+            (int)Math.Ceiling((MaximumDuration - MinimumDelay) / ShortenedInterval);
+        internal static double ShortenedInterval => Profile.RepeatHitInterval * .96;
         internal const double TimeEpsilon = 1e-9;
         internal const double MinimumCycle = .15;
         private const double MinimumDelay = .05;
@@ -151,7 +154,8 @@ namespace BibleSurvivor.Core
         public static void Step(ExpandedWildernessVoiceState state, double now, Vector2 playerPosition, Vector2 facing,
             int level, bool evolved, double damage, double cycle, double reach, double duration, double halfAngle,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit,
-            double delayAdvance = 0, double knockbackBonus = 0, double closeKnockbackBonus = 0)
+            double delayAdvance = 0, double knockbackBonus = 0, double closeKnockbackBonus = 0,
+            bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -174,7 +178,7 @@ namespace BibleSurvivor.Core
             if (state.NextCycle > now + TimeEpsilon) return;
             var start = state.NextCycle;
             state.Cycle = checked(state.Cycle + 1);
-            state.NextCycle = start + cycle;
+            state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             state.Active.Add(new ExpandedWildernessVoiceCastState
             {
                 Id = state.Cycle,
@@ -186,6 +190,7 @@ namespace BibleSurvivor.Core
                 FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay,
                 KnockbackBonus = knockbackBonus,
                 CloseKnockbackBonus = closeKnockbackBonus,
+                ShortenedPrimaryInterval = shortenedPrimaryInterval,
             });
         }
 

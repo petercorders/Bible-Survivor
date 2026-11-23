@@ -8,6 +8,41 @@ namespace BibleSurvivor.Core
 {
     public enum ExpandedCrossHitKind { Outbound, Return, Thorns }
 
+    public readonly struct ExpandedCrossRankOptions
+    {
+        public bool AccelerateOutbound { get; }
+        public bool PrioritizeElite { get; }
+        public bool AccelerateReturn { get; }
+        public bool IncreaseLegBudget { get; }
+        public bool WidenCollision { get; }
+        public bool ExtendThorns { get; }
+        public bool IncreaseSharedLegBudget { get; }
+        public bool ShortenRehitInterval { get; }
+
+        public ExpandedCrossRankOptions(bool accelerateOutbound = false, bool prioritizeElite = false,
+            bool accelerateReturn = false, bool increaseLegBudget = false, bool widenCollision = false, bool extendThorns = false,
+            bool increaseSharedLegBudget = false, bool shortenRehitInterval = false)
+        {
+            AccelerateOutbound = accelerateOutbound;
+            PrioritizeElite = prioritizeElite;
+            AccelerateReturn = accelerateReturn;
+            IncreaseLegBudget = increaseLegBudget;
+            WidenCollision = widenCollision;
+            ExtendThorns = extendThorns;
+            IncreaseSharedLegBudget = increaseSharedLegBudget;
+            ShortenRehitInterval = shortenRehitInterval;
+        }
+
+        public static ExpandedCrossRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
+        {
+            if (ranks == null) throw new ArgumentNullException(nameof(ranks));
+            bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
+            return new ExpandedCrossRankOptions(Has("weapon.cross.a.01"), Has("weapon.cross.a.02"),
+                Has("weapon.cross.b.01"), Has("weapon.cross.c.01"), Has("weapon.cross.c.02"), Has("weapon.cross.e.01"),
+                Has("common.shot.03"), Has("common.tempo.05"));
+        }
+    }
+
     public readonly struct ExpandedCrossHit
     {
         public ExpandedCrossHitKind Kind { get; }
@@ -86,6 +121,19 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public List<ExpandedCrossTargetState> HitTargets { get; set; } = new List<ExpandedCrossTargetState>();
         [DataMember(IsRequired = true)] public List<ExpandedCrossThornState> Thorns { get; set; } = new List<ExpandedCrossThornState>();
 
+        [DataMember(EmitDefaultValue = false)] public double? TrainedOutboundSpeed { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? TrainedReturnSpeed { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool IncreasedLegBudget { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool IncreasedSharedLegBudget { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool ExtendedThorns { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool ShortenedRehitInterval { get; set; }
+
+        public double OutboundSpeed => TrainedOutboundSpeed ?? Speed;
+        public double ReturnSpeed => TrainedReturnSpeed ?? Speed;
+        public double ThornDuration => ExpandedCross.BaseThornDuration * (ExtendedThorns ? 1.20 : 1);
+        public int HitBudget(bool evolved) => Math.Min(8, (evolved ? 6 : ExpandedCross.Profile.HitsPerLeg) +
+            (IncreasedLegBudget ? 1 : 0) + (IncreasedSharedLegBudget ? 1 : 0));
+
         public Vector2 Start => new Vector2(StartX, StartY);
         public Vector2 Position => new Vector2(X, Y);
         public Vector2 Direction => new Vector2(DirectionX, DirectionY);
@@ -147,7 +195,6 @@ namespace BibleSurvivor.Core
             long previousId = 0;
             var flying = 0;
             var trails = 0;
-            var budget = ExpandedCross.LegBudget(evolved);
             foreach (var shot in Shots)
             {
                 if (shot == null || shot.Id <= previousId || shot.Id >= NextShotId || shot.Cycle < 1 || shot.Cycle > Cycle ||
@@ -157,6 +204,8 @@ namespace BibleSurvivor.Core
                     !ExpandedCross.Within(shot.SimulatedAt, shot.EmittedAt, now) ||
                     !ExpandedCross.Within(shot.Damage, 1, ExpandedCross.MaximumDamage) ||
                     !ExpandedCross.ValidGeometry(shot.Radius, shot.Range, shot.Speed) ||
+                    !ExpandedCross.ValidTrainedSpeed(shot.Speed, shot.TrainedOutboundSpeed) ||
+                    !ExpandedCross.ValidTrainedSpeed(shot.Speed, shot.TrainedReturnSpeed) ||
                     !ExpandedCross.Within(shot.Distance, 0, shot.Range) ||
                     shot.HitTargets == null || shot.Thorns == null || (shot.LeavesThorns && !evolved))
                     throw new ArgumentException("Invalid expanded cross shot");
@@ -165,12 +214,12 @@ namespace BibleSurvivor.Core
                 {
                     var start = shot.ReturnStartedAt!.Value;
                     if (!ExpandedCross.Within(start, shot.EmittedAt, shot.SimulatedAt) || shot.Distance != shot.Range ||
-                        Math.Abs(start - (shot.EmittedAt + shot.Range / shot.Speed)) > ExpandedCross.Epsilon ||
+                        Math.Abs(start - (shot.EmittedAt + shot.Range / shot.OutboundSpeed)) > ExpandedCross.Epsilon ||
                         (shot.IsFlying && shot.SimulatedAt >= start + ExpandedCross.Profile.ReturnTimeout))
                         throw new ArgumentException("Invalid expanded cross return");
                 }
                 else if (!shot.IsFlying || shot.Distance >= shot.Range ||
-                    Math.Abs(shot.Distance - (shot.SimulatedAt - shot.EmittedAt) * shot.Speed) > ExpandedCross.Epsilon)
+                    Math.Abs(shot.Distance - (shot.SimulatedAt - shot.EmittedAt) * shot.OutboundSpeed) > ExpandedCross.Epsilon)
                     throw new ArgumentException("Invalid expanded cross outward flight");
 
                 if (shot.IsFlying)
@@ -182,7 +231,7 @@ namespace BibleSurvivor.Core
                     Math.Min(shot.SimulatedAt, shot.ReturnStartedAt.Value + ExpandedCross.Profile.ReturnTimeout)))
                     throw new ArgumentException("Invalid expanded cross expiry");
 
-                ValidateHits(shot, budget);
+                ValidateHits(shot, shot.HitBudget(evolved));
                 ValidateTrail(shot, now);
                 if (shot.HasTrail && ++trails > ExpandedCross.MaximumTrails)
                     throw new ArgumentException("Invalid expanded cross trail count");
@@ -212,8 +261,8 @@ namespace BibleSurvivor.Core
 
         private static void ValidateTrail(ExpandedCrossShotState shot, double now)
         {
-            if ((!shot.LeavesThorns && (shot.NextThornAt.HasValue || shot.Thorns.Count != 0)) ||
-                shot.Thorns.Count > ExpandedCross.MaximumThornPieces ||
+            if ((!shot.LeavesThorns && (shot.NextThornAt.HasValue || shot.Thorns.Count != 0 || shot.ExtendedThorns)) ||
+                shot.Thorns.Count > ExpandedCross.ThornPieceLimit(shot.ThornDuration) ||
                 (shot.Thorns.Count > 0 && !shot.NextThornAt.HasValue) ||
                 (shot.NextThornAt.HasValue && !ExpandedCross.Within(shot.NextThornAt.Value, now, now + ExpandedCross.ThornInterval)))
                 throw new ArgumentException("Invalid expanded cross trail");
@@ -223,7 +272,7 @@ namespace BibleSurvivor.Core
             {
                 if (piece == null || piece.BornAt < last ||
                     !ExpandedCross.Within(piece.BornAt, shot.EmittedAt, shot.EndedAt ?? shot.SimulatedAt) ||
-                    piece.BornAt + ExpandedCross.ThornDuration <= now + ExpandedCross.Epsilon ||
+                    piece.BornAt + shot.ThornDuration <= now + ExpandedCross.Epsilon ||
                     !ExpandedCross.ValidPosition(piece.Start) || !ExpandedCross.ValidPosition(piece.End) ||
                     (piece.Returning && (!shot.Returning || piece.BornAt < shot.ReturnStartedAt!.Value)) ||
                     (!piece.Returning && piece.BornAt > shot.ReturnStartedAt))
@@ -247,8 +296,7 @@ namespace BibleSurvivor.Core
         internal static readonly int MaximumShots =
             MaximumAmount * ((int)Math.Ceiling((MaximumRange / MinimumSpeed + Profile.ReturnTimeout) / MinimumCycle) + 1);
         internal const int MaximumTrails = 16;
-        internal const int MaximumThornPieces = 93;
-        internal const double ThornDuration = 1.5;
+        internal const double BaseThornDuration = 1.5;
         internal const double ThornInterval = .5;
         internal const double ThornDamageFactor = .35;
         private const double ThornRadius = .75 / 2;
@@ -257,12 +305,15 @@ namespace BibleSurvivor.Core
         public static int Step(ExpandedCrossState state, double now, Vector2 playerPosition, Vector2 facing, int level,
             bool evolved, double damage, double cycle, int amount, double radius, double range, double speed,
             Func<IReadOnlyDictionary<int, Vector2>> targets, IReadOnlyDictionary<int, Vector2> previousTargets,
-            Func<ExpandedCrossHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveTrail = null)
+            Func<ExpandedCrossHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveTrail = null,
+            ExpandedCrossRankOptions rankOptions = default, Func<int, bool>? isElite = null,
+            Func<double>? nextCycleDuration = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (previousTargets == null) throw new ArgumentNullException(nameof(previousTargets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
+            if (rankOptions.PrioritizeElite && isElite == null) throw new ArgumentNullException(nameof(isElite));
             if (!Finite(now) || now < 0 || !ValidPosition(playerPosition) || !ValidPosition(facing) ||
                 level < 1 || level > 8 || (evolved && level != 8) || !Within(damage, 1, MaximumDamage) ||
                 !Within(cycle, MinimumCycle, MaximumCycle) || amount < 1 || amount > MaximumAmount ||
@@ -272,18 +323,22 @@ namespace BibleSurvivor.Core
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
             foreach (var shot in state.Shots)
             {
-                if (shot.IsFlying) Move(shot, now, playerPosition, LegBudget(evolved), targets, previousTargets, applyHit);
-                shot.Thorns.RemoveAll(piece => piece.BornAt + ThornDuration <= now + Epsilon);
+                if (shot.IsFlying) Move(shot, now, playerPosition, shot.HitBudget(evolved), targets, previousTargets, applyHit);
+                shot.Thorns.RemoveAll(piece => piece.BornAt + shot.ThornDuration <= now + Epsilon);
             }
             if (evolved) ResolveThorns(state.Shots, now, targets, previousTargets, applyHit);
             state.Shots.RemoveAll(shot => !shot.IsFlying && !shot.HasTrail);
             if (state.NextCycle > now + Epsilon) return 0;
 
             state.Cycle = checked(state.Cycle + 1);
-            state.NextCycle += cycle;
-            var aimFrom = targets().OrderBy(target => Vector2.DistanceSquared(target.Value, playerPosition))
-                .ThenBy(target => target.Key).Select(target => target.Value - playerPosition).FirstOrDefault();
+            state.NextCycle += nextCycleDuration?.Invoke() ?? cycle;
+            var aimFrom = AimOffset(playerPosition, targets(), rankOptions.PrioritizeElite ? isElite : null);
             var aim = DirectionOr(aimFrom, DirectionOr(facing, Vector2.UnitX));
+            if (rankOptions.WidenCollision)
+                radius = Math.Min(MaximumRadius, radius + Profile.AtLevel(1).Radius * .08);
+            var trainedSpeed = rankOptions.AccelerateOutbound || rankOptions.AccelerateReturn
+                ? ResolveTrainedSpeed(speed, Profile.AtLevel(level).Speed)
+                : null;
             var active = state.ActiveShotCount;
             var trails = state.ActiveTrailCount;
             var emitted = 0;
@@ -301,11 +356,38 @@ namespace BibleSurvivor.Core
                     StartX = playerPosition.X, StartY = playerPosition.Y, X = playerPosition.X, Y = playerPosition.Y,
                     DirectionX = direction.X, DirectionY = direction.Y, Damage = damage, Radius = radius,
                     Range = range, Speed = speed, LeavesThorns = leavesThorns,
+                    TrainedOutboundSpeed = rankOptions.AccelerateOutbound ? trainedSpeed : null,
+                    TrainedReturnSpeed = rankOptions.AccelerateReturn ? trainedSpeed : null,
+                    IncreasedLegBudget = rankOptions.IncreaseLegBudget,
+                    IncreasedSharedLegBudget = rankOptions.IncreaseSharedLegBudget,
+                    ExtendedThorns = leavesThorns && rankOptions.ExtendThorns,
+                    ShortenedRehitInterval = rankOptions.ShortenRehitInterval,
                 });
                 state.NextShotId = checked(state.NextShotId + 1);
                 emitted++;
             }
             return emitted;
+        }
+
+        private static Vector2 AimOffset(Vector2 origin, IReadOnlyDictionary<int, Vector2> targets, Func<int, bool>? isElite)
+        {
+            var best = Vector2.Zero;
+            var bestDistance = float.PositiveInfinity;
+            var bestId = int.MaxValue;
+            var bestIsElite = false;
+            foreach (var (id, position) in targets)
+            {
+                var distance = Vector2.DistanceSquared(origin, position);
+                var elite = isElite != null && distance <= 25 && isElite(id);
+                if ((!elite && bestIsElite) || (elite == bestIsElite &&
+                    (distance > bestDistance || (distance == bestDistance && id >= bestId))))
+                    continue;
+                best = position - origin;
+                bestDistance = distance;
+                bestId = id;
+                bestIsElite = elite;
+            }
+            return best;
         }
 
         private static void Move(ExpandedCrossShotState shot, double now, Vector2 player, int budget,
@@ -318,9 +400,9 @@ namespace BibleSurvivor.Core
             shot.SimulatedAt = now;
             if (!shot.Returning)
             {
-                var turnAt = shot.EmittedAt + shot.Range / shot.Speed;
+                var turnAt = shot.EmittedAt + shot.Range / shot.OutboundSpeed;
                 var until = Math.Min(now, turnAt);
-                shot.Distance = until >= turnAt ? shot.Range : (until - shot.EmittedAt) * shot.Speed;
+                shot.Distance = until >= turnAt ? shot.Range : (until - shot.EmittedAt) * shot.OutboundSpeed;
                 var destination = shot.Start + shot.Direction * (float)shot.Distance;
                 Advance(
                     shot, destination, start, until, start, now, budget, targets, previous, applyHit);
@@ -333,12 +415,12 @@ namespace BibleSurvivor.Core
             var length = returning.Length();
             var required = Math.Max(0, length - Profile.ReturnRadius);
             var expiry = shot.ReturnStartedAt!.Value + Profile.ReturnTimeout;
-            var catchAt = segmentStart + required / shot.Speed;
+            var catchAt = segmentStart + required / shot.ReturnSpeed;
             var end = Math.Min(Math.Min(expiry, catchAt), now);
             if (required > 0 && end > segmentStart + Epsilon)
             {
                 shot.Face(Vector2.Normalize(returning));
-                var destination = shot.Position + shot.Direction * (float)((end - segmentStart) * shot.Speed);
+                var destination = shot.Position + shot.Direction * (float)((end - segmentStart) * shot.ReturnSpeed);
                 Advance(shot, destination, segmentStart, end, start, now, budget, targets, previous, applyHit);
             }
             if (end >= Math.Min(expiry, catchAt)) shot.EndedAt = end;
@@ -359,7 +441,8 @@ namespace BibleSurvivor.Core
                 if ((returning ? shot.ReturnHits : shot.OutboundHits) >= budget) break;
                 var record = shot.HitTargets.Find(item => item.Id == id);
                 if (record != null && (returning ? record.Returned : record.Outbound)) continue;
-                var firstAllowed = record == null ? fromAt : Math.Max(fromAt, record.LastHitAt + Profile.MinimumRehitInterval);
+                var interval = Profile.MinimumRehitInterval * (shot.ShortenedRehitInterval ? .96 : 1);
+                var firstAllowed = record == null ? fromAt : Math.Max(fromAt, record.LastHitAt + interval);
                 if (firstAllowed > toAt + Epsilon || !targets().TryGetValue(id, out var current)) continue;
                 var old = previous.TryGetValue(id, out var oldPosition) ? oldPosition : current;
                 var fraction = (float)Math.Min(1, (firstAllowed - fromAt) / duration);
@@ -474,7 +557,19 @@ namespace BibleSurvivor.Core
         private static Vector2 DirectionOr(Vector2 value, Vector2 fallback) =>
             value.LengthSquared() > Epsilon ? Vector2.Normalize(value) : fallback;
 
-        internal static int LegBudget(bool evolved) => evolved ? 6 : Profile.HitsPerLeg;
+        // A 60 Hz strip can also acquire one extra piece when a step straddles the turn.
+        internal static int ThornPieceLimit(double duration) => (int)Math.Ceiling(duration * 60) + 3;
+
+        private static double? ResolveTrainedSpeed(double speed, double basis)
+        {
+            var trained = Math.Min(basis * 1.75, speed + basis * .12);
+            return trained > speed ? trained : (double?)null;
+        }
+
+        internal static bool ValidTrainedSpeed(double untrained, double? trained) => !trained.HasValue ||
+            (trained.Value > untrained && Within(trained.Value, MinimumSpeed,
+                Math.Min(MaximumSpeed, untrained + Profile.AtLevel(8).Speed * .12)));
+
         internal static bool Finite(double number) => !double.IsNaN(number) && !double.IsInfinity(number);
         internal static bool Within(double value, double minimum, double maximum) =>
             Finite(value) && value >= minimum - Epsilon && value <= maximum + Epsilon;

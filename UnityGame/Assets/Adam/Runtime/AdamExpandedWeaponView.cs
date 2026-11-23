@@ -13,8 +13,6 @@ namespace BibleSurvivor.Unity
         const double MarkerLifetime = .14;
         const float CrossThornRadius = .75f / 2;
         const float ChariotTrailWidth = .9f;
-        const double ChariotTrailDuration = 1.5;
-        const float ChariotWhirlRadius = 1.15f;
         static readonly Color Rim = new Color32(29, 26, 20, 255);
         static readonly Color Voice = new Color32(255, 242, 178, 255);
         static readonly Color Lightning = new Color32(255, 252, 225, 255);
@@ -23,7 +21,6 @@ namespace BibleSurvivor.Unity
         static readonly Color Lion = new Color32(224, 195, 144, 255);
         static readonly Color Cross = new Color32(245, 232, 200, 255);
         static readonly Color Chariot = new Color32(253, 226, 136, 255);
-        static readonly ExpandedWeaponProfile CrossProfile = ExpandedWeaponRules.Get("cross");
 
         readonly Texture2D[] rings = new Texture2D[3];
         readonly List<ExpandedLightningEventState> resolvedBolts = new List<ExpandedLightningEventState>();
@@ -128,10 +125,10 @@ namespace BibleSurvivor.Unity
                     var direction = V(path.Direction);
                     if (snap.Time < path.MoveAt)
                         Band(projection, start, start + direction * (float)path.Range, (float)path.Width, Chariot, Stroke.Dash);
-                    else if (snap.ElijahChariot.Evolved)
+                    else if (snap.ElijahChariot.Evolved && !path.SuppressedTrail)
                     {
                         // Core expires each point individually as the dash lays the flame strip.
-                        var expired = Mathf.Clamp((float)((snap.Time - path.MoveAt - ChariotTrailDuration) * path.Speed), 0, (float)path.Distance);
+                        var expired = Mathf.Clamp((float)((snap.Time - path.MoveAt - path.TrailDuration) * path.Speed), 0, (float)path.Distance);
                         Band(projection, start + direction * expired, V(path.Position), ChariotTrailWidth, Chariot, Stroke.Dot);
                     }
                 }
@@ -207,7 +204,7 @@ namespace BibleSurvivor.Unity
                     Line(projection, center - horizontal, center + horizontal, Cross);
                     Line(projection, center - vertical, center + vertical, Cross);
                     var hits = returning ? shot.ReturnHits : shot.OutboundHits;
-                    var streaks = hits >= (snap.Cross.Evolved ? 6 : CrossProfile.HitsPerLeg) ? 1 : 3;
+                    var streaks = hits >= shot.HitBudget(snap.Cross.Evolved) ? 1 : 3;
                     for (var i = 0; i < streaks; i++)
                     {
                         var tail = center - direction * (outer + .06f) + Perpendicular(direction) * ((i - (streaks - 1) * .5f) * .11f);
@@ -225,7 +222,7 @@ namespace BibleSurvivor.Unity
                     Line(projection, center - side, center + side, Chariot);
                     Line(projection, center - side - direction * .32f, center - side, Chariot);
                     Line(projection, center + side - direction * .32f, center + side, Chariot);
-                    if (snap.ElijahChariot.Evolved) Ring(projection, center, ChariotWhirlRadius, Chariot, Stroke.Solid);
+                    if (snap.ElijahChariot.Evolved) Ring(projection, center, (float)path.WhirlwindRadius, Chariot, Stroke.Solid);
                 }
         }
 

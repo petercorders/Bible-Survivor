@@ -391,6 +391,220 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("Sling aims at an in-range elite and rolls its weapon-only critical on impact", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.sling.a.02");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 30, 10, 4), new SpawnGroup("a2", 30, 100, 4) }),
+                });
+                var session = new AdamSession(state, definition, "sling");
+                session.Advance(8);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                var ordinary = session.Targets.Values.First(enemy => enemy.MonsterId == "a1").Id;
+                var elite = session.Targets.Values.First(enemy => enemy.MonsterId == "a2").Id;
+                foreach (var enemy in setup.Enemies)
+                {
+                    enemy.X = enemy.Id == ordinary ? 1.5f : enemy.Id == elite ? 0 : 50;
+                    enemy.Y = enemy.Id == ordinary ? 0 : enemy.Id == elite ? 2.5f : 50;
+                }
+                state.Run!.CriticalRandomStates!["sling"] = 600;
+                var roll = PermanentOriginalHitRules.NextCriticalState(state.Run.RunId, 1, "sling", 600) / 4294967296d;
+                Check.True(roll > .03 && roll < .06);
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var launched = world.Capture().Projectiles.First();
+                Check.True(launched.VelocityY > Math.Abs(launched.VelocityX));
+                state.Run.World = world.Capture();
+                store.Commit(state, state.Revision, "elite-sling-release");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                world = BattleWorld.Restore(session, Speeds, state.Run!.World!);
+                for (var tick = 0; tick < 60 && world.Hits == 0; tick++)
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                Check.Near(10, session.Targets[ordinary].Health);
+                Check.Near(100 - session.AttackProfile("sling").Damage * 1.5, session.Targets[elite].Health);
+            });
+        });
+
+        test("Common motion and duration ranks change their own dimensions without increasing sling travel", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.shot.03", "common.duration.01", "weapon.cross.c.01");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "sling");
+                Check.True(session.Inventory.TryChoose("bible", false));
+                Check.True(session.Inventory.TryChoose("cross", false));
+                session.Advance(1.5);
+                var snapshot = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in snapshot.Enemies)
+                {
+                    enemy.X = 3 + enemy.Id;
+                    enemy.Y = 0;
+                }
+                var world = BattleWorld.Restore(session, Speeds, snapshot);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var sling = frozen.Projectiles.First();
+                var cross = frozen.Cross!.Shots.First();
+                var bible = frozen.Weapons.Single(weapon => weapon.WeaponId == "bible");
+                Check.Near(3.15, bible.ActiveUntil - bible.ActiveSince);
+                Check.Near(.104, sling.Radius);
+                Check.Equal(2, sling.RemainingPierce);
+                Check.Near(snapshot.Tuning.SlingSpeed * 1.05, sling.Velocity.Length(), 1e-5);
+                Check.Near(snapshot.Tuning.SlingSpeed * snapshot.Tuning.SlingLifetime,
+                    sling.Velocity.Length() * (sling.Lifetime + BattleWorld.FixedStep), 1e-5);
+                Check.Near(.28 * 1.04, cross.Radius);
+                Check.Near(6 * 1.05, cross.Speed);
+                Check.Near(5, cross.Range);
+                Check.Equal(6, cross.HitBudget(false));
+                Check.Equal(8, cross.HitBudget(true));
+                state.Run!.World = frozen;
+                store.Commit(state, state.Revision, "expanded-shared-projectile-pierce");
+                Check.Equal(6, store.Load()!.Run!.World!.Cross!.Shots.First().HitBudget(false));
+                sling.RemainingPierce = 8;
+                sling.HitIds.Add(snapshot.Enemies.First().Id);
+                Check.Throws<ArgumentException>(() => frozen.Validate());
+            });
+        });
+
+        test("Common tempo opening occurs once, contextual wait follows actual events, and no-hit carries into the next round", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.tempo.10");
+                var definition = new RoundDefinition(1, 40, 180, 25, new[]
+                {
+                    new WaveDefinition(0, 170, new[] { new SpawnGroup("a1", 20, 10, 4), new SpawnGroup("a2", 20, 100, 4) }),
+                });
+                var session = new AdamSession(state, definition, "bible");
+                Check.True(session.Inventory.TryChoose("jawbone", false));
+                var world = new BattleWorld(session, Speeds, 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var bible = frozen.Weapons.Single(weapon => weapon.WeaponId == "bible");
+                var jawbone = frozen.Weapons.Single(weapon => weapon.WeaponId == "jawbone");
+                var bibleBase = WeaponRules.Get("bible", 1);
+                var jawboneBase = WeaponRules.Get("jawbone", 1);
+                Check.Near(bibleBase.Duration + bibleBase.Cooldown * .79, bible.NextCycle - bible.ActiveSince);
+                Check.Near(jawboneBase.Cooldown * .94, jawbone.NextCycle - jawbone.ActiveSince);
+                Check.Near(jawboneBase.BurstInterval * .92, session.AttackProfile("jawbone").BurstInterval);
+                Check.True(state.Run!.TempoOpeningUsed);
+                state.Run.World = frozen;
+                store.Commit(state, state.Revision, "tempo-opening");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                Check.True(state.Run!.TempoOpeningUsed);
+                session.Advance(10.1);
+                Check.Near(jawboneBase.Cooldown * .94, session.AttackProfile("jawbone").Cycle);
+                session.Damage(10);
+                Check.Near(jawboneBase.Cooldown * .95, session.AttackProfile("jawbone").Cycle);
+                session.Advance(4);
+                Check.Near(jawboneBase.Cooldown * .98, session.AttackProfile("jawbone").Cycle);
+                session.Advance(60);
+                var elite = session.Targets.Keys.First(session.IsEliteActor);
+                Check.Near(jawboneBase.Cooldown * .90, session.AttackProfile("jawbone").Cycle);
+                session.Kill(elite);
+                Check.Near(jawboneBase.Cooldown * .85, session.AttackProfile("jawbone").Cycle);
+                state.Run.World = null;
+                store.Commit(state, state.Revision, "tempo-elite");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                Check.Near(jawboneBase.Cooldown * .85, session.AttackProfile("jawbone").Cycle);
+                session.Advance(180);
+                while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                Check.Equal("between_rounds", session.Stage);
+                Check.Near(10, state.Run!.NoHitCarrySeconds);
+                var second = CatalogReader.Round("content/genesis/catalog.json", 2);
+                session = session.StartNextRound(second);
+                Check.True(!state.Run!.TempoOpeningUsed);
+                Check.True(state.Run.LastTempoEliteKillAt == null);
+                var level = session.Inventory.Weapons["jawbone"];
+                var next = WeaponRules.Get("jawbone", level);
+                Check.Near(next.Cooldown * .90, session.AttackProfile("jawbone").Cycle);
+                session.Advance(180);
+                while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                var third = CatalogReader.Round("content/genesis/catalog.json", 3);
+                session = session.StartNextRound(third);
+                session.Advance(180);
+                Check.Equal("boss_intro", session.Stage);
+                var enteringBossCycle = session.AttackProfile("jawbone").Cycle;
+                session.Advance(2);
+                Check.Equal("boss", session.Stage);
+                Check.Near(enteringBossCycle - WeaponRules.Get("jawbone", session.Inventory.Weapons["jawbone"]).Cooldown * .05,
+                    session.AttackProfile("jawbone").Cycle);
+            });
+        });
+
+        test("Chariot branch geometry and knockback survive a schema 4 world checkpoint", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.elijah_chariot.e.02", "weapon.elijah_chariot.a.01",
+                    "weapon.elijah_chariot.b.01", "weapon.elijah_chariot.d.01");
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                for (var round = 2; round <= 3; round++)
+                {
+                    session.Advance(180);
+                    while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                    session = session.StartNextRound(CatalogReader.Round("content/genesis/catalog.json", round));
+                }
+                var definition = CatalogReader.Round("content/genesis/catalog.json", 3);
+                for (var level = 0; level < 8; level++) Check.True(session.Inventory.TryChoose("elijah_chariot", false));
+                var weapon = ExpandedWeaponRules.Get("elijah_chariot");
+                Check.True(session.Inventory.TryChoose(weapon.PassiveId, true));
+                Check.True(session.Inventory.TryEvolve(weapon.EvolutionId));
+                var speeds = CatalogReader.MonsterSpeeds("content/genesis/catalog.json");
+                var world = new BattleWorld(session, speeds, 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "chariot-ranks-warning");
+                state = store.Load()!;
+                session = AdamSession.Resume(state, definition);
+                world = BattleWorld.Restore(session, speeds, state.Run!.World!);
+                var paths = world.Capture().ElijahChariot!.Paths;
+                Check.Equal(2, paths.Count);
+                Check.Near(1.2, Vector2.Distance(paths[0].Origin, paths[1].Origin), 1e-6);
+                foreach (var path in paths)
+                {
+                    Check.Near(11.2, path.Range);
+                    Check.Near(1.3225, path.WhirlwindRadius);
+                    Check.Near(1.8, path.TrailDuration);
+                    Check.True(path.ForwardKnockback);
+                }
+            });
+        });
+
+        test("Common fixed hit tempo changes primary pulse schedules without accelerating echoes or embers", () =>
+        {
+            var positions = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var voice = new ExpandedWildernessVoiceState();
+            var voiceHits = new List<ExpandedWildernessVoiceHit>();
+            ExpandedWildernessVoice.Step(voice, 0, Vector2.Zero, Vector2.UnitX, 8, true, 15, 2.5, 4.5, 2, 180,
+                () => positions, voiceHits.Add, shortenedPrimaryInterval: true);
+            var restored = voice.Copy();
+            Check.Near(.63, restored.Active.Single().PrimaryAt(1));
+            Check.Near(.5, restored.Active.Single().EchoAt(0));
+            ExpandedWildernessVoice.Step(restored, .63, Vector2.Zero, Vector2.UnitX, 8, true, 15, 2.5, 4.5, 2, 180,
+                () => positions, voiceHits.Add);
+            Check.Equal(2, voiceHits.Count(hit => hit.Kind == ExpandedWildernessVoiceHitKind.Primary));
+            Check.Equal(1, voiceHits.Count(hit => hit.Kind != ExpandedWildernessVoiceHitKind.Primary));
+
+            var fire = new ExpandedFirePillarState();
+            var fireHits = new List<ExpandedFirePillarHit>();
+            ExpandedFirePillar.Step(fire, 0, Vector2.Zero, false, 10, 3, 1, .9, 2,
+                () => positions, fireHits.Add, shortenedPrimaryInterval: true);
+            fire = fire.Copy();
+            foreach (var time in new[] { .15, .63 })
+                ExpandedFirePillar.Step(fire, time, Vector2.Zero, false, 10, 3, 1, .9, 2,
+                    () => positions, fireHits.Add);
+            Check.Equal(2, fireHits.Count);
+            Check.Near(1.11, fire.Regions.Single().NextHit);
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>

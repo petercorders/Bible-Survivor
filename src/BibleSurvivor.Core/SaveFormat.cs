@@ -75,20 +75,20 @@ namespace BibleSurvivor.Core
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle",
                     ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
-                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus")))));
+                    ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval")))));
                 world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep",
-                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay")))));
+                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay ShortenedPrimaryInterval")))));
                 world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle",
                     ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane")))));
                 world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle",
-                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt",
+                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt TrainedOutboundSpeed TrainedReturnSpeed IncreasedLegBudget IncreasedSharedLegBudget ExtendedThorns ShortenedRehitInterval",
                         ("HitTargets", Array(Object("Id Outbound Returned LastHitAt"))),
                         ("Thorns", Array(Object("StartX StartY EndX EndY BornAt Returning"))))))));
-                world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle",
-                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay")))));
+                world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle SuppressedOriginals",
+                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail")))));
                 world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits",
-                    ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget"))),
-                    ("Leap", Object("At OriginX OriginY Damage VisitedIds"))));
+                    ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget ExtendedLeash FirstClawPhaseResolved"))),
+                    ("Leap", Object("At OriginX OriginY Damage VisitedIds EmpoweredDamage"))));
             }
             var reward = Object("RewardId PolicyId EligibleEvolutions Applied UnlockedWeapons SelectedId PromotedFrom GoldApplied",("Weapons",integerMap),("Passives",integerMap),("Forms",integerMap),("Candidates",Array(Object("Id Kind ItemId Level Gold"))));
             if (skillTree) reward.Members!.Add("RulesVersion", Value);
@@ -107,6 +107,9 @@ namespace BibleSurvivor.Core
                     ("ImmediateHeals", Array(Object("At Amount")))));
                 run.Members.Add("CriticalRandomStates", integerMap);
                 run.Members.Add("FirstBibleAttackUsed", Value);
+                run.Members.Add("NoHitCarrySeconds", Value);
+                run.Members.Add("LastTempoEliteKillAt", Value);
+                run.Members.Add("TempoOpeningUsed", Value);
             }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));
