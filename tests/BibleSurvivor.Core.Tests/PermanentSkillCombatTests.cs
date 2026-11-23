@@ -17,6 +17,7 @@ internal static partial class PermanentSkillCombatTests
         RegisterLightningMasteryEvidence(test);
         RegisterArmorEvidence(test);
         RegisterOriginalPowerEvidence(test);
+        RegisterActionEvidence(test);
         var starters = new[] { "bible", "jawbone", "sling" };
         foreach (var weapon in starters.Concat(ExpandedWeaponRules.All.Select(profile => profile.WeaponId)))
         foreach (var upgrade in new[] { "01", "02", "03" })
