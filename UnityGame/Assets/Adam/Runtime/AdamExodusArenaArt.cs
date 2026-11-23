@@ -17,15 +17,16 @@ namespace BibleSurvivor.Unity
         static readonly Color Linen = new Color32(169, 149, 118, 255);
         static readonly Color Shade = new Color32(58, 42, 44, 95);
 
-        // These anchors stay clear of the central paths and fit the short desktop viewport.
-        internal static readonly Vector2 West = new Vector2(-5.25f, 2.25f);
+        // The western slots sit below the start HUD at the centered 660×440 camera.
+        internal static readonly Vector2 West = new Vector2(-5.25f, 1.5f);
+        internal static readonly Vector2 BossWest = new Vector2(-5.25f, 1f);
         internal static readonly Vector2 East = new Vector2(5.25f, -1.5f);
 
         public static void Draw(AdamWorldProjection projection, int round)
         {
             if (round < ExodusContent.GlobalRoundNumber || round > ExodusContent.LastInstalledRound ||
                 Event.current.type != EventType.Repaint) return;
-            var west = new Stamp(projection, West);
+            var west = new Stamp(projection, round is 12 or 15 ? BossWest : West);
             if (round == 10)
             {
                 var east = new Stamp(projection, East);
