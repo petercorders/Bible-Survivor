@@ -28,11 +28,15 @@ namespace BibleSurvivor.Core
         public bool AimAtCrowd { get; }
         public bool TurnTowardRearCrowd { get; }
         public bool StrongerEvolvedCloseKnockback { get; }
+        public bool MarkConsecutiveElite { get; }
+        public bool CountHitsForFinish { get; }
+        public bool StrengthenRepeatedTargets { get; }
 
         public ExpandedWildernessVoiceRankOptions(bool firstPulseDamage = false, bool finalPulseKnockback = false,
             bool lockFacing = false, bool fourthCycleFinalDamage = false, bool centeredDamage = false,
             bool edgeKnockback = false, bool widenEvolution = false, bool widenEchoes = false, bool repeatFifthEcho = false,
-            bool aimAtCrowd = false, bool turnTowardRearCrowd = false, bool strongerEvolvedCloseKnockback = false)
+            bool aimAtCrowd = false, bool turnTowardRearCrowd = false, bool strongerEvolvedCloseKnockback = false,
+            bool markConsecutiveElite = false, bool countHitsForFinish = false, bool strengthenRepeatedTargets = false)
         {
             FirstPulseDamage = firstPulseDamage;
             FinalPulseKnockback = finalPulseKnockback;
@@ -46,6 +50,9 @@ namespace BibleSurvivor.Core
             AimAtCrowd = aimAtCrowd;
             TurnTowardRearCrowd = turnTowardRearCrowd;
             StrongerEvolvedCloseKnockback = strongerEvolvedCloseKnockback;
+            MarkConsecutiveElite = markConsecutiveElite;
+            CountHitsForFinish = countHitsForFinish;
+            StrengthenRepeatedTargets = strengthenRepeatedTargets;
         }
 
         public static ExpandedWildernessVoiceRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -54,7 +61,7 @@ namespace BibleSurvivor.Core
             bool Has(string suffix) => ranks.TryGetValue("weapon.wilderness_voice." + suffix, out var rank) && rank > 0;
             return new ExpandedWildernessVoiceRankOptions(Has("a.02"), Has("a.03"), Has("a.04"), Has("a.05"),
                 Has("b.02"), Has("b.03"), Has("e.01"), Has("e.02"), Has("e.03"),
-                Has("b.04"), Has("b.05"), Has("e.04"));
+                Has("b.04"), Has("b.05"), Has("e.04"), Has("c.03"), Has("c.05"), Has("d.03"));
         }
     }
 
@@ -90,6 +97,45 @@ namespace BibleSurvivor.Core
         }
     }
 
+    public readonly struct ExpandedWildernessVoiceOriginalOutcome
+    {
+        public ExpandedWildernessVoiceHit Hit { get; }
+        public double PreCriticalDamage { get; }
+        public bool Elite { get; }
+        public bool Killed { get; }
+        public bool FinalPulse { get; }
+        public double At { get; }
+
+        internal ExpandedWildernessVoiceOriginalOutcome(ExpandedWildernessVoiceHit hit, double preCriticalDamage,
+            bool elite, bool killed, bool finalPulse, double at)
+        {
+            Hit = hit;
+            PreCriticalDamage = preCriticalDamage;
+            Elite = elite;
+            Killed = killed;
+            FinalPulse = finalPulse;
+            At = at;
+        }
+    }
+
+    [DataContract]
+    public sealed class ExpandedWildernessVoiceTargetCount
+    {
+        [DataMember(IsRequired = true)] public int TargetId { get; set; }
+        [DataMember(IsRequired = true)] public int Count { get; set; }
+        internal ExpandedWildernessVoiceTargetCount Copy() => (ExpandedWildernessVoiceTargetCount)MemberwiseClone();
+    }
+
+    [DataContract]
+    public sealed class ExpandedWildernessVoiceEliteSeries
+    {
+        [DataMember(IsRequired = true)] public int TargetId { get; set; }
+        [DataMember(IsRequired = true)] public long LastPulse { get; set; }
+        [DataMember(IsRequired = true)] public int Consecutive { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? MarkUntil { get; set; }
+        internal ExpandedWildernessVoiceEliteSeries Copy() => (ExpandedWildernessVoiceEliteSeries)MemberwiseClone();
+    }
+
     [DataContract]
     public sealed class ExpandedWildernessVoiceCastState
     {
@@ -115,6 +161,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public float? InitialFacingX { get; set; }
         [DataMember(EmitDefaultValue = false)] public float? InitialFacingY { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool EvolvedCloseKnockback { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool TracksEliteSeries { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool CountsHitsForFinish { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool StrengthensRepeatedTargets { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedWildernessVoiceTargetCount>? OriginalTargetCounts { get; set; }
         [DataMember(EmitDefaultValue = false)] public int DamageLevel { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? UncappedDamage { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool HasExtraEcho { get; set; }
@@ -146,7 +196,22 @@ namespace BibleSurvivor.Core
                 !ValidFacing(LockedFacingX, LockedFacingY) || !ValidFacing(InitialFacingX, InitialFacingY))
                 return false;
 
-            if (!FirstPulseDamage && !FourthCycleFinalDamage && !CenteredDamage)
+            if (OriginalTargetCounts != null)
+            {
+                if (!StrengthensRepeatedTargets || OriginalTargetCounts.Count == 0 ||
+                    OriginalTargetCounts.Count > ExpandedWildernessVoice.MaximumTrackedTargets)
+                    return false;
+                var previousId = 0;
+                foreach (var target in OriginalTargetCounts)
+                {
+                    if (target == null || target.TargetId <= previousId || target.Count <= 0 || target.Count > PrimaryPulses)
+                        return false;
+                    previousId = target.TargetId;
+                }
+            }
+
+            if (!FirstPulseDamage && !FourthCycleFinalDamage && !CenteredDamage && !TracksEliteSeries &&
+                !CountsHitsForFinish && !StrengthensRepeatedTargets)
                 return DamageLevel == 0 && !UncappedDamage.HasValue;
             return DamageLevel >= 1 && DamageLevel <= 8 && (!evolved || DamageLevel == 8) &&
                 UncappedDamage is double damage && ExpandedWildernessVoice.ValidUncappedDamage(DamageLevel, damage, Damage);
@@ -156,7 +221,12 @@ namespace BibleSurvivor.Core
             (!x.HasValue || BattleSnapshot.Position(x.Value, y!.Value) &&
                 Math.Abs(new Vector2(x.Value, y.Value).LengthSquared() - 1) <= .0001);
 
-        internal ExpandedWildernessVoiceCastState Copy() => (ExpandedWildernessVoiceCastState)MemberwiseClone();
+        internal ExpandedWildernessVoiceCastState Copy()
+        {
+            var copy = (ExpandedWildernessVoiceCastState)MemberwiseClone();
+            copy.OriginalTargetCounts = OriginalTargetCounts?.Select(target => target.Copy()).ToList();
+            return copy;
+        }
     }
 
     [DataContract]
@@ -168,11 +238,22 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public List<ExpandedWildernessVoiceCastState> Active { get; set; } =
             new List<ExpandedWildernessVoiceCastState>();
 
+        [DataMember(EmitDefaultValue = false)] public long ElitePulseSequence { get; set; }
+        [DataMember(EmitDefaultValue = false)] public List<ExpandedWildernessVoiceEliteSeries>? EliteSeries { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int FinishHits { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool FinishReady { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextFinishAt { get; set; }
+
         public ExpandedWildernessVoiceState Copy() => new ExpandedWildernessVoiceState
         {
             Evolved = Evolved,
             Cycle = Cycle,
             NextCycle = NextCycle,
+            ElitePulseSequence = ElitePulseSequence,
+            EliteSeries = EliteSeries?.Select(series => series.Copy()).ToList(),
+            FinishHits = FinishHits,
+            FinishReady = FinishReady,
+            NextFinishAt = NextFinishAt,
             Active = Active.Select(cast => cast.Copy()).ToList(),
         };
 
@@ -191,9 +272,15 @@ namespace BibleSurvivor.Core
             if (!BattleSnapshot.Finite(now) || now < 0 || evolved != Evolved || Cycle < 0 ||
                 !BattleSnapshot.Finite(NextCycle) || NextCycle < 0 ||
                 NextCycle > now + ExpandedWildernessVoice.MaximumCycle + epsilon ||
-                Active == null || Active.Count > ExpandedWildernessVoice.MaximumActiveCasts)
+                Active == null || Active.Count > ExpandedWildernessVoice.MaximumActiveCasts ||
+                ElitePulseSequence < 0 || ElitePulseSequence > 0 &&
+                    (ElitePulseSequence - 1) / ExpandedWildernessVoice.MaximumPrimaryPulses >= Cycle ||
+                FinishHits < 0 || FinishHits >= ExpandedWildernessVoice.HitsPerFinish ||
+                FinishHits > 0 && (FinishReady || NextFinishAt.HasValue) ||
+                !ExpandedWildernessVoice.ValidReceipt(NextFinishAt, now, ExpandedWildernessVoice.FinishCooldown))
                 throw new ArgumentException("Invalid wilderness voice clock");
 
+            ValidateEliteSeries(now);
             var previousId = 0L;
             var previousStart = double.NegativeInfinity;
             foreach (var cast in Active)
@@ -225,6 +312,23 @@ namespace BibleSurvivor.Core
                 previousStart = cast.StartedAt;
             }
         }
+
+        private void ValidateEliteSeries(double now)
+        {
+            if (EliteSeries == null) return;
+            if (EliteSeries.Count == 0 || EliteSeries.Count > ExpandedWildernessVoice.MaximumTrackedTargets)
+                throw new ArgumentException("Invalid wilderness voice elite history count");
+            var previousId = 0;
+            foreach (var series in EliteSeries)
+            {
+                if (series == null || series.TargetId <= previousId || series.LastPulse < 1 || series.LastPulse > ElitePulseSequence ||
+                    series.Consecutive < 0 || series.Consecutive >= ExpandedWildernessVoice.EliteHitsPerMark ||
+                    series.Consecutive == 0 && !series.MarkUntil.HasValue ||
+                    !ExpandedWildernessVoice.ValidReceipt(series.MarkUntil, now, ExpandedWildernessVoice.EliteMarkDuration))
+                    throw new ArgumentException("Invalid wilderness voice elite history");
+                previousId = series.TargetId;
+            }
+        }
     }
 
     public static class ExpandedWildernessVoice
@@ -247,6 +351,12 @@ namespace BibleSurvivor.Core
         private const int RearCountLead = 3;
         private const double CrowdRadius = 1.5;
         private const double EvolutionCloseKnockback = .35;
+        internal const int MaximumTrackedTargets = 120;
+        internal const int EliteHitsPerMark = 3;
+        internal const double EliteMarkDuration = 3;
+        internal const int HitsPerFinish = 15;
+        internal const double FinishCooldown = 5;
+        private const int RepeatedTargetThreshold = 3;
 
         // Cast stats are frozen at start. Each atomic pulse samples the current
         // center and facing, then processes every eligible target once in ID order.
@@ -256,12 +366,18 @@ namespace BibleSurvivor.Core
             double delayAdvance = 0, double knockbackBonus = 0, double closeKnockbackBonus = 0,
             bool shortenedPrimaryInterval = false, Func<double>? nextCycleDuration = null, double echoRadiusBonus = 0,
             ExpandedWildernessVoiceRankOptions rankOptions = default, double? uncappedDamage = null,
-            Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null)
+            Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null,
+            Func<ExpandedWildernessVoiceHit, double?>? applyOriginalHit = null,
+            Action<ExpandedWildernessVoiceOriginalOutcome>? observeOriginalHit = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
-            if (rankOptions.TurnTowardRearCrowd && isElite == null) throw new ArgumentNullException(nameof(isElite));
+            var countOriginalHits = rankOptions.MarkConsecutiveElite || rankOptions.CountHitsForFinish || rankOptions.StrengthenRepeatedTargets;
+            if ((rankOptions.TurnTowardRearCrowd || rankOptions.MarkConsecutiveElite || observeOriginalHit != null) && isElite == null)
+                throw new ArgumentNullException(nameof(isElite));
+            if ((countOriginalHits || observeOriginalHit != null) && applyOriginalHit == null)
+                throw new ArgumentNullException(nameof(applyOriginalHit));
             if (rankOptions.TurnTowardRearCrowd && isBoss == null) throw new ArgumentNullException(nameof(isBoss));
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (!ValidKnockbackBonus(knockbackBonus) || !ValidKnockbackBonus(closeKnockbackBonus))
@@ -277,20 +393,23 @@ namespace BibleSurvivor.Core
 
             if (uncappedDamage.HasValue && !ValidUncappedDamage(level, uncappedDamage.Value, damage))
                 throw new ArgumentException("Voice uncapped damage does not match its base pulse", nameof(uncappedDamage));
-            if ((rankOptions.FirstPulseDamage || rankOptions.FourthCycleFinalDamage || rankOptions.CenteredDamage) &&
+            if ((rankOptions.FirstPulseDamage || rankOptions.FourthCycleFinalDamage || rankOptions.CenteredDamage || countOriginalHits) &&
                 !uncappedDamage.HasValue)
                 throw new ArgumentException("Voice pulse bonuses require pre-cap damage", nameof(uncappedDamage));
 
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
+            if (state.NextFinishAt <= now + TimeEpsilon) state.NextFinishAt = null;
+            PruneHistory(state, now, targets);
             var direction = facing.LengthSquared() > 1e-12f ? Vector2.Normalize(facing) : Vector2.UnitX;
-            ResolveDue(state, now, playerPosition, direction, targets, applyHit);
+            ResolveDue(state, now, playerPosition, direction, targets, applyHit, isElite, applyOriginalHit, observeOriginalHit);
+            PruneHistory(state, now, targets);
 
             if (state.NextCycle > now + TimeEpsilon) return;
             var start = state.NextCycle;
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var fourthCycleFinalDamage = rankOptions.FourthCycleFinalDamage && state.Cycle % 4 == 0;
-            var needsDamageBasis = rankOptions.FirstPulseDamage || fourthCycleFinalDamage || rankOptions.CenteredDamage;
+            var needsDamageBasis = rankOptions.FirstPulseDamage || fourthCycleFinalDamage || rankOptions.CenteredDamage || countOriginalHits;
             if (evolved && rankOptions.WidenEvolution)
                 reach = Math.Min(MaximumReach, reach + Profile.AtLevel(1).Reach * .15);
             var adjustedAim = rankOptions.AimAtCrowd || rankOptions.TurnTowardRearCrowd
@@ -321,6 +440,9 @@ namespace BibleSurvivor.Core
                 InitialFacingX = initialAim?.X,
                 InitialFacingY = initialAim?.Y,
                 EvolvedCloseKnockback = evolved && rankOptions.StrongerEvolvedCloseKnockback,
+                TracksEliteSeries = rankOptions.MarkConsecutiveElite,
+                CountsHitsForFinish = rankOptions.CountHitsForFinish,
+                StrengthensRepeatedTargets = rankOptions.StrengthenRepeatedTargets,
                 DamageLevel = needsDamageBasis ? level : 0,
                 UncappedDamage = needsDamageBasis ? uncappedDamage : null,
                 HasExtraEcho = evolved && rankOptions.RepeatFifthEcho && state.Cycle % 5 == 0,
@@ -361,7 +483,9 @@ namespace BibleSurvivor.Core
         }
 
         private static void ResolveDue(ExpandedWildernessVoiceState state, double now, Vector2 center, Vector2 direction,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit)
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit,
+            Func<int, bool>? isElite, Func<ExpandedWildernessVoiceHit, double?>? applyOriginalHit,
+            Action<ExpandedWildernessVoiceOriginalOutcome>? observeOriginalHit)
         {
             if (state.Active.Count == 0) return;
             while (true)
@@ -380,7 +504,7 @@ namespace BibleSurvivor.Core
                     kind = next.Kind;
                 }
                 if (chosen == null) break;
-                HitPulse(chosen, kind, state.Evolved, center, direction, targets, applyHit);
+                HitPulse(state, chosen, kind, now, center, direction, targets, applyHit, isElite, applyOriginalHit, observeOriginalHit);
             }
 
             state.Active.RemoveAll(cast => cast.ExpiresAt(state.Evolved) <= now + TimeEpsilon);
@@ -402,11 +526,17 @@ namespace BibleSurvivor.Core
             return (cast.EchoAt(cast.EchoesFired), kind);
         }
 
-        private static void HitPulse(ExpandedWildernessVoiceCastState cast, ExpandedWildernessVoiceHitKind kind,
-            bool evolved, Vector2 center, Vector2 direction, Func<IReadOnlyDictionary<int, Vector2>> targets,
-            Action<ExpandedWildernessVoiceHit> applyHit)
+        private static void HitPulse(ExpandedWildernessVoiceState state, ExpandedWildernessVoiceCastState cast,
+            ExpandedWildernessVoiceHitKind kind, double now, Vector2 center, Vector2 direction,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedWildernessVoiceHit> applyHit, Func<int, bool>? isElite,
+            Func<ExpandedWildernessVoiceHit, double?>? applyOriginalHit, Action<ExpandedWildernessVoiceOriginalOutcome>? observeOriginalHit)
         {
             var primary = kind == ExpandedWildernessVoiceHitKind.Primary;
+            if (primary && (cast.TracksEliteSeries || cast.CountsHitsForFinish || cast.StrengthensRepeatedTargets) &&
+                (applyOriginalHit == null || cast.TracksEliteSeries && isElite == null))
+                throw new ArgumentException("Voice trained original pulses require an accepted-hit callback and elite classification where applicable");
+            if (primary && cast.TracksEliteSeries)
+                state.ElitePulseSequence = checked(state.ElitePulseSequence + 1);
             var pulseNumber = primary ? ++cast.PrimaryPulses : ++cast.EchoesFired;
             var reach = kind switch
             {
@@ -423,11 +553,13 @@ namespace BibleSurvivor.Core
                 _ => .35,
             };
             // A full-circle primary still uses its facing for directional modifiers.
-            var halfAngle = primary && !evolved ? cast.HalfAngle : 180;
+            var halfAngle = primary && !state.Evolved ? cast.HalfAngle : 180;
             var aim = cast.PulseFacing(direction, primary && pulseNumber == 1);
             var final = primary && cast.PrimaryAt(cast.PrimaryPulses) >= cast.End - TimeEpsilon;
+            var charged = final && cast.CountsHitsForFinish && state.FinishReady;
+            if (charged) state.FinishReady = false;
             var pulseBonus = (primary && pulseNumber == 1 && cast.FirstPulseDamage ? .08 : 0) +
-                (final && cast.FourthCycleFinalDamage ? .12 : 0);
+                (final && cast.FourthCycleFinalDamage ? .12 : 0) + (charged ? .12 : 0);
             var ids = targets().Keys.OrderBy(id => id).ToArray();
             var targetOrdinal = 0;
             foreach (var id in ids)
@@ -437,13 +569,102 @@ namespace BibleSurvivor.Core
                 if (!HitGeometry.InArc(offset.X, offset.Y, aim.X, aim.Y, reach, 2 * halfAngle)) continue;
                 var angle = primary && (cast.CenteredDamage || cast.EdgeKnockback) ? DegreesFrom(aim, offset) : 0;
                 var centered = primary && cast.CenteredDamage && angle <= 15 + GeometryEpsilon;
-                var damageBonus = pulseBonus + (centered ? .08 : 0);
+                var elite = primary && (cast.TracksEliteSeries || observeOriginalHit != null) && isElite!(id);
+                var series = elite && cast.TracksEliteSeries ? state.EliteSeries?.Find(entry => entry.TargetId == id) : null;
+                var previous = primary && cast.StrengthensRepeatedTargets ? cast.OriginalTargetCounts?.Find(entry => entry.TargetId == id) : null;
+                var damageBonus = pulseBonus + (centered ? .08 : 0) +
+                    (series?.MarkUntil >= now - TimeEpsilon ? .08 : 0) +
+                    (previous?.Count >= RepeatedTargetThreshold - 1 ? .08 : 0);
                 var damage = damageBonus > 0
                     ? CappedDamage(cast.DamageLevel, cast.UncappedDamage!.Value, damageBonus) : cast.Damage * factor;
                 var knockback = primary ? PrimaryKnockback(cast, offset, angle, halfAngle, final) : 0;
-                applyHit(new ExpandedWildernessVoiceHit(kind, id, position, center, aim,
+                var hit = new ExpandedWildernessVoiceHit(kind, id, position, center, aim,
                     damage, knockback, cast.Id, pulseNumber,
-                    primary ? cast.OriginalBaseDamage : 0, primary ? ++targetOrdinal : 0));
+                    primary ? cast.OriginalBaseDamage : 0, primary ? targetOrdinal + 1 : 0);
+                if (!primary || applyOriginalHit == null)
+                {
+                    applyHit(hit);
+                    if (primary) targetOrdinal++;
+                    continue;
+                }
+
+                var accepted = applyOriginalHit(hit);
+                if (!accepted.HasValue || !BattleSnapshot.Finite(accepted.Value) || accepted.Value <= 0) continue;
+                targetOrdinal++;
+                if (cast.CountsHitsForFinish && !state.FinishReady && !state.NextFinishAt.HasValue)
+                {
+                    if (++state.FinishHits == HitsPerFinish)
+                    {
+                        state.FinishHits = 0;
+                        state.FinishReady = true;
+                        state.NextFinishAt = now + FinishCooldown;
+                    }
+                }
+                var killed = !targets().ContainsKey(id);
+                if (!killed)
+                {
+                    if (elite && cast.TracksEliteSeries) RecordEliteHit(state, series, id, now);
+                    if (cast.StrengthensRepeatedTargets) RecordTargetHit(cast, previous, id);
+                }
+                observeOriginalHit?.Invoke(new ExpandedWildernessVoiceOriginalOutcome(hit, accepted.Value, elite, killed, final, now));
+            }
+        }
+
+        private static void RecordEliteHit(ExpandedWildernessVoiceState state, ExpandedWildernessVoiceEliteSeries? series, int id, double now)
+        {
+            if (series == null)
+            {
+                state.EliteSeries ??= new List<ExpandedWildernessVoiceEliteSeries>();
+                series = new ExpandedWildernessVoiceEliteSeries { TargetId = id };
+                var index = state.EliteSeries.FindIndex(entry => entry.TargetId > id);
+                if (index < 0) state.EliteSeries.Add(series);
+                else state.EliteSeries.Insert(index, series);
+            }
+            series.Consecutive = series.LastPulse == state.ElitePulseSequence - 1 ? series.Consecutive + 1 : 1;
+            series.LastPulse = state.ElitePulseSequence;
+            if (series.Consecutive == EliteHitsPerMark)
+            {
+                series.Consecutive = 0;
+                series.MarkUntil = now + EliteMarkDuration;
+            }
+        }
+
+        private static void RecordTargetHit(ExpandedWildernessVoiceCastState cast, ExpandedWildernessVoiceTargetCount? count, int id)
+        {
+            if (count != null)
+            {
+                count.Count++;
+                return;
+            }
+
+            cast.OriginalTargetCounts ??= new List<ExpandedWildernessVoiceTargetCount>();
+            count = new ExpandedWildernessVoiceTargetCount { TargetId = id, Count = 1 };
+            var index = cast.OriginalTargetCounts.FindIndex(entry => entry.TargetId > id);
+            if (index < 0) cast.OriginalTargetCounts.Add(count);
+            else cast.OriginalTargetCounts.Insert(index, count);
+        }
+
+        private static void PruneHistory(ExpandedWildernessVoiceState state, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets)
+        {
+            if (state.EliteSeries == null && !state.Active.Any(cast => cast.OriginalTargetCounts != null)) return;
+            var current = targets();
+            if (state.EliteSeries != null)
+            {
+                foreach (var series in state.EliteSeries)
+                {
+                    if (series.MarkUntil < now - TimeEpsilon) series.MarkUntil = null;
+                    if (series.LastPulse < state.ElitePulseSequence) series.Consecutive = 0;
+                }
+                state.EliteSeries.RemoveAll(series => !current.ContainsKey(series.TargetId) ||
+                    series.Consecutive == 0 && !series.MarkUntil.HasValue);
+                if (state.EliteSeries.Count == 0) state.EliteSeries = null;
+            }
+
+            foreach (var cast in state.Active)
+            {
+                cast.OriginalTargetCounts?.RemoveAll(entry => !current.ContainsKey(entry.TargetId));
+                if (cast.OriginalTargetCounts?.Count == 0) cast.OriginalTargetCounts = null;
             }
         }
 
@@ -471,6 +692,9 @@ namespace BibleSurvivor.Core
             var basis = Profile.AtLevel(level).Damage;
             return Math.Max(1, Math.Min(basis * 2.25, uncapped + basis * extra));
         }
+
+        internal static bool ValidReceipt(double? at, double now, double horizon) =>
+            !at.HasValue || BattleSnapshot.Finite(at.Value) && at.Value >= now - TimeEpsilon && at.Value <= now + horizon + TimeEpsilon;
 
         internal static bool ValidUncappedDamage(int level, double uncapped, double damage) =>
             BattleSnapshot.Finite(uncapped) && uncapped >= 0 && Math.Abs(CappedDamage(level, uncapped, 0) - damage) <= TimeEpsilon;

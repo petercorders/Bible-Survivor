@@ -11,6 +11,146 @@ internal static class ExpandedWildernessVoiceTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Voice c.03 saves same-elite consecutive accepted pulses and applies its mark only after the third", () =>
+        {
+            var ranks = new ExpandedWildernessVoiceRankOptions(markConsecutiveElite: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = new Vector2(1, .1f) };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var state = new ExpandedWildernessVoiceState();
+            double? Original(ExpandedWildernessVoiceHit hit) { hits.Add(hit); return hit.Damage; }
+            bool Elite(int id) => id == 1;
+            Step(state, 0, targets, hits, ranks: ranks, isElite: Elite, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, .15, targets, hits, isElite: Elite, applyOriginalHit: Original);
+            Step(state, .65, targets, hits, isElite: Elite, applyOriginalHit: Original);
+            state = Restore(state);
+            state.Validate(.65, false);
+            Check.Equal(2L, state.ElitePulseSequence);
+            Check.Equal(2, state.EliteSeries!.Single().Consecutive);
+            var control = state.Copy();
+            Step(state, 1.15, targets, hits, isElite: Elite, applyOriginalHit: Original);
+            Check.True(hits.All(hit => hit.Damage == 15));
+            Check.Near(4.15, state.EliteSeries!.Single().MarkUntil!.Value);
+            Step(state, 1.65, targets, hits, isElite: Elite, applyOriginalHit: Original);
+            Check.Near(16.2, hits.Last(hit => hit.TargetId == 1).Damage);
+            Check.Near(15, hits.Last(hit => hit.TargetId == 2).Damage);
+            state.Validate(1.65, false);
+
+            hits.Clear();
+            Step(control, 1.15, targets, hits, isElite: Elite,
+                applyOriginalHit: hit => hit.TargetId == 1 ? (double?)null : Original(hit));
+            Check.True(control.EliteSeries == null);
+            Step(control, 1.65, targets, hits, isElite: Elite, applyOriginalHit: Original);
+            Check.Near(15, hits.Last(hit => hit.TargetId == 1).Damage);
+            Check.Equal(1, control.EliteSeries!.Single().Consecutive);
+            control.Validate(1.65, false);
+        });
+
+        test("Voice c.05 latches on the fifteenth accepted original and applies only to the following final pulse", () =>
+        {
+            var ranks = new ExpandedWildernessVoiceRankOptions(countHitsForFinish: true);
+            var targets = Enumerable.Range(1, 17).ToDictionary(id => id, _ => Vector2.UnitX);
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var state = new ExpandedWildernessVoiceState();
+            double? Original(ExpandedWildernessVoiceHit hit)
+            {
+                if (hit.TargetId == 17) return null;
+                hits.Add(hit);
+                return hit.Damage;
+            }
+
+            Step(state, 0, targets, hits, cycle: 1, duration: .3, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, .15, targets, hits, duration: .3, applyOriginalHit: Original);
+            Check.Equal(16, hits.Count);
+            Check.True(hits.All(hit => hit.Damage == 15));
+            Check.True(state.FinishReady);
+            Check.Near(5.15, state.NextFinishAt!.Value);
+            state = Restore(state);
+            state.Validate(.15, false);
+
+            hits.Clear();
+            Step(state, 1, targets, hits, cycle: 1, duration: .3, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, 1.15, targets, hits, applyOriginalHit: Original);
+            Check.Equal(16, hits.Count);
+            foreach (var hit in hits) Check.Near(16.8, hit.Damage);
+            Check.True(!state.FinishReady);
+            Check.Equal(0, state.FinishHits);
+            Step(state, 2, targets, hits, cycle: 1, duration: .3, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, 2.15, targets, hits, applyOriginalHit: Original);
+            Check.True(!state.FinishReady);
+            Check.Equal(0, state.FinishHits);
+
+            var exact = new ExpandedWildernessVoiceState();
+            Step(exact, 0, targets, hits, duration: .3, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(exact, .15, targets, hits, applyOriginalHit: hit => hit.TargetId <= 15 ? hit.Damage : (double?)null);
+            Check.True(exact.FinishReady);
+
+            var echoes = new ExpandedWildernessVoiceState();
+            Step(echoes, 0, targets, hits, evolved: true, duration: .3, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(echoes, .15, targets, hits, evolved: true, applyOriginalHit: hit => hit.TargetId <= 14 ? hit.Damage : (double?)null);
+            Step(echoes, .5, targets, hits, evolved: true, applyOriginalHit: Original);
+            Check.Equal(14, echoes.FinishHits);
+            Check.True(!echoes.FinishReady);
+        });
+
+        test("Voice d.03 counts only accepted contacts separately for each target and cast", () =>
+        {
+            var ranks = new ExpandedWildernessVoiceRankOptions(strengthenRepeatedTargets: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = new Vector2(1, .1f) };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var state = new ExpandedWildernessVoiceState();
+            double? Original(ExpandedWildernessVoiceHit hit)
+            {
+                if (hit.TargetId == 1 && hit.PulseNumber == 1) return null;
+                hits.Add(hit);
+                return hit.Damage;
+            }
+
+            Step(state, 0, targets, hits, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, .15, targets, hits, applyOriginalHit: Original);
+            Check.Equal(1, hits.Single().TargetOrdinal);
+            Step(state, .65, targets, hits, applyOriginalHit: Original);
+            state = Restore(state);
+            state.Validate(.65, false);
+            Check.True(state.Active[0].OriginalTargetCounts!.Select(count => count.Count).SequenceEqual(new[] { 1, 2 }));
+            Step(state, 1.15, targets, hits, applyOriginalHit: Original);
+            Check.Near(15, hits.Last(hit => hit.TargetId == 1).Damage);
+            Check.Near(16.2, hits.Last(hit => hit.TargetId == 2).Damage);
+            Step(state, 1.65, targets, hits, applyOriginalHit: Original);
+            Check.Near(16.2, hits.Last(hit => hit.TargetId == 1).Damage);
+            Check.Near(16.2, hits.Last(hit => hit.TargetId == 2).Damage);
+            Step(state, 2.5, targets, hits, ranks: ranks, applyOriginalHit: Original, uncappedDamage: 15);
+            Step(state, 2.65, targets, hits, applyOriginalHit: Original);
+            Check.Near(15, hits.Last(hit => hit.TargetId == 2).Damage);
+        });
+
+        test("Voice original outcome observes accepted precritical damage and actual removal but never echoes", () =>
+        {
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX, [3] = new Vector2(4, 0) };
+            var support = new List<ExpandedWildernessVoiceHit>();
+            var outcomes = new List<ExpandedWildernessVoiceOriginalOutcome>();
+            var state = new ExpandedWildernessVoiceState();
+            double? Original(ExpandedWildernessVoiceHit hit)
+            {
+                if (hit.TargetId == 1) return null;
+                targets.Remove(hit.TargetId);
+                return 17;
+            }
+            Step(state, 0, targets, support, evolved: true, duration: .3);
+            Step(state, .15, targets, support, evolved: true, isElite: id => id == 2,
+                applyOriginalHit: Original, observeOriginalHit: outcomes.Add);
+            var accepted = outcomes.Single();
+            Check.Equal(2, accepted.Hit.TargetId);
+            Check.Equal(1, accepted.Hit.TargetOrdinal);
+            Check.True(accepted.Elite && accepted.Killed && accepted.FinalPulse);
+            Check.Near(.15, accepted.At);
+            Check.Near(17, accepted.PreCriticalDamage);
+            Check.Near(15, accepted.Hit.Damage);
+            Step(state, .5, targets, support, evolved: true, isElite: id => id == 2,
+                applyOriginalHit: Original, observeOriginalHit: outcomes.Add);
+            Check.Equal(1, outcomes.Count);
+            Check.True(support.Any(hit => hit.TargetId == 3 && hit.Kind == ExpandedWildernessVoiceHitKind.FirstEcho));
+        });
+
         test("Voice b.04 uses cast-start density within five and restores its first aim without freezing later facing", () =>
         {
             var rank = ExpandedWildernessVoiceRankOptions.FromRanks(new Dictionary<string, int>
@@ -480,12 +620,15 @@ internal static class ExpandedWildernessVoiceTests
         List<ExpandedWildernessVoiceHit> hits, bool evolved = false, Vector2 center = default,
         Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2, double delayAdvance = 0,
         double echoRadiusBonus = 0, ExpandedWildernessVoiceRankOptions ranks = default,
-        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, double knockback = 0, double closeKnockback = 0)
+        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, double knockback = 0, double closeKnockback = 0,
+        Func<ExpandedWildernessVoiceHit, double?>? applyOriginalHit = null,
+        Action<ExpandedWildernessVoiceOriginalOutcome>? observeOriginalHit = null, double? uncappedDamage = null)
     {
         ExpandedWildernessVoice.Step(state, time, center, facing ?? Vector2.UnitX, 8, evolved,
             damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add, delayAdvance,
             echoRadiusBonus: echoRadiusBonus, rankOptions: ranks, knockbackBonus: knockback,
-            closeKnockbackBonus: closeKnockback, isElite: isElite, isBoss: isBoss);
+            closeKnockbackBonus: closeKnockback, isElite: isElite, isBoss: isBoss, applyOriginalHit: applyOriginalHit,
+            observeOriginalHit: observeOriginalHit, uncappedDamage: uncappedDamage);
     }
 
     private static ExpandedWildernessVoiceState Restore(ExpandedWildernessVoiceState state)

@@ -151,6 +151,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public List<ExpandedFireContact>? Contacts { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NativeDuration { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool EliteExtensionUsed { get; set; }
+        [DataMember(EmitDefaultValue = false)] public PermanentDurationProgress? DurationProgress { get; set; }
         [DataMember(IsRequired = true)] public double Radius { get; set; }
         [DataMember(EmitDefaultValue = false)] public int TargetId { get; set; }
         [DataMember(EmitDefaultValue = false)] public double NextTargetAt { get; set; }
@@ -169,6 +170,7 @@ namespace BibleSurvivor.Core
             copy.Contacts = Contacts?.Select(contact => contact.Copy()).ToList();
             copy.HeatTimers = HeatTimers?.Select(timer => timer.Copy()).ToList();
             copy.PursuedGroup = PursuedGroup?.ToList();
+            copy.DurationProgress = DurationProgress?.Copy();
             return copy;
         }
     }
@@ -316,6 +318,7 @@ namespace BibleSurvivor.Core
         private const float PredictionLimit = 1;
         private const float PreferredCenterGap = 1.2f;
         private const double CrowdRadius = 1.5;
+        private const double DurationCrowdRadius = 3;
         private const double CrowdMotionMultiplier = .70;
         private const double DamageCapMultiplier = 2.25;
         private const double InnerRadiusFraction = .40;
@@ -334,7 +337,8 @@ namespace BibleSurvivor.Core
             IReadOnlyDictionary<int, Vector2>? previousTargets = null, int level = 0,
             Action<int>? recordOriginalSuppression = null, Action? recordSupportSuppression = null,
             double conditionalRegionBonus = 0, Func<int, bool>? isElite = null,
-            Func<ExpandedFirePillarHit, double?>? applyOriginalHit = null, Func<bool>? reserveSupportProjectile = null)
+            Func<ExpandedFirePillarHit, double?>? applyOriginalHit = null, Func<bool>? reserveSupportProjectile = null,
+            PermanentDurationRules durationRules = default, Func<bool>? consumeFirstSustained = null)
         {
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (level < 0 || level > 8 || evolved && level != 0 && level != 8)
@@ -342,7 +346,8 @@ namespace BibleSurvivor.Core
             if (!BattleSnapshot.Finite(conditionalRegionBonus) || conditionalRegionBonus < 0 ||
                 settings.RegionShapeBonus + conditionalRegionBonus > 1.5 || settings.EmberRadiusBonus + conditionalRegionBonus > 1.5)
                 throw new ArgumentOutOfRangeException(nameof(conditionalRegionBonus));
-            var originalBaseDamage = level == 0 ? 0 : Profile.AtLevel(level).Damage;
+            var native = level == 0 ? default : Profile.AtLevel(level);
+            var originalBaseDamage = native.Damage;
             double? baseDamage = null;
             if (settings.IncreaseCoreDamage || settings.IncreaseIgnitionDamage || settings.RepeatedHeat || settings.ExtendOnEliteKill)
             {
@@ -409,6 +414,11 @@ namespace BibleSurvivor.Core
                 radius = Math.Min(2.25, radius + Profile.AtLevel(1).Radius * .15);
                 state.RadiusBoostUntil = null;
             }
+            var firstSustained = level != 0 && accepted > 0 && durationRules.HasFirstSustainedBonus &&
+                consumeFirstSustained?.Invoke() == true;
+            var lifetime = level == 0 ? duration : durationRules.LaunchDuration(native.Duration, duration, firstSustained, evolved: evolved);
+            var crowdedLifetime = level == 0 ? duration : durationRules.LaunchDuration(native.Duration, duration,
+                firstSustained, nearbyAtOriginalRegion: 6, evolved: evolved);
             for (var index = 0; index < accepted; index++)
             {
                 var candidateIndex = index % candidates.Length;
@@ -419,7 +429,9 @@ namespace BibleSurvivor.Core
                     var reuse = index / candidates.Length;
                     center.X += (float)(Profile.TargetReuseSpacing * ((reuse + 1) / 2) * (reuse % 2 == 1 ? -1 : 1));
                 }
-                var region = Create(state, center, start, damage, radius, duration, false);
+                var crowded = crowdedLifetime > lifetime &&
+                    targets.Values.Where(position => InRange(center, position, DurationCrowdRadius)).Skip(5).Any();
+                var region = Create(state, center, start, damage, radius, crowded ? crowdedLifetime : lifetime, false);
                 region.Cycle = state.Cycle;
                 region.OriginalBaseDamage = originalBaseDamage;
                 region.FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay;
@@ -430,7 +442,8 @@ namespace BibleSurvivor.Core
                 region.RepeatedHeat = settings.RepeatedHeat;
                 region.AdaptiveHeat = settings.AdaptiveHeat;
                 TrackHeat(region, start, targets);
-                region.NativeDuration = settings.ExtendOnEliteKill ? Profile.AtLevel(level).Duration : (double?)null;
+                region.NativeDuration = settings.ExtendOnEliteKill ? native.Duration : (double?)null;
+                if (level != 0) region.DurationProgress = durationRules.BeginKillTracking(native.Duration);
                 region.NextHit = region.IgnitionAt;
                 if (evolved && settings.HeatAroundRim) region.NextRimHitAt = region.IgnitionAt;
                 if (settings.LinkNearbyPillars && !state.NextLinkAt.HasValue)
@@ -794,9 +807,17 @@ namespace BibleSurvivor.Core
 
         internal static bool ValidDuration(ExpandedFireRegion region)
         {
+            var lifetime = region.EndsAt - region.StartedAt;
+            if (region.DurationProgress is PermanentDurationProgress progress)
+            {
+                if (region.Ember || !Enumerable.Range(1, 8).Select(Profile.AtLevel).Any(level =>
+                        level.Duration == progress.NativeDuration && level.Damage == region.OriginalBaseDamage) ||
+                    region.NativeDuration.HasValue && region.NativeDuration.Value != progress.NativeDuration) return false;
+                progress.Validate(lifetime);
+            }
             if (region.NativeDuration is not double basis) return !region.EliteExtensionUsed;
             return !region.Ember && (basis == Profile.AtLevel(1).Duration || basis == Profile.AtLevel(2).Duration || basis == Profile.AtLevel(8).Duration) &&
-                region.EndsAt <= region.StartedAt + basis * 1.75 + TimeEpsilon;
+                lifetime <= basis * PermanentDurationRules.MaximumScale + TimeEpsilon;
         }
 
         internal static bool ValidHeatTimers(ExpandedFireRegion region, double now) =>
@@ -895,7 +916,8 @@ namespace BibleSurvivor.Core
                     regionId = region.Id;
                     targetOrdinal = 0;
                 }
-                var trackKills = !region.Ember && (region.NativeDuration.HasValue || settings.NormalKillBurst || settings.EliteReignition || settings.EmpowerAfterKills);
+                var trackKills = !region.Ember && (region.NativeDuration.HasValue || region.DurationProgress != null ||
+                    settings.NormalKillBurst || settings.EliteReignition || settings.EmpowerAfterKills);
                 var elite = trackKills && isElite?.Invoke(candidate.Id) == true;
                 var contact = new ExpandedFirePillarHit(candidate.Id, candidate.Position, candidate.Damage, region.Ember,
                     region.Cycle, region.Ember ? 0 : region.OriginalBaseDamage, region.Ember ? 0 : targetOrdinal + 1);
@@ -937,10 +959,16 @@ namespace BibleSurvivor.Core
             double regionShapeBonus, Func<IReadOnlyDictionary<int, Vector2>> targets, Action<ExpandedFirePillarHit> hit,
             Func<bool>? reserve, Action? suppressed)
         {
+            if (elite && region.NativeDuration.HasValue && !region.EliteExtensionUsed && !state.NextEliteExtensionAt.HasValue)
+                ExtendForElite(state, region, now);
+            if (region.DurationProgress is PermanentDurationProgress progress)
+            {
+                var currentDuration = region.EndsAt - region.StartedAt;
+                var duration = progress.RecordOriginalKill(currentDuration, elite);
+                if (duration > currentDuration) region.EndsAt = region.StartedAt + duration;
+            }
             if (elite)
             {
-                if (region.NativeDuration.HasValue && !region.EliteExtensionUsed && !state.NextEliteExtensionAt.HasValue)
-                    ExtendForElite(state, region, now);
                 if (settings.EliteReignition && !state.NextEliteReignitionAt.HasValue && ReserveSupport(state, reserve, suppressed))
                 {
                     SpawnSupport(state, position, now, preCriticalDamage * .35,

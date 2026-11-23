@@ -70,6 +70,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double OriginalBaseDamage { get; set; }
         [DataMember(EmitDefaultValue=false)] public PermanentShotHitBonuses SharedShotHitBonuses { get; set; }
         [DataMember(EmitDefaultValue=false)] public double TravelledDistance { get; set; }
+        [DataMember(EmitDefaultValue=false)] public int SlingSlot { get; set; }
+        [DataMember(EmitDefaultValue=false)] public bool SlingEvolved { get; set; }
+        [DataMember(EmitDefaultValue=false)] public bool SlingBoostedVolley { get; set; }
+        [DataMember(EmitDefaultValue=false)] public bool SlingGuaranteedCritical { get; set; }
         [DataMember] public double Radius {get;set;}
         [DataMember] public List<int> HitIds {get;set;}=new List<int>();
         internal Vector2 Position {get=>new Vector2(X,Y);set{X=value.X;Y=value.Y;}}
@@ -95,6 +99,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double PulseUntil {get;set;}
         [DataMember(EmitDefaultValue=false)] public int FocusTargetId {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool LaunchedSlingInCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ExpandedSlingCombatState? SlingCombat { get; set; }
         [DataMember(EmitDefaultValue=false)] public List<int>? PulseHitIds {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool StrengthenedFirstPulse { get; set; }
         [DataMember(EmitDefaultValue=false)] public double FrozenPulseRadius { get; set; }
@@ -103,6 +108,10 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double FrozenOrbitHitRadius { get; set; }
         [DataMember(EmitDefaultValue=false)] public double FrozenOrbitDamage { get; set; }
         [DataMember(EmitDefaultValue=false)] public double FrozenOrbitBaseDamage { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double BibleMotionCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public float BibleCrowdX { get; set; }
+        [DataMember(EmitDefaultValue=false)] public float BibleCrowdY { get; set; }
+        [DataMember(EmitDefaultValue=false)] public PermanentDurationProgress? BibleDuration { get; set; }
         [DataMember(EmitDefaultValue=false)] public double LastJawboneReach { get; set; }
         [DataMember(EmitDefaultValue=false)] public int JawboneCycleAmount { get; set; }
         [DataMember(EmitDefaultValue=false)] public double LastJawboneHalfAngle { get; set; }
@@ -112,7 +121,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public ExpandedJawboneEliteMarks? JawboneMarks { get; set; }
         [DataMember(EmitDefaultValue=false)] public List<BattleHitState>? FormHits {get;set;}
         internal BattleWeaponState Copy()
-        {var copy=(BattleWeaponState)MemberwiseClone();copy.OrbitHits=OrbitHits.Select(x=>x.Copy()).ToList();copy.PendingBursts=new List<double>(PendingBursts);copy.PulseHitIds=PulseHitIds?.ToList();copy.OriginalHitLedger=OriginalHitLedger?.Copy();copy.FormHits=FormHits?.Select(x=>x.Copy()).ToList();copy.JawboneMarks=JawboneMarks?.Copy();return copy;}
+        {var copy=(BattleWeaponState)MemberwiseClone();copy.OrbitHits=OrbitHits.Select(x=>x.Copy()).ToList();copy.PendingBursts=new List<double>(PendingBursts);copy.PulseHitIds=PulseHitIds?.ToList();copy.OriginalHitLedger=OriginalHitLedger?.Copy();copy.FormHits=FormHits?.Select(x=>x.Copy()).ToList();copy.JawboneMarks=JawboneMarks?.Copy();copy.SlingCombat=SlingCombat?.Copy();copy.BibleDuration=BibleDuration?.Copy();return copy;}
     }
     [DataContract]
     public sealed class BattleSpeedState
@@ -169,6 +178,18 @@ namespace BibleSurvivor.Core
             foreach (var weapon in Weapons)
             {
                 foreach (var hit in weapon.OrbitHits) yield return hit.Id;
+                if (weapon.SlingCombat is { } sling)
+                {
+                    if (sling.LastTargetId > 0) yield return sling.LastTargetId;
+                    if (sling.VolleyHits != null)
+                        foreach (var hit in sling.VolleyHits) yield return hit.TargetId;
+                    if (sling.Support != null)
+                        foreach (var shot in sling.Support)
+                        {
+                            if (shot.TargetId > 0) yield return shot.TargetId;
+                            if (shot.ExcludedId > 0) yield return shot.ExcludedId;
+                        }
+                }
                 if (weapon.JawboneMarks is { } jawbone)
                 {
                     if (jawbone.LastEliteId != 0) yield return jawbone.LastEliteId;
@@ -193,6 +214,14 @@ namespace BibleSurvivor.Core
                         foreach (var id in strike.VisitedIds) yield return id;
                 }
             if (FirePillar?.Spark != null) yield return FirePillar.Spark.TargetId;
+            if (WildernessVoice != null)
+            {
+                if (WildernessVoice.EliteSeries != null)
+                    foreach (var series in WildernessVoice.EliteSeries) yield return series.TargetId;
+                foreach (var cast in WildernessVoice.Active)
+                    if (cast.OriginalTargetCounts != null)
+                        foreach (var target in cast.OriginalTargetCounts) yield return target.TargetId;
+            }
             if (FirePillar != null)
                 foreach (var region in FirePillar.Regions)
                 {
@@ -338,6 +367,10 @@ namespace BibleSurvivor.Core
                     p.TravelledDistance < 0 || p.TravelledDistance > Tuning.SlingSpeed * Tuning.SlingLifetime * 1.05 + 1e-6 ||
                     p.TravelledDistance > 0 && (p.SharedShotHitBonuses & PermanentShotHitBonuses.LongFlight) == 0 ||
                     p.SharedShotHitBonuses != PermanentShotHitBonuses.None && (!expanded || p.OriginalBaseDamage <= 0) ||
+                    p.SlingSlot < 0 || p.SlingSlot > CombatStats.ExpandedAmountLimit("sling") ||
+                    p.SlingSlot > 0 && (!expanded || p.Cycle < 1 || p.OriginalBaseDamage <= 0) ||
+                    p.SlingEvolved && p.SlingSlot == 0 || p.SlingBoostedVolley && !p.SlingEvolved ||
+                    p.SlingGuaranteedCritical && (!p.SlingEvolved || p.SlingSlot != 1 || p.Cycle % 5 != 0) ||
                     p.RemainingPierce<1||p.RemainingPierce>10000||!Finite(p.Radius)||p.Radius<=0||p.HitIds==null||
                     p.HitIds.Count>6210||p.HitIds.Any(x=>x<=0)||p.HitIds.Count!=p.HitIds.Distinct().Count() ||
                     expanded && p.RemainingPierce + p.HitIds.Count > 8 ||
@@ -364,6 +397,10 @@ namespace BibleSurvivor.Core
                     throw new ArgumentException("Unexpected strengthened first pulse");
                 if (w.LaunchedSlingInCycle && (!expanded || w.WeaponId != "sling" || w.StarterCycle == 0))
                     throw new ArgumentException("Invalid sling launch receipt");
+                if (w.SlingCombat != null && (!expanded || w.WeaponId != "sling" ||
+                    w.SlingCombat.LastOriginalId >= NextProjectileId || w.StarterCycle <= 0))
+                    throw new ArgumentException("Invalid sling specialization receipt");
+                w.SlingCombat?.Validate(Time, w.StarterCycle);
                 if (!Finite(w.FrozenPulseRadius) || w.FrozenPulseRadius < 0 ||
                     w.FrozenPulseRadius > EvolutionRules.PulseRadius * 2.5 ||
                     (w.FrozenPulseRadius > 0) != (expanded && w.WeaponForm == EvolutionRules.Bible && w.NextPulse > 0))
@@ -376,6 +413,13 @@ namespace BibleSurvivor.Core
                     w.FrozenOrbitCount == 0 && (w.FrozenOrbitRadius != 0 || w.FrozenOrbitHitRadius != 0) ||
                     w.FrozenOrbitCount > 0 && (!expanded || w.WeaponId != "bible" || w.ActiveSince < 0))
                     throw new ArgumentException("Invalid frozen orbit geometry");
+                var crowd = new Vector2(w.BibleCrowdX, w.BibleCrowdY);
+                if (!Finite(w.BibleMotionCycle) || w.BibleMotionCycle < 0 || w.BibleMotionCycle > 12 ||
+                    !Position(crowd.X, crowd.Y) || crowd != Vector2.Zero && Math.Abs(crowd.LengthSquared() - 1) > .0001 ||
+                    (w.BibleMotionCycle > 0 || crowd != Vector2.Zero || w.BibleDuration != null) &&
+                        (!expanded || w.WeaponId != "bible" || w.FrozenOrbitCount == 0))
+                    throw new ArgumentException("Invalid expanded Bible orbit state");
+                w.BibleDuration?.Validate(w.ActiveUntil - w.ActiveSince);
                 if (!Finite(w.LastJawboneReach) || w.LastJawboneReach < 0 ||
                     w.LastJawboneReach > Tuning.JawboneRange * 2.5 ||
                     w.LastJawboneReach > 0 && (!expanded || w.WeaponId != "jawbone" || w.ActiveSince < 0))
@@ -483,7 +527,9 @@ namespace BibleSurvivor.Core
             if (expanded &&
                 (BattleWorld.CountOriginalProjectiles(Projectiles.Count, MosesStaff, Cross, ElijahChariot) > ExpandedOriginalProjectileLimit ||
                     BattleWorld.CountSupportRegions(MosesStaff, Cross, FirePillar, ElijahChariot, Lightning) > ExpandedSupportRegionLimit ||
-                    BattleWorld.CountSupportProjectiles(MosesStaff, Cross, ElijahChariot, FirePillar) > ExpandedSupportProjectileLimit))
+                    BattleWorld.CountSupportProjectiles(MosesStaff, Cross, ElijahChariot, FirePillar) +
+                        (Weapons.SingleOrDefault(weapon => weapon.WeaponId == "sling")?.SlingCombat?.SupportCount ?? 0) >
+                        ExpandedSupportProjectileLimit))
                 throw new ArgumentException("Expanded attack reservations exceed their shared limits");
         }
 
@@ -532,7 +578,7 @@ namespace BibleSurvivor.Core
         internal ChariotDashView(Vector2 origin,Vector2 direction,string phase,double elapsed,double deadline,double remaining,double body,double player)
         {Origin=origin;Direction=direction;Phase=phase;BossElapsed=elapsed;Deadline=deadline;RemainingDistance=remaining;BodyRadius=body;PlayerRadius=player;}
     }
-    public sealed class BattleWorld
+    public sealed partial class BattleWorld
     {
         public const double FixedStep=1.0/60;
         public const double E1Speed=.60,E2Speed=.45,E3Speed=.95;
@@ -584,6 +630,8 @@ namespace BibleSurvivor.Core
         private readonly Dictionary<long, Vector2> hostileStepStarts = new Dictionary<long, Vector2>();
         private readonly PermanentShotRules permanentShotRules;
         private readonly PermanentDurationRules permanentDurationRules;
+        private readonly ExpandedSlingRanks slingRanks;
+        private readonly ExpandedBibleRanks bibleRanks;
         private readonly List<ChariotDeflectionAttempt> chariotDeflectionAttempts = new List<ChariotDeflectionAttempt>();
         private double? nextHostileEraseAt;
         private uint chariotDeflectRandom;
@@ -647,6 +695,8 @@ namespace BibleSurvivor.Core
                 danielLionRankOptions = session.DanielLionRankOptions();
                 permanentShotRules = session.ShotRules();
                 permanentDurationRules = session.DurationRules();
+                slingRanks = session.SlingRanks();
+                bibleRanks = session.BibleRanks();
             }
             this.tuning=(tuning??new BattleTuning()).Copy();this.tuning.Validate();
             if(monsterSpeeds==null||monsterSpeeds.Count==0||monsterSpeeds.Any(x=>string.IsNullOrWhiteSpace(x.Key)||
@@ -814,6 +864,7 @@ namespace BibleSurvivor.Core
             impactFloor=ImpactSequence+1;
             if (wildernessVoice != null) Session.RecordVoiceCyclesAtBossEntry(wildernessVoice.Cycle);
             if (weapons.TryGetValue("jawbone", out var jawbone)) Session.RecordJawboneCyclesAtBossEntry(jawbone.StarterCycle);
+            if (weapons.TryGetValue("sling", out var sling)) Session.RecordSlingCadenceAtBossEntry(sling);
             if (danielLion != null) Session.RecordLionCadenceAtBossEntry(danielLion);
             Session.RecordWeaponCadenceAtBossEntry(lightning, firePillar, cross, mosesStaff, elijahChariot);
             enemies.Clear();drops.Clear();projectiles.Clear();weapons.Clear();ClearExpandedAttacks();Synchronize();
@@ -1127,6 +1178,13 @@ namespace BibleSurvivor.Core
                     weapons[id]=new BattleWeaponState{WeaponId=id,WeaponForm=form,NextCycle=SimulationTime};
                     if (id == "jawbone" && Session.CombatRulesVersion == 2)
                         weapons[id].StarterCycle = clock?.StarterCycle ?? Session.BossEntryJawboneCycle;
+                    if (id == "sling" && Session.CombatRulesVersion == 2)
+                    {
+                        var entry = Session.BossEntrySlingCadence;
+                        weapons[id].StarterCycle = clock?.StarterCycle ?? entry.Cycle;
+                        weapons[id].SlingCombat = clock?.SlingCombat ?? (entry.NormalHits > 0
+                            ? new ExpandedSlingCombatState { NormalHits = entry.NormalHits } : null);
+                    }
                     if (id == "lightning")
                     {
                         var cadence = Session.BossEntryLightningCadence;
@@ -1263,7 +1321,12 @@ namespace BibleSurvivor.Core
                 clock.BurstsRemaining=profile.IsOrbit?0:profile.Amount;
                 if (expanded && clock.WeaponId == "jawbone") clock.JawboneCycleAmount = profile.Amount;
                 clock.NextBurst=expanded&&profile.IsOrbit?0:scheduled;
-                if(clock.WeaponForm==EvolutionRules.Sling)clock.FocusTargetId=FocusSlingTarget(profile);
+                if (clock.WeaponId == "sling")
+                {
+                    if (expanded && slingRanks.HasSpecialization) StartSlingVolley(clock);
+                    if (clock.WeaponForm == EvolutionRules.Sling)
+                        clock.FocusTargetId = expanded && slingRanks.LockEvolvedFocus ? 0 : FocusSlingTarget(profile);
+                }
                 if(profile.IsOrbit)
                 {
                     if (expanded)
@@ -1273,6 +1336,14 @@ namespace BibleSurvivor.Core
                         clock.FrozenOrbitHitRadius = tuning.BookRadius * profile.OrbitCollisionMultiplier;
                         clock.FrozenOrbitDamage = profile.Damage;
                         clock.FrozenOrbitBaseDamage = profile.OriginalBaseDamage;
+                        var native = WeaponRules.Get("bible", Session.Inventory.Weapons["bible"]).Duration;
+                        var duration = permanentDurationRules.LaunchDuration(native, profile.Duration,
+                            permanentDurationRules.HasFirstSustainedBonus && Session.ConsumeFirstSustainedAttack(),
+                            evolved: clock.WeaponForm != null);
+                        clock.ActiveUntil += duration - profile.Duration;
+                        clock.NextCycle += duration - profile.Duration;
+                        if (bibleRanks.PulsesOrbitRadius) clock.BibleMotionCycle = clock.NextCycle - scheduled;
+                        clock.BibleDuration = permanentDurationRules.BeginKillTracking(native);
                     }
                     ShotsFired += profile.Amount;
                     Session.ObserveTempoOpening();
@@ -1290,6 +1361,11 @@ namespace BibleSurvivor.Core
                 var orbitHitRadius = clock.FrozenOrbitCount == 0 ? tuning.BookRadius * profile.OrbitCollisionMultiplier : clock.FrozenOrbitHitRadius;
                 var orbitDamage = clock.FrozenOrbitDamage == 0 ? profile.Damage : clock.FrozenOrbitDamage;
                 var orbitBasis = clock.FrozenOrbitBaseDamage == 0 ? profile.OriginalBaseDamage : clock.FrozenOrbitBaseDamage;
+                var crowd = bibleRanks.FindCrowdedDirection(PlayerPosition, enemies.Values);
+                clock.BibleCrowdX = crowd.X;
+                clock.BibleCrowdY = crowd.Y;
+                var tracksOrbitPath = expanded && (bibleRanks.ExpandsCrowdedSide ||
+                    Session.HasExpandedSkill("weapon.bible.a.03") || bibleRanks.PulsesOrbitRadius);
                 var orbitOrdinals = Session.HasExpandedSkill("common.power.06") ? new int[orbitCount] : null;
                 foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
                 {
@@ -1299,13 +1375,26 @@ namespace BibleSurvivor.Core
                     for(var book=0;book<orbitCount;book++)
                     {
                         var angle=SimulationTime*2.5*Session.BibleRotationMultiplier+book*2*Math.PI/orbitCount;
-                        var position=PlayerPosition+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)orbitRadius;
+                        var position = tracksOrbitPath
+                            ? bibleRanks.Book(PlayerPosition, book, orbitCount, SimulationTime, Session.BibleRotationMultiplier,
+                                clock.ActiveSince, clock.BibleMotionCycle, orbitRadius, tuning.BibleOrbitRadius, crowd).Position
+                            : PlayerPosition + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * (float)orbitRadius;
                         var strikeRadius = orbitHitRadius + TargetRadius(pair.Key);
                         if (Vector2.DistanceSquared(position,pair.Value)>strikeRadius*strikeRadius) continue;
                         if(old==null){old=new BattleHitState{Id=pair.Key};clock.OrbitHits.Add(old);}old.At=SimulationTime;
                         var ordinal = orbitOrdinals == null ? 1 : ++orbitOrdinals[book];
-                        Hit(pair.Key, orbitDamage, "bible", position, cycle: clock.StarterCycle,
+                        var trackKill = clock.BibleDuration != null;
+                        var elite = trackKill && Session.IsEliteActor(pair.Key);
+                        var precrit = ApplyExpandedDamage(pair.Key, orbitDamage, "bible", position, pair.Value - PlayerPosition,
+                            bibleRanks.BookKnockback(pair.Value - PlayerPosition), original: true, cycle: clock.StarterCycle,
                             originalBaseDamage: orbitBasis, ordinal: ordinal);
+                        if (trackKill && precrit > 0 && !enemies.ContainsKey(pair.Key))
+                        {
+                            var before = clock.ActiveUntil - clock.ActiveSince;
+                            var extended = clock.BibleDuration!.RecordOriginalKill(before, elite) - before;
+                            clock.ActiveUntil += extended;
+                            clock.NextCycle += extended;
+                        }
                         if(clock.WeaponForm==EvolutionRules.Bible)RecordFormHit(clock,pair.Key);break;
                     }
                     if(!Session.CanAttack)break;
@@ -1315,6 +1404,8 @@ namespace BibleSurvivor.Core
             foreach(var at in clock.PendingBursts.Where(x=>x<=SimulationTime+1e-9).OrderBy(x=>x).ToArray())
             {
                 clock.PendingBursts.Remove(at);
+                var sling = clock.SlingCombat;
+                var slot = sling == null ? 0 : ++sling.Slot;
                 if(clock.WeaponId=="jawbone")
                 {
                     ShotsFired++;
@@ -1335,11 +1426,18 @@ namespace BibleSurvivor.Core
                 }
                 else if(enemies.Count>0&&(expanded?OriginalProjectileCount:projectiles.Count)<projectileLimit)
                 {
-                    if(clock.WeaponForm==EvolutionRules.Sling&&!enemies.ContainsKey(clock.FocusTargetId))clock.FocusTargetId=FocusSlingTarget(profile);
-                    var preferred = clock.WeaponForm == EvolutionRules.Sling ? clock.FocusTargetId : PreferredSlingTarget(profile);
-                    var target = preferred == 0
-                        ? enemies.OrderBy(x=>Vector2.DistanceSquared(x.Value,PlayerPosition)).ThenBy(x=>x.Key).First().Value
-                        : enemies[preferred];
+                    var slingEvolved = clock.WeaponForm == EvolutionRules.Sling;
+                    var tracksFirst = slingEvolved && slingRanks.LockEvolvedFocus;
+                    if (slingEvolved && !tracksFirst && !enemies.ContainsKey(clock.FocusTargetId))
+                        clock.FocusTargetId = FocusSlingTarget(profile);
+                    var preferred = slingEvolved && !tracksFirst ? clock.FocusTargetId : PreferredSlingTarget(profile);
+                    var targetId = sling != null ? slingRanks.ChooseTarget(PlayerPosition, enemies, Session.IsEliteActor,
+                        preferred, sling.LastTargetId, slot, tuning.SlingSpeed * tuning.SlingLifetime * profile.SlingTravelMultiplier,
+                        slingEvolved, clock.FocusTargetId, sling.LastTargetKilled) : preferred == 0
+                            ? enemies.OrderBy(x=>Vector2.DistanceSquared(x.Value,PlayerPosition)).ThenBy(x=>x.Key).First().Key
+                            : preferred;
+                    if (tracksFirst) clock.FocusTargetId = targetId;
+                    var target = enemies[targetId];
                     var aim=target-PlayerPosition;var direction=aim.LengthSquared()>1e-12?Vector2.Normalize(aim):facing;
                     var first = !clock.LaunchedSlingInCycle;
                     var speed = permanentShotRules.LaunchSpeed(tuning.SlingSpeed, tuning.SlingSpeed * profile.ProjectileSpeedMultiplier, first);
@@ -1347,11 +1445,26 @@ namespace BibleSurvivor.Core
                     var lifetime = expanded
                         ? tuning.SlingLifetime * profile.SlingTravelMultiplier / (speed / tuning.SlingSpeed)
                         : tuning.SlingLifetime;
-                    projectiles.Add(new BattleProjectileState{Id=nextProjectile++,X=PlayerPosition.X,Y=PlayerPosition.Y,
+                    var budget = permanentShotRules.EvolutionPierceBudget(profile.Pierce, slingEvolved);
+                    if (slingRanks.SixthFullPierce && slot == 1 && clock.StarterCycle % 6 == 0) budget = 8;
+                    var id = nextProjectile++;
+                    projectiles.Add(new BattleProjectileState{Id=id,X=PlayerPosition.X,Y=PlayerPosition.Y,
                         VelocityX=direction.X*(float)speed,VelocityY=direction.Y*(float)speed,Lifetime=lifetime,
-                        Damage=profile.Damage,RemainingPierce=permanentShotRules.EvolutionPierceBudget(profile.Pierce, clock.WeaponForm != null),Radius=radius,
+                        Damage=profile.Damage,RemainingPierce=budget,Radius=radius,
                         Cycle=clock.StarterCycle,OriginalBaseDamage=expanded ? profile.OriginalBaseDamage : 0,
-                        SharedShotHitBonuses=permanentShotRules.HitBonuses});ShotsFired++;
+                        SharedShotHitBonuses=permanentShotRules.HitBonuses, SlingSlot=slot, SlingEvolved=slot > 0 && slingEvolved,
+                        SlingBoostedVolley=sling?.StrengthenedVolley == true,
+                        SlingGuaranteedCritical=slingEvolved && slingRanks.GuaranteedCritical && slot == 1 &&
+                            clock.StarterCycle % 5 == 0});ShotsFired++;
+                    if (sling != null)
+                    {
+                        sling.LastTargetId = targetId;
+                        sling.LastOriginalId = id;
+                        sling.LastTargetKilled = false;
+                        if (slingRanks.FourthCopy && clock.PendingBursts.Count == 0 && clock.StarterCycle % 4 == 0)
+                            SpawnSlingSupport(sling, ExpandedSlingSupportKind.CycleCopy, PlayerPosition, direction,
+                                profile.Damage * .45, 3);
+                    }
                     if (expanded && (Session.HasExpandedSkill("common.shot.05") || Session.HasExpandedSkill("common.shot.06")))
                         clock.LaunchedSlingInCycle = true;
                     if (Session.TempoOpeningAvailable)
@@ -1368,6 +1481,19 @@ namespace BibleSurvivor.Core
             }
             clock.BurstsRemaining=clock.PendingBursts.Count;
             clock.NextBurst=clock.PendingBursts.Count==0?0:clock.PendingBursts.Min();
+        }
+
+        private static void StartSlingVolley(BattleWeaponState clock)
+        {
+            var state = clock.SlingCombat ??= new ExpandedSlingCombatState();
+            state.Slot = 0;
+            state.LastTargetId = 0;
+            state.LastOriginalId = 0;
+            state.LastTargetKilled = false;
+            state.StrengthenedVolley = state.BossBoostPending && clock.WeaponForm == EvolutionRules.Sling;
+            if (state.StrengthenedVolley) state.BossBoostPending = false;
+            state.VolleyHits?.RemoveAll(hit => hit.Cycle < clock.StarterCycle - 2);
+            if (state.VolleyHits?.Count == 0) state.VolleyHits = null;
         }
 
         private void ResolveExpandedJawbone(BattleWeaponState clock, CombatStats profile, double reach)
@@ -1471,7 +1597,10 @@ namespace BibleSurvivor.Core
                         nextCycleDuration: nextCycleDuration, echoRadiusBonus: Session.AreaProfile(evolved, surrounded).HitShapeBonus +
                             Session.AreaProfile().RegionShapeBonus,
                         rankOptions: Session.WildernessVoiceRankOptions(), uncappedDamage: profile.UncappedDamage,
-                        isElite: Session.IsEliteActor, isBoss: Session.IsBossActor);
+                        isElite: Session.IsEliteActor, isBoss: Session.IsBossActor,
+                        applyOriginalHit: hit => AcceptedOriginalDamage(ApplyExpandedDamage(hit.TargetId, hit.Damage,
+                            weapon, hit.Position, hit.Position - hit.Center, hit.Knockback, original: true, cycle: hit.Cycle,
+                            originalBaseDamage: hit.OriginalBaseDamage, ordinal: hit.TargetOrdinal)));
                     if (wildernessVoice.Cycle != voiceCycle) ShotsFired++;
                     return true;
                 case "fire_pillar":
@@ -1490,7 +1619,8 @@ namespace BibleSurvivor.Core
                         applyOriginalHit: hit => AcceptedOriginalDamage(ApplyExpandedDamage(hit.TargetId, hit.Damage,
                             weapon, hit.Position, Vector2.Zero, 0, original: true, cycle: hit.Cycle,
                             originalBaseDamage: hit.OriginalBaseDamage, ordinal: hit.TargetOrdinal)),
-                        reserveSupportProjectile: () => SupportProjectileCount < BattleSnapshot.ExpandedSupportProjectileLimit);
+                        reserveSupportProjectile: () => SupportProjectileCount < BattleSnapshot.ExpandedSupportProjectileLimit,
+                        durationRules: permanentDurationRules, consumeFirstSustained: Session.ConsumeFirstSustainedAttack);
                     return true;
                 case "moses_staff":
                     mosesStaff ??= new ExpandedMosesStaffState();
@@ -1612,7 +1742,8 @@ namespace BibleSurvivor.Core
 
         private int OriginalProjectileCount => CountOriginalProjectiles(projectiles.Count, mosesStaff, cross, elijahChariot);
         private int SupportRegionCount => CountSupportRegions(mosesStaff, cross, firePillar, elijahChariot, lightning);
-        private int SupportProjectileCount => CountSupportProjectiles(mosesStaff, cross, elijahChariot, firePillar);
+        private int SupportProjectileCount => CountSupportProjectiles(mosesStaff, cross, elijahChariot, firePillar) +
+            (weapons.TryGetValue("sling", out var clock) ? clock.SlingCombat?.SupportCount ?? 0 : 0);
         private void RecordOriginalSuppression(int count) => OriginalSuppressions = checked(OriginalSuppressions + count);
         private void RecordSupportSuppression() => SupportSuppressions = checked(SupportSuppressions + 1);
 
@@ -1680,18 +1811,35 @@ namespace BibleSurvivor.Core
                 foreach(var collision in collisions.OrderBy(x=>x.At).ThenBy(x=>x.Id))
                 {
                     if(!enemies.ContainsKey(collision.Id))continue;
+                    var ordinal = projectile.HitIds.Count + 1;
+                    var sling = weapons.TryGetValue("sling", out var clock) ? clock.SlingCombat : null;
+                    var elite = sling != null && Session.IsEliteActor(collision.Id);
+                    var boss = sling != null && Session.IsBossActor(collision.Id);
                     var damage = PermanentShotRules.HitDamage(projectile.SharedShotHitBonuses, projectile.OriginalBaseDamage,
                         projectile.Damage, projectile.RemainingPierce, projectile.TravelledDistance + travel * collision.At);
+                    if (sling != null && projectile.SlingSlot > 0)
+                        damage = slingRanks.HitDamage(projectile.OriginalBaseDamage, damage, projectile.Cycle,
+                            projectile.SlingSlot, ordinal, elite, sling.VolleyHits?.Any(hit =>
+                                hit.Cycle == projectile.Cycle && hit.TargetId == collision.Id) == true,
+                            projectile.SlingEvolved, projectile.SlingBoostedVolley);
                     projectile.HitIds.Add(collision.Id);projectile.RemainingPierce--;
-                    Hit(collision.Id, damage, "sling", from+(to-from)*(float)collision.At, cycle: projectile.Cycle,
-                        originalBaseDamage: projectile.OriginalBaseDamage, ordinal: projectile.HitIds.Count);
+                    var contact = from + (to - from) * (float)collision.At;
+                    var accepted = Hit(collision.Id, damage, "sling", contact, cycle: projectile.Cycle,
+                        originalBaseDamage: projectile.OriginalBaseDamage, ordinal: ordinal,
+                        forceCritical: projectile.SlingGuaranteedCritical && ordinal == 1);
+                    if (sling != null && projectile.SlingSlot > 0 && accepted > 0 && Session.CanAttack)
+                        ApplySlingFollowups(sling, projectile, collision.Id, contact, accepted, elite, boss);
                     if(projectile.RemainingPierce==0||!Running)break;
                 }
                 projectile.Position=to;projectile.Lifetime-=duration;projectile.TravelledDistance+=travel;
                 if(projectile.RemainingPierce==0||projectile.Lifetime<=1e-9)projectiles.Remove(projectile);
                 if(!Running)break;
             }
+            if (Session.CanAttack && weapons.TryGetValue("sling", out var slingClock) &&
+                slingClock.SlingCombat is { } slingState)
+                MoveSlingSupports(slingState, previous);
         }
+
         // Earliest swept-circle contact in relative coordinates (enemy motion is included).
         private static double? Intersection(Vector2 from,Vector2 to,double radius)
         {
@@ -1701,7 +1849,7 @@ namespace BibleSurvivor.Core
             var time=(-b-Math.Sqrt(disc))/(2*a);return time>=0&&time<=1?time:(double?)null;
         }
         private double Hit(int id, double damage, string cause, Vector2 contact, bool original = true,
-            long cycle = 0, bool singleHitCycle = false, double originalBaseDamage = 0, int ordinal = 1)
+            long cycle = 0, bool singleHitCycle = false, double originalBaseDamage = 0, int ordinal = 1, bool forceCritical = false)
         {
             if (!Session.CanAttack || !enemies.TryGetValue(id, out var position) ||
                 !Session.Targets.TryGetValue(id, out var target)) return 0;
@@ -1716,7 +1864,7 @@ namespace BibleSurvivor.Core
                 damage = Session.ResolveOriginalDamage(cause, damage, originalBaseDamage, id, before,
                     Vector2.Distance(PlayerPosition, position), ordinal,
                     singleHitCycle || ledger?.IsFirst(cycle) == true, ledger?.IsMarked(id, SimulationTime) == true,
-                    out preCriticalDamage);
+                    out preCriticalDamage, forceCritical);
             }
             Session.Hit(id,damage,null,original);
             ledger?.RecordCycle(cycle);

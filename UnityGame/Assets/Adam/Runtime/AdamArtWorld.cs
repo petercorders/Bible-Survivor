@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BibleSurvivor.Core;
 using UnityEngine;
 
@@ -539,6 +540,10 @@ namespace BibleSurvivor.Unity
                 art.Draw("wpn_sling-stone_spin_8",anchor,scale,Clock);
                 GUI.matrix=before;
             }
+            var sling = snap.Weapons.FirstOrDefault(weapon => weapon.WeaponId == "sling")?.SlingCombat;
+            if (sling?.Support != null)
+                foreach (var stone in sling.Support)
+                    art.Draw("wpn_sling-stone_spin_8", Point(stone.X, stone.Y), scale, Clock);
             VisualQuality.SlingRelease(arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
             foreach(var weapon in snap.Weapons)
             {
@@ -546,15 +551,20 @@ namespace BibleSurvivor.Unity
                 {
                     var profile=host.Session.AttackProfile("bible");
                     var amount = weapon.FrozenOrbitCount == 0 ? profile.Amount : weapon.FrozenOrbitCount;
-                    var radius = weapon.FrozenOrbitCount == 0
+                    var nativeRadius = weapon.FrozenOrbitCount == 0
                         ? snap.Tuning.BibleOrbitRadius * profile.AreaMultiplier : weapon.FrozenOrbitRadius;
+                    var ranks = host.Session.BibleRanks();
                     for(var i=0;i<amount;i++)
                     {
-                        var angle=snap.Time*2.5*host.Session.BibleRotationMultiplier+i*Math.PI*2/amount;
-                        var pos=Point(snap.PlayerX+(float)(Math.Cos(angle)*radius),snap.PlayerY+(float)(Math.Sin(angle)*radius));
+                        var pose = ranks.Book(new System.Numerics.Vector2(snap.PlayerX, snap.PlayerY), i, amount, snap.Time,
+                            host.Session.BibleRotationMultiplier, weapon.ActiveSince, weapon.BibleMotionCycle, nativeRadius,
+                            snap.Tuning.BibleOrbitRadius, new System.Numerics.Vector2(weapon.BibleCrowdX, weapon.BibleCrowdY));
+                        var angle = pose.Angle;
+                        var radius = pose.Radius;
+                        var pos = Point(pose.Position.X, pose.Position.Y);
                         if(FeedbackEnabled&&AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Page,out _))
                         {
-                            var tint=GUI.color;try{for(var age=2;age>=1;age--){var behind=angle-age*12*Mathf.Deg2Rad;var ghost=Point(snap.PlayerX+(float)(Math.Cos(behind)*radius),snap.PlayerY+(float)(Math.Sin(behind)*radius));GUI.color=new Color(1,1,1,age==1?.45f:.2f);art.Draw("wpn_bible-book_spin_16",ghost,scale,Clock);}}finally{GUI.color=tint;}
+                            var tint=GUI.color;try{for(var age=2;age>=1;age--){var behind=angle-pose.RotationSign*age*12*Mathf.Deg2Rad;var ghost=Point(snap.PlayerX+(float)(Math.Cos(behind)*radius),snap.PlayerY+(float)(Math.Sin(behind)*radius));GUI.color=new Color(1,1,1,age==1?.45f:.2f);art.Draw("wpn_bible-book_spin_16",ghost,scale,Clock);}}finally{GUI.color=tint;}
                         }
                         art.Draw("fx_bible-glow_static_20",pos,scale); art.Draw("wpn_bible-book_spin_16",pos,scale,Clock);
                     }

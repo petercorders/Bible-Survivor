@@ -117,7 +117,7 @@ public sealed class AdamVisualQualityUiTests
 
     [Test] public void PermanentShopOffersOnlyTheLinkedCommonAndWeaponEffects()
     {
-        Assert.AreEqual(346,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
+        Assert.AreEqual(375,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
         foreach(var profile in ExpandedWeaponRules.All)
         {
             for(var rank=1;rank<=5;rank++)

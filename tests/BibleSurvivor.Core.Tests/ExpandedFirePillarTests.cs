@@ -637,6 +637,110 @@ internal static class ExpandedFirePillarTests
             Check.Near(.9, saved.Regions.Single().Radius);
         });
 
+        test("Common duration applies first emitted and evolved bonuses and samples nearby enemies per pillar center", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2>();
+            var ranks = PermanentDurationRules.FromRanks(new Dictionary<string, int>
+            {
+                ["common.duration.05"] = 1, ["common.duration.08"] = 1, ["common.duration.10"] = 1,
+            });
+            var attempts = 0;
+            int Step(ExpandedFirePillarState fire, double now, int amount = 2) =>
+                ExpandedFirePillar.Step(fire, now, Vector2.Zero, true, 20, 2.5, amount, 1.125, 3,
+                    () => targets, _ => { }, level: 8, durationRules: ranks, consumeFirstSustained: () => ++attempts == 1);
+            Check.Equal(0, Step(state, 0));
+            Check.Equal(0, attempts);
+
+            targets[1] = new Vector2(-2, 0);
+            targets[2] = new Vector2(2.5f, 0);
+            for (var id = 3; id <= 7; id++) targets[id] = new Vector2(-5, 0);
+            Check.Equal(0, Step(new ExpandedFirePillarState(), .25, amount: 0));
+            Check.Equal(0, attempts);
+            Check.Equal(2, Step(state, .25));
+            Check.Equal(1, attempts);
+            var saved = Restore(state);
+            saved.Validate(.25, true);
+            Check.Near(3.91, saved.Regions[0].EndsAt);
+            Check.Near(3.73, saved.Regions[1].EndsAt);
+            Check.True(saved.Regions.All(region => region.DurationProgress == null));
+
+            Check.Equal(2, Step(saved, 2.75));
+            var later = saved.Regions.Where(region => !region.Ember && region.Cycle == 2).ToArray();
+            Check.Near(3.42, later[0].EndsAt - later[0].StartedAt);
+            Check.Near(3.24, later[1].EndsAt - later[1].StartedAt);
+        });
+
+        test("Common duration waits for the eighth accepted original kill and freezes progress across reload", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = Enumerable.Range(1, 8).ToDictionary(id => id, _ => Vector2.Zero);
+            var extended = PermanentDurationRules.FromRanks(new Dictionary<string, int>
+            {
+                ["common.duration.06"] = 1, ["common.duration.07"] = 1,
+            });
+            void Step(ExpandedFirePillarState fire, double now, PermanentDurationRules rules) =>
+                ExpandedFirePillar.Step(fire, now, Vector2.Zero, false, 10, 3, 1, .9, 2,
+                    () => targets, _ => { }, level: 1, durationRules: rules, isElite: id => id >= 20,
+                    applyOriginalHit: hit =>
+                    {
+                        if (now < .65 && hit.TargetId == 8) return null;
+                        targets.Remove(hit.TargetId);
+                        return 10;
+                    });
+            Step(state, 0, extended);
+            Step(state, .15, default);
+            Check.Near(2, state.Regions.Single().EndsAt);
+            Check.Equal(7, state.Regions.Single().DurationProgress!.NormalKills);
+            var cloned = state.Copy();
+            cloned.Regions.Single().DurationProgress!.NormalKills = 0;
+            Check.Equal(7, state.Regions.Single().DurationProgress!.NormalKills);
+            var resumed = Restore(state);
+            resumed.Validate(.15, false);
+            var corrupt = resumed.Copy();
+            corrupt.Regions.Single().DurationProgress!.NativeDuration = 3;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(.15, false));
+
+            targets[9] = Vector2.Zero;
+            targets[20] = Vector2.Zero;
+            targets[21] = Vector2.Zero;
+            Step(resumed, .65, default);
+            var grown = resumed.Regions.Single();
+            Check.Near(2.55, grown.EndsAt);
+            Check.Equal(8, grown.DurationProgress!.NormalKills);
+            Check.True(grown.DurationProgress.EliteUsed);
+            resumed.Validate(.65, false);
+        });
+
+        test("Fire b.05 and common elite duration both qualify under the same native ceiling", () =>
+        {
+            var ranks = PermanentDurationRules.FromRanks(new Dictionary<string, int> { ["common.duration.07"] = 1 });
+            var settings = new ExpandedFirePillarSettings(false, null, false, extendOnEliteKill: true, eliteReignition: true);
+            void Verify(double duration, double end)
+            {
+                var fire = new ExpandedFirePillarState();
+                var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+                void Step(double now) => ExpandedFirePillar.Step(fire, now, Vector2.Zero, false, 20, 3, 1, .9, duration,
+                    () => targets, _ => { }, settings: settings, level: 8, durationRules: ranks, isElite: _ => true,
+                    applyOriginalHit: hit =>
+                    {
+                        targets.Remove(hit.TargetId);
+                        return 20;
+                    });
+                Step(0);
+                Step(.15);
+                var saved = Restore(fire);
+                saved.Validate(.15, false);
+                var original = saved.Regions.Single(region => !region.Ember);
+                Check.Near(end, original.EndsAt);
+                Check.True(original.EliteExtensionUsed && original.DurationProgress!.EliteUsed);
+                Check.True(saved.Regions.Single(region => region.Ember).DurationProgress == null);
+            }
+
+            Verify(3, 3.65);
+            Verify(5.10, 5.25);
+        });
+
     }
 
     private static ExpandedFirePillarState Restore(ExpandedFirePillarState state)

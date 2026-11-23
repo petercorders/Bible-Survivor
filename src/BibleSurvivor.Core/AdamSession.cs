@@ -79,6 +79,8 @@ namespace BibleSurvivor.Core
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
         public double BibleRotationMultiplier => WeaponRules.Get("bible", Inventory.Weapons["bible"]).RotationSpeedMultiplier +
             (HasExpandedSkill("weapon.bible.a.01") ? .12 : 0);
+        public ExpandedBibleRanks BibleRanks() => CombatRulesVersion == 2
+            ? ExpandedBibleRanks.FromRanks(run.PermanentSnapshot) : default;
         public double JawboneArcDegrees =>
             (HasExpandedSkill("weapon.jawbone.a.01") ? 140 : 120) + 2 * AreaProfile().HalfAngleBonus;
         public double MoveSpeedMultiplier => MoveSpeedAt(false);
@@ -102,7 +104,7 @@ namespace BibleSurvivor.Core
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
         internal double ResolveOriginalDamage(string weaponId, double damage, double originalBaseDamage,
             int targetId, double targetHealth, double distance, int ordinal, bool firstHitOfCycle, bool hasConsecutiveMark,
-            out double preCriticalDamage)
+            out double preCriticalDamage, bool forceCritical = false)
         {
             preCriticalDamage = damage;
             if (CombatRulesVersion != 2 || damage <= 0) return damage;
@@ -126,12 +128,13 @@ namespace BibleSurvivor.Core
             }
             preCriticalDamage = damage;
             var streams = run.CriticalRandomStates;
-            if (streams == null) return damage;
+            if (streams == null && !forceCritical) return damage;
             var profile = conditionalCritical
                 ? PermanentOriginalHitRules.ConditionalCritical(run.PermanentSnapshot, weaponId, damage, context)
                 : PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, weaponId, damage);
+            if (forceCritical) return damage * profile.CriticalMultiplier;
             if (!profile.RequiresCriticalRoll) return damage;
-            streams.TryGetValue(weaponId, out var previous);
+            streams!.TryGetValue(weaponId, out var previous);
             var current = PermanentOriginalHitRules.NextCriticalState(run.RunId, definition.Number, weaponId, previous);
             streams[weaponId] = current;
             return profile.Resolve(current / 4294967296d).Damage;
@@ -192,6 +195,14 @@ namespace BibleSurvivor.Core
             ? PermanentAreaRules.Evaluate(run.PermanentSnapshot, HealthRatio <= .30, surrounded, evolved) : default;
         internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
         internal long BossEntryJawboneCycle => run.Stage == "boss" ? run.BossEntryJawboneCycle : 0;
+        internal (long Cycle, int NormalHits) BossEntrySlingCadence =>
+            run.Stage == "boss" ? (run.BossEntrySlingCycle, run.BossEntrySlingNormalHits) : default;
+        internal void RecordSlingCadenceAtBossEntry(BattleWeaponState state)
+        {
+            if (CombatRulesVersion != 2) return;
+            run.BossEntrySlingCycle = state.StarterCycle;
+            run.BossEntrySlingNormalHits = state.SlingCombat?.NormalHits ?? 0;
+        }
         internal (long Cycle, double? NextLeap) BossEntryLionCadence =>
             run.Stage == "boss" ? (run.BossEntryLionPackCycle, run.BossEntryLionNextPackLeapAt) : default;
         internal void RecordLionCadenceAtBossEntry(ExpandedDanielLionState state)
@@ -207,6 +218,7 @@ namespace BibleSurvivor.Core
         internal ExpandedJawboneRanks JawboneRanks() => ExpandedJawboneRanks.FromRanks(run.PermanentSnapshot);
         internal PermanentShotRules ShotRules() => PermanentShotRules.FromRanks(run.PermanentSnapshot);
         internal PermanentDurationRules DurationRules() => PermanentDurationRules.FromRanks(run.PermanentSnapshot);
+        internal ExpandedSlingRanks SlingRanks() => new ExpandedSlingRanks(run.PermanentSnapshot);
         internal void RecordVoiceCyclesAtBossEntry(long cycle)
         {
             if (HasExpandedSkill("weapon.wilderness_voice.a.05") || HasExpandedSkill("weapon.wilderness_voice.e.03"))
@@ -336,6 +348,13 @@ namespace BibleSurvivor.Core
         {
             if (!HasExpandedSkill("weapon.bible.base.04") || run.FirstBibleAttackUsed) return false;
             run.FirstBibleAttackUsed = true;
+            return true;
+        }
+
+        internal bool ConsumeFirstSustainedAttack()
+        {
+            if (run.FirstSustainedUsed || !HasExpandedSkill("common.duration.05")) return false;
+            run.FirstSustainedUsed = true;
             return true;
         }
 
@@ -530,8 +549,11 @@ namespace BibleSurvivor.Core
             target.TempoOpeningUsed = false;
             target.BossEntryVoiceCycle = 0;
             target.BossEntryJawboneCycle = 0;
+            target.BossEntrySlingCycle = 0;
+            target.BossEntrySlingNormalHits = 0;
             target.BossEntryLionPackCycle = 0;
             target.BossEntryLionNextPackLeapAt = null;
+            target.FirstSustainedUsed = false;
             target.BossEntryLightningCycle = 0;
             target.BossEntryLightningStrikes = 0;
             target.BossEntryFireCycle = 0;

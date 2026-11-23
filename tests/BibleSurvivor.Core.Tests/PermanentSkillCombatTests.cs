@@ -1151,6 +1151,46 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("A purchased Sling ricochet saves the moving child and restores its one non-original collision", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.sling.c.01");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "sling");
+                session.Advance(7);
+                var initial = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in initial.Enemies) { enemy.X = 20; enemy.Y = 0; }
+                var first = initial.Enemies[0];
+                var second = initial.Enemies[1];
+                first.X = .95f;
+                second.X = 1.55f; second.Y = 1.4f;
+                var world = BattleWorld.Restore(session, Speeds, initial);
+                BattleSnapshot? candidate = null;
+                for (var tick = 0; tick < 30; tick++)
+                {
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    var snapshot = world.Capture();
+                    if (snapshot.Weapons.Single(weapon => weapon.WeaponId == "sling").SlingCombat?.Support?.Count != 1) continue;
+                    candidate = snapshot;
+                    break;
+                }
+                Check.True(candidate != null);
+                state.Run!.World = candidate;
+                var support = candidate!.Weapons.Single(weapon => weapon.WeaponId == "sling").SlingCombat!.Support!.Single();
+                Check.Equal(ExpandedSlingSupportKind.Ricochet, support.Kind);
+                Check.Equal(second.Id, support.TargetId);
+                Check.Equal(first.Id, support.ExcludedId);
+                store.Commit(state, state.Revision, "sling-active-ricochet");
+                var saved = store.Load()!;
+                var resumed = BattleWorld.Restore(AdamSession.Resume(saved, definition), Speeds, saved.Run!.World!);
+                world.Advance(.5, Vector2.Zero);
+                resumed.Advance(.5, Vector2.Zero);
+                Check.Equal(2, resumed.Hits);
+                Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(resumed.Capture()));
+            });
+        });
+
         test("A purchased Jawbone reverse strike keeps its facing and pending slot across a real checkpoint", () =>
         {
             WithStore(store =>

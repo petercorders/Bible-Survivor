@@ -134,7 +134,9 @@ namespace BibleSurvivor.Unity
                 foreach (var cast in snap.WildernessVoice.Active)
                 {
                     var age = snap.Time - cast.StartedAt;
-                    var facing = Mathf.Atan2(cast.LockedFacingY ?? snap.FacingY, cast.LockedFacingX ?? snap.FacingX);
+                    var initial = cast.PrimaryPulses <= 1 ? cast.InitialFacing : null;
+                    var facing = Mathf.Atan2(cast.LockedFacingY ?? initial?.Y ?? snap.FacingY,
+                        cast.LockedFacingX ?? initial?.X ?? snap.FacingX);
                     var warning = cast.PrimaryPulses == 0 ? Stroke.Dash : Stroke.Solid;
                     if (age < cast.Duration)
                     {
