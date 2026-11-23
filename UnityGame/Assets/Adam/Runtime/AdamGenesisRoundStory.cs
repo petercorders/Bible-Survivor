@@ -28,17 +28,19 @@ namespace BibleSurvivor.Unity
             East = east;
         }
 
+        // Fixed world anchors keep the western props below the sortie marker or boss HUD
+        // at the minimum desktop size when the camera is centred on the spawn point.
         static readonly AdamGenesisRoundStory[] Stories =
         {
             new AdamGenesisRoundStory(1, Motif.Eden, "동산과 물길", "창 2:8–10",
                 "하나님은 에덴에 동산을 마련하고 사람을 그곳에 두셨다. 에덴에서 흘러나온 강이 동산을 적셨다.",
-                new Placement(-5.5f, 2.5f), new Placement(5.5f, -1.5f)),
+                new Placement(-5.5f, 1.5f), new Placement(5.5f, -1.5f)),
             new AdamGenesisRoundStory(2, Motif.Field, "제물과 형제", "창 4:3–8",
                 "가인은 땅의 소산을, 아벨은 양 떼의 첫 새끼를 드렸다. 가인은 들에서 동생 아벨을 쳐 죽였다.",
                 new Placement(-5.25f, 2.25f), new Placement(5f, -1.75f)),
             new AdamGenesisRoundStory(3, Motif.Ark, "노아의 방주", "창 6:14–16",
                 "하나님은 노아에게 나무로 방주를 만들고, 내부를 나누고, 방주의 크기와 구조를 갖추라고 하셨다.",
-                new Placement(-5.5f, 2.5f), new Placement(4.5f, -2f)),
+                new Placement(-5.5f, 1f), new Placement(4.5f, -2f)),
             new AdamGenesisRoundStory(4, Motif.Tent, "별과 약속", "창 15:5, 18:1",
                 "하나님은 아브라함에게 하늘의 별을 보여 주며 많은 후손을 약속하셨다. 훗날 아브라함은 마므레에서 천막 입구에 앉아 있었다.",
                 new Placement(-5f, 2.5f), new Placement(5.25f, -1.5f)),
@@ -56,7 +58,7 @@ namespace BibleSurvivor.Unity
                 new Placement(-5.5f, 2.25f), new Placement(5f, -1.75f)),
             new AdamGenesisRoundStory(9, Motif.Hall, "은잔과 베냐민", "창 44:12, 18–34",
                 "베냐민의 자루에서 은잔이 나왔다. 유다는 아버지의 슬픔을 염려해 베냐민 대신 자신이 남겠다고 청했다.",
-                new Placement(-5.5f, 2.5f), new Placement(5f, -1.75f))
+                new Placement(-5.5f, 1f), new Placement(5f, -1.75f))
         };
 
         public static AdamGenesisRoundStory Find(int round) =>
