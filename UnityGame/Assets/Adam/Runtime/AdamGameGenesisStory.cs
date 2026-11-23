@@ -1,3 +1,4 @@
+using BibleSurvivor.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,7 +16,7 @@ namespace BibleSurvivor.Unity
         void OpenGenesisStory()
         {
             if (!CanReadGenesisStory || commandFrame == Time.frameCount) return;
-            genesisStoryRound = Mathf.Clamp(Host.Session?.RoundNumber ?? 1, 1, 9);
+            genesisStoryRound = Mathf.Clamp(Host.Session?.RoundNumber ?? 1, 1, ExodusContent.LastInstalledRound);
             commandFrame = Time.frameCount;
         }
 
@@ -51,7 +52,7 @@ namespace BibleSurvivor.Unity
         }
 
         void ChangeGenesisStory(int direction) =>
-            genesisStoryRound = Mathf.Clamp(genesisStoryRound + direction, 1, 9);
+            genesisStoryRound = Mathf.Clamp(genesisStoryRound + direction, 1, ExodusContent.LastInstalledRound);
 
         void DrawGenesisStoryEntry(float width)
         {
@@ -61,15 +62,17 @@ namespace BibleSurvivor.Unity
                 ? new Vector2(14, 8)
                 : new Vector2(width - 182, StartStageAvailable ? 48 : 8);
             if (GUI.Button(new Rect(position, new Vector2(168, 36)),
-                drawingMobile ? "창세기 기록" : "창세기 기록 (F4)", style))
+                drawingMobile ? "성경 기록" : "성경 기록 (F4)", style))
                 OpenGenesisStory();
         }
 
         void DrawGenesisStory(float width, float height)
         {
-            var story = AdamGenesisRoundStory.Find(genesisStoryRound);
+            var genesis = AdamGenesisRoundStory.Find(genesisStoryRound);
+            var exodus = AdamExodusRoundStory.Find(genesisStoryRound);
             AdamHud.Fill(new Rect(0, 0, width, height), AdamHud.Ink0);
-            if (story == null) return;
+            if (genesis == null && exodus == null) return;
+            var book = genesis != null ? "창세기" : "출애굽기";
 
             var panelWidth = Mathf.Min(width - 24, 600);
             var panelHeight = Mathf.Min(height - 24, 340);
@@ -78,16 +81,16 @@ namespace BibleSurvivor.Unity
             var inset = 16f;
             var contentWidth = panel.width - inset * 2;
             GUI.Label(new Rect(panel.x + inset, panel.y + 10, contentWidth, 26),
-                $"창세기 기록 · R{story.Round:00} / 09", HudText(16, AdamHud.Lapis, false, TextAnchor.MiddleCenter));
-            GUI.Label(new Rect(panel.x + inset, panel.y + 38, contentWidth, 38), story.Title,
+                $"{book} 기록 · R{genesisStoryRound:00}", HudText(16, AdamHud.Lapis, false, TextAnchor.MiddleCenter));
+            GUI.Label(new Rect(panel.x + inset, panel.y + 38, contentWidth, 38), genesis?.Title ?? exodus.Title,
                 HudText(24, AdamHud.Primary, false, TextAnchor.MiddleCenter));
             GUI.Label(new Rect(panel.x + inset, panel.y + 76, contentWidth, 28),
-                story.Reference + " · 자체 요약", HudText(16, AdamHud.Secondary, false, TextAnchor.MiddleCenter));
+                (genesis?.Reference ?? exodus.Reference) + " · 자체 요약", HudText(16, AdamHud.Secondary, false, TextAnchor.MiddleCenter));
 
             var summary = HudText(20, AdamHud.Primary);
             summary.wordWrap = true;
             var summaryRect = new Rect(panel.x + inset, panel.y + 111, contentWidth, Mathf.Max(0, panel.height - 202));
-            if (summaryRect.height > 0) GUI.Label(summaryRect, story.Summary, summary);
+            if (summaryRect.height > 0) GUI.Label(summaryRect, genesis?.Summary ?? exodus.Summary, summary);
             GUI.Label(new Rect(panel.x + inset, panel.yMax - 89, contentWidth, 24),
                 "전장과 전투는 게임 각색입니다.", HudText(16, AdamHud.Muted, false, TextAnchor.MiddleCenter));
 
@@ -97,12 +100,12 @@ namespace BibleSurvivor.Unity
             var y = panel.yMax - 57;
             try
             {
-                GUI.enabled = oldEnabled && !Host.Suspended && story.Round > 1;
+                GUI.enabled = oldEnabled && !Host.Suspended && genesisStoryRound > 1;
                 if (GUI.Button(new Rect(panel.x + inset, y, buttonWidth, 42), "이전", style)) ChangeGenesisStory(-1);
                 GUI.enabled = oldEnabled && !Host.Suspended;
                 if (GUI.Button(new Rect(panel.x + inset + buttonWidth + 8, y, buttonWidth, 42),
                     drawingMobile ? "닫기" : "닫기 (Esc)", style)) CloseGenesisStory();
-                GUI.enabled = oldEnabled && !Host.Suspended && story.Round < 9;
+                GUI.enabled = oldEnabled && !Host.Suspended && genesisStoryRound < ExodusContent.LastInstalledRound;
                 if (GUI.Button(new Rect(panel.x + inset + 2 * (buttonWidth + 8), y, buttonWidth, 42), "다음", style))
                     ChangeGenesisStory(1);
             }
