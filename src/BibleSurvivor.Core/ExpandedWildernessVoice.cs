@@ -607,7 +607,7 @@ namespace BibleSurvivor.Core
             return true;
         }
 
-        private static void ExpireReceipts(ExpandedWildernessVoiceState state, double now)
+        internal static void ExpireReceipts(ExpandedWildernessVoiceState state, double now)
         {
             if (state.NextFinishAt <= now + TimeEpsilon) state.NextFinishAt = null;
             if (state.NextWaitAt <= now + TimeEpsilon) state.NextWaitAt = null;

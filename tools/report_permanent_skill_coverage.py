@@ -39,6 +39,9 @@ rank_evidence = {
     ("weapon.sling.base.01", 1): ("P02 무기별 피해 계산", "", ""),
     ("weapon.sling.base.03", 1): ("P02 추가 투석", "P02 7·8발 수량 상한", "P02 발사 중 저장과 재생"),
     ("common.shot.04", 1): ("Cross·Staff 부채꼴 실타격", "Cross·Staff 가장자리 표적", "Cross·Staff 비행 중 저장과 재생"),
+    ("weapon.jawbone.e.02", 1): ("진화형 월드 밀침 충돌", "월드 기본형 제외·단위 시험 2초 재사용", "밀침 충돌 후 저장과 재생"),
+    ("weapon.jawbone.c.02", 1): ("라이프사이클 단위 시험의 원본 처치", "단위 시험 2초 연속 처치·3초 대기 감소", "보스 진입 상태 만료 뒤 재개"),
+    ("weapon.wilderness_voice.d.01", 1): ("", "", "보스 진입 상태 만료 뒤 재개"),
 }
 for ordinal in range(2, 11):
     rank_evidence[(f"common.health.{ordinal:02}", 1)] = ("시작 체력 누적 단계별 단정", "", "")

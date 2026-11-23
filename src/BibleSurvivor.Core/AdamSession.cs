@@ -255,8 +255,13 @@ namespace BibleSurvivor.Core
         {
             if (CombatRulesVersion != 2) return;
             run.BossEntryJawboneCycle = clock.StarterCycle;
-            run.BossEntryJawboneLifecycle = clock.JawboneLifecycle?.Copy();
-            if (run.BossEntryJawboneLifecycle != null) run.BossEntryJawboneLifecycle.Pushes = null;
+            var entry = clock.JawboneLifecycle?.Copy();
+            if (entry != null)
+            {
+                entry.Prune(CombatTime);
+                entry.Pushes = null;
+            }
+            run.BossEntryJawboneLifecycle = entry;
         }
         internal ExpandedJawboneRanks JawboneRanks() => ExpandedJawboneRanks.FromRanks(run.PermanentSnapshot);
         internal PermanentShotRules ShotRules() => PermanentShotRules.FromRanks(run.PermanentSnapshot);
@@ -273,6 +278,7 @@ namespace BibleSurvivor.Core
             if (entry.PendingWait?.Applied == true) entry.NextWaitReady = true;
             entry.ResetForForm(voice.Evolved, 0);
             entry.EliteSeries = null;
+            ExpandedWildernessVoice.ExpireReceipts(entry, CombatTime);
             run.BossEntryVoiceState = entry;
         }
         internal (long Cycle, long Strikes) BossEntryLightningCadence =>
