@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -33,6 +34,39 @@ internal static class PermanentShotRulesTests
             Check.Equal(exact, rules.CorrectAim(exact, exact * 2));
             Check.Equal(Vector2.UnitY, rules.CorrectAim(Vector2.UnitY, Vector2.Zero));
             Check.Equal(Vector2.UnitY, default(PermanentShotRules).CorrectAim(Vector2.UnitY, Vector2.UnitX));
+        });
+
+        test("Fan actors preserve directional launches and center shots while tracking selected enemies at the origin", () =>
+        {
+            var noTargets = new Dictionary<int, Vector2>();
+            var atOrigin = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var rules = Ranks("04");
+            foreach (var fire in new Func<IReadOnlyDictionary<int, Vector2>, int, PermanentShotRules, Vector2[]>[] { Cross, Staff })
+            {
+                Check.True(fire(noTargets, 3, default).SequenceEqual(fire(noTargets, 3, rules)));
+                Check.Equal(Vector2.UnitX, fire(atOrigin, 1, rules).Single());
+                var original = fire(atOrigin, 3, default);
+                var narrowed = fire(atOrigin, 3, rules);
+                Check.Equal(original[1], narrowed[1]);
+                Check.Near(Angle(original[2]) * .90, Angle(narrowed[2]), 1e-4);
+            }
+
+            static Vector2[] Cross(IReadOnlyDictionary<int, Vector2> targets, int amount, PermanentShotRules ranks)
+            {
+                var state = new ExpandedCrossState();
+                ExpandedCross.Step(state, 0, Vector2.Zero, Vector2.UnitX, 4, false, 10, 2, amount, .28, 5,
+                    7.5, () => targets, targets, _ => true, shotRules: ranks);
+                return state.Shots.Select(shot => shot.Direction).ToArray();
+            }
+
+            static Vector2[] Staff(IReadOnlyDictionary<int, Vector2> targets, int amount, PermanentShotRules ranks)
+            {
+                var state = new ExpandedMosesStaffState();
+                var targeting = ExpandedMosesStaffRankOptions.FromRanks(new Dictionary<string, int> { ["weapon.moses_staff.a.03"] = 1 });
+                ExpandedMosesStaff.Step(state, 0, Vector2.Zero, Vector2.UnitX, 6, false, 30, 2.5, amount, 1.08, 7,
+                    5, () => targets, targets, _ => true, rankOptions: targeting, isElite: _ => true, shotRules: ranks);
+                return state.Waves.Select(wave => wave.Direction).ToArray();
+            }
         });
 
         test("Common projectile damage uses last accepted pierce and exact swept travel before one precritical cap", () =>

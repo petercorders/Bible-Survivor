@@ -672,8 +672,10 @@ namespace BibleSurvivor.Core
 
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle += nextCycleDuration?.Invoke() ?? cycle;
-            var aimFrom = AimOffset(playerPosition, targets(), rankOptions.PrioritizeElite ? isElite : null);
+            var aimTargets = targets();
+            var aimFrom = AimOffset(playerPosition, aimTargets, rankOptions.PrioritizeElite ? isElite : null);
             var aim = DirectionOr(aimFrom, DirectionOr(facing, Vector2.UnitX));
+            var correctionAxis = aimTargets.Count > 0 ? aim : Vector2.Zero;
             if (rankOptions.WidenCollision)
                 radius = Math.Min(MaximumRadius, radius + Profile.AtLevel(1).Radius * .08);
             var levelSpeed = Profile.AtLevel(level).Speed;
@@ -693,7 +695,7 @@ namespace BibleSurvivor.Core
                     break;
                 }
                 var angle = (index - (amount - 1) * .5) * spread;
-                var direction = Rotate(aim, angle);
+                var direction = shotRules.CorrectAim(Rotate(aim, angle), correctionAxis);
                 var launchSpeed = shotRules.LaunchSpeed(levelSpeed, speed, emitted == 0);
                 var trainedSpeed = rankOptions.AccelerateOutbound || rankOptions.AccelerateReturn
                     ? ResolveTrainedSpeed(launchSpeed, levelSpeed) : null;

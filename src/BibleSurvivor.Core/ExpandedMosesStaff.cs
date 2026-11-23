@@ -688,11 +688,14 @@ namespace BibleSurvivor.Core
             var originalBaseDamage = Profile.AtLevel(level).Damage;
             var forward = facing.LengthSquared() > 0 ? Vector2.Normalize(facing) : Vector2.UnitX;
             var spread = rankOptions.WidenFan ? 20 : Profile.SpreadDegrees;
-            if (rankOptions.PrioritizeElite && TryFindEliteDirection(playerPosition, targets(), isElite!, out var aim))
+            var aim = Vector2.Zero;
+            var hasEliteAim = rankOptions.PrioritizeElite && TryFindEliteDirection(playerPosition, targets(), isElite!, out aim);
+            if (hasEliteAim)
             {
                 if (aim != Vector2.Zero) forward = Vector2.Normalize(aim);
                 spread = Math.Min(spread, 5);
             }
+            var correctionAxis = hasEliteAim ? forward : Vector2.Zero;
             var moving = state.ActiveWaveCount;
             var lanes = state.ActiveLaneCount;
             var emitted = 0;
@@ -704,7 +707,7 @@ namespace BibleSurvivor.Core
                     break;
                 }
                 var angle = (index - (amount - 1) * .5) * spread * Math.PI / 180;
-                var direction = Rotate(forward, angle);
+                var direction = shotRules.CorrectAim(Rotate(forward, angle), correctionAxis);
                 var techniques = rankOptions.TechniqueRanks;
                 var fourthFirst = (techniques & FourthCycleFirstWave) != 0 && index == 0 && state.Cycle % 4 == 0;
                 if (!fourthFirst) techniques = (byte)(techniques & ~FourthCycleFirstWave);

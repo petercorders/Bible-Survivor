@@ -14,6 +14,81 @@ internal static class PermanentSkillCombatTests
 
     public static void Register(Action<string, Action> test)
     {
+        test("Purchased aim correction changes real Cross and Staff fan contacts and survives a mid-flight save", () =>
+        {
+            foreach (var weapon in new[] { "cross", "moses_staff" })
+            WithStore(store =>
+            {
+                var isCross = weapon == "cross";
+                var baseline = ExpandedProfile(store, "common.shot.03",
+                    $"weapon.{weapon}.base.03", isCross ? "weapon.cross.base.01" : "weapon.moses_staff.a.03");
+                var begin = baseline.Profile.Gold;
+                var trained = Buy(store, baseline, "common.shot.04", 450);
+                Check.Equal(begin - 450, trained.Profile.Gold);
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 30, 200, 4), new SpawnGroup("a2", 30, 600, 4) }),
+                });
+                var tuning = new BattleTuning { PlayerSpeed = .01 };
+                foreach (var profile in new[] { baseline, trained })
+                {
+                    var corrected = ReferenceEquals(profile, trained);
+                    var session = new AdamSession(profile, definition, weapon);
+                    for (var level = 1; level < (isCross ? 4 : 2); level++)
+                        Check.True(session.Inventory.TryChoose(weapon, false));
+                    session.Advance(8);
+                    var fixture = new BattleWorld(session, Speeds, 7, tuning).Capture();
+                    var anchor = fixture.Enemies.First(enemy => session.IsEliteActor(enemy.Id));
+                    var edge = fixture.Enemies.First(enemy => !session.IsEliteActor(enemy.Id));
+                    foreach (var enemy in fixture.Enemies) { enemy.X = 80; enemy.Y = 80; }
+                    anchor.X = 3;
+                    anchor.Y = 0;
+                    edge.X = isCross ? 4.5f : 5.5f;
+                    edge.Y = isCross ? 1.20f : .98f;
+                    fixture.FacingX = 0;
+                    fixture.FacingY = 1;
+                    var world = BattleWorld.Restore(session, Speeds, fixture, tuning);
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    var launch = world.Capture();
+                    var directions = isCross
+                        ? launch.Cross!.Shots.Select(shot => shot.Direction).ToArray()
+                        : launch.MosesStaff!.Waves.Select(wave => wave.Direction).ToArray();
+                    Check.Equal(3, directions.Length);
+                    var expected = (isCross ? 12 : 5) * (corrected ? .90 : 1);
+                    var centerAngle = Angle(directions[1]);
+                    Check.Near(0, centerAngle, .01);
+                    for (var index = 0; index < directions.Length; index++)
+                        Check.Near((index - 1) * expected, Angle(directions[index]) - centerAngle, 1e-4);
+
+                    static double Angle(Vector2 direction) => Math.Atan2(direction.Y, direction.X) * 180 / Math.PI;
+                    BattleWorld? replay = null;
+                    AdamSession? resumed = null;
+                    if (corrected)
+                    {
+                        profile.Run!.World = launch;
+                        store.Commit(profile, profile.Revision, "corrected-aim-mid-flight");
+                        var loaded = store.Load()!;
+                        resumed = AdamSession.Resume(loaded, definition);
+                        replay = BattleWorld.Restore(resumed, Speeds, loaded.Run!.World!, tuning);
+                    }
+                    var flight = isCross ? .61 : 1.12;
+                    world.Advance(flight, Vector2.Zero);
+                    var health = session.Targets[edge.Id].Health;
+                    if (corrected) Check.Near(200, health);
+                    else Check.True(health < 200);
+                    Check.True(session.Targets[anchor.Id].Health < 600);
+                    if (replay != null)
+                    {
+                        replay.Advance(flight, Vector2.Zero);
+                        Check.Near(health, resumed!.Targets[edge.Id].Health);
+                        Check.Near(session.Targets[anchor.Id].Health, resumed.Targets[anchor.Id].Health);
+                        Check.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(world.Capture()),
+                            JsonSerializer.SerializeToElement(replay.Capture())));
+                    }
+                }
+            });
+        });
+
         test("Every purchased rank survives mixed six-weapon checkpoints in both forms", () =>
         {
             var all = PermanentSkillCatalog.Current.Nodes.Select(node => node.Id).ToArray();

@@ -20,7 +20,7 @@ namespace BibleSurvivor.Unity
             "common.crit.06", "common.crit.07", "common.crit.08", "common.crit.09", "common.crit.10",
             "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04", "common.duration.05",
             "common.duration.06", "common.duration.07", "common.duration.08", "common.duration.09", "common.duration.10",
-            "common.shot.01", "common.shot.02", "common.shot.03",
+            "common.shot.01", "common.shot.02", "common.shot.03", "common.shot.04",
             "common.shot.05", "common.shot.06", "common.shot.07", "common.shot.08", "common.shot.09", "common.shot.10",
             "common.tempo.02", "common.tempo.03", "common.tempo.04", "common.tempo.05", "common.tempo.06",
             "common.tempo.07", "common.tempo.08", "common.tempo.09", "common.tempo.10",
