@@ -1,0 +1,24 @@
+name: Windows display startup
+on:
+  pull_request:
+    paths:
+      - 'UnityGame/EditorNative/WindowsDisplayStartup.cpp'
+      - 'UnityGame/Assets/Adam/Editor/AdamDesktopStartupBuild.cs'
+      - 'tools/check_windows_display_startup.ps1'
+      - '.github/workflows/windows-display-startup.yml'
+  workflow_dispatch:
+
+jobs:
+  startup:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile the Windows launcher and exercise its native preference and argument path
+        shell: cmd
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "ADAM_VS=%%i"
+          if not defined ADAM_VS exit /b 1
+          call "%ADAM_VS%\VC\Auxiliary\Build\vcvars64.bat"
+          if errorlevel 1 exit /b 1
+          pwsh -NoProfile -File tools/check_windows_display_startup.ps1
