@@ -155,7 +155,7 @@ namespace BibleSurvivor.Unity
         private string skillResult;
         private bool skillResultSuccess;
 
-        private bool CanShowPermanentSkillEntry => Host?.CanOpenPermanentSkills == true && !DeathPresentationVisible;
+        private bool CanShowPermanentSkillEntry => Host?.CanOpenPermanentSkills == true && !DeathPresentationVisible && !NewChallengeOpen;
         private bool PermanentSkillEntryHasFocus => skillEntryFocused && CanShowPermanentSkillEntry;
 
         private PermanentSkillNode ActiveSkillNode => skillTrees[skillTree][skillRow];
@@ -211,7 +211,8 @@ namespace BibleSurvivor.Unity
                 }
                 if (keys == null || keys.altKey.isPressed) return false;
                 if (keys.tabKey.wasPressedThisFrame) skillEntryFocused = !skillEntryFocused;
-                if (keys.leftArrowKey.wasPressedThisFrame || keys.rightArrowKey.wasPressedThisFrame ||
+                if ((Host.BookComplete && (keys.upArrowKey.wasPressedThisFrame || keys.downArrowKey.wasPressedThisFrame)) ||
+                    keys.leftArrowKey.wasPressedThisFrame || keys.rightArrowKey.wasPressedThisFrame ||
                     keys.aKey.wasPressedThisFrame || keys.dKey.wasPressedThisFrame) skillEntryFocused = false;
                 if (!keys.kKey.wasPressedThisFrame && !(skillEntryFocused && keys.enterKey.wasPressedThisFrame)) return false;
                 OpenPermanentSkillMenu(SkillEntryScreen);

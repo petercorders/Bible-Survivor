@@ -74,14 +74,16 @@ public sealed class AdamR10HostTests
         h.Session.Capture();h.State.Run.World=new BattleWorld(h.Session,AdamCatalog.Load().SpeedsFor(10),7).Capture();new SaveStore(path).Commit(h.State,h.State.Revision,"R10-real-XP-gold25-fixture");Assert.IsTrue(h.Reload());var gold=h.State.Profile.Gold;var pending=h.State.Run.PendingLevels;Assert.Greater(pending,0);Assert.AreEqual(choice,h.Session.PendingChoices.Single());Assert.IsTrue(h.Reload());Assert.AreEqual(gold,h.State.Profile.Gold);
         var fail=true;h=new AdamHost(AdamCatalog.Load(),new SaveStore(path,()=>{if(fail)throw new IOException("gold25");}));Assert.IsTrue(h.Choose(choice));Assert.NotNull(h.Error);Assert.AreEqual(gold+25,h.State.Profile.Gold);var frozen=Bytes(h.State);h.Tick(20);Assert.IsFalse(h.Choose(choice));CollectionAssert.AreEqual(frozen,Bytes(h.State));fail=false;Assert.IsTrue(h.RetrySave());Assert.IsTrue(h.Reload());Assert.AreEqual(gold+25,h.State.Profile.Gold);Assert.AreEqual(pending-1,h.State.Run.PendingLevels);Assert.IsFalse(h.Choose(choice));
     }
-    [TestCase(true)][TestCase(false)]public void SharedGameHandlersConsumeOnlyOneEntryOrNewChallengePerFrame(bool entryFirst)
+    [TestCase(true)][TestCase(false)]public void NumberKeysDoNotReplaceCompletedGenesis(bool entryFirst)
     {
         var h=CompletedGenesis(path);var old=h.State.Run.RunId;var profile=Bytes(h.State.Profile);var go=new GameObject("R10 handlers");
         try
         {
             var game=go.AddComponent<AdamGame>();game.AutoInitialize=false;game.enabled=false;game.Initialize(h);game.SetLifecycle(true,false);
-            if(entryFirst){game.EnterExodus();game.EnterExodus();game.SelectSlot(0);Assert.AreEqual(10,h.Session.RoundNumber);Assert.AreEqual(old,h.State.Run.RunId);}
-            else{game.SelectSlot(0);game.EnterExodus();Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreNotEqual(old,h.State.Run.RunId);}
+            if(!entryFirst)game.SelectSlot(0);
+            game.EnterExodus();game.EnterExodus();game.SelectSlot(0);
+            Assert.AreEqual(10,h.Session.RoundNumber);
+            Assert.AreEqual(old,h.State.Run.RunId);
             CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));Assert.IsFalse(h.HasSaveRetry);
         }
         finally{UnityEngine.Object.DestroyImmediate(go);}
