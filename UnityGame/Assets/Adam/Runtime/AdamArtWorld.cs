@@ -374,6 +374,7 @@ namespace BibleSurvivor.Unity
             finally{GUI.color=groundColor;}
             if(desert)AdamBookGround.Edges(arena,FeedbackEnabled);
             else AdamVisualQualityWorld.Canopy(art,arena,scale,FeedbackEnabled);
+            AdamGenesisArenaArt.Draw(art, projection, round);
         }
 
         public bool Draw(AdamArt art, AdamHost host, Rect arena, AdamImpactParticles particles = null, System.Action beforeTelegraphs = null, bool bossShadowOnly = false, bool coverFrame = false)
