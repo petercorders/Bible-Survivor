@@ -49,6 +49,7 @@ internal static class Program
         ExpandedWeaponRulesTests.Register(Test);
         ExpandedLightningTests.Register(Test);
         ExpandedWeaponProgressionTests.Register(Test);
+        ExpandedCampaignReplayTests.Register(Test);
         ExpandedWildernessVoiceTests.Register(Test);
         ExpandedMosesStaffTests.Register(Test);
         ExpandedCrossTests.Register(Test);

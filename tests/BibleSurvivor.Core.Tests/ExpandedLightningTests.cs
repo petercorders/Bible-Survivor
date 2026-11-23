@@ -146,11 +146,140 @@ internal static class ExpandedLightningTests
             Check.Equal(ExpandedLightningHitKind.Strike, hits[0].Kind);
             state.Validate(3.2, false);
         });
+
+        test("Lightning rank radius adds from level one and delay retains the .05 floor", () =>
+        {
+            var state = new ExpandedLightningState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.Zero, [4] = new Vector2(1.07f, 0), [6] = new Vector2(1.09f, 0),
+            };
+            var hits = new List<ExpandedLightningHit>();
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("base.04", "base.05"));
+            Step(state, 0, targets, hits, settings: settings);
+            Check.Near(.07, state.Pending.Single().At);
+            Check.Near(1.08, state.Pending.Single().Radius);
+            Step(state, .0699, targets, hits, settings: settings);
+            Check.Equal(0, hits.Count);
+            Step(state, .07, targets, hits, settings: settings);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 4 }));
+            state.Validate(.07, false);
+
+            var overCap = new ExpandedLightningState();
+            Step(overCap, 0, targets, hits, settings: new ExpandedLightningSettings(radiusBonus: 3, delayAdvance: 1));
+            Check.Near(.05, overCap.Pending.Single().At);
+            Check.Near(2, overCap.Pending.Single().Radius);
+        });
+
+        test("Lightning rank targeting puts boss and elite before crowd, and crowd before distance", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1, 0), [4] = new Vector2(4.5f, 0), [5] = new Vector2(3, 0),
+                [6] = new Vector2(6, 0), [10] = new Vector2(0, 7.4f), [12] = new Vector2(0, -7.9f),
+            };
+            var hits = new List<ExpandedLightningHit>();
+            var normal = new ExpandedLightningState();
+            Step(normal, 0, targets, hits, amount: 3);
+            Check.Equal(1, normal.Pending[0].AssignedTargetId);
+            var crowd = new ExpandedLightningState();
+            var crowdSettings = ExpandedLightningSettings.FromRanks(Ranks("a.01"));
+            Step(crowd, 0, targets, hits, amount: 3, settings: crowdSettings);
+            Check.Equal(4, crowd.Pending[0].AssignedTargetId);
+
+            var threats = new ExpandedLightningState();
+            var threatSettings = ExpandedLightningSettings.FromRanks(Ranks("a.01", "a.02"),
+                isBoss: id => id == 12, isElite: id => id == 10);
+            Step(threats, 0, targets, hits, amount: 3, settings: threatSettings);
+            Check.True(threats.Pending.Select(attack => attack.AssignedTargetId).SequenceEqual(new[] { 12, 10, 4 }));
+        });
+
+        test("Lightning rank retarget saves its sole attempt without moving the impact time", () =>
+        {
+            var state = new ExpandedLightningState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1, 0), [2] = new Vector2(4, 0), [3] = new Vector2(6, 0),
+            };
+            var hits = new List<ExpandedLightningHit>();
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("a.04"));
+            Step(state, 0, targets, hits, settings: settings);
+            Check.True(state.Pending.Single().CanRetarget);
+            targets.Remove(1);
+            Step(state, .05, targets, hits, settings: settings);
+            var strike = state.Pending.Single();
+            Check.Equal(2, strike.AssignedTargetId);
+            Check.Near(4, strike.X);
+            Check.Near(.15, strike.At);
+            Check.True(!strike.CanRetarget);
+
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedLightningState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            state = (ExpandedLightningState)serializer.ReadObject(save)!;
+            state.Validate(.05, false);
+            targets.Remove(2);
+            Step(state, .1, targets, hits, settings: settings);
+            Check.Equal(2, state.Pending.Single().AssignedTargetId);
+            targets[5] = new Vector2(4, 0);
+            Step(state, .15, targets, hits, settings: settings);
+            Check.Equal(5, hits.Single().TargetId);
+        });
+
+        test("Lightning reuse preference reserves an unassigned replacement when that bolt can retarget", () =>
+        {
+            foreach (var reserveFreshTarget in new[] { false, true })
+            {
+                var state = new ExpandedLightningState();
+                var targets = new Dictionary<int, Vector2>
+                {
+                    [1] = new Vector2(1, 0), [2] = new Vector2(2, 0), [3] = new Vector2(3, 0),
+                };
+                var hits = new List<ExpandedLightningHit>();
+                var settings = ExpandedLightningSettings.FromRanks(
+                    reserveFreshTarget ? Ranks("a.03", "a.04") : Ranks("a.04"));
+                Step(state, 0, targets, hits, amount: 2, settings: settings);
+                Check.True(state.Pending.Select(attack => attack.AssignedTargetId).SequenceEqual(new[] { 1, 2 }));
+                targets.Remove(1);
+                Step(state, .05, targets, hits, amount: 2, settings: settings);
+                Check.Equal(reserveFreshTarget ? 3 : 2, state.Pending[0].AssignedTargetId);
+                Check.Equal(2, state.Pending[1].AssignedTargetId);
+            }
+        });
+
+        test("Lightning evolution rank adds a fourth accepted chain transfer only to its evolved form", () =>
+        {
+            var targets = new Dictionary<int, Vector2>();
+            for (var index = 0; index < 6; index++) targets.Add(index + 1, new Vector2(index * 2.5f, 0));
+            var hits = new List<ExpandedLightningHit>();
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("e.01"));
+            var untrained = new ExpandedLightningState();
+            Step(untrained, 0, targets, hits, evolved: true);
+            Step(untrained, .15, targets, hits, evolved: true);
+            Check.Equal(3, hits.Count(hit => hit.Kind == ExpandedLightningHitKind.Chain));
+
+            hits.Clear();
+            var evolved = new ExpandedLightningState();
+            Step(evolved, 0, targets, hits, evolved: true, settings: settings);
+            Step(evolved, .15, targets, hits, evolved: true, settings: settings);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedLightningHitKind.Chain).Select(hit => hit.TargetId)
+                .SequenceEqual(new[] { 2, 3, 4, 5 }));
+            Check.Equal(5, evolved.Pending.Single().VisitedIds!.Count);
+            evolved.Validate(.15, true);
+
+            hits.Clear();
+            var basic = new ExpandedLightningState();
+            Step(basic, 0, targets, hits, settings: settings);
+            Step(basic, .15, targets, hits, settings: settings);
+            Check.Equal(ExpandedLightningHitKind.Strike, hits.Single().Kind);
+            Check.Equal(0, basic.Pending.Count);
+        });
     }
 
     private static void Step(ExpandedLightningState state, double time, Dictionary<int, Vector2> targets,
         List<ExpandedLightningHit> hits, bool evolved = false, int amount = 1, double cycle = 3,
-        Func<ExpandedLightningHit, bool>? accept = null)
+        Func<ExpandedLightningHit, bool>? accept = null, ExpandedLightningSettings settings = default)
     {
         ExpandedLightning.Step(state, time, Vector2.Zero, 8, evolved, 40, cycle, amount, 1,
             () => targets, hit =>
@@ -158,6 +287,13 @@ internal static class ExpandedLightningTests
                 if (accept != null && !accept(hit)) return false;
                 hits.Add(hit);
                 return true;
-            });
+            }, settings);
+    }
+
+    private static Dictionary<string, int> Ranks(params string[] suffixes)
+    {
+        var ranks = new Dictionary<string, int>();
+        foreach (var suffix in suffixes) ranks.Add("weapon.lightning." + suffix, 1);
+        return ranks;
     }
 }

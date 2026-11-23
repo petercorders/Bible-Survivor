@@ -96,12 +96,27 @@ namespace BibleSurvivor.Core
         }
         public int CombatRulesVersion => run.CombatRulesVersion ?? 1;
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
+        internal double RollOriginalDamage(string weaponId, double damage)
+        {
+            if (!HasExpandedSkill("common.crit.01") || damage <= 0) return damage;
+            var profile = PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, damage);
+            var streams = run.CriticalRandomStates!;
+            streams.TryGetValue(weaponId, out var previous);
+            var current = PermanentOriginalHitRules.NextCriticalState(run.RunId, definition.Number, weaponId, previous);
+            streams[weaponId] = current;
+            return profile.Resolve(current / 4294967296d).Damage;
+        }
         internal bool IsEliteActor(int id) =>
             Encounter != null ? id == BossRules!.BossActorId :
             TargetMaxHealth(id) >= 3L * definition.Waves.SelectMany(wave => wave.Groups).Min(group => group.Health);
+        internal ExpandedLightningSettings LightningSettings() =>
+            ExpandedLightningSettings.FromRanks(run.PermanentSnapshot,
+                id => Encounter != null && id == BossRules!.BossActorId, IsEliteActor);
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
-        public CombatStats AttackProfile(string weaponId)
+        public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
+
+        internal CombatStats AttackProfile(string weaponId, bool firstBibleWait)
         {
             if(!Inventory.Weapons.TryGetValue(weaponId,out var level)) throw new InvalidOperationException("Weapon not equipped");
             var bonuses = new CombatBonuses {
@@ -121,12 +136,41 @@ namespace BibleSurvivor.Core
                     return CombatStats.ForScheduled(expanded, level, bonuses, specialization);
                 }
                 bonuses.ExtraAmount += specialization;
-                return CombatStats.ForExpanded(weaponId, level, bonuses, form);
+                var collisionBonus = 0d;
+                switch (weaponId)
+                {
+                    case "bible":
+                        if (HasExpandedSkill(skillPrefix + "05")) collisionBonus = .12;
+                        if (firstBibleWait) bonuses.CooldownReduction += .25;
+                        break;
+                    case "jawbone":
+                        if (HasExpandedSkill(skillPrefix + "04")) bonuses.AreaBonus += .10;
+                        break;
+                    case "sling":
+                        if (HasExpandedSkill(skillPrefix + "04")) collisionBonus = .10;
+                        if (HasExpandedSkill(skillPrefix + "05")) bonuses.ProjectileSpeedBonus += .12;
+                        break;
+                }
+                return CombatStats.ForExpanded(weaponId, level, bonuses, form, collisionBonus);
             }
             var profile = CombatStats.For(weaponId, level, bonuses);
             return form != null ? profile.Evolved(form) : profile;
         }
         public IReadOnlyList<string> PendingChoices => run.Choices.AsReadOnly();
+
+        internal bool ConsumeFirstBibleAttack()
+        {
+            if (!HasExpandedSkill("weapon.bible.base.04") || run.FirstBibleAttackUsed) return false;
+            run.FirstBibleAttackUsed = true;
+            return true;
+        }
+
+        internal double JawboneDamage(double damage, double distance, double reach)
+        {
+            if (!HasExpandedSkill("weapon.jawbone.base.05") || distance + 1e-8 < .8 * reach) return damage;
+            var baseDamage = WeaponRules.Get("jawbone", Inventory.Weapons["jawbone"]).Damage;
+            return Math.Min(baseDamage * 2.25, damage + baseDamage * .08);
+        }
 
         public AdamSession(GameSnapshot state, RoundDefinition definition, string startingWeapon)
         {
@@ -144,8 +188,7 @@ namespace BibleSurvivor.Core
                 run.CampaignLayout = "genesis";
                 run.CombatRulesVersion = 2;
                 run.PermanentCatalogVersion = PermanentSkillCatalog.CurrentVersion;
-                run.PermanentActions = new PermanentActionState();
-                run.PermanentRecovery = new PermanentRecoveryState();
+                ResetPermanentRound(run);
             }
             else state.SchemaVersion = SaveFormat.GenesisVersion;
             state.Run = run; Capture();
@@ -306,6 +349,9 @@ namespace BibleSurvivor.Core
             if (target.CombatRulesVersion != 2) return;
             target.PermanentActions = new PermanentActionState();
             target.PermanentRecovery = new PermanentRecoveryState();
+            target.CriticalRandomStates = PermanentRules.Rank(target.PermanentSnapshot, "common.crit.01") > 0
+                ? new Dictionary<string, uint>(StringComparer.Ordinal) : null;
+            target.FirstBibleAttackUsed = false;
         }
 
         public void Advance(double seconds)

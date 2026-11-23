@@ -25,6 +25,7 @@ namespace BibleSurvivor.Core
         public bool IsOrbit {get; private set;}
         public double ProjectileSpeedMultiplier {get; private set;}
         internal double OrbitCollisionMultiplier { get; private set; } = 1;
+        internal double PulseRadiusMultiplier { get; private set; } = 1;
         internal double AttackRadius { get; private set; }
         internal double AttackReach { get; private set; }
         internal double AttackWidth { get; private set; }
@@ -56,7 +57,8 @@ namespace BibleSurvivor.Core
             Guard.NonNegative(result.AreaMultiplier,nameof(result.AreaMultiplier)); return result;
         }
 
-        internal static CombatStats ForExpanded(string id, int level, CombatBonuses bonuses, string? form)
+        internal static CombatStats ForExpanded(string id, int level, CombatBonuses bonuses, string? form,
+            double collisionBonus = 0)
         {
             bonuses.DamageBonus = Math.Min(1.25, bonuses.DamageBonus);
             bonuses.DurationBonus = Math.Min(.75, bonuses.DurationBonus);
@@ -65,7 +67,9 @@ namespace BibleSurvivor.Core
             var orbitCollisionBonus = id == "bible" ? bonuses.AreaBonus : 0;
             if (id == "bible" || id == "sling") bonuses.AreaBonus = 0;
             var stats = For(id, level, bonuses);
-            stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
+            stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + collisionBonus);
+            stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
+            if (id == "sling") stats.AreaMultiplier += collisionBonus;
             // Choose the evolved sling's base volley before adding stones and specialization.
             // EvolutionRules.Evolved retains the v1 final-count maximum for older runs.
             if (form == EvolutionRules.Sling) stats.Amount = EvolutionRules.SlingMinimum + bonuses.ExtraAmount;

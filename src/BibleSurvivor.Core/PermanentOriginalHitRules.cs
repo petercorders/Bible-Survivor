@@ -90,6 +90,28 @@ namespace BibleSurvivor.Core
 
     public static class PermanentOriginalHitRules
     {
+        internal static PermanentOriginalHitProfile BaseCritical(IReadOnlyDictionary<string, int> ranks,
+            double damage) => new PermanentOriginalHitProfile(damage, BasicCriticalChance(ranks),
+                1.5 + BasicCriticalMultiplier(ranks), false);
+
+        internal static uint NextCriticalState(string runId, int round, string weaponId, uint state)
+        {
+            unchecked
+            {
+                if (state == 0)
+                {
+                    state = (2166136261u ^ (uint)round) * 16777619u;
+                    foreach (var character in runId) state = (state ^ character) * 16777619u;
+                    foreach (var character in weaponId) state = (state ^ character) * 16777619u;
+                    if (state == 0) state = 0x9e3779b9;
+                }
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                return state;
+            }
+        }
+
         public static PermanentOriginalHitProfile Evaluate(IReadOnlyDictionary<string, int> ranks,
             PermanentOriginalHitContext context, double baseDamage, double damageBonus = 0,
             double criticalChanceBonus = 0, double criticalMultiplierBonus = 0, double postCapDamageFactor = 1,
@@ -130,8 +152,7 @@ namespace BibleSurvivor.Core
 
         private static double ChanceBonus(IReadOnlyDictionary<string, int> ranks, PermanentOriginalHitContext context)
         {
-            var bonus = 0d;
-            if (Has(ranks, "common.crit.01")) bonus += .03;
+            var bonus = BasicCriticalChance(ranks);
             if (context.FirstHitOfCycle && Has(ranks, "common.crit.03")) bonus += .05;
             if ((context.IsElite || context.IsBoss) && Has(ranks, "common.crit.04")) bonus += .04;
             if (context.PlayerHealthRatio >= .90 && Has(ranks, "common.crit.06")) bonus += .04;
@@ -143,12 +164,17 @@ namespace BibleSurvivor.Core
 
         private static double MultiplierBonus(IReadOnlyDictionary<string, int> ranks, PermanentOriginalHitContext context)
         {
-            var bonus = 0d;
-            if (Has(ranks, "common.crit.02")) bonus += .10;
+            var bonus = BasicCriticalMultiplier(ranks);
             if (context.TargetHealthRatio <= .25 && Has(ranks, "common.crit.05")) bonus += .15;
             if (context.HasConsecutiveMark && Has(ranks, "common.crit.09")) bonus += .15;
             return bonus;
         }
+
+        private static double BasicCriticalChance(IReadOnlyDictionary<string, int> ranks) =>
+            Has(ranks, "common.crit.01") ? .03 : 0;
+
+        private static double BasicCriticalMultiplier(IReadOnlyDictionary<string, int> ranks) =>
+            Has(ranks, "common.crit.02") ? .10 : 0;
 
         private static bool Has(IReadOnlyDictionary<string, int> ranks, string id) =>
             ranks.TryGetValue(id, out var rank) && rank > 0;

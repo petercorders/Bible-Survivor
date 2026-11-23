@@ -14,9 +14,13 @@ namespace BibleSurvivor.Unity
         private static readonly HashSet<string> PlayablePermanentSkills = new HashSet<string>(StringComparer.Ordinal)
         {
             "attack", "health", "armor", "move", "pickup", "growth", "cooldown", "regen",
+            "common.crit.01", "common.crit.02",
             "weapon.bible.base.01", "weapon.bible.base.02", "weapon.bible.base.03",
+            "weapon.bible.base.04", "weapon.bible.base.05",
             "weapon.jawbone.base.01", "weapon.jawbone.base.02", "weapon.jawbone.base.03",
+            "weapon.jawbone.base.04", "weapon.jawbone.base.05",
             "weapon.sling.base.01", "weapon.sling.base.02", "weapon.sling.base.03",
+            "weapon.sling.base.04", "weapon.sling.base.05",
             "common.health.02", "common.health.03", "common.health.04",
             "common.health.05", "common.health.06", "common.health.07",
             "common.health.08", "common.health.09", "common.health.10",
@@ -37,6 +41,8 @@ namespace BibleSurvivor.Unity
             "common.pickup.08", "common.pickup.09", "common.pickup.10",
             "weapon.wilderness_voice.base.01", "weapon.wilderness_voice.base.02", "weapon.wilderness_voice.base.03",
             "weapon.lightning.base.01", "weapon.lightning.base.02", "weapon.lightning.base.03",
+            "weapon.lightning.base.04", "weapon.lightning.base.05",
+            "weapon.lightning.a.01", "weapon.lightning.a.02", "weapon.lightning.e.01",
             "weapon.moses_staff.base.01", "weapon.moses_staff.base.02", "weapon.moses_staff.base.03",
             "weapon.fire_pillar.base.01", "weapon.fire_pillar.base.02", "weapon.fire_pillar.base.03",
             "weapon.daniel_lion.base.01", "weapon.daniel_lion.base.02", "weapon.daniel_lion.base.03",

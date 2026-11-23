@@ -172,14 +172,26 @@ public class AdamPlayTests
     }
     [UnityTest] public IEnumerator OneTwoThreeChoicesAndSameFrameCommandsOnlyApplyOneUpgrade()
     {
-        var passives = new[] { "scroll", "hair", "stones", "east_wind", "seal", "cloud", "thunder", "crown", "underwear", "whirlwind" };
+        var passives = new[] { "scroll", "hair", "east_wind", "seal", "cloud", "thunder", "stones", "crown", "underwear", "whirlwind" };
         for (int count = 1; count <= 3; count++)
         {
             if (game.Host.State.Run != null) game.Host.State.Run = null; // Disposable boundary fixture, not gameplay evidence.
             game.Host.Start("bible");
             var run = game.Host.State.Run;
+            var inventory = game.Host.Session.Inventory;
+            foreach (var weapon in game.Host.State.Profile.UnlockedWeapons)
+            {
+                var current = inventory.Weapons.TryGetValue(weapon, out var rank) ? rank : 0;
+                for (; current < 8; current++) Assert.IsTrue(inventory.TryChoose(weapon, false));
+            }
+            for (var passive = 0; passive < 6; passive++)
+            {
+                var maximum = passive < count ? 4 : 5;
+                for (var rank = 0; rank < maximum; rank++) Assert.IsTrue(inventory.TryChoose(passives[passive], true));
+            }
             run.PendingLevels = 2;
-            run.Choices = game.Host.Session.Inventory.Choices(game.Host.State.Profile.UnlockedWeapons, passives, 3, run.ChoiceSerial).Take(count).ToList();
+            run.GrowthChoiceUnlockedWeapons = game.Host.State.Profile.UnlockedWeapons.OrderBy(id => id, StringComparer.Ordinal).ToList();
+            run.Choices = inventory.Choices(run.GrowthChoiceUnlockedWeapons, passives, 3, run.ChoiceSerial).ToList();
             Assert.IsTrue(game.Host.Checkpoint(), game.Host.Error); Assert.IsTrue(game.Host.Reload(), game.Host.Error);
             yield return null;
             Assert.AreEqual(count, game.Host.Session.PendingChoices.Count);

@@ -117,6 +117,146 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("Expanded base critical ranks roll on a real jawbone hit and restore an independent stream", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.crit.02");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 100, 4) }),
+                });
+                var session = new AdamSession(state, definition, "jawbone");
+                session.Advance(1.1);
+                var snapshot = new BattleWorld(session, Speeds, 7).Capture();
+                var target = snapshot.Enemies.OrderBy(enemy => enemy.Id).First();
+                target.X = 1;
+                target.Y = 0;
+                snapshot.FacingX = 1;
+                snapshot.FacingY = 0;
+                state.Run!.CriticalRandomStates = new Dictionary<string, uint> { ["jawbone"] = 1 };
+                state.Run.World = snapshot;
+                store.Commit(state, state.Revision, "before-original-critical");
+                var loaded = store.Load()!;
+                var streams = loaded.Run!.CriticalRandomStates;
+                loaded.Run.CriticalRandomStates = null;
+                Check.Throws<InvalidDataException>(loaded.Validate);
+                loaded.Run.CriticalRandomStates = streams;
+                var replay = AdamSession.Resume(loaded, definition);
+                var world = BattleWorld.Restore(session, Speeds, snapshot);
+                var replayWorld = BattleWorld.Restore(replay, Speeds, loaded.Run!.World!);
+                var baseDamage = session.AttackProfile("jawbone").Damage;
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                replayWorld.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                Check.Near(100 - baseDamage * 1.6, session.Targets[target.Id].Health);
+                Check.Near(session.Targets[target.Id].Health, replay.Targets[target.Id].Health);
+                Check.Equal(state.Run.CriticalRandomStates["jawbone"], loaded.Run.CriticalRandomStates!["jawbone"]);
+                Check.True(state.Run.CriticalRandomStates["jawbone"] != 1);
+                Check.Equal(snapshot.RandomState, world.Capture().RandomState);
+            });
+        });
+
+        test("Starter masteries reach real book clocks, outer jawbone hits and saved sling projectiles", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.bible.base.05", "weapon.sling.base.05", "weapon.jawbone.base.05");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "bible");
+                var world = new BattleWorld(session, Speeds, 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var bible = session.AttackProfile("bible");
+                var clock = world.Capture().Weapons.Single();
+                Check.Near(bible.Cycle - .75, clock.NextCycle - clock.ActiveSince);
+                Check.Near(1.12, bible.OrbitCollisionMultiplier);
+                Check.Near(1, bible.PulseRadiusMultiplier);
+                Check.True(state.Run!.FirstBibleAttackUsed);
+                state.Run.World = world.Capture();
+                store.Commit(state, state.Revision, "first-bible-wait");
+                state = store.Load()!;
+                Check.True(state.Run!.FirstBibleAttackUsed);
+
+                state = SaveStore.PrepareNewChallenge(state);
+                session = new AdamSession(state, definition, "bible");
+                const string catalog = "content/genesis/catalog.json";
+                session.Advance(180);
+                session = session.StartNextRound(CatalogReader.Round(catalog, 2));
+                session.Advance(180);
+                session = session.StartNextRound(CatalogReader.Round(catalog, 3));
+                for (var rank = 1; rank < 8; rank++) Check.True(session.Inventory.TryChoose("bible", false));
+                Check.True(session.Inventory.TryChoose("scroll", true));
+                Check.True(session.Inventory.TryEvolve(EvolutionRules.Bible));
+                world = new BattleWorld(session, CatalogReader.MonsterSpeeds(catalog), 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                clock = world.Capture().Weapons.Single();
+                Check.True(clock.StrengthenedFirstPulse);
+                Check.Near(session.AttackProfile("bible").Duration, clock.NextCycle - clock.ActiveSince);
+                Check.Near(1.10 * EvolutionRules.PulseRadius, clock.FrozenPulseRadius);
+                Check.True(session.Inventory.TryChoose("whirlwind", true));
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                Check.Near(clock.FrozenPulseRadius, world.Capture().Weapons.Single().FrozenPulseRadius);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "first-evolved-bible-pulse");
+                var savedPulse = store.Load()!.Run!.World!.Weapons.Single();
+                Check.True(savedPulse.StrengthenedFirstPulse);
+                Check.Near(clock.FrozenPulseRadius, savedPulse.FrozenPulseRadius);
+
+                state = SaveStore.PrepareNewChallenge(store.Load()!);
+                session = new AdamSession(state, definition, "sling");
+                Check.True(session.Inventory.TryChoose("jawbone", false));
+                var jawbone = session.AttackProfile("jawbone");
+                Check.Near(1.1, jawbone.AreaMultiplier);
+                Check.Near(jawbone.Damage, session.JawboneDamage(jawbone.Damage, .799, 1));
+                Check.Near(jawbone.Damage + .8, session.JawboneDamage(jawbone.Damage, .8, 1));
+                session.Advance(1.2);
+                var snapshot = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in snapshot.Enemies)
+                {
+                    enemy.X = 4 + enemy.Id;
+                    enemy.Y = 0;
+                }
+                world = BattleWorld.Restore(session, Speeds, snapshot);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var projectile = world.Capture().Projectiles.First();
+                Check.Near(.11, projectile.Radius);
+                Check.Near(snapshot.Tuning.SlingSpeed * 1.12, projectile.Velocity.Length(), 1e-5);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "expanded-sling-projectile");
+                var loaded = store.Load()!.Run!.World!.Projectiles.First();
+                Check.Near(projectile.Radius, loaded.Radius);
+                Check.Equal(projectile.VelocityX, loaded.VelocityX);
+            });
+        });
+
+        test("Purchased lightning radius and delay reach the actual frozen strike and restore it", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.lightning.base.05");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "sling");
+                Check.True(session.Inventory.TryChoose("lightning", false));
+                session.Advance(1.5);
+                var initial = new BattleWorld(session, Speeds, 7).Capture();
+                foreach (var enemy in initial.Enemies)
+                {
+                    enemy.X = 3 + enemy.Id;
+                    enemy.Y = 0;
+                }
+                var world = BattleWorld.Restore(session, Speeds, initial);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var snapshot = world.Capture();
+                var strike = snapshot.Lightning!.Pending.First();
+                Check.Near(.88, strike.Radius);
+                Check.Near(.07, strike.At - snapshot.Time);
+                state.Run!.World = snapshot;
+                store.Commit(state, state.Revision, "expanded-lightning-geometry");
+                var saved = store.Load()!;
+                var restored = BattleWorld.Restore(AdamSession.Resume(saved, definition), Speeds, saved.Run!.World!);
+                Check.Equal(JsonSerializer.Serialize(snapshot.Lightning), JsonSerializer.Serialize(restored.Capture().Lightning));
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>
@@ -235,6 +375,8 @@ internal static class PermanentSkillCombatTests
         var state = SaveStore.PrepareNewChallenge(GameSnapshot.New());
         state.Profile.HighestSettledRound = 180;
         state.Profile.Gold = 100_000;
+        if (desired.Any(id => id.StartsWith("weapon.lightning.", StringComparison.Ordinal)))
+            state.Profile.UnlockedWeapons.Add("lightning");
         store.Commit(state, state.Revision, "seed-settled-profile");
         state = store.Load()!;
         foreach (var id in desired) BuyPrerequisites(id, 1);

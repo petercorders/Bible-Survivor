@@ -34,6 +34,58 @@ namespace BibleSurvivor.Core
         }
     }
 
+    public readonly struct ExpandedLightningSettings
+    {
+        public double RadiusBonus { get; }
+        public double DelayAdvance { get; }
+        public bool PrioritizeCrowds { get; }
+        public bool PrioritizeThreats { get; }
+        public bool DeferPreviousTargetOnReuse { get; }
+        public bool RetargetOnce { get; }
+        public bool LongerChain { get; }
+        internal Func<int, bool>? IsBoss { get; }
+        internal Func<int, bool>? IsElite { get; }
+
+        public ExpandedLightningSettings(double radiusBonus = 0, double delayAdvance = 0,
+            bool prioritizeCrowds = false, bool prioritizeThreats = false, bool deferPreviousTargetOnReuse = false,
+            bool retargetOnce = false, bool longerChain = false, Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null)
+        {
+            if (!ExpandedLightning.Finite(radiusBonus) || radiusBonus < 0 ||
+                !ExpandedLightning.Finite(delayAdvance) || delayAdvance < 0)
+                throw new ArgumentException("Invalid expanded lightning bonuses");
+            if (prioritizeThreats && (isBoss == null || isElite == null))
+                throw new ArgumentException("Lightning threat priority needs boss and elite classifiers");
+
+            RadiusBonus = radiusBonus;
+            DelayAdvance = delayAdvance;
+            PrioritizeCrowds = prioritizeCrowds;
+            PrioritizeThreats = prioritizeThreats;
+            DeferPreviousTargetOnReuse = deferPreviousTargetOnReuse;
+            RetargetOnce = retargetOnce;
+            LongerChain = longerChain;
+            IsBoss = isBoss;
+            IsElite = isElite;
+        }
+
+        public static ExpandedLightningSettings FromRanks(IReadOnlyDictionary<string, int> ranks,
+            Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null)
+        {
+            if (ranks == null) throw new ArgumentNullException(nameof(ranks));
+            bool Has(string suffix) => ranks.TryGetValue("weapon.lightning." + suffix, out var rank) && rank > 0;
+
+            return new ExpandedLightningSettings(
+                radiusBonus: Has("base.04") ? .10 : 0,
+                delayAdvance: Has("base.05") ? .08 : 0,
+                prioritizeCrowds: Has("a.01"),
+                prioritizeThreats: Has("a.02"),
+                deferPreviousTargetOnReuse: Has("a.03"),
+                retargetOnce: Has("a.04"),
+                longerChain: Has("e.01"),
+                isBoss: isBoss,
+                isElite: isElite);
+        }
+    }
+
     [DataContract]
     public sealed class ExpandedLightningEventState
     {
@@ -47,6 +99,8 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public int AssignedTargetId { get; set; }
         [DataMember(IsRequired = true)] public bool Aftershock { get; set; }
         [DataMember(EmitDefaultValue = false)] public List<int>? VisitedIds { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool CanRetarget { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool LongerChain { get; set; }
 
         internal Vector2 Position => new Vector2(X, Y);
 
@@ -108,7 +162,7 @@ namespace BibleSurvivor.Core
             foreach (var attack in Pending)
             {
                 if (attack == null || attack.Id < 1 || attack.Id >= NextStrikeId || !ids.Add(attack.Id) ||
-                    attack.Cycle < 1 || attack.Cycle > Cycle || attack.AssignedTargetId < 1 ||
+                    attack.Cycle < 1 || attack.Cycle > Cycle || attack.AssignedTargetId < 1 || attack.LongerChain && !Evolved ||
                     !ExpandedLightning.ValidPosition(attack.Position) ||
                     !ExpandedLightning.Finite(attack.At) || attack.At < now - ExpandedLightning.TimeEpsilon ||
                     !ExpandedLightning.Finite(attack.Damage) || attack.Damage <= 0 ||
@@ -117,14 +171,14 @@ namespace BibleSurvivor.Core
 
                 if (attack.Aftershock)
                 {
-                    if (!Evolved || !shockCycles.Add(attack.Cycle) ||
+                    if (!Evolved || attack.CanRetarget || !shockCycles.Add(attack.Cycle) ||
                         shockCycles.Count > ExpandedLightning.MaximumPendingAftershocks ||
                         attack.At > now + ExpandedLightning.AftershockDelay + ExpandedLightning.TimeEpsilon ||
                         attack.Damage < ExpandedLightning.AftershockDamageFactor ||
                         attack.Damage > ExpandedLightning.MaximumDamage * ExpandedLightning.AftershockDamageFactor ||
                         attack.Radius != ExpandedLightning.AftershockRadius ||
                         attack.VisitedIds == null || attack.VisitedIds.Count == 0 ||
-                        attack.VisitedIds.Count > ExpandedLightning.ChainLimit + 1 ||
+                        attack.VisitedIds.Count > ExpandedLightning.ChainLimit + (attack.LongerChain ? 2 : 1) ||
                         attack.VisitedIds.Any(id => id < 1) ||
                         attack.VisitedIds.Distinct().Count() != attack.VisitedIds.Count)
                         throw new ArgumentException("Invalid expanded lightning aftershock");
@@ -155,6 +209,8 @@ namespace BibleSurvivor.Core
         internal static readonly double MaximumStrikeRadius = Profile.AtLevel(1).Radius * 2.5;
         internal const double TimeEpsilon = 1e-9;
         internal const double MinimumCycle = .15;
+        private const double MinimumDelay = .05;
+        private const double CrowdRadius = 1.5;
         internal const int ChainLimit = 3;
         internal const double AftershockDelay = .5;
         internal const double AftershockRadius = 1.4;
@@ -167,7 +223,8 @@ namespace BibleSurvivor.Core
         // live target map. The callback returns true for actual damage, including kills.
         public static void Step(ExpandedLightningState state, double now, Vector2 playerPosition, int level,
             bool evolved, double damage, double cycle, int amount, double radius,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
+            ExpandedLightningSettings settings = default)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -180,11 +237,10 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Invalid expanded lightning parameters");
 
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
-            ResolveDue(state, now, targets, applyHit);
+            ResolveDue(state, now, playerPosition, targets, applyHit, settings);
             if (state.NextCycle > now + TimeEpsilon) return;
 
-            var candidates = targets().Where(target => InRange(target.Value, playerPosition, Profile.TargetSearchRadius))
-                .OrderBy(target => DistanceSquared(target.Value, playerPosition)).ThenBy(target => target.Key).ToArray();
+            var candidates = OrderedTargets(targets(), playerPosition, settings);
             if (candidates.Length == 0)
             {
                 state.WaitingForTarget = true;
@@ -197,34 +253,89 @@ namespace BibleSurvivor.Core
             state.WaitingForTarget = false;
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle = start + cycle;
+            var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - settings.DelayAdvance);
+            var strikeRadius = Math.Min(MaximumStrikeRadius, radius + Profile.AtLevel(1).Radius * settings.RadiusBonus);
+            var previous = 0;
             for (var index = 0; index < amount; index++)
             {
-                var target = candidates[index % candidates.Length];
+                var target = index >= candidates.Length && settings.DeferPreviousTargetOnReuse
+                    ? PreferredReuse(candidates, previous) : candidates[index % candidates.Length];
                 state.Pending.Add(new ExpandedLightningEventState
                 {
                     Id = state.NextStrikeId,
                     Cycle = state.Cycle,
-                    At = start + Profile.FirstAttackDelay,
+                    At = start + delay,
                     X = target.Value.X,
                     Y = target.Value.Y,
                     Damage = damage,
-                    Radius = radius,
+                    Radius = strikeRadius,
                     AssignedTargetId = target.Key,
+                    CanRetarget = settings.RetargetOnce,
+                    LongerChain = evolved && settings.LongerChain,
                 });
+                previous = target.Key;
                 state.NextStrikeId = checked(state.NextStrikeId + 1);
             }
         }
 
-        private static void ResolveDue(ExpandedLightningState state, double now,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit)
+        private static KeyValuePair<int, Vector2>[] OrderedTargets(IReadOnlyDictionary<int, Vector2> targets,
+            Vector2 playerPosition, ExpandedLightningSettings settings)
+        {
+            return targets.Where(target => InRange(target.Value, playerPosition, Profile.TargetSearchRadius))
+                .OrderByDescending(target => settings.PrioritizeThreats && settings.IsBoss!(target.Key))
+                .ThenByDescending(target => settings.PrioritizeThreats && settings.IsElite!(target.Key))
+                .ThenByDescending(target => settings.PrioritizeCrowds ?
+                    targets.Values.Count(other => InRange(other, target.Value, CrowdRadius)) : 0)
+                .ThenBy(target => DistanceSquared(target.Value, playerPosition))
+                .ThenBy(target => target.Key).ToArray();
+        }
+
+        private static KeyValuePair<int, Vector2> PreferredReuse(KeyValuePair<int, Vector2>[] candidates, int previous)
+        {
+            var alternative = candidates.FirstOrDefault(candidate => candidate.Key != previous);
+            return alternative.Key != 0 ? alternative : candidates[0];
+        }
+
+        private static void TryRetarget(ExpandedLightningState state, ExpandedLightningEventState attack,
+            Vector2 playerPosition, IReadOnlyDictionary<int, Vector2> targets, ExpandedLightningSettings settings)
+        {
+            if (!attack.CanRetarget || targets.ContainsKey(attack.AssignedTargetId)) return;
+            attack.CanRetarget = false;
+            var candidates = OrderedTargets(targets, playerPosition, settings);
+            if (candidates.Length == 0) return;
+
+            var replacement = candidates[0];
+            if (settings.DeferPreviousTargetOnReuse)
+            {
+                var others = state.Pending.Where(pending => !pending.Aftershock &&
+                    pending.Cycle == attack.Cycle && pending.Id != attack.Id).ToArray();
+                var fresh = candidates.FirstOrDefault(candidate => !others.Any(pending => pending.AssignedTargetId == candidate.Key));
+                var previous = others.LastOrDefault(pending => pending.Id < attack.Id)?.AssignedTargetId ?? 0;
+                replacement = fresh.Key != 0 ? fresh : PreferredReuse(candidates, previous);
+            }
+            attack.AssignedTargetId = replacement.Key;
+            attack.X = replacement.Value.X;
+            attack.Y = replacement.Value.Y;
+        }
+
+        private static void ResolveDue(ExpandedLightningState state, double now, Vector2 playerPosition,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
+            ExpandedLightningSettings settings)
         {
             if (state.Pending.Count == 0) return;
+            // Retarget on the first fixed step that observes the assigned actor's death,
+            // so the replacement telegraph remains visible until the original due time.
+            foreach (var attack in state.Pending)
+                if (attack.CanRetarget && attack.At > now + TimeEpsilon)
+                    TryRetarget(state, attack, playerPosition, targets(), settings);
+
             var due = state.Pending.Where(attack => attack.At <= now + TimeEpsilon)
                 .OrderBy(attack => attack.At).ThenBy(attack => attack.Id).ToArray();
             if (due.Length == 0) return;
             var shockCycles = new HashSet<long>();
             foreach (var attack in due)
             {
+                if (attack.CanRetarget) TryRetarget(state, attack, playerPosition, targets(), settings);
                 state.Pending.Remove(attack);
                 var kind = attack.Aftershock ? ExpandedLightningHitKind.Aftershock : ExpandedLightningHitKind.Strike;
                 var nearest = HitArea(attack, kind, targets, applyHit);
@@ -236,6 +347,7 @@ namespace BibleSurvivor.Core
                 var aftershock = attack.Copy();
                 aftershock.At += AftershockDelay;
                 aftershock.Aftershock = true;
+                aftershock.CanRetarget = false;
                 aftershock.Radius = AftershockRadius;
                 aftershock.Damage *= AftershockDamageFactor;
                 aftershock.VisitedIds = visited;
@@ -271,7 +383,8 @@ namespace BibleSurvivor.Core
             var visited = new List<int> { anchor.Key };
             var attempted = new HashSet<int> { anchor.Key };
             var origin = anchor.Value;
-            while (visited.Count <= ChainLimit)
+            var limit = ChainLimit + (attack.LongerChain ? 1 : 0);
+            while (visited.Count <= limit)
             {
                 var next = targets().Where(target => !attempted.Contains(target.Key) && InRange(target.Value, origin, ChainRadius))
                     .OrderBy(target => DistanceSquared(target.Value, origin)).ThenBy(target => target.Key).FirstOrDefault();

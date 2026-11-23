@@ -89,6 +89,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double PulseUntil {get;set;}
         [DataMember(EmitDefaultValue=false)] public int FocusTargetId {get;set;}
         [DataMember(EmitDefaultValue=false)] public List<int>? PulseHitIds {get;set;}
+        [DataMember(EmitDefaultValue=false)] public bool StrengthenedFirstPulse { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double FrozenPulseRadius { get; set; }
         [DataMember(EmitDefaultValue=false)] public List<BattleHitState>? FormHits {get;set;}
         internal BattleWeaponState Copy()
         {var copy=(BattleWeaponState)MemberwiseClone();copy.OrbitHits=OrbitHits.Select(x=>x.Copy()).ToList();copy.PendingBursts=new List<double>(PendingBursts);copy.PulseHitIds=PulseHitIds?.ToList();copy.FormHits=FormHits?.Select(x=>x.Copy()).ToList();return copy;}
@@ -255,6 +257,12 @@ namespace BibleSurvivor.Core
                     if(w.WeaponForm!=EvolutionRules.Sling&&w.FocusTargetId!=0)throw new ArgumentException("Unexpected volley focus");
                 }
                 else if(w.NextPulse!=0||w.PulseUntil!=0||w.FocusTargetId!=0||w.PulseHitIds!=null||w.FormHits!=null)throw new ArgumentException("Evolution clock without form");
+                if (w.StrengthenedFirstPulse && (!expanded || w.WeaponForm != EvolutionRules.Bible || w.NextPulse <= 0))
+                    throw new ArgumentException("Unexpected strengthened first pulse");
+                if (!Finite(w.FrozenPulseRadius) || w.FrozenPulseRadius < 0 ||
+                    w.FrozenPulseRadius > EvolutionRules.PulseRadius * 2.5 ||
+                    (w.FrozenPulseRadius > 0) != (expanded && w.WeaponForm == EvolutionRules.Bible && w.NextPulse > 0))
+                    throw new ArgumentException("Invalid frozen pulse radius");
                 if(!EquipmentInventory.SupportsWeapon(w.WeaponId,expanded?2:1)||!Finite(w.NextCycle)||w.NextCycle<0||
                     !Finite(w.ActiveUntil)||w.ActiveUntil<0||!Finite(w.ActiveSince)||w.ActiveSince< -1||
                     !Finite(w.NextBurst)||w.NextBurst<0||w.BurstsRemaining<0||w.BurstsRemaining>1007||w.OrbitHits==null||
@@ -371,6 +379,7 @@ namespace BibleSurvivor.Core
         private readonly List<HostileProjectileState> hostileProjectiles=new List<HostileProjectileState>();
         private long nextHostile=1;
         private ExpandedLightningState? lightning;
+        private readonly ExpandedLightningSettings lightningSettings;
         private ExpandedWildernessVoiceState? wildernessVoice;
         private ExpandedFirePillarState? firePillar;
         private ExpandedMosesStaffState? mosesStaff;
@@ -425,6 +434,7 @@ namespace BibleSurvivor.Core
         public BattleWorld(AdamSession session,IReadOnlyDictionary<string,double> monsterSpeeds,int seed=1,BattleTuning? tuning=null)
         {
             Session=session??throw new ArgumentNullException(nameof(session));
+            if (session.CombatRulesVersion == 2) lightningSettings = session.LightningSettings();
             this.tuning=(tuning??new BattleTuning()).Copy();this.tuning.Validate();
             if(monsterSpeeds==null||monsterSpeeds.Count==0||monsterSpeeds.Any(x=>string.IsNullOrWhiteSpace(x.Key)||
                 !BattleSnapshot.Finite(x.Value)||x.Value<=0||x.Value>10))throw new ArgumentException("Invalid monster speeds");
@@ -871,12 +881,17 @@ namespace BibleSurvivor.Core
             {
                 clock.NextPulse=SimulationTime+EvolutionRules.PulsePeriod;clock.PulseUntil=SimulationTime+EvolutionRules.PulseLifetime;
                 clock.PulseHitIds=new List<int>();ShotsFired++;
+                clock.StrengthenedFirstPulse = Session.ConsumeFirstBibleAttack();
+                if (Session.CombatRulesVersion == 2)
+                    clock.FrozenPulseRadius = EvolutionRules.PulseRadius * Math.Min(2.5,
+                        profile.PulseRadiusMultiplier + (clock.StrengthenedFirstPulse ? .10 : 0));
             }
             var expanded = Session.CombatRulesVersion == 2;
             if(SimulationTime + (expanded ? 1e-9 : 0) >= clock.PulseUntil)return;
+            var radius = expanded ? clock.FrozenPulseRadius : EvolutionRules.PulseRadius;
             foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
             {
-                if(clock.PulseHitIds!.Contains(pair.Key)||!FormHitReady(clock,pair.Key)||Vector2.DistanceSquared(pair.Value,PlayerPosition)>Math.Pow(EvolutionRules.PulseRadius*profile.OrbitCollisionMultiplier+TargetRadius(pair.Key),2))continue;
+                if(clock.PulseHitIds!.Contains(pair.Key)||!FormHitReady(clock,pair.Key)||Vector2.DistanceSquared(pair.Value,PlayerPosition)>Math.Pow(radius+TargetRadius(pair.Key),2))continue;
                 clock.PulseHitIds.Add(pair.Key);Hit(pair.Key,profile.Damage,"bible",pair.Value, original: false);RecordFormHit(clock,pair.Key);
                 if(!Session.CanAttack)break;
             }
@@ -892,7 +907,9 @@ namespace BibleSurvivor.Core
             {
                 var scheduled = expanded ? clock.NextCycle : SimulationTime;
                 clock.ActiveSince=scheduled;clock.ActiveUntil=scheduled+profile.Duration;
-                clock.NextCycle=scheduled+profile.Cycle;
+                var cycle = clock.WeaponId == "bible" && clock.WeaponForm == null && Session.ConsumeFirstBibleAttack()
+                    ? Session.AttackProfile("bible", true).Cycle : profile.Cycle;
+                clock.NextCycle=scheduled+cycle;
                 clock.BurstsRemaining=profile.IsOrbit?0:profile.Amount;
                 clock.NextBurst=expanded&&profile.IsOrbit?0:scheduled;
                 if(clock.WeaponForm==EvolutionRules.Sling)clock.FocusTargetId=StrongestTarget();
@@ -932,7 +949,9 @@ namespace BibleSurvivor.Core
                     foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
                     {
                         var relative=pair.Value-PlayerPosition;
-                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,tuning.JawboneRange*profile.AreaMultiplier+TargetRadius(pair.Key),120))Hit(pair.Key,profile.Damage,"jawbone",pair.Value);
+                        var reach = tuning.JawboneRange * profile.AreaMultiplier;
+                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,reach+TargetRadius(pair.Key),120))
+                            Hit(pair.Key,Session.JawboneDamage(profile.Damage,relative.Length(),reach),"jawbone",pair.Value);
                         if(!Session.CanAttack)break;
                     }
                 }
@@ -964,7 +983,7 @@ namespace BibleSurvivor.Core
                     ExpandedLightning.Step(lightning, SimulationTime, PlayerPosition, Session.Inventory.Weapons[weapon],
                         evolved, profile.Damage, profile.Cycle, profile.Amount, profile.AttackRadius, () => enemies,
                         hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, Vector2.Zero, 0,
-                            hit.Kind == ExpandedLightningHitKind.Strike));
+                            hit.Kind == ExpandedLightningHitKind.Strike), lightningSettings);
                     if (lightning.Cycle != lightningCycle) ShotsFired += profile.Amount;
                     return true;
                 case "wilderness_voice":
@@ -1087,7 +1106,10 @@ namespace BibleSurvivor.Core
         private void Hit(int id,double damage,string cause,Vector2 contact,bool original = true)
         {
             if(!Session.CanAttack||!enemies.TryGetValue(id,out var position)||!Session.Targets.ContainsKey(id))return;
-            var before=Session.Targets[id].Health;Session.Hit(id,damage,null,original && cause!="retaliation");
+            var before=Session.Targets[id].Health;
+            original = original && cause != "retaliation";
+            if (original) damage = Session.RollOriginalDamage(cause, damage);
+            Session.Hit(id,damage,null,original);
             if(!Session.Targets.TryGetValue(id,out var after)){Hits++;if(Session.Encounter!=null&&id==Session.BossRules!.BossActorId)BossKills++;else Kills++;enemies.Remove(id);charges.Remove(id);
                 if(Session.DroppedExperience.ContainsKey(id))drops[id]=position;
                 if(Session.Stage=="boss_reward"||Session.Stage=="boss_settlement")impactFloor=ImpactSequence+1;

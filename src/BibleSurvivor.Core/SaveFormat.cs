@@ -60,6 +60,11 @@ namespace BibleSurvivor.Core
             var projectile = Object("Id X Y VelocityX VelocityY Lifetime Damage RemainingPierce Radius HitIds");
             var weapon = Object("WeaponId WeaponForm NextCycle ActiveUntil ActiveSince NextBurst BurstsRemaining PendingBursts NextPulse PulseUntil FocusTargetId PulseHitIds",
                 ("OrbitHits", Array(Object("Id At"))),("FormHits",Array(Object("Id At"))));
+            if (skillTree)
+            {
+                weapon.Members!.Add("StrengthenedFirstPulse", Value);
+                weapon.Members.Add("FrozenPulseRadius", Value);
+            }
             var tuning = Object("PlayerSpeed CameraHalfWidth CameraHalfHeight SpawnMargin PlayerRadius EnemyRadius BibleOrbitRadius BookRadius JawboneRange SlingSpeed SlingLifetime PickupRadius MaxProjectiles");
             var world = Object("SchemaVersion Time Remainder NextHostileId PlayerX PlayerY FacingX FacingY RandomState NextProjectileId ShotsFired Hits Kills BossKills Collected DamageTaken",
                 ("Tuning", tuning), ("Enemies", Array(entity)), ("Drops", Array(entity)),
@@ -68,7 +73,7 @@ namespace BibleSurvivor.Core
             if (skillTree)
             {
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle",
-                    ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds")))));
+                    ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
                     ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired")))));
                 world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep",
@@ -100,6 +105,8 @@ namespace BibleSurvivor.Core
                 run.Members.Add("PermanentActions", Object("GemsCollected LastGemAt LastContactAt StationarySince HeadingSince HeadingX HeadingY"));
                 run.Members.Add("PermanentRecovery", Object("NormalKills NextEliteAt NextBossSupportAt NextLowHealthAt LastEventAt",
                     ("ImmediateHeals", Array(Object("At Amount")))));
+                run.Members.Add("CriticalRandomStates", integerMap);
+                run.Members.Add("FirstBibleAttackUsed", Value);
             }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));

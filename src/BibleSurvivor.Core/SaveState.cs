@@ -61,6 +61,8 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public List<string>? GrowthChoiceUnlockedWeapons { get; set; }
         [DataMember(EmitDefaultValue=false)] public PermanentActionState? PermanentActions { get; set; }
         [DataMember(EmitDefaultValue=false)] public PermanentRecoveryState? PermanentRecovery { get; set; }
+        [DataMember(EmitDefaultValue=false)] public Dictionary<string, uint>? CriticalRandomStates { get; set; }
+        [DataMember(EmitDefaultValue=false)] public bool FirstBibleAttackUsed { get; set; }
     }
 
     [DataContract]
@@ -116,7 +118,8 @@ namespace BibleSurvivor.Core
             if (expandedCombat && (Run.PermanentCatalogVersion is not int catalog ||
                 !PermanentSkillCatalog.SupportsVersion(catalog)))
                 throw new UnsupportedSaveVersionException();
-            if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null || Run.PermanentRecovery != null))
+            if (!expandedCombat && (Run.PermanentCatalogVersion != null || Run.PermanentActions != null ||
+                Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
             foreach (var encounter in PermanentProfile.EncounterHistory(Run))
                 if (encounter.Reward is { } reward &&
@@ -166,6 +169,14 @@ namespace BibleSurvivor.Core
                 PermanentSkillCatalog.ForVersion(Run.PermanentCatalogVersion!.Value).ValidateRanks(Run.PermanentSnapshot);
                 if (Run.PermanentActions == null || Run.PermanentRecovery == null)
                     throw new InvalidDataException("Expanded run requires permanent action and recovery state");
+                var hasCriticalRank = PermanentRules.Rank(Run.PermanentSnapshot, "common.crit.01") > 0;
+                if (hasCriticalRank != (Run.CriticalRandomStates != null) ||
+                    Run.CriticalRandomStates != null && (Run.CriticalRandomStates.Count > 6 ||
+                        Run.CriticalRandomStates.Any(stream => stream.Value == 0 || !Run.Weapons.ContainsKey(stream.Key))))
+                    throw new InvalidDataException("Invalid permanent critical attack stream");
+                if (Run.FirstBibleAttackUsed && (PermanentRules.Rank(Run.PermanentSnapshot, "weapon.bible.base.04") == 0 ||
+                    !Run.Weapons.ContainsKey("bible")))
+                    throw new InvalidDataException("Unexpected first-bible-attack receipt");
                 if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
                     throw new InvalidDataException("Expanded run health does not match its starting ranks");
             }
@@ -294,8 +305,14 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("World weapon form does not match inventory");
                 if (expandedCombat && Run.World.Weapons.Any(w => !Run.Weapons.ContainsKey(w.WeaponId)))
                     throw new InvalidDataException("Expanded weapon clock requires equipped weapon");
+                if (!Run.FirstBibleAttackUsed && Run.World.Weapons.Any(w => w.StrengthenedFirstPulse))
+                    throw new InvalidDataException("Strengthened first pulse requires its round receipt");
                 if (expandedCombat && Run.World.PermanentTargetLedger().Any(id => id < firstActor || id > lastActor))
                     throw new InvalidDataException("Expanded weapon ledger refers to an unissued actor");
+                if (Run.World.Lightning?.Pending.Any(strike =>
+                    strike.CanRetarget && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.04") == 0 ||
+                    strike.LongerChain && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.e.01") == 0) == true)
+                    throw new InvalidDataException("Lightning strike flags require their frozen ranks");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if (expandedCombat && ((Run.World.Charges != null) != (normalRound >= 4) ||
                     (Run.World.HostileProjectiles != null) != chainWorld))

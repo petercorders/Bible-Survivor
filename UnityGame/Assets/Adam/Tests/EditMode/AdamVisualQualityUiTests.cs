@@ -117,12 +117,12 @@ public sealed class AdamVisualQualityUiTests
 
     [Test] public void PermanentShopOffersOnlyTheLinkedCommonAndWeaponEffects()
     {
-        Assert.AreEqual(92,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
+        Assert.AreEqual(105,PermanentSkillCatalog.Current.Nodes.Count(node=>AdamGame.OffersPermanentSkillPurchase(node.Id)));
         foreach(var profile in ExpandedWeaponRules.All)
         {
             for(var rank=1;rank<=3;rank++)
                 Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase($"weapon.{profile.WeaponId}.base.0{rank}"));
-            Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase($"weapon.{profile.WeaponId}.base.04"));
+            Assert.AreEqual(profile.WeaponId=="lightning",AdamGame.OffersPermanentSkillPurchase($"weapon.{profile.WeaponId}.base.04"));
         }
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.health.10"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.armor.10"));
@@ -130,7 +130,13 @@ public sealed class AdamVisualQualityUiTests
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.move.08"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.xp.07"));
         Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.pickup.10"));
-        Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase("common.crit.01"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("common.crit.02"));
+        Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase("common.crit.03"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.bible.base.05"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.jawbone.base.05"));
+        Assert.IsTrue(AdamGame.OffersPermanentSkillPurchase("weapon.sling.base.05"));
+        Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase("weapon.lightning.a.03"));
+        Assert.IsFalse(AdamGame.OffersPermanentSkillPurchase("weapon.lightning.a.04"));
     }
 
     [TestCase(false)][TestCase(true)]
