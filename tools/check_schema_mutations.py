@@ -17,8 +17,8 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 CASES = [
     ('old_typed_run_before_header', [
-        ('SaveState.cs', '\n            sourceVersion = SaveFormat.Probe(bytes);', '\n            sourceVersion = SaveFormat.CurrentVersion;'),
-        ('SaveState.cs', 'var sourceVersion = SaveFormat.Probe(bytes); // Header before typed Run: future bodies must never trigger backup recovery.', 'var sourceVersion = SaveFormat.CurrentVersion; // Original typed read occurs before version validation.'),
+        ('SaveState.cs', '            sourceVersion = SaveFormat.Probe(bytes); // Header before typed Run: future bodies must never trigger backup recovery.\n', ''),
+        ('SaveState.cs', '            if (state == null || state.SchemaVersion != sourceVersion)', '            sourceVersion = SaveFormat.Probe(bytes);\n            if (state == null || state.SchemaVersion != sourceVersion)'),
     ], 'Future schema header precedes incompatible typed Run'),
     ('old_schema1_writer', [
         ('SaveState.cs', 'candidate.Revision = checked(revision + 1);', 'candidate.SchemaVersion = 1; candidate.Revision = checked(revision + 1);'),
@@ -33,14 +33,23 @@ CASES = [
         ('SaveMigrationArchive.cs', 'if (Directory.Exists(destination)) { VerifyPublishedArchive(destination); return; }', 'if (Directory.Exists(destination)) return;'),
     ], 'Schema archive path failure and incomplete'),
     ('unsupported_schema2_content_recovers_older_backup', [
-        ('SaveFormat.cs', 'if (version >= GenesisVersion) throw new UnsupportedSaveVersionException();', 'if (version >= GenesisVersion) throw new InvalidDataException("unsupported treated as corrupt");'),
-        ('SaveFormat.cs', 'if (version == GenesisVersion)\n                {', 'if (version < 0)\n                {'),
+        ('SaveFormat.cs', 'if (version >= GenesisVersion) throw new UnsupportedSaveVersionException();', 'if (version > GenesisVersion) throw new UnsupportedSaveVersionException();'),
+        ('SaveFormat.cs', 'if (layoutVersion == GenesisVersion)\n                {', 'if (layoutVersion == GenesisVersion && skillTree)\n                {'),
+        ('SaveFormat.cs', 'if (version >= GenesisVersion && !skillTree) CheckSupportedContent(root, LegacyContent);',
+         'if (version >= GenesisVersion && !skillTree)\n'
+         '            {\n'
+         '                try { CheckSupportedContent(root, LegacyContent); }\n'
+         '                catch (UnsupportedSaveVersionException error) when (version == GenesisVersion)\n'
+         '                { throw new InvalidDataException("unsupported treated as corrupt", error); }\n'
+         '            }'),
     ], 'Schema2 reader preserves future boss content'),
     ('old_shallow_schema2_content_guard', [
-        ('SaveFormat.cs', 'if (version >= GenesisVersion) CheckSupportedContent(root, SupportedContent);', '/* Original preparatory reader only checked envelope and direct Run fields. */'),
+        ('SaveFormat.cs', 'if (version >= GenesisVersion && !skillTree) CheckSupportedContent(root, LegacyContent);', 'if (version > GenesisVersion && !skillTree) CheckSupportedContent(root, LegacyContent);'),
     ], ['Schema2 nested Profile unknown content', 'Schema2 nested World unknown content']),
     ('future_world_version_recovers_legacy_backup', [
-        ('SaveFormat.cs', 'CheckWorldVersion(members.SingleOrDefault(x => x.Name == "World"));', '/* Original reader delegated future World version to typed corruption recovery. */'),
+        ('SaveFormat.cs', 'CheckWorldVersion(world);', 'if (version > GenesisVersion) CheckWorldVersion(world);'),
+        ('SaveFormat.cs', 'if (!expandedCombat && worldVersion == BattleSnapshot.ExpandedVersion.ToString(CultureInfo.InvariantCulture))',
+         'if (version > GenesisVersion && !expandedCombat && worldVersion == BattleSnapshot.ExpandedVersion.ToString(CultureInfo.InvariantCulture))'),
     ], ['Future World version preserves Gold19 primary', 'Future World version and overflow precede incompatible typed bodies']),
     ('archive_compared_to_later_corrupt_primary', [
         ('SaveMigrationArchive.cs', 'VerifyPublishedArchive(destination); return;', 'Verify(destination, files); return;'),
