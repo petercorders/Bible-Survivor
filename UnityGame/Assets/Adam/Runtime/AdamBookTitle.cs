@@ -68,7 +68,7 @@ namespace BibleSurvivor.Unity
             var genesis = Book(round) == 0;
             if (genesis) AdamCinematicArt.DrawEdenSeal(new Vector2(28, 35), 2);
             else AdamArt.Blit(AdamVisualQualityArt.Sprite(Crest,ArtFrame(round)),new Rect(20,22,64,64));
-            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":"성경 서바이버",eyebrow);
+            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":AdamGameTitle.Korean,eyebrow);
             if (genesis)
                 GUI.Label(new Rect(96,38,204,36), death ? "도전 기록" : "시작 무기를 선택하세요", count);
             else

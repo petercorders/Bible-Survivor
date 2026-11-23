@@ -60,7 +60,13 @@ internal static partial class PermanentSkillCombatTests
     {
         var node = PermanentSkillCatalog.Current.Find(id);
         var prior = ExpandedProfile(store, node.Prerequisites.Keys.ToArray());
-        if (id == "move") prior = Purchase(prior, "pickup", 1, 120);
+        foreach (var requirement in node.Prerequisites)
+        {
+            var prerequisite = PermanentSkillCatalog.Current.Find(requirement.Key);
+            var owned = PermanentRules.Rank(prior.Profile.Upgrades, prerequisite.Id);
+            for (; owned < requirement.Value; owned++)
+                prior = Purchase(prior, prerequisite.Id, owned, prerequisite.Prices[owned]);
+        }
         for (var owned = 0; owned < rank - 1; owned++) prior = Purchase(prior, id, owned, node.Prices[owned]);
         return (prior, Purchase(prior, id, rank - 1, node.Prices[rank - 1]));
 

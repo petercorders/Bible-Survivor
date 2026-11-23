@@ -21,8 +21,8 @@ def main():
         ROOT / 'UnityGame/Assets/Adam/Plugins/BibleSurvivor.Core.dll',
         ROOT / 'UnityGame/Assets/Adam/Resources/core-provenance.json',
         ROOT / 'UnityGame/Assets/Adam/Resources/genesis-catalog.json',
-        ROOT / 'UnityGame/Builds/Adam.app/Contents/MacOS/Adam Prototype',
-        ROOT / 'UnityGame/Builds/Adam.app/Contents/Resources/Data/Managed/BibleSurvivor.Core.dll']
+        ROOT / 'UnityGame/Builds/History Survival.app/Contents/MacOS/Adam Prototype',
+        ROOT / 'UnityGame/Builds/History Survival.app/Contents/Resources/Data/Managed/BibleSurvivor.Core.dll']
     live_before = {str(path.relative_to(ROOT)): digest(path) for path in live_paths if path.is_file()}
     (ROOT / '.local').mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='unity-provenance-', dir=ROOT / '.local') as temp:
