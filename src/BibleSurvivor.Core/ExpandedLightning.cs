@@ -11,6 +11,7 @@ namespace BibleSurvivor.Core
         Strike,
         Chain,
         Aftershock,
+        EliteThunder,
     }
 
     public readonly struct ExpandedLightningHit
@@ -21,9 +22,11 @@ namespace BibleSurvivor.Core
         public double Damage { get; }
         public long StrikeId { get; }
         public long Cycle { get; }
+        public double OriginalBaseDamage { get; }
+        public int TargetOrdinal { get; }
 
         internal ExpandedLightningHit(ExpandedLightningHitKind kind, int targetId, Vector2 position,
-            double damage, long strikeId, long cycle)
+            double damage, long strikeId, long cycle, double originalBaseDamage = 0, int targetOrdinal = 0)
         {
             Kind = kind;
             TargetId = targetId;
@@ -31,6 +34,8 @@ namespace BibleSurvivor.Core
             Damage = damage;
             StrikeId = strikeId;
             Cycle = cycle;
+            OriginalBaseDamage = originalBaseDamage;
+            TargetOrdinal = targetOrdinal;
         }
     }
 
@@ -44,13 +49,19 @@ namespace BibleSurvivor.Core
         public bool DeferPreviousTargetOnReuse { get; }
         public bool RetargetOnce { get; }
         public bool LongerChain { get; }
+        public bool IsolatedDamage { get; }
+        public bool HighHealthDamage { get; }
+        public bool RepeatStrikeDamage { get; }
+        public bool WiderLastStrike { get; }
+        public bool EliteThunderOnFifthCycle { get; }
         internal Func<int, bool>? IsBoss { get; }
         internal Func<int, bool>? IsElite { get; }
 
         public ExpandedLightningSettings(double radiusBonus = 0, double delayAdvance = 0,
             bool prioritizeCrowds = false, bool prioritizeThreats = false, bool deferPreviousTargetOnReuse = false,
             bool retargetOnce = false, bool longerChain = false, Func<int, bool>? isBoss = null, Func<int, bool>? isElite = null,
-            double aftershockRadiusBonus = 0)
+            double aftershockRadiusBonus = 0, bool isolatedDamage = false, bool highHealthDamage = false,
+            bool repeatStrikeDamage = false, bool widerLastStrike = false, bool eliteThunderOnFifthCycle = false)
         {
             if (!ExpandedLightning.Finite(radiusBonus) || radiusBonus < 0 ||
                 !ExpandedLightning.Finite(delayAdvance) || delayAdvance < 0 ||
@@ -58,6 +69,8 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Invalid expanded lightning bonuses");
             if (prioritizeThreats && (isBoss == null || isElite == null))
                 throw new ArgumentException("Lightning threat priority needs boss and elite classifiers");
+            if (eliteThunderOnFifthCycle && isElite == null)
+                throw new ArgumentException("Lightning elite thunder needs an elite classifier");
 
             RadiusBonus = radiusBonus;
             AftershockRadiusBonus = aftershockRadiusBonus;
@@ -67,6 +80,11 @@ namespace BibleSurvivor.Core
             DeferPreviousTargetOnReuse = deferPreviousTargetOnReuse;
             RetargetOnce = retargetOnce;
             LongerChain = longerChain;
+            IsolatedDamage = isolatedDamage;
+            HighHealthDamage = highHealthDamage;
+            RepeatStrikeDamage = repeatStrikeDamage;
+            WiderLastStrike = widerLastStrike;
+            EliteThunderOnFifthCycle = eliteThunderOnFifthCycle;
             IsBoss = isBoss;
             IsElite = isElite;
         }
@@ -88,7 +106,9 @@ namespace BibleSurvivor.Core
                 longerChain: Has("e.01"),
                 isBoss: isBoss,
                 isElite: isElite,
-                aftershockRadiusBonus: (HasRank("common.area.01") ? .04 : 0) + (HasRank("common.area.04") ? .05 : 0));
+                aftershockRadiusBonus: (HasRank("common.area.01") ? .04 : 0) + (HasRank("common.area.04") ? .05 : 0),
+                isolatedDamage: Has("a.05"), highHealthDamage: Has("b.01"), repeatStrikeDamage: Has("b.03"),
+                widerLastStrike: Has("b.04"), eliteThunderOnFifthCycle: Has("b.05"));
         }
     }
 
@@ -101,6 +121,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public float X { get; set; }
         [DataMember(IsRequired = true)] public float Y { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double OriginalBaseDamage { get; set; }
         [DataMember(IsRequired = true)] public double Radius { get; set; }
         [DataMember(IsRequired = true)] public int AssignedTargetId { get; set; }
         [DataMember(IsRequired = true)] public bool Aftershock { get; set; }
@@ -112,6 +133,17 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public float? PredecessorX { get; set; }
         [DataMember(EmitDefaultValue = false)] public float? PredecessorY { get; set; }
 
+        [DataMember(EmitDefaultValue = false)] public bool IsolatedDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool HighHealthDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool RepeatStrikeDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WiderLastStrike { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool EliteThunderOnHit { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool EliteThunder { get; set; }
+
+        public bool IsPrimary => !Aftershock && !EliteThunder;
+        public ExpandedLightningHitKind HitKind => EliteThunder ? ExpandedLightningHitKind.EliteThunder
+            : Aftershock ? ExpandedLightningHitKind.Aftershock : ExpandedLightningHitKind.Strike;
+
         internal Vector2 Position => new Vector2(X, Y);
         internal Vector2 PredecessorPosition => new Vector2(PredecessorX.GetValueOrDefault(), PredecessorY.GetValueOrDefault());
 
@@ -120,6 +152,19 @@ namespace BibleSurvivor.Core
             PredecessorTargetId = targetId;
             PredecessorX = targetId == 0 ? (float?)null : position.X;
             PredecessorY = targetId == 0 ? (float?)null : position.Y;
+        }
+
+        internal void ClearPrimaryModifiers()
+        {
+            OriginalBaseDamage = 0;
+            CanRetarget = false;
+            UsesFarthestReuse = false;
+            SetPredecessor(0, default);
+            IsolatedDamage = false;
+            HighHealthDamage = false;
+            RepeatStrikeDamage = false;
+            WiderLastStrike = false;
+            EliteThunderOnHit = false;
         }
 
         internal ExpandedLightningEventState Copy()
@@ -141,6 +186,8 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public List<ExpandedLightningEventState> Pending { get; set; } =
             new List<ExpandedLightningEventState>();
 
+        [DataMember(EmitDefaultValue = false)] public List<BattleHitState>? RecentStrikeHits { get; set; }
+
         public ExpandedLightningState Copy() => new ExpandedLightningState
         {
             Evolved = Evolved,
@@ -149,6 +196,7 @@ namespace BibleSurvivor.Core
             NextStrikeId = NextStrikeId,
             NextCycle = NextCycle,
             Pending = Pending.Select(attack => attack.Copy()).ToList(),
+            RecentStrikeHits = RecentStrikeHits?.Select(hit => hit.Copy()).ToList(),
         };
 
         // Call at a form change or when the encounter cancels held attacks.
@@ -160,6 +208,7 @@ namespace BibleSurvivor.Core
             WaitingForTarget = false;
             NextCycle = now;
             Pending.Clear();
+            RecentStrikeHits = null;
         }
 
         public void Validate(double now, bool evolved)
@@ -170,25 +219,43 @@ namespace BibleSurvivor.Core
                 !ExpandedLightning.Finite(NextCycle) || NextCycle < 0 ||
                 NextCycle > now + ExpandedLightning.MaximumCycle + ExpandedLightning.TimeEpsilon ||
                 (WaitingForTarget && NextCycle > now + ExpandedLightning.TimeEpsilon) ||
-                Pending == null || Pending.Count > ExpandedLightning.MaximumAmount + ExpandedLightning.MaximumPendingAftershocks)
+                Pending == null || Pending.Count > ExpandedLightning.MaximumAmount + ExpandedLightning.MaximumPendingAftershocks + 1 ||
+                RecentStrikeHits != null && (RecentStrikeHits.Count > 120 ||
+                    RecentStrikeHits.Any(hit => hit == null || hit.Id <= 0 ||
+                        !ExpandedLightning.Finite(hit.At) || hit.At < 0 || hit.At > now + ExpandedLightning.TimeEpsilon) ||
+                    RecentStrikeHits.Select(hit => hit.Id).Distinct().Count() != RecentStrikeHits.Count))
                 throw new ArgumentException("Invalid expanded lightning clock");
 
-            var ids = new HashSet<long>();
+            var ids = new HashSet<(long Id, bool EliteThunder)>();
             var shockCycles = new HashSet<long>();
+            var thunderCycles = new HashSet<long>();
             var strikeCount = 0;
             double? strikeTime = null;
             foreach (var attack in Pending)
             {
-                if (attack == null || attack.Id < 1 || attack.Id >= NextStrikeId || !ids.Add(attack.Id) ||
+                if (attack == null || attack.Id < 1 || attack.Id >= NextStrikeId || !ids.Add((attack.Id, attack.EliteThunder)) ||
                     attack.Cycle < 1 || attack.Cycle > Cycle || attack.AssignedTargetId < 1 || attack.LongerChain && !Evolved ||
                     !ExpandedLightning.ValidPosition(attack.Position) ||
                     !ExpandedLightning.Finite(attack.At) || attack.At < now - ExpandedLightning.TimeEpsilon ||
                     !ExpandedLightning.Finite(attack.Damage) || attack.Damage <= 0 ||
                     !ExpandedLightning.Finite(attack.Radius) || attack.Radius <= 0 ||
-                    !ValidPredecessor(attack))
+                    !ValidPredecessor(attack) ||
+                    !ExpandedLightning.ValidOriginalBaseDamage(attack.OriginalBaseDamage, evolved, !attack.IsPrimary) ||
+                    !ValidPrimaryModifiers(attack))
                     throw new ArgumentException("Invalid expanded lightning event");
 
-                if (attack.Aftershock)
+                if (attack.EliteThunder)
+                {
+                    if (attack.Aftershock || attack.CanRetarget || attack.LongerChain || !thunderCycles.Add(attack.Cycle) ||
+                        thunderCycles.Count > 1 || attack.Cycle % 5 != 0 ||
+                        attack.At > now + ExpandedLightning.AftershockDelay + ExpandedLightning.TimeEpsilon ||
+                        attack.Damage < ExpandedLightning.EliteThunderDamageFactor ||
+                        attack.Damage > ExpandedLightning.MaximumDamage * ExpandedLightning.EliteThunderDamageFactor ||
+                        attack.Radius < ExpandedLightning.EliteThunderRadius || attack.Radius > ExpandedLightning.EliteThunderRadius * 2.5 ||
+                        attack.VisitedIds != null)
+                        throw new ArgumentException("Invalid expanded lightning elite thunder");
+                }
+                else if (attack.Aftershock)
                 {
                     if (!Evolved || attack.CanRetarget || !shockCycles.Add(attack.Cycle) ||
                         shockCycles.Count > ExpandedLightning.MaximumPendingAftershocks ||
@@ -209,17 +276,19 @@ namespace BibleSurvivor.Core
                         attack.At > NextCycle + ExpandedLightning.TimeEpsilon ||
                         (strikeTime.HasValue && attack.At != strikeTime.Value) ||
                         attack.Damage < 1 || attack.Damage > ExpandedLightning.MaximumDamage ||
-                        attack.Radius > ExpandedLightning.MaximumStrikeRadius || attack.VisitedIds != null)
+                        attack.Radius > ExpandedLightning.MaximumStrikeRadius || attack.VisitedIds != null ||
+                        attack.WiderLastStrike && attack.Id != NextStrikeId - 1 ||
+                        attack.EliteThunderOnHit && attack.Cycle % 5 != 0)
                         throw new ArgumentException("Invalid expanded lightning strike");
                     strikeTime = attack.At;
                 }
             }
-            if (strikeTime.HasValue && (WaitingForTarget || shockCycles.Contains(Cycle)))
+            if (strikeTime.HasValue && (WaitingForTarget || shockCycles.Contains(Cycle) || thunderCycles.Contains(Cycle)))
                 throw new ArgumentException("Conflicting expanded lightning events");
 
             foreach (var attack in Pending.Where(attack => attack.UsesFarthestReuse))
             {
-                var previous = Pending.Find(candidate => !candidate.Aftershock && candidate.Cycle == attack.Cycle &&
+                var previous = Pending.Find(candidate => candidate.IsPrimary && candidate.Cycle == attack.Cycle &&
                     candidate.Id == attack.Id - 1);
                 if (previous != null && (attack.PredecessorTargetId != previous.AssignedTargetId ||
                     attack.PredecessorPosition != previous.Position))
@@ -227,12 +296,19 @@ namespace BibleSurvivor.Core
             }
         }
 
+        private static bool ValidPrimaryModifiers(ExpandedLightningEventState attack)
+        {
+            if (attack.IsolatedDamage || attack.HighHealthDamage || attack.RepeatStrikeDamage)
+                return attack.IsPrimary && attack.OriginalBaseDamage > 0;
+            return attack.IsPrimary || (!attack.WiderLastStrike && !attack.EliteThunderOnHit);
+        }
+
         private static bool ValidPredecessor(ExpandedLightningEventState attack)
         {
             if (attack.PredecessorTargetId == 0)
                 return !attack.PredecessorX.HasValue && !attack.PredecessorY.HasValue &&
-                    (!attack.UsesFarthestReuse || !attack.Aftershock);
-            return !attack.Aftershock && attack.UsesFarthestReuse && attack.PredecessorTargetId > 0 &&
+                    (!attack.UsesFarthestReuse || attack.IsPrimary);
+            return attack.IsPrimary && attack.UsesFarthestReuse && attack.PredecessorTargetId > 0 &&
                 attack.PredecessorX.HasValue && attack.PredecessorY.HasValue &&
                 ExpandedLightning.ValidPosition(attack.PredecessorPosition);
         }
@@ -253,6 +329,11 @@ namespace BibleSurvivor.Core
         internal const double AftershockDelay = .5;
         internal const double AftershockRadius = 1.4;
         internal const double AftershockDamageFactor = .4;
+        internal const double EliteThunderRadius = .8;
+        internal const double EliteThunderDamageFactor = .35;
+        private const double RepeatStrikeWindow = 1.5;
+        private const double IsolationRadius = 2;
+        private const double WiderLastStrikeBonus = .14;
         internal const int MaximumPendingAftershocks = 4;
         private const double ChainRadius = 3;
         private const double ChainDamageFactor = .7;
@@ -262,7 +343,8 @@ namespace BibleSurvivor.Core
         public static void Step(ExpandedLightningState state, double now, Vector2 playerPosition, int level,
             bool evolved, double damage, double cycle, int amount, double radius,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
-            ExpandedLightningSettings settings = default, Func<double>? nextCycleDuration = null)
+            ExpandedLightningSettings settings = default, Func<double>? nextCycleDuration = null,
+            Func<int, double>? targetHealthRatio = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -275,7 +357,14 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Invalid expanded lightning parameters");
 
             if (state.Evolved != evolved) state.ResetForForm(evolved, now);
-            ResolveDue(state, now, playerPosition, targets, applyHit, settings);
+            if (state.RecentStrikeHits != null)
+            {
+                var live = targets();
+                state.RecentStrikeHits.RemoveAll(hit => now - hit.At > RepeatStrikeWindow + TimeEpsilon ||
+                    !live.ContainsKey(hit.Id));
+                if (state.RecentStrikeHits.Count == 0) state.RecentStrikeHits = null;
+            }
+            ResolveDue(state, now, playerPosition, targets, applyHit, settings, targetHealthRatio);
             if (state.NextCycle > now + TimeEpsilon) return;
 
             var candidates = OrderedTargets(targets(), playerPosition, settings);
@@ -292,12 +381,15 @@ namespace BibleSurvivor.Core
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - settings.DelayAdvance);
-            var strikeRadius = Math.Min(MaximumStrikeRadius, radius + Profile.AtLevel(1).Radius * settings.RadiusBonus);
+            var radiusBonus = Profile.AtLevel(1).Radius * settings.RadiusBonus;
             var previous = default(KeyValuePair<int, Vector2>);
             for (var index = 0; index < amount; index++)
             {
                 var target = index >= candidates.Length && settings.DeferPreviousTargetOnReuse
                     ? FarthestReuse(candidates, previous.Key, previous.Value) : candidates[index % candidates.Length];
+                var wider = settings.WiderLastStrike && index == amount - 1;
+                var strikeRadius = Math.Min(MaximumStrikeRadius, radius + radiusBonus +
+                    (wider ? Profile.AtLevel(1).Radius * WiderLastStrikeBonus : 0));
                 var attack = new ExpandedLightningEventState
                 {
                     Id = state.NextStrikeId,
@@ -306,11 +398,17 @@ namespace BibleSurvivor.Core
                     X = target.Value.X,
                     Y = target.Value.Y,
                     Damage = damage,
+                    OriginalBaseDamage = Profile.AtLevel(level).Damage,
                     Radius = strikeRadius,
                     AssignedTargetId = target.Key,
                     CanRetarget = settings.RetargetOnce,
                     LongerChain = evolved && settings.LongerChain,
                     UsesFarthestReuse = settings.DeferPreviousTargetOnReuse,
+                    IsolatedDamage = settings.IsolatedDamage,
+                    HighHealthDamage = settings.HighHealthDamage,
+                    RepeatStrikeDamage = settings.RepeatStrikeDamage,
+                    WiderLastStrike = wider,
+                    EliteThunderOnHit = settings.EliteThunderOnFifthCycle && state.Cycle % 5 == 0,
                 };
                 if (attack.UsesFarthestReuse) attack.SetPredecessor(previous.Key, previous.Value);
                 state.Pending.Add(attack);
@@ -361,7 +459,7 @@ namespace BibleSurvivor.Core
             var replacement = candidates[0];
             if (attack.UsesFarthestReuse)
             {
-                var others = state.Pending.Where(pending => !pending.Aftershock &&
+                var others = state.Pending.Where(pending => pending.IsPrimary &&
                     pending.Cycle == attack.Cycle && pending.Id != attack.Id).ToArray();
                 var fresh = candidates.FirstOrDefault(candidate =>
                     spentAssignments?.Contains((attack.Cycle, candidate.Key)) != true &&
@@ -373,14 +471,14 @@ namespace BibleSurvivor.Core
             attack.AssignedTargetId = replacement.Key;
             attack.X = replacement.Value.X;
             attack.Y = replacement.Value.Y;
-            var successor = state.Pending.Find(next => !next.Aftershock && next.UsesFarthestReuse &&
+            var successor = state.Pending.Find(next => next.IsPrimary && next.UsesFarthestReuse &&
                 next.Cycle == attack.Cycle && next.Id == attack.Id + 1);
             successor?.SetPredecessor(replacement.Key, replacement.Value);
         }
 
         private static void ResolveDue(ExpandedLightningState state, double now, Vector2 playerPosition,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
-            ExpandedLightningSettings settings)
+            ExpandedLightningSettings settings, Func<int, double>? targetHealthRatio)
         {
             if (state.Pending.Count == 0) return;
             // Retarget on the first fixed step that observes the assigned actor's death,
@@ -390,18 +488,22 @@ namespace BibleSurvivor.Core
                 TryRetarget(state, attack, playerPosition, targets(), settings);
 
             var due = state.Pending.Where(attack => attack.At <= now + TimeEpsilon)
-                .OrderBy(attack => attack.At).ThenBy(attack => attack.Id).ToArray();
+                .OrderBy(attack => attack.At).ThenBy(attack => attack.Id).ThenBy(attack => attack.EliteThunder).ToArray();
             if (due.Length == 0) return;
             var shockCycles = new HashSet<long>();
+            var thunderCycles = new HashSet<long>();
             var spentAssignments = new HashSet<(long Cycle, int Id)>();
             foreach (var attack in due)
             {
                 if (attack.CanRetarget) TryRetarget(state, attack, playerPosition, targets(), settings, spentAssignments);
                 if (attack.UsesFarthestReuse) spentAssignments.Add((attack.Cycle, attack.AssignedTargetId));
                 state.Pending.Remove(attack);
-                var kind = attack.Aftershock ? ExpandedLightningHitKind.Aftershock : ExpandedLightningHitKind.Strike;
-                var nearest = HitArea(attack, kind, targets, applyHit);
-                if (!state.Evolved || attack.Aftershock || !nearest.HasValue) continue;
+                var (nearest, firstElite) = HitArea(state, attack, now, targets, applyHit,
+                    attack.EliteThunderOnHit && !thunderCycles.Contains(attack.Cycle) ? settings.IsElite : null,
+                    targetHealthRatio);
+                if (firstElite is { } elite && thunderCycles.Add(attack.Cycle))
+                    AddEliteThunder(state, attack, elite, settings.AftershockRadiusBonus);
+                if (!state.Evolved || !attack.IsPrimary || !nearest.HasValue) continue;
 
                 var visited = Chain(attack, nearest.Value, targets, applyHit);
                 // A cycle schedules one thunderwave, at the first landing that actually hit.
@@ -409,9 +511,7 @@ namespace BibleSurvivor.Core
                 var aftershock = attack.Copy();
                 aftershock.At += AftershockDelay;
                 aftershock.Aftershock = true;
-                aftershock.CanRetarget = false;
-                aftershock.UsesFarthestReuse = false;
-                aftershock.SetPredecessor(0, default);
+                aftershock.ClearPrimaryModifiers();
                 aftershock.Radius = AftershockRadius * (1 + settings.AftershockRadiusBonus);
                 aftershock.Damage *= AftershockDamageFactor;
                 aftershock.VisitedIds = visited;
@@ -419,26 +519,86 @@ namespace BibleSurvivor.Core
             }
         }
 
-        private static KeyValuePair<int, Vector2>? HitArea(ExpandedLightningEventState attack,
-            ExpandedLightningHitKind kind, Func<IReadOnlyDictionary<int, Vector2>> targets,
-            Func<ExpandedLightningHit, bool> applyHit)
+        private static void AddEliteThunder(ExpandedLightningState state, ExpandedLightningEventState attack,
+            (int TargetId, Vector2 Position, double Damage) elite, double areaBonus)
+        {
+            var thunder = attack.Copy();
+            thunder.At += AftershockDelay;
+            thunder.EliteThunder = true;
+            thunder.LongerChain = false;
+            thunder.ClearPrimaryModifiers();
+            thunder.AssignedTargetId = elite.TargetId;
+            thunder.X = elite.Position.X;
+            thunder.Y = elite.Position.Y;
+            thunder.Radius = EliteThunderRadius * (1 + areaBonus);
+            thunder.Damage = elite.Damage * EliteThunderDamageFactor;
+            state.Pending.Add(thunder);
+        }
+
+        private static (KeyValuePair<int, Vector2>? Nearest, (int TargetId, Vector2 Position, double Damage)? Elite) HitArea(
+            ExpandedLightningState state, ExpandedLightningEventState attack, double now,
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedLightningHit, bool> applyHit,
+            Func<int, bool>? isElite, Func<int, double>? targetHealthRatio)
         {
             var ids = targets().Where(target => InRange(target.Value, attack.Position, attack.Radius))
                 .Select(target => target.Key).OrderBy(id => id).ToArray();
             KeyValuePair<int, Vector2>? nearest = null;
             var nearestDistance = double.PositiveInfinity;
+            (int TargetId, Vector2 Position, double Damage)? firstElite = null;
+            var kind = attack.HitKind;
+            var primary = attack.IsPrimary;
+            var acceptedOriginalTargets = 0;
             foreach (var id in ids)
             {
-                if (!targets().TryGetValue(id, out var position) || !InRange(position, attack.Position, attack.Radius) ||
-                    !applyHit(new ExpandedLightningHit(kind, id, position, attack.Damage, attack.Id, attack.Cycle)))
+                var live = targets();
+                if (!live.TryGetValue(id, out var position) || !InRange(position, attack.Position, attack.Radius)) continue;
+                var eligibleElite = !firstElite.HasValue && isElite?.Invoke(id) == true;
+                var damage = StrikeDamage(state, attack, id, now, live, targetHealthRatio);
+                if (!applyHit(new ExpandedLightningHit(kind, id, position, damage, attack.Id, attack.Cycle,
+                        primary ? attack.OriginalBaseDamage : 0, primary ? acceptedOriginalTargets + 1 : 0)))
                     continue;
+
+                if (eligibleElite) firstElite = (id, position, damage);
+                if (primary)
+                {
+                    acceptedOriginalTargets++;
+                    if (attack.RepeatStrikeDamage) RecordStrikeHit(state, id, now, targets().ContainsKey(id));
+                }
 
                 var distance = DistanceSquared(position, attack.Position);
                 if (distance >= nearestDistance) continue;
                 nearestDistance = distance;
                 nearest = new KeyValuePair<int, Vector2>(id, position);
             }
-            return nearest;
+            return (nearest, firstElite);
+        }
+
+        private static double StrikeDamage(ExpandedLightningState state, ExpandedLightningEventState attack, int id,
+            double now, IReadOnlyDictionary<int, Vector2> targets, Func<int, double>? targetHealthRatio)
+        {
+            var bonus = 0d;
+            if (attack.IsolatedDamage && !targets.Any(target => target.Key != id &&
+                InRange(target.Value, attack.Position, IsolationRadius))) bonus += .10;
+            if (attack.HighHealthDamage && targetHealthRatio?.Invoke(id) >= .75) bonus += .06;
+            if (attack.RepeatStrikeDamage &&
+                state.RecentStrikeHits?.Any(hit => hit.Id == id && now - hit.At <= RepeatStrikeWindow + TimeEpsilon) == true)
+                bonus += .07;
+            return bonus == 0 ? attack.Damage :
+                Math.Min(2.25 * attack.OriginalBaseDamage, attack.Damage + attack.OriginalBaseDamage * bonus);
+        }
+
+        private static void RecordStrikeHit(ExpandedLightningState state, int id, double now, bool stillAlive)
+        {
+            if (!stillAlive)
+            {
+                state.RecentStrikeHits?.RemoveAll(hit => hit.Id == id);
+                if (state.RecentStrikeHits?.Count == 0) state.RecentStrikeHits = null;
+                return;
+            }
+            state.RecentStrikeHits ??= new List<BattleHitState>();
+            var previous = state.RecentStrikeHits.Find(hit => hit.Id == id);
+            if (previous != null) previous.At = now;
+            else state.RecentStrikeHits.Add(new BattleHitState { Id = id, At = now });
         }
 
         private static List<int> Chain(ExpandedLightningEventState attack, KeyValuePair<int, Vector2> anchor,
@@ -472,6 +632,10 @@ namespace BibleSurvivor.Core
             var y = (double)a.Y - b.Y;
             return x * x + y * y;
         }
+
+        internal static bool ValidOriginalBaseDamage(double damage, bool evolved, bool aftershock) => damage == 0 ||
+            !aftershock && (damage == Profile.AtLevel(8).Damage || !evolved &&
+                (damage == Profile.AtLevel(1).Damage || damage == Profile.AtLevel(4).Damage));
 
         internal static bool Finite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
         internal static bool ValidPosition(Vector2 point) => Finite(point.X) && Finite(point.Y) &&

@@ -100,40 +100,63 @@ namespace BibleSurvivor.Core
         }
         public int CombatRulesVersion => run.CombatRulesVersion ?? 1;
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
-        internal double RollOriginalDamage(string weaponId, double damage, int targetId, double targetHealth,
-            double distance, bool firstHitOfCycle, bool hasConsecutiveMark)
+        internal double ResolveOriginalDamage(string weaponId, double damage, double originalBaseDamage,
+            int targetId, double targetHealth, double distance, int ordinal, bool firstHitOfCycle, bool hasConsecutiveMark)
         {
-            if (CombatRulesVersion != 2 || damage <= 0 || run.CriticalRandomStates == null) return damage;
-            var profile = HasExpandedSkill("common.crit.03")
-                ? PermanentOriginalHitRules.ConditionalCritical(run.PermanentSnapshot, weaponId, damage,
-                    new PermanentOriginalHitContext(Math.Min(1, targetHealth / TargetMaxHealth(targetId)),
-                        HealthRatio, firstHitOfCycle, 1, IsEliteActor(targetId), IsBossActor(targetId), null, distance,
-                        Actions.Moving ? 0 : Math.Round(ActiveRoundTime(CombatTime) - ActiveRoundTime(Actions.StationarySince), 9),
-                        hasConsecutiveMark))
+            if (CombatRulesVersion != 2 || damage <= 0) return damage;
+            var hasPower = HasExpandedSkill("common.power.02");
+            var conditionalCritical = HasExpandedSkill("common.crit.03");
+            var context = default(PermanentOriginalHitContext);
+            if (hasPower || conditionalCritical)
+            {
+                var clock = ActiveRoundTime(CombatTime);
+                var stationary = Actions.Moving ? 0 : Math.Round(clock - ActiveRoundTime(Actions.StationarySince), 9);
+                var sinceHurt = run.LastHitTime < 0 ? (double?)null : Math.Round(clock - ActiveRoundTime(run.LastHitTime), 9);
+                context = new PermanentOriginalHitContext(Math.Min(1, targetHealth / TargetMaxHealth(targetId)),
+                    HealthRatio, firstHitOfCycle, ordinal, IsEliteActor(targetId), IsBossActor(targetId),
+                    sinceHurt, distance, stationary, hasConsecutiveMark);
+            }
+            if (hasPower)
+            {
+                // Previously saved v2 projectiles may predate the optional basis field.
+                var basis = originalBaseDamage > 0 ? originalBaseDamage : AttackProfile(weaponId).OriginalBaseDamage;
+                damage = PermanentOriginalHitRules.ApplyPower(run.PermanentSnapshot, context, basis, damage);
+            }
+            var streams = run.CriticalRandomStates;
+            if (streams == null) return damage;
+            var profile = conditionalCritical
+                ? PermanentOriginalHitRules.ConditionalCritical(run.PermanentSnapshot, weaponId, damage, context)
                 : PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, weaponId, damage);
             if (!profile.RequiresCriticalRoll) return damage;
-            var streams = run.CriticalRandomStates!;
             streams.TryGetValue(weaponId, out var previous);
             var current = PermanentOriginalHitRules.NextCriticalState(run.RunId, definition.Number, weaponId, previous);
             streams[weaponId] = current;
             return profile.Resolve(current / 4294967296d).Damage;
         }
+        internal bool TrackOriginalCycles => HasExpandedSkill("common.crit.03") || HasExpandedSkill("common.power.03");
+        internal bool TrackOriginalMarks => HasExpandedSkill("common.crit.09") || HasExpandedSkill("common.power.09");
         internal bool IsEliteActor(int id) =>
             Encounter != null ? IsBossActor(id) :
             TargetMaxHealth(id) >= 3L * definition.Waves.SelectMany(wave => wave.Groups).Min(group => group.Health);
+        internal double TargetHealthRatio(int id) =>
+            Targets.TryGetValue(id, out var target) ? Math.Min(1, target.Health / TargetMaxHealth(id)) : 0;
         internal bool IsBossActor(int id) => Encounter != null && id == BossRules!.BossActorId;
         internal ExpandedLightningSettings LightningSettings() =>
             ExpandedLightningSettings.FromRanks(run.PermanentSnapshot, IsBossActor, IsEliteActor);
         internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
             HasExpandedSkill("weapon.fire_pillar.a.01"),
             HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
-            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: AreaProfile().HitShapeBonus,
+            HasExpandedSkill("weapon.fire_pillar.e.01"), emberRadiusBonus: HasExpandedSkill("common.area.01") ? .04 : 0,
             predictPlacement: HasExpandedSkill("weapon.fire_pillar.a.03"),
             preferSeparatedCenters: HasExpandedSkill("weapon.fire_pillar.a.04"),
             slowInCrowds: HasExpandedSkill("weapon.fire_pillar.e.02"),
             increaseCoreDamage: HasExpandedSkill("weapon.fire_pillar.b.02"),
             increaseIgnitionDamage: HasExpandedSkill("weapon.fire_pillar.d.01"),
-            emberDurationBonus: ExpandedWeaponRules.ResidualDurationBonus(run.PermanentSnapshot, true));
+            emberDurationBonus: ExpandedWeaponRules.ResidualDurationBonus(run.PermanentSnapshot, true),
+            closeRangeFire: HasExpandedSkill("weapon.fire_pillar.a.05"),
+            leaveClosingEmber: HasExpandedSkill("weapon.fire_pillar.b.03"),
+            closingAshHit: HasExpandedSkill("weapon.fire_pillar.d.02"),
+            regionShapeBonus: HasExpandedSkill("common.area.01") ? .04 : 0);
         internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
             ExpandedWildernessVoiceRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
@@ -144,8 +167,8 @@ namespace BibleSurvivor.Core
         public double LionRoarRadius(bool guardian) => DanielLionRankOptions().RoarRadius(guardian);
         internal ExpandedElijahChariotRankOptions ElijahChariotRankOptions() =>
             ExpandedElijahChariotRankOptions.FromRanks(run.PermanentSnapshot);
-        internal PermanentAreaProfile AreaProfile() => HasExpandedSkill("common.area.01")
-            ? PermanentAreaRules.Evaluate(run.PermanentSnapshot) : default;
+        internal PermanentAreaProfile AreaProfile(bool evolved = false, bool surrounded = false) => HasExpandedSkill("common.area.01")
+            ? PermanentAreaRules.Evaluate(run.PermanentSnapshot, HealthRatio <= .30, surrounded, evolved) : default;
         internal long BossEntryVoiceCycle => run.Stage == "boss" ? run.BossEntryVoiceCycle : 0;
         internal void RecordVoiceCyclesAtBossEntry(long cycle)
         {
@@ -156,7 +179,8 @@ namespace BibleSurvivor.Core
         internal double LastDamageReceived { get; private set; }
         public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
 
-        internal CombatStats AttackProfile(string weaponId, bool firstBibleWait, bool firstTempoWait = false)
+        internal CombatStats AttackProfile(string weaponId, bool firstBibleWait, bool firstTempoWait = false,
+            bool surrounded = false)
         {
             if(!Inventory.Weapons.TryGetValue(weaponId,out var level)) throw new InvalidOperationException("Weapon not equipped");
             var bonuses = new CombatBonuses {
@@ -167,7 +191,7 @@ namespace BibleSurvivor.Core
             if (CombatRulesVersion == 2)
             {
                 var skillPrefix = "weapon." + weaponId + ".base.";
-                var area = AreaProfile();
+                var area = AreaProfile(form != null, surrounded);
                 bonuses.DamageBonus += .10 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "01");
                 bonuses.AreaBonus += area.HitShapeBonus;
                 bonuses.TravelDistanceBonus = area.FlightDistanceBonus;
@@ -189,7 +213,7 @@ namespace BibleSurvivor.Core
                     HasExpandedSkill("common.shot.01")) bonuses.ProjectileSpeedBonus += .05;
                 var specialization = PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");
                 var collisionBonus = weaponId == "sling" || weaponId == "cross"
-                    ? area.ProjectileRadiusBonus + (HasExpandedSkill("common.shot.02") ? .04 : 0) : 0;
+                    ? area.ProjectileRadiusBonus + area.ConditionalHitShapeBonus + (HasExpandedSkill("common.shot.02") ? .04 : 0) : 0;
                 if (ExpandedWeaponRules.TryGet(weaponId, out var expanded))
                 {
                     bonuses.ExtraAmount = weaponId == "wilderness_voice" ? 0 : specialization;

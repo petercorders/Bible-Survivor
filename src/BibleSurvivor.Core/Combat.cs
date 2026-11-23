@@ -22,6 +22,7 @@ namespace BibleSurvivor.Core
     {
         public double Damage {get; private set;}
         internal double UncappedDamage { get; private set; }
+        internal double OriginalBaseDamage { get; private set; }
         public int Amount {get; private set;}
         public int Pierce {get; private set;}
         public double Duration {get; private set;}
@@ -60,7 +61,7 @@ namespace BibleSurvivor.Core
             var duration=baseStats.Duration*(1+bonuses.DurationBonus);
             var cooldown=baseStats.Cooldown*Math.Max(.2,1-bonuses.CooldownReduction);
             var attackDamage = baseStats.Damage * (1 + bonuses.DamageBonus);
-            var result=new CombatStats { Damage=attackDamage,UncappedDamage=attackDamage,Amount=baseStats.Amount+bonuses.ExtraAmount,
+            var result=new CombatStats { Damage=attackDamage,UncappedDamage=attackDamage,OriginalBaseDamage=baseStats.Damage,Amount=baseStats.Amount+bonuses.ExtraAmount,
                 Pierce=baseStats.Pierce,Duration=duration,Cycle=duration+cooldown,BurstInterval=baseStats.BurstInterval,
                 AreaMultiplier=baseStats.AreaMultiplier+bonuses.AreaBonus,IsOrbit=id=="bible",ProjectileSpeedMultiplier=1+bonuses.ProjectileSpeedBonus };
             Guard.NonNegative(result.Damage,nameof(result.Damage)); Guard.NonNegative(result.Cycle,nameof(result.Cycle));
@@ -128,6 +129,7 @@ namespace BibleSurvivor.Core
             {
                 Damage = Math.Max(1, basis.Damage * Math.Min(2.25, 1 + bonuses.DamageBonus)),
                 UncappedDamage = basis.Damage * (1 + bonuses.DamageBonus),
+                OriginalBaseDamage = basis.Damage,
                 Cycle = Math.Max(.15, basis.Cycle * Math.Max(.20, 1 - bonuses.CooldownReduction)),
                 Amount = Math.Min(profile.MaximumOriginalAmount, basis.Amount + bonuses.ExtraAmount),
                 AttackRadius = Math.Min(original.Radius * 2.5, basis.Radius + original.Radius * radiusBonus),

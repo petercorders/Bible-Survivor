@@ -132,7 +132,11 @@ namespace BibleSurvivor.Unity
                 }
 
             if (snap.Cross != null)
-                foreach (var shot in snap.Cross.Shots) DrawThorns(projection, shot.Thorns, (float)shot.ThornRadius);
+                foreach (var shot in snap.Cross.Shots)
+                {
+                    DrawTrail(projection, shot.Thorns, (float)shot.ThornRadius, Cross, Stroke.Dash);
+                    if (shot.Afterglow != null) DrawTrail(projection, shot.Afterglow, (float)shot.AfterglowRadius, Cross, Stroke.Dot);
+                }
 
             if (snap.ElijahChariot != null)
                 foreach (var path in snap.ElijahChariot.Paths)
@@ -156,7 +160,7 @@ namespace BibleSurvivor.Unity
             if (Event.current.type != EventType.Repaint) return;
             foreach (var bolt in resolvedBolts)
             {
-                if (bolt.Aftershock) continue;
+                if (!bolt.IsPrimary) continue;
                 var center = new Vector2(bolt.X, bolt.Y);
                 var elbow = center + new Vector2(-.12f, .34f);
                 Line(projection, center, elbow, Lightning);
@@ -261,10 +265,10 @@ namespace BibleSurvivor.Unity
             var center = new Vector2(bolt.X, bolt.Y);
             var radius = (float)bolt.Radius;
             Ring(projection, center, radius, Lightning, stroke);
-            if (bolt.Aftershock) Ring(projection, center, radius - .10f, Lightning, stroke);
+            if (!bolt.IsPrimary) Ring(projection, center, radius - .10f, Lightning, stroke);
         }
 
-        void DrawThorns(AdamWorldProjection projection, List<ExpandedCrossThornState> pieces, float radius)
+        void DrawTrail(AdamWorldProjection projection, List<ExpandedCrossThornState> pieces, float radius, Color color, Stroke stroke)
         {
             for (var i = 0; i < pieces.Count;)
             {
@@ -285,12 +289,12 @@ namespace BibleSurvivor.Unity
                     end = next;
                     i++;
                 }
-                Rail(projection, start, end, radius, Cross, Stroke.Dash);
+                Rail(projection, start, end, radius, color, stroke);
                 // Endcaps close the capsule without drawing inner boundaries along a contiguous leg.
                 if (i == pieces.Count || (new Vector2(pieces[i].StartX, pieces[i].StartY) - end).sqrMagnitude > 1e-9f)
-                    Arc(projection, end, Mathf.Atan2(direction.y, direction.x), Mathf.PI / 2, radius, Cross, Stroke.Dash);
+                    Arc(projection, end, Mathf.Atan2(direction.y, direction.x), Mathf.PI / 2, radius, color, stroke);
                 if (first == 0 || (new Vector2(pieces[first - 1].EndX, pieces[first - 1].EndY) - start).sqrMagnitude > 1e-9f)
-                    Arc(projection, start, Mathf.Atan2(-direction.y, -direction.x), Mathf.PI / 2, radius, Cross, Stroke.Dash);
+                    Arc(projection, start, Mathf.Atan2(-direction.y, -direction.x), Mathf.PI / 2, radius, color, stroke);
             }
         }
 

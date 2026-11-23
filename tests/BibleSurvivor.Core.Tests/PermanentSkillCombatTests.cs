@@ -926,6 +926,182 @@ internal static class PermanentSkillCombatTests
                     });
         });
 
+        test("Common power adds first, elite, low health and third-target damage to real originals", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.power.09");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[]
+                    {
+                        new SpawnGroup("a1", 60, 100, 4), new SpawnGroup("a2", 60, 100, 4),
+                        new SpawnGroup("a3", 60, 400, 4),
+                    }),
+                });
+                var session = new AdamSession(state, definition, "jawbone");
+                session.Advance(2.1);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                var chosen = new[] { "a1", "a2", "a3" }
+                    .Select(species => setup.Enemies.First(actor => session.Targets[actor.Id].MonsterId == species))
+                    .OrderBy(actor => actor.Id).ToArray();
+                foreach (var actor in setup.Enemies) actor.X = 100;
+                for (var index = 0; index < chosen.Length; index++)
+                {
+                    var actor = chosen[index];
+                    actor.X = 1.2f;
+                    actor.Y = (index - 1) * .2f;
+                }
+                var lowTarget = chosen[1].Id;
+                session.Hit(lowTarget, session.Targets[lowTarget].Health * .75, null, original: false);
+                var healthBefore = chosen.Select(actor => session.Targets[actor.Id].Health).ToArray();
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                for (var index = 0; index < chosen.Length; index++)
+                {
+                    var id = chosen[index].Id;
+                    var expected = 10 * (1 + .03 + .05 + (index == 0 ? .06 : 0) +
+                        (index == 2 ? .06 : 0) + (id == lowTarget ? .06 : 0) +
+                        (session.Targets[id].MonsterId == "a3" ? .05 : 0));
+                    Check.Near(expected, healthBefore[index] - session.Targets[id].Health);
+                }
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "power-original-order");
+                var saved = store.Load()!;
+                Check.Equal(1L, saved.Run!.World!.Weapons.Single().OriginalHitLedger!.LatestCycle);
+                Check.True(saved.Run.CriticalRandomStates == null);
+            });
+        });
+
+        test("A queued lightning strike restores its damage basis and applies power by accepted target order", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.power.06", "weapon.lightning.base.01");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 100, 4) }),
+                });
+                var session = new AdamSession(state, definition, "bible");
+                Check.True(session.Inventory.TryChoose("lightning", false));
+                session.Advance(3.5);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                var chosen = setup.Enemies.OrderBy(actor => actor.Id).Take(3).ToArray();
+                Check.Equal(3, chosen.Length);
+                foreach (var actor in setup.Enemies) actor.X = 100;
+                for (var index = 0; index < chosen.Length; index++)
+                {
+                    chosen[index].X = 4.5f + index * .05f;
+                    chosen[index].Y = 0;
+                }
+
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var frozen = world.Capture();
+                var strike = frozen.Lightning!.Pending.Single();
+                Check.Near(20, strike.OriginalBaseDamage);
+                state.Run!.World = frozen;
+                store.Commit(state, state.Revision, "lightning-original-power");
+                var saved = store.Load()!;
+                var restoredSession = AdamSession.Resume(saved, definition);
+                var restored = BattleWorld.Restore(restoredSession, Speeds, saved.Run!.World!);
+                world.Advance(.3, Vector2.Zero);
+                restored.Advance(.3, Vector2.Zero);
+                Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(restored.Capture()));
+                for (var index = 0; index < chosen.Length; index++)
+                {
+                    var damage = 20 * (1 + .03 + .10 + .05 + (index == 0 || index == 2 ? .06 : 0));
+                    Check.Near(damage, 100 - restoredSession.Targets[chosen[index].Id].Health);
+                }
+            });
+        });
+
+        test("Purchased area conditions reach actual jawbone swings and persist the last drawn reach", () =>
+        {
+            foreach (var (lowHealth, targets, evolved) in new[]
+            {
+                (false, 5, false), (true, 5, false), (false, 6, false), (true, 6, true),
+            })
+                WithStore(store =>
+                {
+                    var state = ExpandedProfile(store, "common.area.10");
+                    var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                    {
+                        new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 100, 4) }),
+                    });
+                    const string path = "content/genesis/catalog.json";
+                    var speeds = evolved ? CatalogReader.MonsterSpeeds(path) : Speeds;
+                    var session = new AdamSession(state, definition, "jawbone");
+                    if (evolved)
+                    {
+                        session.Advance(180);
+                        session = session.StartNextRound(CatalogReader.Round(path, 2));
+                        session.Advance(180);
+                        definition = CatalogReader.Round(path, 3);
+                        session = session.StartNextRound(definition);
+                        for (var rank = 1; rank < 8; rank++) Check.True(session.Inventory.TryChoose("jawbone", false));
+                        Check.True(session.Inventory.TryChoose("hair", true));
+                        Check.True(session.Inventory.TryEvolve(EvolutionRules.Jawbone));
+                    }
+                    session.Advance(7.5);
+                    if (lowHealth) session.Damage((int)session.CurrentHealth - 30);
+                    var setup = new BattleWorld(session, speeds, 7).Capture();
+                    var nearby = setup.Enemies.OrderBy(enemy => enemy.Id).Take(targets).ToArray();
+                    Check.Equal(targets, nearby.Length);
+                    foreach (var enemy in setup.Enemies) { enemy.X = 100; enemy.Y = 0; }
+                    for (var index = 0; index < nearby.Length; index++)
+                    {
+                        nearby[index].X = 2.9f;
+                        nearby[index].Y = (index - 2) * .10f;
+                    }
+                    var world = BattleWorld.Restore(session, speeds, setup);
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    var snapshot = world.Capture();
+                    var expected = WeaponRules.Get("jawbone", evolved ? 8 : 1).AreaMultiplier + .04
+                        + (lowHealth ? .06 : 0) + (targets == 6 ? .06 : 0)
+                        + (evolved ? .07 + EvolutionRules.JawboneArea : 0);
+                    Check.Near(snapshot.Tuning.JawboneRange * expected, snapshot.Weapons.Single().LastJawboneReach);
+                    state.Run!.World = snapshot;
+                    store.Commit(state, state.Revision, "jawbone-area-conditions");
+                    var saved = store.Load()!;
+                    Check.Near(snapshot.Weapons.Single().LastJawboneReach, saved.Run!.World!.Weapons.Single().LastJawboneReach);
+                });
+        });
+
+        test("Purchased fire expiry keeps the current shape through resume and freezes the new region radius", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.fire_pillar.b.03", "weapon.fire_pillar.d.02", "common.area.07");
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                Check.True(session.Inventory.TryChoose("fire_pillar", false));
+                session.Advance(3.5);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                var target = setup.Enemies.OrderBy(actor => actor.Id).First();
+                foreach (var enemy in setup.Enemies) { enemy.X = 100; enemy.Y = 0; }
+                target.X = 4;
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var before = world.Capture();
+                Check.Near(.9 * 1.09, before.FirePillar!.Regions.Single().Radius);
+                session.Damage((int)session.CurrentHealth - 30);
+                state.Run!.World = before;
+                store.Commit(state, state.Revision, "before-trained-fire-expiry");
+                var saved = store.Load()!;
+                var restoredSession = AdamSession.Resume(saved, WaveTests.Adam());
+                var restored = BattleWorld.Restore(restoredSession, Speeds, saved.Run!.World!);
+                world.Advance(2.3, Vector2.Zero);
+                restored.Advance(2.3, Vector2.Zero);
+                var snapshot = world.Capture();
+                var ember = snapshot.FirePillar!.Regions.Single(region => region.SupportKind == ExpandedFireSupportKind.ClosingEmber);
+                Check.Near(.7 * 1.10, ember.Radius);
+                Check.Equal(JsonSerializer.Serialize(snapshot), JsonSerializer.Serialize(restored.Capture()));
+                saved.Run.World = restored.Capture();
+                store.Commit(saved, saved.Revision, "trained-fire-expiry");
+                Check.Near(ember.Radius, store.Load()!.Run!.World!.FirePillar!.Regions.Single().Radius);
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>

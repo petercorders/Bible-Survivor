@@ -11,6 +11,40 @@ internal static class ExpandedWildernessVoiceTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Wilderness Voice restores its launch base and numbers eligible targets separately on each pulse", () =>
+        {
+            var state = new ExpandedWildernessVoiceState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [8] = new Vector2(1, 0), [1] = new Vector2(-1, 0),
+                [2] = new Vector2(2, 0), [5] = new Vector2(2.5f, 0),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            void Tick(ExpandedWildernessVoiceState current, double now, int level) =>
+                ExpandedWildernessVoice.Step(current, now, Vector2.Zero, Vector2.UnitX, level, false, 8, 3,
+                    3, 1, 45, () => targets, hits.Add);
+
+            Tick(state, 0, 1);
+            Check.Near(6, state.Active.Single().OriginalBaseDamage);
+            var corrupt = state.Copy();
+            corrupt.Active[0].OriginalBaseDamage = 7;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(0, false));
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
+
+            Tick(restored, .15, 4);
+            Check.True(hits.Select(hit => (hit.TargetId, hit.TargetOrdinal, hit.OriginalBaseDamage))
+                .SequenceEqual(new[] { (2, 1, 6d), (5, 2, 6d), (8, 3, 6d) }));
+            hits.Clear();
+            Tick(restored, .65, 4);
+            Check.True(hits.Select(hit => (hit.TargetId, hit.TargetOrdinal, hit.OriginalBaseDamage))
+                .SequenceEqual(new[] { (2, 1, 6d), (5, 2, 6d), (8, 3, 6d) }));
+            restored.Validate(.65, false);
+        });
+
         test("Trained voice freezes opening aim, uses shortened final pulse and stacks pre-cap bonuses", () =>
         {
             var state = new ExpandedWildernessVoiceState { Cycle = 3 };
@@ -115,7 +149,8 @@ internal static class ExpandedWildernessVoiceTests
             Tick(restored, 1.5);
             Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
             Check.True(hits.All(hit => hit.Kind == ExpandedWildernessVoiceHitKind.ExtraEcho &&
-                hit.Damage == 7 && hit.Knockback == 0 && hit.PulseNumber == 3));
+                hit.Damage == 7 && hit.Knockback == 0 && hit.PulseNumber == 3 &&
+                hit.OriginalBaseDamage == 0 && hit.TargetOrdinal == 0));
             Check.Equal(0, restored.Active.Count);
             restored.Validate(1.5, true);
 

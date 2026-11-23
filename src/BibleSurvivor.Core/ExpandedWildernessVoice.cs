@@ -61,10 +61,12 @@ namespace BibleSurvivor.Core
         public double Knockback { get; }
         public long Cycle { get; }
         public int PulseNumber { get; }
+        public double OriginalBaseDamage { get; }
+        public int TargetOrdinal { get; }
 
         internal ExpandedWildernessVoiceHit(ExpandedWildernessVoiceHitKind kind, int targetId,
             Vector2 position, Vector2 center, Vector2 facing, double damage, double knockback,
-            long cycle, int pulseNumber)
+            long cycle, int pulseNumber, double originalBaseDamage, int targetOrdinal)
         {
             Kind = kind;
             TargetId = targetId;
@@ -75,6 +77,8 @@ namespace BibleSurvivor.Core
             Knockback = knockback;
             Cycle = cycle;
             PulseNumber = pulseNumber;
+            OriginalBaseDamage = originalBaseDamage;
+            TargetOrdinal = targetOrdinal;
         }
     }
 
@@ -85,6 +89,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public double StartedAt { get; set; }
         [DataMember(IsRequired = true)] public double Duration { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double OriginalBaseDamage { get; set; }
         [DataMember(IsRequired = true)] public double Reach { get; set; }
         [DataMember(IsRequired = true)] public double HalfAngle { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
@@ -187,6 +192,7 @@ namespace BibleSurvivor.Core
                     !ExpandedWildernessVoice.ValidKnockbackBonus(cast.CloseKnockbackBonus) ||
                     !ExpandedWildernessVoice.ValidEchoRadiusBonus(cast.EchoRadiusBonus) ||
                     (!evolved && cast.EchoRadiusBonus != 0) || !cast.ValidRanks(evolved) ||
+                    !ExpandedWildernessVoice.ValidOriginalBaseDamage(cast, evolved) ||
                     cast.ExpiresAt(evolved) < now - epsilon ||
                     cast.PrimaryPulses < 0 || cast.PrimaryPulses > ExpandedWildernessVoice.MaximumPrimaryPulses ||
                     cast.EchoesFired < 0 || cast.EchoesFired > cast.EchoCount(evolved))
@@ -269,6 +275,7 @@ namespace BibleSurvivor.Core
                 Id = state.Cycle,
                 StartedAt = start,
                 Damage = damage,
+                OriginalBaseDamage = Profile.AtLevel(level).Damage,
                 Reach = reach,
                 Duration = duration,
                 HalfAngle = halfAngle,
@@ -359,6 +366,7 @@ namespace BibleSurvivor.Core
             var pulseBonus = (primary && pulseNumber == 1 && cast.FirstPulseDamage ? .08 : 0) +
                 (final && cast.FourthCycleFinalDamage ? .12 : 0);
             var ids = targets().Keys.OrderBy(id => id).ToArray();
+            var targetOrdinal = 0;
             foreach (var id in ids)
             {
                 if (!targets().TryGetValue(id, out var position)) continue;
@@ -371,7 +379,8 @@ namespace BibleSurvivor.Core
                     ? CappedDamage(cast.DamageLevel, cast.UncappedDamage!.Value, damageBonus) : cast.Damage * factor;
                 var knockback = primary ? PrimaryKnockback(cast, offset, angle, halfAngle, final) : 0;
                 applyHit(new ExpandedWildernessVoiceHit(kind, id, position, center, aim,
-                    damage, knockback, cast.Id, pulseNumber));
+                    damage, knockback, cast.Id, pulseNumber,
+                    primary ? cast.OriginalBaseDamage : 0, primary ? ++targetOrdinal : 0));
             }
         }
 
@@ -408,6 +417,15 @@ namespace BibleSurvivor.Core
             BattleSnapshot.Finite(reach) && reach > 0 && reach <= MaximumReach &&
             BattleSnapshot.Finite(duration) && duration > delay && duration <= MaximumDuration &&
             BattleSnapshot.Finite(halfAngle) && halfAngle > 0 && halfAngle <= (evolved ? 180 : 90);
+
+        internal static bool ValidOriginalBaseDamage(ExpandedWildernessVoiceCastState cast, bool evolved)
+        {
+            var damage = cast.OriginalBaseDamage;
+            if (damage == 0) return true;
+            if (cast.DamageLevel is >= 1 and <= 8) return damage == Profile.AtLevel(cast.DamageLevel).Damage;
+            return damage == Profile.AtLevel(8).Damage || !evolved &&
+                (damage == Profile.AtLevel(1).Damage || damage == Profile.AtLevel(4).Damage);
+        }
 
         internal static bool ValidKnockbackBonus(double bonus) => BattleSnapshot.Finite(bonus) && bonus >= 0 && bonus <= 1;
         internal static bool ValidEchoRadiusBonus(double bonus) => BattleSnapshot.Finite(bonus) && bonus >= 0 && bonus <= 1.5;

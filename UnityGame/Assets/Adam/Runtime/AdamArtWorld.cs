@@ -563,7 +563,8 @@ namespace BibleSurvivor.Unity
                 {
                     AdamVisualQualityWorld.SwingFx(art,JawboneSwing,arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
                     JawboneSwing.Draw(art,arena,feet,scale,PlayerLeft,snap.Time,
-                        (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled,
+                        (float)(weapon.LastJawboneReach > 0 ? weapon.LastJawboneReach :
+                            snap.Tuning.JawboneRange * host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled,
                         (float)host.Session.JawboneArcDegrees);
                 }
             }

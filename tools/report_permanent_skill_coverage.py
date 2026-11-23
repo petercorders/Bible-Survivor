@@ -17,7 +17,7 @@ routes = {
     "common.xp": "AdamSession.AwardExperience → PermanentActionRules.Experience → GrowthLedger.Add",
     "common.regen": "AdamSession.Regenerate / RecoverOnKill / Damage → PermanentRecoveryRules",
     "common.crit": "BattleWorld.Hit → AdamSession.RollOriginalDamage → PermanentOriginalHitRules.BaseCritical",
-    "common.power": "AdamSession.AttackProfile → CombatStats damage profile",
+    "common.power": "BattleWorld.Hit → AdamSession.ResolveOriginalDamage → PermanentOriginalHitRules.ApplyPower",
     "common.tempo": "AdamSession.AttackProfile → CombatStats cycle",
     "common.area": "AdamSession.AttackProfile → BattleWorld collision, attack geometry and schedules",
     "common.shot": "AdamSession.AttackProfile → BattleWorld projectile launch and ExpandedCross",

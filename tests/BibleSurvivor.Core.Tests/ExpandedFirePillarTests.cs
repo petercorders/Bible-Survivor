@@ -12,6 +12,40 @@ internal static class ExpandedFirePillarTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Fire pillar freezes launch base and ranks targets after selecting each overlap winner", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [99] = Vector2.UnitX, [100] = Vector2.UnitX * 3 };
+            var hits = new List<ExpandedFirePillarHit>();
+            void Tick(ExpandedFirePillarState current, double now, int level) =>
+                ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 14, 3, 2, 1.2, 2,
+                    () => targets, hits.Add, level: level);
+
+            Tick(state, 0, 1);
+            Check.True(state.Regions.All(region => region.OriginalBaseDamage == 10));
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedFirePillarState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedFirePillarState)serializer.ReadObject(save)!;
+            var corrupt = restored.Copy();
+            corrupt.Regions[0].OriginalBaseDamage = 12;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(0, false));
+            targets = new Dictionary<int, Vector2>
+            {
+                [9] = new Vector2(3.3f, 0), [3] = new Vector2(2, 0), [8] = new Vector2(1.3f, 0),
+                [2] = new Vector2(1.2f, 0), [1] = new Vector2(3.2f, 0),
+            };
+
+            var expected = new[] { (2, 1, 10d), (3, 2, 10d), (8, 3, 10d), (1, 1, 10d), (9, 2, 10d) };
+            Tick(restored, .15, 8);
+            Check.True(hits.Select(hit => (hit.TargetId, hit.TargetOrdinal, hit.OriginalBaseDamage)).SequenceEqual(expected));
+            hits.Clear();
+            Tick(restored, .65, 8);
+            Check.True(hits.Select(hit => (hit.TargetId, hit.TargetOrdinal, hit.OriginalBaseDamage)).SequenceEqual(expected));
+            restored.Validate(.65, false);
+        });
+
         test("Fire pillars reserve nearest positions, hit once on overlap, and respect the exclusive end", () =>
         {
             var state = new ExpandedFirePillarState();
@@ -152,7 +186,10 @@ internal static class ExpandedFirePillarTests
             targets[3] = new Vector2(ember.X, .68f);
             hits.Clear();
             Tick(restored, ember.NextHit, default);
-            Check.Equal(2, hits.Single(hit => hit.IsEmber).TargetId);
+            var emberHit = hits.Single(hit => hit.IsEmber);
+            Check.Equal(2, emberHit.TargetId);
+            Check.Equal(0, emberHit.TargetOrdinal);
+            Check.Equal(0d, emberHit.OriginalBaseDamage);
         });
 
         test("Evolved fire does not allocate an ember when shared support regions are full", () =>
@@ -294,6 +331,65 @@ internal static class ExpandedFirePillarTests
             Check.Near(11.8, hits[0].Damage);
             Check.Equal(2, hits[1].TargetId);
             Check.Near(11.5, hits[1].Damage);
+        });
+
+        test("Pillar closing ember and ash apply independently only after natural expiry and honor support slots", () =>
+        {
+            foreach (var allow in new[] { false, true })
+            {
+                var state = new ExpandedFirePillarState();
+                var targets = new Dictionary<int, Vector2> { [1] = new Vector2(2, 0) };
+                var hits = new List<ExpandedFirePillarHit>();
+                var suppressed = 0;
+                var ranks = new ExpandedFirePillarSettings(false, null, false, leaveClosingEmber: true, closingAshHit: true);
+                void Step(ExpandedFirePillarState current, double now) =>
+                    ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 12, 3, 1, .9, 2,
+                        () => targets, hits.Add, settings: ranks, reserveEmber: () => allow,
+                        recordSupportSuppression: () => suppressed++);
+
+                for (var tick = 0; tick < 120; tick++) Step(state, tick / 60d);
+                var resumed = Restore(state);
+                var cancelled = Restore(state);
+                cancelled.ResetForForm(false, 2);
+                Check.Equal(0, cancelled.Regions.Count);
+                hits.Clear();
+                Step(resumed, 2);
+                Check.Equal(allow ? 2 : 0, hits.Count);
+                Check.Equal(allow ? 0 : 2, suppressed);
+                if (!allow) continue;
+                Check.True(hits.All(hit => hit.IsEmber && hit.Damage == 3 && hit.TargetOrdinal == 0));
+                var ember = resumed.Regions.Single();
+                Check.Equal(ExpandedFireSupportKind.ClosingEmber, ember.SupportKind);
+                Check.Near(2, ember.StartedAt);
+                Check.Near(3, ember.EndsAt);
+                Check.Near(.7, ember.Radius);
+                Check.Near(4, resumed.NextClosingEmberAt!.Value);
+                Check.Near(4, resumed.NextClosingAshAt!.Value);
+                Restore(resumed).Validate(2, false);
+            }
+        });
+
+        test("Pillar close-range fire on the fifth cycle uses the nearest eligible enemy instead of crowd priority", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(true, null, false, closeRangeFire: true);
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(3, 0), [2] = new Vector2(3.1f, 0),
+                [3] = new Vector2(.8f, 0), [4] = new Vector2(-.6f, 0),
+            };
+            var hits = new List<ExpandedFirePillarHit>();
+            for (var tick = 0; tick <= 12 * 60; tick++) Tick(state, tick / 60d, targets, hits.Add, settings: ranks);
+            Check.Equal(5L, state.Cycle);
+            var fire = Restore(state).Regions.Single(region => region.SupportKind == ExpandedFireSupportKind.CloseRange);
+            Check.Equal(targets[4], fire.Center);
+            Check.Near(3.5, fire.Damage);
+            Check.Near(12, fire.StartedAt);
+            Check.Near(16, state.NextCloseRangeAt!.Value);
+            hits.Clear();
+            Tick(state, 12 + BattleWorld.FixedStep, targets, hits.Add, settings: ranks);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 4 }));
+            Check.True(hits.Single().IsEmber);
         });
 
     }

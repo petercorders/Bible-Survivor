@@ -68,6 +68,8 @@ namespace BibleSurvivor.Core
         public Vector2 Position { get; }
         public Vector2 Direction { get; }
         public double Damage { get; }
+        public double OriginalBaseDamage { get; }
+        public int TargetOrdinal { get; }
         public double Knockback { get; }
         public long PathId { get; }
         public long Cycle { get; }
@@ -80,6 +82,8 @@ namespace BibleSurvivor.Core
             Position = position;
             Direction = path.Direction;
             Damage = damage;
+            OriginalBaseDamage = kind == ExpandedElijahChariotHitKind.Body ? path.OriginalBaseDamage : 0;
+            TargetOrdinal = kind == ExpandedElijahChariotHitKind.Body ? path.BodyHitCount + 1 : 0;
             Knockback = kind == ExpandedElijahChariotHitKind.Body && path.ForwardKnockback ? .30 : 0;
             PathId = path.Id;
             Cycle = path.Cycle;
@@ -108,6 +112,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public double Speed { get; set; }
         [DataMember(IsRequired = true)] public double Width { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double OriginalBaseDamage { get; set; }
         [DataMember(IsRequired = true)] public double Distance { get; set; }
         [DataMember(IsRequired = true)] public int TrailTicksFired { get; set; }
         [DataMember(IsRequired = true)] public int BodyHitCount { get; set; }
@@ -197,6 +202,7 @@ namespace BibleSurvivor.Core
                     !BattleSnapshot.Position(path.DirectionX, path.DirectionY) ||
                     Math.Abs(path.Direction.LengthSquared() - 1) > .0001 ||
                     !ExpandedElijahChariot.ValidPath(path.Damage, path.Width, path.Speed, path.Range) ||
+                    !ExpandedElijahChariot.ValidOriginalBaseDamage(path.OriginalBaseDamage, evolved) ||
                     !BattleSnapshot.Finite(path.MoveAt) || !ExpandedElijahChariot.ValidDelay(path.FirstDelay) ||
                     path.StaggerIndex < 0 || path.StaggerIndex >= ExpandedElijahChariot.MaximumAmount ||
                     path.Cycle < previousCycle || path.Cycle == previousCycle &&
@@ -249,6 +255,8 @@ namespace BibleSurvivor.Core
         internal static readonly int MaximumAmount = Profile.MaximumOriginalAmount;
         internal static readonly double MaximumCycle = Profile.AtLevel(1).Cycle;
         private static readonly double MaximumDamage = Profile.AtLevel(8).Damage * 2.25;
+        private static readonly double[] OriginalDamageByLevel = Enumerable.Range(1, 8)
+            .Select(level => (double)Profile.AtLevel(level).Damage).ToArray();
         private static readonly double MaximumWidth = Profile.AtLevel(1).Width * 2.5;
         private static readonly double MinimumSpeed = Profile.AtLevel(1).Speed;
         private static readonly double MaximumSpeed = MinimumSpeed * 1.75;
@@ -315,6 +323,7 @@ namespace BibleSurvivor.Core
             var moveAt = state.NextCycle + delay;
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle += nextCycleDuration?.Invoke() ?? cycle;
+            var originalBaseDamage = Profile.AtLevel(level).Damage;
             for (var index = 0; index < amount; index++)
             {
                 if (reserveOriginal?.Invoke() == false)
@@ -341,8 +350,7 @@ namespace BibleSurvivor.Core
                 var pathDamage = damage;
                 if (rankOptions.StrengthenLastChariot && index == amount - 1)
                 {
-                    var basis = Profile.AtLevel(level).Damage;
-                    pathDamage = Math.Min(basis * 2.25, damage + basis * LastChariotDamageBonus);
+                    pathDamage = Math.Min(originalBaseDamage * 2.25, damage + originalBaseDamage * LastChariotDamageBonus);
                 }
                 var suppressedTrail = evolved && reserveTrail?.Invoke() == false;
                 if (suppressedTrail) recordSupportSuppression?.Invoke();
@@ -367,6 +375,7 @@ namespace BibleSurvivor.Core
                     Speed = speed,
                     Width = width,
                     Damage = pathDamage,
+                    OriginalBaseDamage = originalBaseDamage,
                 });
                 state.NextPathId = checked(state.NextPathId + 1);
             }
@@ -513,6 +522,9 @@ namespace BibleSurvivor.Core
 
         internal static bool ValidDelay(double? seconds) => !seconds.HasValue ||
             (BattleSnapshot.Finite(seconds.Value) && seconds.Value >= MinimumDelay && seconds.Value <= Profile.FirstAttackDelay);
+
+        internal static bool ValidOriginalBaseDamage(double value, bool evolved) => value == 0 ||
+            (evolved ? value == Profile.AtLevel(8).Damage : OriginalDamageByLevel.Contains(value));
 
         internal static bool ValidPath(double damage, double width, double speed, double range) =>
             BattleSnapshot.Finite(damage) && damage >= 1 && damage <= MaximumDamage &&

@@ -428,6 +428,36 @@ internal static class ExpandedElijahChariotTests
             Check.Equal(1, reserved.SuppressedOriginals);
             Check.True(reserved.Paths.Select(path => path.Damage).SequenceEqual(new[] { 80d, 80d }));
         });
+
+        test("Chariot preserves body hit order and level damage through saved path while support carries no power metadata", () =>
+        {
+            var state = new ExpandedElijahChariotState();
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(.2f, 0), [2] = new Vector2(1, 0) };
+            var hits = new List<ExpandedElijahChariotHit>();
+            Step(state, 0, targets, hits, level: 1, damage: 44);
+            Step(state, .2, targets, hits, level: 1, damage: 44);
+            Check.Equal((40d, 1), (hits.Single().OriginalBaseDamage, hits.Single().TargetOrdinal));
+            targets.Remove(1);
+            var restored = Restore(state);
+            restored.Validate(.2, false);
+            var corrupt = restored.Copy();
+            corrupt.Paths.Single().OriginalBaseDamage = 50;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(.2, false));
+            Step(restored, .3, targets, hits, level: 8);
+            Check.Equal((2, 40d, 2), (hits.Last().TargetId, hits.Last().OriginalBaseDamage, hits.Last().TargetOrdinal));
+
+            targets[1] = Vector2.Zero;
+            targets[3] = new Vector2(2, 1);
+            hits.Clear();
+            var evolved = new ExpandedElijahChariotState();
+            Step(evolved, 0, targets, hits, evolved: true);
+            Step(evolved, .15, targets, hits, evolved: true);
+            Step(evolved, 1.4, targets, hits, evolved: true);
+            var support = hits.Where(hit => hit.Kind != ExpandedElijahChariotHitKind.Body).ToArray();
+            Check.True(support.Any(hit => hit.Kind == ExpandedElijahChariotHitKind.Trail));
+            Check.True(support.Any(hit => hit.Kind == ExpandedElijahChariotHitKind.Whirlwind));
+            Check.True(support.All(hit => hit.OriginalBaseDamage == 0 && hit.TargetOrdinal == 0));
+        });
     }
 
     private static ExpandedElijahChariotRankOptions Rank(string id) => ExpandedElijahChariotRankOptions.FromRanks(

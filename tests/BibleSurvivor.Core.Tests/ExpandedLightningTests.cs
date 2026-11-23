@@ -11,6 +11,145 @@ internal static class ExpandedLightningTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Lightning stacks frozen solo, high-health, and repeat damage at their inclusive boundaries", () =>
+        {
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("a.05", "b.01", "b.03"));
+            var targets = new Dictionary<int, Vector2> { [9] = Vector2.UnitX };
+            var hits = new List<ExpandedLightningHit>();
+            var ratio = .75;
+            void Tick(ExpandedLightningState current, double now, ExpandedLightningSettings ranks = default,
+                double period = 1.5) =>
+                ExpandedLightning.Step(current, now, Vector2.Zero, 8, false, 40, period, 1, 1,
+                    () => targets, hit => { hits.Add(hit); return true; }, ranks, targetHealthRatio: _ => ratio);
+
+            var state = new ExpandedLightningState();
+            Tick(state, 0, settings);
+            var restored = Restore(state);
+            Tick(restored, .15);
+            Check.Near(46.4, hits.Single().Damage);
+            Check.Equal(9, restored.RecentStrikeHits!.Single().Id);
+            Check.Near(.15, restored.RecentStrikeHits!.Single().At);
+            restored.Validate(.15, false);
+            hits.Clear();
+
+            targets[2] = Vector2.UnitX * 3; // Exactly two units from the frozen impact.
+            Tick(restored, 1.5, settings);
+            restored = Restore(restored);
+            Tick(restored, 1.65);
+            Check.Near(45.2, hits.Single().Damage);
+            restored.Validate(1.65, false);
+
+            var late = new ExpandedLightningState();
+            Tick(late, 0, settings, period: 1.5001);
+            Tick(late, .15);
+            Tick(late, 1.5001, settings, period: 1.5001);
+            ratio = .749;
+            hits.Clear();
+            Tick(late, 1.6501);
+            Check.Near(40, hits.Single().Damage);
+        });
+
+        test("Lightning widened last strike schedules elite thunder at the first accepted elite hit", () =>
+        {
+            var ranks = Ranks("b.01", "b.04", "b.05");
+            ranks.Add("common.area.01", 1);
+            ranks.Add("common.area.04", 1);
+            var settings = ExpandedLightningSettings.FromRanks(ranks, isElite: id => id == 4);
+            var state = new ExpandedLightningState { Evolved = true, Cycle = 4, NextStrikeId = 5 };
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(.4f, 0), [8] = new Vector2(4, 0), [4] = new Vector2(5.08f, 0),
+            };
+            var hits = new List<ExpandedLightningHit>();
+            void Tick(ExpandedLightningState current, double now) =>
+                ExpandedLightning.Step(current, now, Vector2.Zero, 8, true, 40, 3, 2, 1,
+                    () => targets, hit => { hits.Add(hit); return true; }, settings,
+                    targetHealthRatio: id => id == 4 ? .75 : .74);
+
+            Tick(state, 0);
+            var pending = state.Pending.OrderBy(attack => attack.Id).ToArray();
+            Check.Near(1, pending[0].Radius);
+            Check.Near(1.112, pending[1].Radius);
+            Check.True(!pending[0].WiderLastStrike && pending[1].WiderLastStrike);
+            Check.True(pending.All(attack => attack.EliteThunderOnHit));
+            state = Restore(state);
+            state.Validate(0, true);
+            Tick(state, .15);
+            var elite = hits.Single(hit => hit.Kind == ExpandedLightningHitKind.Strike && hit.TargetId == 4);
+            Check.Equal(6L, elite.StrikeId);
+            Check.Near(42.4, elite.Damage);
+            var thunder = state.Pending.Single(attack => attack.EliteThunder);
+            Check.Equal(6L, thunder.Id);
+            Check.Near(5.08, thunder.X, 1e-6);
+            Check.Near(.65, thunder.At);
+            Check.Near(.872, thunder.Radius);
+            Check.Near(14.84, thunder.Damage);
+            Check.True(!thunder.IsPrimary && !thunder.CanRetarget && !thunder.EliteThunderOnHit);
+            state = Restore(state);
+            state.Validate(.15, true);
+
+            hits.Clear();
+            Tick(state, .649);
+            Check.Equal(0, hits.Count);
+            Tick(state, .65);
+            Check.True(hits.Select(hit => (hit.Kind, hit.TargetId)).SequenceEqual(
+                new[] { (ExpandedLightningHitKind.Aftershock, 1), (ExpandedLightningHitKind.EliteThunder, 4) }));
+            Check.True(hits.All(hit => hit.OriginalBaseDamage == 0 && hit.TargetOrdinal == 0));
+            Check.Equal(0, state.Pending.Count);
+
+            var other = new ExpandedLightningState { Evolved = true, Cycle = 3, NextStrikeId = 4 };
+            Tick(other, 0);
+            Tick(other, .15);
+            Check.True(!other.Pending.Any(attack => attack.EliteThunder));
+        });
+
+        test("Lightning can reopen two support events from one fifth-cycle strike in fixed order", () =>
+        {
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("b.05"), isElite: _ => true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var state = new ExpandedLightningState { Evolved = true, Cycle = 4, NextStrikeId = 5 };
+            var hits = new List<ExpandedLightningHit>();
+            Step(state, 0, targets, hits, evolved: true, settings: settings);
+            Step(state, .15, targets, hits, evolved: true, settings: settings);
+            Check.True(state.Pending.All(attack => attack.Id == 5));
+            state = Restore(state);
+            state.Validate(.15, true);
+            hits.Clear();
+            Step(state, .65, targets, hits, evolved: true, settings: settings);
+            Check.True(hits.Select(hit => hit.Kind).SequenceEqual(
+                new[] { ExpandedLightningHitKind.Aftershock, ExpandedLightningHitKind.EliteThunder }));
+        });
+
+        test("Lightning restores launch base and restarts accepted target ordinals for every strike", () =>
+        {
+            var state = new ExpandedLightningState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [9] = new Vector2(1.2f, 0), [2] = new Vector2(1, 0), [7] = new Vector2(1.1f, 0),
+            };
+            var accepted = new List<ExpandedLightningHit>();
+            void Tick(ExpandedLightningState current, double now, int level) =>
+                ExpandedLightning.Step(current, now, Vector2.Zero, level, false, 32, 3, 2, 1, () => targets, hit =>
+                {
+                    if (hit.TargetId == 2) return false;
+                    accepted.Add(hit);
+                    return true;
+                });
+
+            Tick(state, 0, 4);
+            Check.True(state.Pending.All(strike => strike.OriginalBaseDamage == 30));
+            var corrupt = state.Copy();
+            corrupt.Pending[0].OriginalBaseDamage = 31;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(0, false));
+
+            var restored = Restore(state);
+            restored.Validate(0, false);
+            Tick(restored, .15, 8);
+            Check.True(accepted.Select(hit => (hit.StrikeId, hit.TargetId, hit.TargetOrdinal, hit.OriginalBaseDamage))
+                .SequenceEqual(new[] { (1L, 7, 1, 30d), (1L, 9, 2, 30d),
+                    (2L, 7, 1, 30d), (2L, 9, 2, 30d) }));
+        });
+
         test("Expanded lightning targets nearest distinct centers before reusing and strikes their fixed positions", () =>
         {
             var state = new ExpandedLightningState();
@@ -84,7 +223,8 @@ internal static class ExpandedLightningTests
             var firstStrike = hits.Where(hit => hit.StrikeId == 1).ToArray();
             Check.True(firstStrike.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3, 4 }));
             Check.Equal(ExpandedLightningHitKind.Strike, firstStrike[0].Kind);
-            Check.True(firstStrike.Skip(1).All(hit => hit.Kind == ExpandedLightningHitKind.Chain && hit.Damage == 28));
+            Check.True(firstStrike.Skip(1).All(hit => hit.Kind == ExpandedLightningHitKind.Chain && hit.Damage == 28 &&
+                hit.OriginalBaseDamage == 0 && hit.TargetOrdinal == 0));
             Check.Equal(1, state.Pending.Count);
             var pending = state.Pending.Single();
             Check.True(pending.Aftershock && pending.VisitedIds!.SequenceEqual(new[] { 1, 2, 3, 4 }));
@@ -113,6 +253,8 @@ internal static class ExpandedLightningTests
             Check.Equal(1, replayHits.Count);
             Check.Equal((ExpandedLightningHitKind.Aftershock, 30, 16d),
                 (replayHits[0].Kind, replayHits[0].TargetId, replayHits[0].Damage));
+            Check.Equal(0d, replayHits[0].OriginalBaseDamage);
+            Check.Equal(0, replayHits[0].TargetOrdinal);
             Check.Equal(0, restored.Pending.Count);
         });
 

@@ -276,6 +276,53 @@ internal static class ExpandedMosesStaffTests
             Check.Equal(5, hits.Count(hit => hit.Kind == ExpandedMosesStaffHitKind.Lane));
             loaded.Validate(145 / 60d, true);
         });
+
+        test("Staff total original ordinal survives a rejected contact, dead-ledger pruning and checkpoint restore", () =>
+        {
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(.18f, 0), [2] = new Vector2(.20f, 0) };
+            var hits = new List<ExpandedMosesStaffHit>();
+            void Tick(ExpandedMosesStaffState current, int tick, int level, Func<ExpandedMosesStaffHit, bool> apply) =>
+                ExpandedMosesStaff.Step(current, tick / 60d, Vector2.Zero, Vector2.UnitX, level, false, 24, 3,
+                    1, .9, 7, 5, () => targets, targets, apply);
+
+            Tick(state, 0, 1, _ => true);
+            Tick(state, 1, 1, hit =>
+            {
+                hits.Add(hit);
+                if (hit.TargetId == 1) return false;
+                targets.Remove(2);
+                return true;
+            });
+            Check.True(hits.Select(hit => (hit.TargetId, hit.OriginalBaseDamage, hit.TargetOrdinal)).SequenceEqual(
+                new[] { (1, 20d, 1), (2, 20d, 1) }));
+            var preview = state.Copy();
+            preview.Waves.Single().OriginalBaseDamage = 0;
+            preview.Waves.Single().OriginalHitCount = 0;
+            var old = RoundTrip(preview);
+            old.Validate(1 / 60d, false);
+
+            targets.Clear();
+            Tick(state, 2, 8, _ => true);
+            Check.Equal(0, state.Waves.Single().HitIds.Count);
+            var loaded = RoundTrip(state);
+            loaded.Validate(2 / 60d, false);
+            var corrupt = loaded.Copy();
+            corrupt.Waves.Single().OriginalHitCount = 6211;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(2 / 60d, false));
+            targets[3] = new Vector2(.40f, 0);
+            Tick(loaded, 3, 8, hit => { hits.Add(hit); return true; });
+            Check.Equal((3, 20d, 2), (hits.Last().TargetId, hits.Last().OriginalBaseDamage, hits.Last().TargetOrdinal));
+            Tick(old, 3, 8, hit => { hits.Add(hit); return true; });
+            Check.Equal((3, 0d, 2), (hits.Last().TargetId, hits.Last().OriginalBaseDamage, hits.Last().TargetOrdinal));
+
+            var evolved = new ExpandedMosesStaffState();
+            targets[1] = new Vector2(.04f, 0);
+            Step(evolved, 0, targets, hits, evolved: true);
+            Step(evolved, 1 / 60d, targets, hits, evolved: true);
+            var lane = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.Lane);
+            Check.Equal((0d, 0), (lane.OriginalBaseDamage, lane.TargetOrdinal));
+        });
     }
 
     private static ExpandedMosesStaffRankOptions Rank(string id) => ExpandedMosesStaffRankOptions.FromRanks(

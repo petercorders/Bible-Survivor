@@ -74,10 +74,12 @@ namespace BibleSurvivor.Core
         public Vector2 Position { get; }
         public Vector2 Center { get; }
         public double Damage { get; }
+        public double OriginalBaseDamage { get; }
+        public int TargetOrdinal { get; }
         public double Knockback { get; }
 
         internal ExpandedDanielLionHit(ExpandedDanielLionHitKind kind, int lionIndex, int targetId,
-            Vector2 position, Vector2 center, double damage, double knockback = 0)
+            Vector2 position, Vector2 center, double damage, double knockback = 0, double originalBaseDamage = 0)
         {
             Kind = kind;
             LionIndex = lionIndex;
@@ -85,6 +87,8 @@ namespace BibleSurvivor.Core
             Position = position;
             Center = center;
             Damage = damage;
+            OriginalBaseDamage = kind == ExpandedDanielLionHitKind.Claw ? originalBaseDamage : 0;
+            TargetOrdinal = kind == ExpandedDanielLionHitKind.Claw ? 1 : 0;
             Knockback = knockback;
         }
     }
@@ -276,7 +280,7 @@ namespace BibleSurvivor.Core
             if (state.KillLeapReadyAt <= now + TimeEpsilon) state.KillLeapReadyAt = null;
             if (evolved && rankOptions.WidenEvolvedClaw)
                 radius = Math.Min(MaximumRadius, radius + Profile.AtLevel(1).Radius * .12);
-            var levelCycle = Profile.AtLevel(level).Cycle;
+            var levelProfile = Profile.AtLevel(level);
             var originals = 0;
             var assigned = new HashSet<int>();
             foreach (var lion in state.Lions)
@@ -284,7 +288,7 @@ namespace BibleSurvivor.Core
                 var guardian = evolved && lion.Index == 0;
                 if (lion.ClawHasteUntil <= now + TimeEpsilon) lion.ClawHasteUntil = null;
                 if (AdvanceLion(state, lion, guardian, now, playerPosition, damage, cycle, radius,
-                    distance, assigned, targets, applyHit, rankOptions, isElite, isBoss, afterClaw, levelCycle))
+                    distance, assigned, targets, applyHit, rankOptions, isElite, isBoss, afterClaw, levelProfile))
                     originals++;
                 if (guardian && state.NextRoarAt <= now + TimeEpsilon)
                 {
@@ -315,7 +319,7 @@ namespace BibleSurvivor.Core
             bool guardian, double now, Vector2 player, double damage, double cycle, double radius,
             double distance, HashSet<int> assigned, Func<IReadOnlyDictionary<int, Vector2>> targets,
             Func<ExpandedDanielLionHit, bool> applyHit, ExpandedDanielLionRankOptions ranks,
-            Func<int, bool>? isElite, Func<int, bool>? isBoss, Func<double>? afterClaw, double levelCycle)
+            Func<int, bool>? isElite, Func<int, bool>? isBoss, Func<double>? afterClaw, ExpandedWeaponLevel levelProfile)
         {
             var leash = (float)(Profile.LeashDistance * (lion.ExtendedLeash ? 1.15 : 1));
             if (!Within(lion.Position, player, leash)) lion.Returning = true;
@@ -364,7 +368,7 @@ namespace BibleSurvivor.Core
                 return false;
             }
             if (!applyHit(new ExpandedDanielLionHit(ExpandedDanielLionHitKind.Claw,
-                    lion.Index, target.Key, target.Value, lion.Position, damage)))
+                    lion.Index, target.Key, target.Value, lion.Position, damage, originalBaseDamage: levelProfile.Damage)))
             {
                 lion.WaitingForTarget = true;
                 return false;
@@ -376,8 +380,8 @@ namespace BibleSurvivor.Core
                 throw new ArgumentOutOfRangeException(nameof(afterClaw));
             if (lion.ClawHasteUntil > now + TimeEpsilon)
             {
-                var floor = Math.Max(MinimumCycle, levelCycle * .20);
-                nextWait = Math.Min(nextWait, Math.Max(floor, nextWait - levelCycle * .06));
+                var floor = Math.Max(MinimumCycle, levelProfile.Cycle * .20);
+                nextWait = Math.Min(nextWait, Math.Max(floor, nextWait - levelProfile.Cycle * .06));
             }
             lion.NextClawAt = at + nextWait;
             lion.WaitingForTarget = false;

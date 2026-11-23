@@ -430,6 +430,173 @@ internal static class ExpandedCrossTests
             Step(basic, 0, targets, hits, ranks: Rank("e.01"));
             Check.True(!basic.Shots.Single().ExtendedThorns && !basic.Shots.Single().LeavesThorns);
         });
+
+        test("Cross preserves the launch-level damage basis and resets one-based ordinals on each leg", () =>
+        {
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(1, 0), [2] = new Vector2(2, 0) };
+            var hits = new List<ExpandedCrossHit>();
+            void Tick(ExpandedCrossState current, int tick, int level, List<ExpandedCrossHit> output) =>
+                ExpandedCross.Step(current, tick / 60d, Vector2.Zero, Vector2.UnitX, level, false,
+                    6, 2, 1, .28, 5, 6, () => targets, targets, hit => { output.Add(hit); return true; });
+
+            for (var tick = 0; tick <= 12; tick++) Tick(state, tick, 1, hits);
+            Check.Equal((5d, 1), (hits.Single().OriginalBaseDamage, hits.Single().TargetOrdinal));
+            var preview = state.Copy();
+            preview.Shots.Single().OriginalBaseDamage = 0;
+            var old = RoundTrip(preview);
+            old.Validate(.2, false);
+
+            var loaded = RoundTrip(state);
+            loaded.Validate(.2, false);
+            var corrupt = loaded.Copy();
+            corrupt.Shots.Single().OriginalBaseDamage = 7;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(.2, false));
+            for (var tick = 13; tick <= 100; tick++) Tick(loaded, tick, 4, hits);
+            Check.True(hits.All(hit => hit.OriginalBaseDamage == 5));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedCrossHitKind.Outbound)
+                .Select(hit => hit.TargetOrdinal).SequenceEqual(new[] { 1, 2 }));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedCrossHitKind.Return)
+                .Select(hit => hit.TargetOrdinal).SequenceEqual(new[] { 1, 2 }));
+            var oldHits = new List<ExpandedCrossHit>();
+            for (var tick = 13; tick <= 22; tick++) Tick(old, tick, 4, oldHits);
+            Check.Equal((0d, 2), (oldHits.Single().OriginalBaseDamage, oldHits.Single().TargetOrdinal));
+
+            hits.Clear();
+            targets[1] = Vector2.Zero;
+            var evolved = new ExpandedCrossState();
+            Step(evolved, 0, targets, hits, evolved: true);
+            Step(evolved, 1 / 60d, targets, hits, evolved: true);
+            var thorns = hits.Single(hit => hit.Kind == ExpandedCrossHitKind.Thorns);
+            Check.Equal((0d, 0), (thorns.OriginalBaseDamage, thorns.TargetOrdinal));
+        });
+
+        test("Cross d.01 leaves a width .60, one-second afterglow and reserves it separately from evolved thorns", () =>
+        {
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            var state = new ExpandedCrossState();
+            Step(state, 0, targets, hits, ranks: Rank("d.01"));
+            targets[1] = new Vector2(.04f, .3f);
+            targets[2] = new Vector2(.04f, .301f);
+            Step(state, 1 / 60d, targets, hits);
+            var glow = hits.Single(hit => hit.Kind == ExpandedCrossHitKind.Afterglow);
+            Check.Equal((1, 7.5d, 0), (glow.TargetId, glow.Damage, glow.TargetOrdinal));
+            Check.True(!glow.IsOriginal);
+            Check.Near(1, state.Shots.Single().AfterglowDuration);
+            Check.Equal(1, state.ActiveTrailCount);
+
+            var evolved = new ExpandedCrossState();
+            var suppressed = 0;
+            Step(evolved, 0, targets, hits, evolved: true, ranks: Rank("d.01"),
+                reserveTrail: () => evolved.ActiveTrailCount < 1, supportSuppressed: () => suppressed++);
+            Check.Equal(1, evolved.ActiveTrailCount);
+            Check.Equal(1, suppressed);
+            Check.True(evolved.Shots.Single().LeavesThorns && !evolved.Shots.Single().LeavesAfterglow);
+            var doubleTrail = new ExpandedCrossState();
+            Step(doubleTrail, 0, targets, hits, evolved: true, ranks: Rank("d.01"));
+            Check.Equal(2, doubleTrail.ActiveTrailCount);
+            RoundTrip(doubleTrail).Validate(0, true);
+        });
+
+        test("Cross d.02 restores the longer outer piece and preserves the anchored extra afterglow pulse", () =>
+        {
+            foreach (var trained in new[] { false, true })
+            {
+                var ranks = new ExpandedCrossRankOptions(leaveAfterglow: true, extendAfterglow: trained);
+                var state = new ExpandedCrossState();
+                var targets = new Dictionary<int, Vector2>();
+                var hits = new List<ExpandedCrossHit>();
+                Step(state, 0, targets, hits, ranks: ranks);
+                targets[1] = new Vector2(-.29f, 0);
+                for (var tick = 1; tick <= 60; tick++) Step(state, tick / 60d, targets, hits);
+                var restored = RoundTrip(state);
+                restored.Validate(1, false);
+                Check.Near(trained ? 1.2 : 1, restored.Shots.Single().AfterglowDuration);
+                Step(restored, 61 / 60d, targets, hits);
+                Check.Equal(trained ? 3 : 2, HitIds(hits, ExpandedCrossHitKind.Afterglow).Length);
+            }
+        });
+
+        test("Cross d.03 afterglow chooses the stronger return piece once per target when legs overlap", () =>
+        {
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            var ranks = new ExpandedCrossRankOptions(leaveAfterglow: true, boostReturningAfterglow: true);
+            Step(state, 0, targets, hits, ranks: ranks);
+            targets[1] = new Vector2(.04f, .29f);
+            targets[2] = new Vector2(4.7f, .1f);
+            Step(state, 1 / 60d, targets, hits);
+            Check.Near(7.5, hits.Single(hit => hit.Kind == ExpandedCrossHitKind.Afterglow).Damage);
+            for (var tick = 2; tick <= 60; tick++) Step(state, tick / 60d, targets, hits);
+            var restored = RoundTrip(state);
+            hits.Clear();
+            Step(restored, 61 / 60d, targets, hits);
+            var glow = hits.Single(hit => hit.Kind == ExpandedCrossHitKind.Afterglow && hit.TargetId == 2);
+            Check.Near(10.5, glow.Damage);
+        });
+
+        test("Cross d.04 pulses from a confirmed elite original contact and persists the two-second shared cooldown", () =>
+        {
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            var ranks = Rank("d.04");
+            Step(state, 0, targets, hits, ranks: ranks, isElite: id => id == 1);
+            targets[1] = new Vector2(.06f, 0);
+            targets[2] = new Vector2(0, .6f);
+            targets[3] = new Vector2(0, .601f);
+            Step(state, 1 / 60d, targets, hits, ranks: ranks, isElite: id => id == 1);
+            var effects = hits.Where(hit => hit.Kind == ExpandedCrossHitKind.EliteThorn).ToArray();
+            Check.True(effects.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.True(effects.All(hit => hit.Damage == 9 && hit.OriginalBaseDamage == 0 && !hit.IsOriginal));
+            var restored = RoundTrip(state);
+            restored.Validate(1 / 60d, false);
+            Check.Near(2 + 1 / 60d, restored.NextEliteThornAt!.Value);
+            restored.ResetForForm(false, 1);
+            hits.Clear();
+            Step(restored, 1, targets, hits, ranks: ranks, isElite: id => id == 1);
+            Step(restored, 1 + 1 / 60d, targets, hits, ranks: ranks, isElite: id => id == 1);
+            Check.Equal(0, HitIds(hits, ExpandedCrossHitKind.EliteThorn).Length);
+        });
+
+        test("Cross d.05 chooses the two nearest normal targets only after confirmed elite removal", () =>
+        {
+            foreach (var (killed, reserved) in new[] { (true, true), (false, true), (true, false) })
+            {
+                var state = new ExpandedCrossState();
+                var targets = new Dictionary<int, Vector2>();
+                var hits = new List<ExpandedCrossHit>();
+                var ranks = Rank("d.05");
+                var suppressed = 0;
+                Step(state, 0, targets, hits, ranks: ranks, isElite: id => id == 1 || id == 5);
+                targets[1] = new Vector2(.06f, 0);
+                targets[2] = new Vector2(1, 0);
+                targets[3] = new Vector2(-1, 0);
+                targets[4] = new Vector2(2, 0);
+                targets[5] = new Vector2(.06f, .4f);
+                Step(state, 1 / 60d, targets, hits, ranks: ranks, isElite: id => id == 1 || id == 5,
+                    apply: hit =>
+                    {
+                        if (killed && hit.IsOriginal && hit.TargetId == 1) targets.Remove(1);
+                        return true;
+                    }, reserveTrail: () => reserved, supportSuppressed: () => suppressed++);
+                var light = hits.Where(hit => hit.Kind == ExpandedCrossHitKind.EliteLight).ToArray();
+                if (killed && reserved)
+                {
+                    Check.True(light.Select(hit => hit.TargetId).SequenceEqual(new[] { 2, 3 }));
+                    Check.True(light.All(hit => hit.Damage == 7.5 && hit.TargetOrdinal == 0 && !hit.IsOriginal));
+                    Check.Near(4 + 1 / 60d, RoundTrip(state).NextEliteLightAt!.Value);
+                }
+                else
+                {
+                    Check.Equal(0, light.Length);
+                    Check.True(!state.NextEliteLightAt.HasValue);
+                }
+                Check.Equal(killed && !reserved ? 1 : 0, suppressed);
+            }
+        });
     }
 
     private static double TurnOffsetDegrees(Vector2 tangent, Vector2 direction)
@@ -454,10 +621,15 @@ internal static class ExpandedCrossTests
         List<ExpandedCrossHit> hits, bool evolved = false, double cycle = 2, int count = 1,
         Vector2? player = null, Vector2? facing = null, IReadOnlyDictionary<int, Vector2>? previous = null,
         Func<bool>? reserveOriginal = null, Func<bool>? reserveTrail = null, double damage = 30, double speed = 6,
-        ExpandedCrossRankOptions ranks = default, Func<int, bool>? isElite = null) =>
+        ExpandedCrossRankOptions ranks = default, Func<int, bool>? isElite = null,
+        Func<ExpandedCrossHit, bool>? apply = null, Action? supportSuppressed = null) =>
         ExpandedCross.Step(state, now, player ?? Vector2.Zero, facing ?? Vector2.UnitX, evolved ? 8 : 1,
-            evolved, damage, cycle, count, .28, 5, speed, () => targets, previous ?? targets, hit => { hits.Add(hit); return true; },
-            reserveOriginal, reserveTrail, ranks, isElite);
+            evolved, damage, cycle, count, .28, 5, speed, () => targets, previous ?? targets, hit =>
+            {
+                if (apply?.Invoke(hit) == false) return false;
+                hits.Add(hit);
+                return true;
+            }, reserveOriginal, reserveTrail, ranks, isElite, recordSupportSuppression: supportSuppressed);
 
     private static ExpandedCrossState RoundTrip(ExpandedCrossState state)
     {

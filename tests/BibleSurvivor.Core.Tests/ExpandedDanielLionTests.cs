@@ -458,6 +458,31 @@ internal static class ExpandedDanielLionTests
             enemies[1] = new Vector2(.729f, 0);
             Check.Equal(0, Step(new ExpandedDanielLionState(), 0, enemies, hits, evolved: true, ranks: ranks));
         });
+
+        test("Lion each claw starts an independent ordinal and leap or roar never carries original metadata", () =>
+        {
+            var state = new ExpandedDanielLionState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero, [2] = new Vector2(2, 0) };
+            var hits = new List<ExpandedDanielLionHit>();
+            Step(state, 0, targets, hits, amount: 2, level: 1);
+            Check.True(hits.Select(hit => (hit.OriginalBaseDamage, hit.TargetOrdinal))
+                .SequenceEqual(new[] { (20d, 1), (20d, 1) }));
+            hits.Clear();
+            Step(state, 1, targets, hits, amount: 2);
+            Check.True(hits.Select(hit => (hit.OriginalBaseDamage, hit.TargetOrdinal))
+                .SequenceEqual(new[] { (50d, 1), (50d, 1) }));
+
+            hits.Clear();
+            var evolved = new ExpandedDanielLionState();
+            for (var time = 0; time <= 2; time++) Step(evolved, time, targets, hits, evolved: true);
+            Step(evolved, 2.5, targets, hits, evolved: true);
+            Step(evolved, 3, targets, hits, evolved: true);
+            Step(evolved, 4, targets, hits, evolved: true);
+            var support = hits.Where(hit => hit.Kind != ExpandedDanielLionHitKind.Claw).ToArray();
+            Check.True(support.Any(hit => hit.Kind == ExpandedDanielLionHitKind.Leap));
+            Check.True(support.Any(hit => hit.Kind == ExpandedDanielLionHitKind.Roar));
+            Check.True(support.All(hit => hit.OriginalBaseDamage == 0 && hit.TargetOrdinal == 0));
+        });
     }
 
     private static ExpandedDanielLionRankOptions Rank(string id) => ExpandedDanielLionRankOptions.FromRanks(
@@ -475,8 +500,9 @@ internal static class ExpandedDanielLionTests
     private static int Step(ExpandedDanielLionState state, double time, Dictionary<int, Vector2> enemies,
         List<ExpandedDanielLionHit> hits, bool evolved = false, int amount = 1, Vector2 player = default,
         Func<ExpandedDanielLionHit, bool>? accept = null, ExpandedDanielLionRankOptions ranks = default,
-        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, Func<double>? afterClaw = null) =>
-        ExpandedDanielLion.Step(state, time, player, 8, evolved, damage: 50, cycle: 1, amount,
+        Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null, Func<double>? afterClaw = null,
+        int level = 8) =>
+        ExpandedDanielLion.Step(state, time, player, level, evolved, damage: 50, cycle: 1, amount,
             radius: .65, speed: 5, () => enemies, hit =>
             {
                 if (accept != null && !accept(hit)) return false;

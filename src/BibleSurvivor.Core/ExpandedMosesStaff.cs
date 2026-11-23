@@ -61,6 +61,8 @@ namespace BibleSurvivor.Core
         public Vector2 Origin { get; }
         public Vector2 Direction { get; }
         public double Damage { get; }
+        public double OriginalBaseDamage { get; }
+        public int TargetOrdinal { get; }
         public double Knockback { get; }
         public long WaveId { get; }
         public long Cycle { get; }
@@ -74,6 +76,8 @@ namespace BibleSurvivor.Core
             Origin = origin;
             Direction = wave.Direction;
             Damage = kind == ExpandedMosesStaffHitKind.Wave ? wave.Damage : wave.LaneDamage(laneEdge);
+            OriginalBaseDamage = kind == ExpandedMosesStaffHitKind.Wave ? wave.OriginalBaseDamage : 0;
+            TargetOrdinal = kind == ExpandedMosesStaffHitKind.Wave ? wave.OriginalHitCount + 1 : 0;
             Knockback = kind == ExpandedMosesStaffHitKind.Wave ? wave.Knockback : 0;
             WaveId = wave.Id;
             Cycle = wave.Cycle;
@@ -92,6 +96,8 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public float DirectionX { get; set; }
         [DataMember(IsRequired = true)] public float DirectionY { get; set; }
         [DataMember(IsRequired = true)] public double Damage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double OriginalBaseDamage { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int OriginalHitCount { get; set; }
         [DataMember(IsRequired = true)] public double Width { get; set; }
         [DataMember(IsRequired = true)] public double Range { get; set; }
         [DataMember(IsRequired = true)] public double Speed { get; set; }
@@ -182,11 +188,14 @@ namespace BibleSurvivor.Core
                     !ExpandedMosesStaff.Finite(wave.LastStepAt) || wave.LastStepAt < wave.EmittedAt ||
                     wave.LastStepAt > now + ExpandedMosesStaff.TimeEpsilon ||
                     !ExpandedMosesStaff.Finite(wave.Damage) || wave.Damage < 1 || wave.Damage > ExpandedMosesStaff.MaximumDamage ||
+                    !ExpandedMosesStaff.ValidOriginalBaseDamage(wave.OriginalBaseDamage, evolved) ||
+                    wave.OriginalHitCount < 0 || wave.OriginalHitCount > ExpandedMosesStaff.MaximumOriginalHits ||
                     !ExpandedMosesStaff.Finite(wave.Width) || wave.Width <= 0 || wave.Width > ExpandedMosesStaff.MaximumWidth ||
                     !ExpandedMosesStaff.ValidMotion(wave.Range, wave.Speed) || !ExpandedMosesStaff.Finite(wave.Distance) ||
                     wave.Distance < 0 || wave.Distance > wave.Range ||
                     Math.Abs(wave.Distance - Math.Min(wave.Range, wave.Speed * (wave.LastStepAt - wave.EmittedAt))) > ExpandedMosesStaff.DistanceEpsilon ||
                     wave.HitIds == null || wave.HitIds.Count > ExpandedMosesStaff.MaximumLiveTargets ||
+                    (wave.OriginalBaseDamage != 0 || wave.OriginalHitCount != 0) && wave.OriginalHitCount < wave.HitIds.Count ||
                     wave.HitIds.Any(id => id < 1) || wave.HitIds.Distinct().Count() != wave.HitIds.Count ||
                     (!wave.IsMoving && !wave.HasLane))
                     throw new ArgumentException("Invalid expanded staff wave");
@@ -233,6 +242,8 @@ namespace BibleSurvivor.Core
         internal static readonly int MaximumAmount = Profile.MaximumOriginalAmount;
         internal static readonly double MaximumCycle = Profile.AtLevel(1).Cycle;
         internal static readonly double MaximumDamage = Profile.AtLevel(8).Damage * 2.25;
+        private static readonly double[] OriginalDamageByLevel = Enumerable.Range(1, 8)
+            .Select(level => (double)Profile.AtLevel(level).Damage).ToArray();
         internal static readonly double MaximumWidth = Profile.AtLevel(1).Width * 2.5;
         internal static readonly double MaximumLaneLength = Profile.TravelDistance;
         private static readonly double MaximumRange = Profile.TravelDistance * 2.5;
@@ -245,6 +256,7 @@ namespace BibleSurvivor.Core
         internal const double BaseLaneDuration = 2;
         internal const int MaximumLanes = 16;
         internal const int MaximumLiveTargets = 120;
+        internal const int MaximumOriginalHits = 6210;
         internal static readonly int MaximumMovingWaves = MaximumAmount * ((int)Math.Ceiling(MaximumRange / MinimumSpeed / MinimumCycle) + 1);
         internal const double BaseLaneWidth = 1.2;
         internal const double LaneDamageFactor = .35;
@@ -319,6 +331,7 @@ namespace BibleSurvivor.Core
                     DirectionX = direction.X,
                     DirectionY = direction.Y,
                     Damage = damage,
+                    OriginalBaseDamage = Profile.AtLevel(level).Damage,
                     Width = width,
                     Range = range,
                     Speed = speed,
@@ -371,6 +384,8 @@ namespace BibleSurvivor.Core
             var to = wave.Position;
             var fractionOfStep = Math.Min(1, (wave.Distance - previousDistance) / (wave.Speed * duration));
             var live = targets();
+            // Preview checkpoints lacked a total. Recover their available ledger before pruning dead actors.
+            wave.OriginalHitCount = Math.Max(wave.OriginalHitCount, wave.HitIds.Count);
             wave.HitIds.RemoveAll(id => !live.ContainsKey(id));
             foreach (var id in live.Keys.OrderBy(id => id).ToArray())
             {
@@ -379,7 +394,10 @@ namespace BibleSurvivor.Core
                 var endTarget = Vector2.Lerp(previous, current, (float)fractionOfStep);
                 if (!SweptContact(from - previous, to - endTarget, wave.Width / 2, out var contact)) continue;
                 if (applyHit(new ExpandedMosesStaffHit(ExpandedMosesStaffHitKind.Wave, id, current, Vector2.Lerp(from, to, contact), wave)))
+                {
                     wave.HitIds.Add(id);
+                    wave.OriginalHitCount++;
+                }
             }
             // One lane starts on the first tick that leaves a trace. Its lifetime belongs
             // to that lane, while its length grows behind the wave up to seven units.
@@ -495,6 +513,9 @@ namespace BibleSurvivor.Core
         private static Vector2 Rotate(Vector2 direction, double angle) => new Vector2(
             (float)(direction.X * Math.Cos(angle) - direction.Y * Math.Sin(angle)),
             (float)(direction.X * Math.Sin(angle) + direction.Y * Math.Cos(angle)));
+
+        internal static bool ValidOriginalBaseDamage(double value, bool evolved) => value == 0 ||
+            (evolved ? value == Profile.AtLevel(8).Damage : OriginalDamageByLevel.Contains(value));
 
         internal static bool Finite(double number) => !double.IsNaN(number) && !double.IsInfinity(number);
         internal static bool ValidPosition(Vector2 value) =>
