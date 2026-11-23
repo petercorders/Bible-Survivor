@@ -14,6 +14,7 @@ namespace BibleSurvivor.Unity
     sealed class CuratedCinematicsPlayerProbe : MonoBehaviour
     {
         static readonly FieldInfo Timeline = typeof(AdamGame).GetField("cinematic", BindingFlags.Instance | BindingFlags.NonPublic);
+        static readonly FieldInfo CuratedArt = typeof(AdamGame).GetField("curatedArt", BindingFlags.Instance | BindingFlags.NonPublic);
         AdamGame game;
         string output, source;
         int width, height;
@@ -105,6 +106,47 @@ namespace BibleSurvivor.Unity
             yield return Capture("r180-missing-completed");
         }
 
+        static void AdvanceTo(AdamCinematic timeline, float target)
+        {
+            while (timeline.Active && timeline.Elapsed < target)
+                timeline.Advance(Mathf.Min(.1f, target - timeline.Elapsed));
+        }
+
+        IEnumerator CaptureArt(AdamCinematic timeline, AdamCinematicKind kind)
+        {
+            var renderer = (AdamCuratedCinematicArt)CuratedArt.GetValue(game);
+            var spec = AdamCinematicSpec.Find(kind);
+            var start = 0f;
+            for (var i = 0; i < spec.CutCount; i++)
+            {
+                var seconds = timeline.CutDuration(i);
+                for (var time = .05f; time < seconds; time += 28f / AdamCuratedCinematicArt.FramesPerSecond)
+                {
+                    AdvanceTo(timeline, start + time);
+                    Check(timeline.CurrentIndex == i && renderer.TryGetFrame(timeline, true, out _),
+                        $"Design atlas {kind} cut {i + 1} at {time:0.00}");
+                }
+                timeline.Paused = true;
+                yield return Capture(kind + "-design-" + (i + 1));
+                game.ArtWorld.FeedbackEnabled = false;
+                Check(renderer.TryGetFrame(timeline, false, out var still) && !still.LiveTerrain,
+                    $"Design reduced-motion still {kind} cut {i + 1}");
+                yield return Capture(kind + "-lowfx-" + (i + 1));
+                game.ArtWorld.FeedbackEnabled = true;
+                timeline.Paused = false;
+                start += seconds;
+            }
+            if (spec.Boundary == AdamCinematicBoundary.Entry)
+            {
+                AdvanceTo(timeline, spec.Seconds - .2f);
+                Check(renderer.TryGetFrame(timeline, true, out var frame) && frame.LiveTerrain,
+                    "live projected arena " + kind);
+                timeline.Paused = true;
+                yield return Capture(kind + "-terrain");
+                timeline.Paused = false;
+            }
+        }
+
         IEnumerator Run()
         {
             var deadline = Time.realtimeSinceStartup + 10;
@@ -129,6 +171,7 @@ namespace BibleSurvivor.Unity
             var clearRun = host.State.OldTestamentClear.RunId;
             var clearTime = host.State.OldTestamentClear.CompletedAtUnixMilliseconds;
             var gold = host.State.Profile.Gold;
+            var design = Array.IndexOf(Environment.GetCommandLineArgs(), "-curatedDesignArt") >= 0;
             foreach (var kind in new[] { AdamCinematicKind.Creation, AdamCinematicKind.Judges,
                 AdamCinematicKind.Samuel, AdamCinematicKind.Malachi })
             {
@@ -146,11 +189,15 @@ namespace BibleSurvivor.Unity
                     continue;
                 }
 
-                var spec = AdamCinematicSpec.Find(kind);
-                for (var i = 1; i < spec.CutCount; i++)
+                if (design) yield return CaptureArt(timeline, kind);
+                else
                 {
-                    while (timeline.CurrentIndex < i) timeline.Advance(.1f);
-                    yield return Capture(kind + "-" + (i + 1));
+                    var spec = AdamCinematicSpec.Find(kind);
+                    for (var i = 1; i < spec.CutCount; i++)
+                    {
+                        while (timeline.CurrentIndex < i) timeline.Advance(.1f);
+                        yield return Capture(kind + "-" + (i + 1));
+                    }
                 }
                 if (kind == AdamCinematicKind.Malachi && width == 1920)
                 {

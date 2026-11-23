@@ -125,7 +125,9 @@ namespace BibleSurvivor.Unity
             }
         }
         public Cut Current => cuts[CurrentIndex];
-        public float CutElapsed => CurrentIndex == 0 ? Elapsed : Elapsed - cuts[CurrentIndex - 1].end;
+        public float CutElapsed => Elapsed - CutStart(CurrentIndex);
+        internal float CutDuration(int index) => cuts[index].end - CutStart(index);
+        float CutStart(int index) => index == 0 ? 0 : cuts[index - 1].end;
 
         public bool Begin(AdamCinematicKind kind, string json)
         {

@@ -102,6 +102,45 @@ public sealed class AdamCinematicTests
         }
     }
 
+    [TestCase(43)]
+    [TestCase(55)]
+    [TestCase(180)]
+    public void ApprovedCuratedArtLoadsEveryPageAndReducedMotionStill(int round)
+    {
+        var spec = AdamCinematicSpec.Find(round, round == 180 ? AdamCinematicBoundary.Settlement : AdamCinematicBoundary.Entry);
+        var timeline = new AdamCinematic();
+        Assert.IsTrue(timeline.Begin(spec.Kind, Resources.Load<TextAsset>(spec.Resource).text));
+        var renderer = new AdamCuratedCinematicArt();
+        try
+        {
+            renderer.Begin(spec, timeline);
+            Assert.IsFalse(renderer.Preview);
+            var seen = new System.Collections.Generic.HashSet<string>();
+            for (var i = 0; i < spec.CutCount; i++)
+            {
+                for (var frame = 0; timeline.Active && timeline.CurrentIndex == i; frame++)
+                {
+                    Assert.IsTrue(renderer.TryGetFrame(timeline, true, out var art), $"R{round} cut {i} frame {frame}");
+                    if (seen.Add(art.Texture.name))
+                    {
+                        Assert.AreEqual(FilterMode.Point, art.Texture.filterMode);
+                        Assert.AreEqual(1, art.Texture.mipmapCount);
+                        Assert.IsFalse(art.Texture.isReadable);
+                    }
+                    if (frame == 0)
+                    {
+                        Assert.IsTrue(renderer.TryGetFrame(timeline, false, out var still));
+                        Assert.IsFalse(still.LiveTerrain);
+                        Assert.AreEqual(new Rect(0, 0, 1, 1), still.Uv);
+                    }
+                    timeline.Advance(.1f);
+                }
+            }
+            Assert.GreaterOrEqual(seen.Count, 6);
+        }
+        finally { renderer.Clear(); }
+    }
+
     [TestCase(true,6)]
     [TestCase(false,2)]
     public void ScriptPlaysEveryCutAndCompletes(bool creation,int expectedCuts)

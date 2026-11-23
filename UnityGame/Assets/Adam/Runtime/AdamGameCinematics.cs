@@ -7,6 +7,7 @@ namespace BibleSurvivor.Unity
     public sealed partial class AdamGame
     {
         readonly AdamCinematic cinematic = new AdamCinematic();
+        readonly AdamCuratedCinematicArt curatedArt = new AdamCuratedCinematicArt();
         bool releaseCinematicControls;
         int cinematicExitFrame = -1;
         public bool CinematicPlaying => cinematic.Active;
@@ -30,6 +31,7 @@ namespace BibleSurvivor.Unity
             if (spec == null || (!spec.IsCurated && !AdamCinematicArt.Available)) return false;
             var script = Resources.Load<TextAsset>(spec.Resource);
             if (!cinematic.Begin(kind, script?.text)) return false;
+            curatedArt.Begin(spec, cinematic);
             commandFrame = Time.frameCount;
             inputReleased = false;
             touchStarted = false;
@@ -83,6 +85,7 @@ namespace BibleSurvivor.Unity
         void FinishCinematic(bool pointer = false)
         {
             cinematic.End();
+            curatedArt.Clear();
             cinematicExitFrame = commandFrame = Time.frameCount;
             var keys = Keyboard.current;
             releaseCinematicControls = pointer || CinematicControlsHeld(keys, Gamepad.current);
@@ -150,7 +153,7 @@ namespace BibleSurvivor.Unity
             return true;
         }
 
-        void DrawCinematic(Rect viewport)
+        void DrawCinematic(Rect viewport, bool mobile, Rect? physicalFrame)
         {
             var prior = GUI.matrix;
             GUI.matrix = Matrix4x4.identity;
@@ -162,20 +165,34 @@ namespace BibleSurvivor.Unity
             var actor = art.Sprite("chr_player_layer-base_idle_32", 0);
             var scroll = art.Sprite("ico_psv_scroll_static_16", 0);
             var spec = AdamCinematicSpec.Find(cinematic.Kind);
+            var sourceRect = new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height);
+            var motion = ArtWorld.FeedbackEnabled;
+            var artLabel = "";
             if (spec.IsCurated)
-                AdamCinematicArt.DrawCuratedPrototype(cinematic, actor, scroll, ArtWorld.FeedbackEnabled);
+            {
+                if (curatedArt.TryGetFrame(cinematic, motion, out var media))
+                {
+                    if (media.LiveTerrain) DrawCinematicTerrain(viewport, frame, spec.Round, mobile, physicalFrame);
+                    GUI.DrawTextureWithTexCoords(sourceRect, media.Texture, media.Uv);
+                    if (curatedArt.Preview) artLabel = "컷신 검수용";
+                }
+                else
+                {
+                    AdamCinematicArt.DrawCuratedPrototype(cinematic, actor, scroll, motion);
+                    artLabel = "컷신 시제품";
+                }
+            }
             else if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
-                ArtWorld.DrawBackdrop(art, new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
-                    ExodusContent.GlobalRoundNumber);
+                ArtWorld.DrawBackdrop(art, sourceRect, ExodusContent.GlobalRoundNumber);
             else
-                AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, ArtWorld.FeedbackEnabled);
+                AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, motion);
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one);
 
             var cut = cinematic.Current;
-            if (spec.IsCurated)
+            if (artLabel.Length > 0)
             {
                 AdamHud.Fill(new Rect(10, 8, 116, 30), AdamHud.Ink0);
-                GUI.Label(new Rect(16, 10, 110, 26), "컷신 시제품", HudText(16, AdamHud.Primary, false));
+                GUI.Label(new Rect(16, 10, 110, 26), artLabel, HudText(16, AdamHud.Primary, false));
             }
             var subtitleHeight = SubtitleHeight(viewport, frame);
             var subtitleTop = viewport.height - subtitleHeight;
@@ -212,6 +229,21 @@ namespace BibleSurvivor.Unity
             if (GUI.Button(skip, skipLabel, controls) && pointer)
                 FinishCinematic(pointer: true);
             GUI.enabled = enabled;
+            GUI.matrix = prior;
+        }
+
+        void DrawCinematicTerrain(Rect viewport, Rect frame, int round, bool mobile, Rect? physicalFrame)
+        {
+            var prior = GUI.matrix;
+            var scale = mobile ? AdamMobileLayout.Scale(viewport) : AdamChoiceText.ScreenScale(viewport.width, viewport.height);
+            var arena = mobile ? AdamMobileLayout.FullFrame(viewport, physicalFrame ?? viewport)
+                : Arena(viewport.width / scale, viewport.height / scale);
+            var clip = new Rect((frame.position - viewport.position) / scale, frame.size / scale);
+            GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one * scale);
+            GUI.BeginGroup(clip);
+            arena.position -= clip.position;
+            ArtWorld.DrawBackdrop(art, arena, round);
+            GUI.EndGroup();
             GUI.matrix = prior;
         }
 
