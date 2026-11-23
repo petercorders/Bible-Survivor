@@ -8,5 +8,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="BibleSurvivor.Sim" />
     <InternalsVisibleTo Include="BibleSurvivor.Core.Tests" />
+    <EmbeddedResource Include="../../content/permanent-skills/catalog-v1.tsv"
+                      LogicalName="BibleSurvivor.Core.PermanentSkillCatalog.v1.tsv" />
   </ItemGroup>
 </Project>

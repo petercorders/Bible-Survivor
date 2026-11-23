@@ -15,9 +15,9 @@ public sealed class AdamR03HostTests
     static byte[] Bytes(object value){using(var m=new MemoryStream()){new DataContractJsonSerializer(value.GetType()).WriteObject(m,value);return m.ToArray();}}
     public static AdamHost Intro(string path,SaveStore store=null)
     {
-        var h=new AdamHost(AdamCatalog.Load(),store??new SaveStore(path));h.Start("sling");
+        var h=AdamRoundHostTests.OpenLegacyChallenge(path,store);
         h.Session.Advance(180);h.Checkpoint();h.SetPaused(false);h.Session.Advance(180);h.Checkpoint();h.SetPaused(false);
-        Assert.AreEqual(3,h.Session.RoundNumber);for(var i=1;i<8;i++)h.Session.Inventory.TryChoose("sling",false);h.Session.Inventory.TryChoose("stones",true);
+        Assert.AreEqual(3,h.Session.RoundNumber);Assert.AreEqual(SaveFormat.CurrentVersion,h.State.SchemaVersion);Assert.AreEqual(1,h.Session.CombatRulesVersion);for(var i=1;i<8;i++)h.Session.Inventory.TryChoose("sling",false);h.Session.Inventory.TryChoose("stones",true);
         h.Session.Advance(180);h.Session.Capture();h.State.Run.World=null;
         new SaveStore(path).Commit(h.State,h.State.Revision,"r03-intro-fixture");Assert.IsTrue(h.Reload(),h.Error);return h;
     }

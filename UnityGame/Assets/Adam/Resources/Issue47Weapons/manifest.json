@@ -1,0 +1,1657 @@
+{
+  "schema": "bible-survivors.visual-quality-art",
+  "schemaVersion": 1,
+  "bundle": "issue47",
+  "ppu": 32,
+  "pivotSpace": "bottom-left-pixel-edge",
+  "borderOrder": "left,bottom,right,top",
+  "assets": [
+    {
+      "id": "ico_wpn_moses-staff_static_32",
+      "file": "ico_wpn_moses-staff_static_32.png",
+      "alpha": "binary",
+      "sha256": "044c2903d9b25f57f46ba3e98d8973bdd78f7eb1124a00821d9949ca032d2d71",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_red-sea-path_static_32",
+      "file": "ico_evo_red-sea-path_static_32.png",
+      "alpha": "binary",
+      "sha256": "c14472b4b0cf271ba92ed78ecd62c05358ca40229f8eb373ab8ec9258b0a4fe5",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_wilderness-voice_static_32",
+      "file": "ico_wpn_wilderness-voice_static_32.png",
+      "alpha": "binary",
+      "sha256": "0802b376a7f460d9154af92d7120288b7c4a61c046657998cadf31f254d24d07",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_wilderness-proclamation_static_32",
+      "file": "ico_evo_wilderness-proclamation_static_32.png",
+      "alpha": "binary",
+      "sha256": "c99f701d1d09436afad0ab0ce46a01d65a0a5e919dc680aaa8723674b1dbc7fd",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_lightning_static_32",
+      "file": "ico_wpn_lightning_static_32.png",
+      "alpha": "binary",
+      "sha256": "b672283823d9222b3ab68c6dd9fca202246b9a60cc649228c5b9b93bd083c26e",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_thunder-judgment_static_32",
+      "file": "ico_evo_thunder-judgment_static_32.png",
+      "alpha": "binary",
+      "sha256": "0adf9c13d21bc12392bbc8736b162a632aa3ba01d409369ee881756be01506da",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_fire-pillar_static_32",
+      "file": "ico_wpn_fire-pillar_static_32.png",
+      "alpha": "binary",
+      "sha256": "a89d7da56d12b947021d8ba8e84ac33a0368ebd11b18a53314da08634ad81ae8",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_wilderness-guidance_static_32",
+      "file": "ico_evo_wilderness-guidance_static_32.png",
+      "alpha": "binary",
+      "sha256": "6f001db27450200cacfe6857863569466e822f73081c0b40ea058a0c92416ed9",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_daniel-lion_static_32",
+      "file": "ico_wpn_daniel-lion_static_32.png",
+      "alpha": "binary",
+      "sha256": "258d9e0261a286385e0c102866c4fea6975a4c5c07553f194ba69b8e2e29c31f",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_den-guardian_static_32",
+      "file": "ico_evo_den-guardian_static_32.png",
+      "alpha": "binary",
+      "sha256": "9978d8284174cfa787e8cce4f5eaf1554d0af2cf537dac03731b43ba39f19ef5",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_cross_static_32",
+      "file": "ico_wpn_cross_static_32.png",
+      "alpha": "binary",
+      "sha256": "614494363975bd6e8706990f39d22a8714d6a360574e54edad72013e71edd493",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_passion-radiance_static_32",
+      "file": "ico_evo_passion-radiance_static_32.png",
+      "alpha": "binary",
+      "sha256": "77f06c8310e05ec95ce0388153fbbba4b14c3584b79e2a9d5d873b17cfc0b45b",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_wpn_elijah-chariot_static_32",
+      "file": "ico_wpn_elijah-chariot_static_32.png",
+      "alpha": "binary",
+      "sha256": "6506540e1b5e2673fffa7efb435360b41a943a50ff82846e83c6e7465ef9185d",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_evo_ascending-chariot_static_32",
+      "file": "ico_evo_ascending-chariot_static_32.png",
+      "alpha": "binary",
+      "sha256": "78c6694406c3400ef1462a5aaef3d89c88b511350f03831d096e7e6916189bc2",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ui_skill-node_9slice_16",
+      "file": "ui_skill-node_9slice_16.png",
+      "alpha": "binary",
+      "sha256": "e4cb67b628688cea5ac80649b2e32d65eec3ffae8aae88e00ed4f5c8703a86fc",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 5,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "states": [
+        "available",
+        "owned",
+        "max",
+        "locked",
+        "unlock-locked"
+      ],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_link_static_16",
+      "file": "ico_ui_link_static_16.png",
+      "alpha": "binary",
+      "sha256": "e2acf360d8f89abd39cdd6cb737f5f00c92b5e9a3b1632478e78f6ffe86fe3de",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_diamond_static_16",
+      "file": "ico_ui_diamond_static_16.png",
+      "alpha": "binary",
+      "sha256": "9d3ea64986f19355078cbb92c8151ff2747e81e8fe638347faadde627f47b887",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_round_static_16",
+      "file": "ico_ui_round_static_16.png",
+      "alpha": "binary",
+      "sha256": "ae4199b91af9b097f81409e3aa9baf7a668d9c1ecfc334740412ffe58f01ec13",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_lock_static_16",
+      "file": "ico_ui_lock_static_16.png",
+      "alpha": "binary",
+      "sha256": "ef6b6af00713fa9d2596b2ed57162621371e7b3e3f276411d5408dc64c15da28",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_check_static_16",
+      "file": "ico_ui_check_static_16.png",
+      "alpha": "binary",
+      "sha256": "d1b4083c61665b0ac01bf3386944fd04894c49e5d06a897112144106005e3977",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_cross_static_16",
+      "file": "ico_ui_cross_static_16.png",
+      "alpha": "binary",
+      "sha256": "f6da1b095bf692db3e78fad56d7808c01c9ed734f4d24463b9e28f2195acb7fe",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_question_static_16",
+      "file": "ico_ui_question_static_16.png",
+      "alpha": "binary",
+      "sha256": "312fe64aa004d364a14042ed126679db7691be9309d4bdf3133e2e74fc57e4b5",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "ico_ui_refresh_static_16",
+      "file": "ico_ui_refresh_static_16.png",
+      "alpha": "binary",
+      "sha256": "4b0f829386077ed1f8cdbd751c753ee8da83dd2250cd2863f1608055adf0c3d6",
+      "cell": [
+        16,
+        16
+      ],
+      "pivot": [
+        8,
+        8
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": null,
+      "quality": null
+    },
+    {
+      "id": "wpn_daniel-lion_walk_32",
+      "file": "wpn_daniel-lion_walk_32.png",
+      "alpha": "binary",
+      "sha256": "3d33c3234cbaff3db55677fb09292e618bd42f52359987f2c4791e19ca5b4a31",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        1
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_daniel-lion_return_32",
+      "file": "wpn_daniel-lion_return_32.png",
+      "alpha": "binary",
+      "sha256": "2a744a74d5c6e9a3bfce6c49ac8d836adea624d3e31e50e48447ed884cbd2bee",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        1
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_daniel-lion_roar_32",
+      "file": "wpn_daniel-lion_roar_32.png",
+      "alpha": "binary",
+      "sha256": "c892acf2e893c0871a492f889e968f7e18fcf9607f3301517f79bcda41a6ccde",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        1
+      ],
+      "frames": 3,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_daniel-lion_claw_32",
+      "file": "fx_daniel-lion_claw_32.png",
+      "alpha": "binary",
+      "sha256": "2530494641e74fa7634c74d606568c45552c48a336550ee2085cb7e69fd3a217",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_daniel-lion_roar-piece_32",
+      "file": "fx_daniel-lion_roar-piece_32.png",
+      "alpha": "binary",
+      "sha256": "02f2008f233b46e7499e3e5b451ae127960ee7fe25472db12927bdb5053aad91",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_den-guardian_walk_48",
+      "file": "wpn_den-guardian_walk_48.png",
+      "alpha": "binary",
+      "sha256": "6cb9112e0a314566ab8bd56052ab00c24ea8a8cef7cb3842671ffdaef9e32223",
+      "cell": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        1
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_den-guardian_leap_48",
+      "file": "wpn_den-guardian_leap_48.png",
+      "alpha": "binary",
+      "sha256": "0b009e0bc7b4cdf42332d165b5ab8dd656df24f3cb75ac58be3167d05f76ac08",
+      "cell": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        1
+      ],
+      "frames": 3,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_den-guardian_roar_48",
+      "file": "wpn_den-guardian_roar_48.png",
+      "alpha": "binary",
+      "sha256": "32d8fba04e6e33b08bdce8ed487b85dc8b061277ae2ce27bc93f4a64bc9d1b20",
+      "cell": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        1
+      ],
+      "frames": 3,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_den-guardian_return_48",
+      "file": "wpn_den-guardian_return_48.png",
+      "alpha": "binary",
+      "sha256": "66aae26fc81082aa7ee8343e6f784c92653a423449f49d922d3b6b78f26392df",
+      "cell": [
+        48,
+        48
+      ],
+      "pivot": [
+        24,
+        1
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-voice_mouth_32",
+      "file": "fx_wilderness-voice_mouth_32.png",
+      "alpha": "binary",
+      "sha256": "0cfc16ed6dd1637e20c204d0eb85cc63d5dfe9b65dd7fa999077d518cc56c34d",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-voice_crest_32",
+      "file": "fx_wilderness-voice_crest_32.png",
+      "alpha": "binary",
+      "sha256": "c6ba675a6b1221ce33b622c2ce31f8f49fa939cad3dc74fd18d9e0e65d8104ff",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-voice_aim-lock_32",
+      "file": "fx_wilderness-voice_aim-lock_32.png",
+      "alpha": "binary",
+      "sha256": "dee6c7de94d6b472fb5aafc664a0acf3f34c9d4e376615644badf68756cc836e",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 1,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-proclamation_echo-1_32",
+      "file": "fx_wilderness-proclamation_echo-1_32.png",
+      "alpha": "binary",
+      "sha256": "cc7c28555c045070b0c41d4b23f0c660b8533d3bfb9ace32c0731aa86388439c",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-proclamation_echo-2_32",
+      "file": "fx_wilderness-proclamation_echo-2_32.png",
+      "alpha": "binary",
+      "sha256": "89f2946e84ca17ce139f2a70c61fe4d0fe5ca6d925c1eb20304052796a4d1a0f",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-proclamation_echo-3_32",
+      "file": "fx_wilderness-proclamation_echo-3_32.png",
+      "alpha": "binary",
+      "sha256": "8520b4e1a903801b810e1e3ae2a079a9ff4628970ab81759d08f6575cf8bd8ed",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_lightning-mark_32",
+      "file": "fx_lightning-mark_32.png",
+      "alpha": "binary",
+      "sha256": "2ad1974d4a3337beef8dd925d18806feec354065859b501ca640d610a6db32df",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_lightning-bolt_64",
+      "file": "fx_lightning-bolt_64.png",
+      "alpha": "binary",
+      "sha256": "002e8b3e1135b77f538a55d94a104a42ae831712a10aa70281eb2dd8164bea40",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        8
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_lightning-flash_64",
+      "file": "fx_lightning-flash_64.png",
+      "alpha": "binary",
+      "sha256": "5a09125e35d1182e8114b01ce5b788689a11ac9e387eac135d5a7d4f98e28ebd",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L9",
+      "quality": "optional-fx"
+    },
+    {
+      "id": "fx_thunder-judgment_chain-node_32",
+      "file": "fx_thunder-judgment_chain-node_32.png",
+      "alpha": "binary",
+      "sha256": "785dd2707d3adf8184a7df704487aea2d23e69af4499ef35718cce474ff1d5c0",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_thunder-judgment_wave-spark_32",
+      "file": "fx_thunder-judgment_wave-spark_32.png",
+      "alpha": "binary",
+      "sha256": "9ec8597a774d70f6ede31ba986e08f99db64a924bdb22590b45b58007dba46db",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 5,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_moses-staff_wave_32",
+      "file": "wpn_moses-staff_wave_32.png",
+      "alpha": "binary",
+      "sha256": "cd382200d888ceb279fc2817603c39e4a51976ec61911b17e8e9bb369d48027c",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_moses-staff_hit_32",
+      "file": "fx_moses-staff_hit_32.png",
+      "alpha": "binary",
+      "sha256": "c946d951f91c4e7b89e29ec9851ed152a38b0a754659fa2389d04f29d77b6835",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 3,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_moses-staff_wave-end_32",
+      "file": "fx_moses-staff_wave-end_32.png",
+      "alpha": "binary",
+      "sha256": "0a362fde5701b34126efdaf5d9055d7a2e6eaa2edcee265e2665c9e080f17ad0",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 15,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_red-sea-path_channel_32",
+      "file": "fx_red-sea-path_channel_32.png",
+      "alpha": "binary",
+      "sha256": "cd5018a1252dcf1962ec7a996fd36a370c04102f28d1eebad486aabd25600928",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L6",
+      "quality": null
+    },
+    {
+      "id": "fx_fire-pillar_ignite_64",
+      "file": "fx_fire-pillar_ignite_64.png",
+      "alpha": "binary",
+      "sha256": "aa8e3430a7d0616632e03a68c8fda2146e15484b2ed6f3b45227501d042b8303",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        8
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_fire-pillar_column_64",
+      "file": "fx_fire-pillar_column_64.png",
+      "alpha": "binary",
+      "sha256": "cd028f3af0c334d9c37838a2d185e070f88d62849a5eca90747b213c0a0c5c76",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        8
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_fire-pillar_column-end_64",
+      "file": "fx_fire-pillar_column-end_64.png",
+      "alpha": "binary",
+      "sha256": "19fe1bd1d5e36c22f9c34dacf03faa6225c1acfdc75c665dfc65061b25f4e11a",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        8
+      ],
+      "frames": 2,
+      "fps": 15,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-guidance_column-move_64",
+      "file": "fx_wilderness-guidance_column-move_64.png",
+      "alpha": "binary",
+      "sha256": "67d4e9ef2fd99097fa85a34ce174af8a2ff799a85cb359ff76aa57b96b5f2a02",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        8
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_wilderness-guidance_ember_32",
+      "file": "fx_wilderness-guidance_ember_32.png",
+      "alpha": "binary",
+      "sha256": "f3cdb95019da798d547e6040e95effc681cb524bcb9acc15240a59b3ec9b555a",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L6",
+      "quality": null
+    },
+    {
+      "id": "wpn_cross_fly-out_32",
+      "file": "wpn_cross_fly-out_32.png",
+      "alpha": "binary",
+      "sha256": "4d331cf333aa4e9eca11b63214fa52cca86c44177189b13265bc1f0742afb329",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_cross_fly-back_32",
+      "file": "wpn_cross_fly-back_32.png",
+      "alpha": "binary",
+      "sha256": "c7deeeac0cf24e0a74ce726dd2d70403807ff75a320d5096b3daed683b3d091f",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_cross_hit_32",
+      "file": "fx_cross_hit_32.png",
+      "alpha": "binary",
+      "sha256": "51f07e9acc446c14384f212a21263b53b3f71fd8a791a37829aedff65794339b",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 3,
+      "fps": 20,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_cross_recover_32",
+      "file": "fx_cross_recover_32.png",
+      "alpha": "binary",
+      "sha256": "cee276e6a9ce587b1114e2cff3a7f83695b4875643d423fdf99b0b1600b81ce6",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 15,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_passion-radiance_thorn_32",
+      "file": "fx_passion-radiance_thorn_32.png",
+      "alpha": "binary",
+      "sha256": "13a4d59f963a95fb5040c6308234800eed52b97d89cf8d072ac4d634b498bbff",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L6",
+      "quality": null
+    },
+    {
+      "id": "fx_elijah-chariot_lane_32",
+      "file": "fx_elijah-chariot_lane_32.png",
+      "alpha": "binary",
+      "sha256": "3e287b685550ff7cdf657e59ab04777566cebece54988b63b9ad8aaf257e8bbc",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [
+        "stage-1 dim",
+        "stage-2 bright"
+      ],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_elijah-chariot_lane-end_32",
+      "file": "fx_elijah-chariot_lane-end_32.png",
+      "alpha": "binary",
+      "sha256": "5635773acc67e57ad920cbd586453b24c1ac0c83fd1fd6a63af0134fda5c17cc",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 2,
+      "fps": 0,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "wpn_elijah-chariot_body_64",
+      "file": "wpn_elijah-chariot_body_64.png",
+      "alpha": "binary",
+      "sha256": "a735f084494a8cb687bd9af63ff8de7a58f5d5db1462a4c892122d4cce74ef15",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_elijah-chariot_end_64",
+      "file": "fx_elijah-chariot_end_64.png",
+      "alpha": "binary",
+      "sha256": "c723ead291aec65eebb4053470a9dec6686400bd543f1a1f094944451c76a99e",
+      "cell": [
+        64,
+        64
+      ],
+      "pivot": [
+        32,
+        32
+      ],
+      "frames": 2,
+      "fps": 15,
+      "loop": false,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8.5",
+      "quality": null
+    },
+    {
+      "id": "fx_ascending-chariot_whirl-piece_32",
+      "file": "fx_ascending-chariot_whirl-piece_32.png",
+      "alpha": "binary",
+      "sha256": "a46fc2f38df1f211cf987e3454f0c2acdf069d11a04a45ee1a3b444cd325c04e",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L8",
+      "quality": null
+    },
+    {
+      "id": "fx_ascending-chariot_flame_32",
+      "file": "fx_ascending-chariot_flame_32.png",
+      "alpha": "binary",
+      "sha256": "02564bcf4776705a1fe039bb52335ce2a4ed13c90e3a9bf2f1003a157372b053",
+      "cell": [
+        32,
+        32
+      ],
+      "pivot": [
+        16,
+        16
+      ],
+      "frames": 6,
+      "fps": 8,
+      "loop": true,
+      "borders": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "states": [],
+      "sorting": "L6",
+      "quality": null
+    }
+  ]
+}

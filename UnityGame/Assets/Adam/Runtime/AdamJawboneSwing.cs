@@ -10,14 +10,21 @@ namespace BibleSurvivor.Unity
         public const double Duration=.2;
         public double Started {get;private set;}=-1;
         public Vector2 Direction {get;private set;}=Vector2.right;
-        public void Clear(){Started=-1;Direction=Vector2.right;}
+        private float sampledArc;
+        public void Clear(){Started=-1;Direction=Vector2.right;sampledArc=0;}
         public void Observe(BattleSnapshot snapshot,int amount,double interval)
         {
             foreach(var weapon in snapshot.Weapons)if(weapon.WeaponId=="jawbone")
             {
-                var at=AdamArtWorld.LatestJawboneBurst(weapon,snapshot.Time,amount,interval);
+                var at=AdamArtWorld.LatestJawboneBurst(weapon,snapshot.Time,
+                    weapon.JawboneCycleAmount > 0 ? weapon.JawboneCycleAmount : amount,interval);
                 if(at>=0 && (Started<0 || at>Started+1e-9))
-                {Started=at;Direction=new Vector2(snapshot.FacingX,snapshot.FacingY);}
+                {
+                    Started=at;
+                    sampledArc=(float)weapon.LastJawboneHalfAngle*2;
+                    Direction=sampledArc>0 ? new Vector2(weapon.LastJawboneDirectionX,weapon.LastJawboneDirectionY) :
+                        new Vector2(snapshot.FacingX,snapshot.FacingY);
+                }
                 break;
             }
         }
@@ -38,19 +45,22 @@ namespace BibleSurvivor.Unity
         }
         public static Rect GripRect(Sprite sprite,Vector2 hand,int scale)=>new Rect(
             hand.x-sprite.pivot.x*scale,hand.y-(sprite.rect.height-sprite.pivot.y)*scale,sprite.rect.width*scale,sprite.rect.height*scale);
-        public void Draw(AdamArt art,Rect arena,Vector2 feet,int scale,bool playerLeft,double clock,float range,bool feedback)
+        public void Draw(AdamArt art,Rect arena,Vector2 feet,int scale,bool playerLeft,double clock,float range,bool feedback,
+            float arcDegrees = 120)
         {
             if(!Active(clock))return;var elapsed=clock-Started;var hand=Hand(feet,scale,playerLeft);
+            if (sampledArc>0) arcDegrees=sampledArc;
             var matrix=GUI.matrix;var color=GUI.color;
             try
             {
-                // A short arc describes Core's existing120 degree sector/range; it never detects a hit.
-                if(feedback && elapsed>=.03 && elapsed<.11)
+                // The arc projects the live sector without changing hit detection.
+                if((feedback || arcDegrees != 120) && elapsed>=.03 && elapsed<.11)
                 {
                     var aim=Mathf.Atan2(-Direction.y,Direction.x);var radius=range*32*scale;
+                    var segment = arcDegrees / 8;
                     for(var i=0;i<8;i++)
                     {
-                        var a=aim+(-60+i*15)*Mathf.Deg2Rad;var b=aim+(-45+i*15)*Mathf.Deg2Rad;
+                        var a=aim+(-arcDegrees/2+i*segment)*Mathf.Deg2Rad;var b=aim+(-arcDegrees/2+(i+1)*segment)*Mathf.Deg2Rad;
                         var from=feet+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius;
                         var to=feet+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius;
                         Line(arena,from,to,scale,new Color(1,.92f,.72f,.65f));

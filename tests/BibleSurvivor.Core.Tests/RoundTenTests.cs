@@ -55,7 +55,7 @@ internal static class RoundTenTests
         }));
         test("R10 schema3 future content protects primary backup and profile new challenge restores schema2",()=>Store(store=>{
             var (state,game)=CompletedNine();state=game.PrepareExodus(Definition());store.Commit(state,0,"enter");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["SchemaVersion"]=4,n=>n["Run"]!["RoundNumber"]=12,n=>n["Run"]!["Future"]=true,n=>n["Run"]!["CompletedThirdBoss"]!["Future"]=true,n=>n["Run"]!["CompletedThirdBoss"]!["Version"]=4})
+            foreach(var change in new Action<JsonNode>[] {n=>n["SchemaVersion"]=SaveFormat.CurrentVersion+1,n=>n["Run"]!["RoundNumber"]=12,n=>n["Run"]!["Future"]=true,n=>n["Run"]!["CompletedThirdBoss"]!["Future"]=true,n=>n["Run"]!["CompletedThirdBoss"]!["Version"]=4})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
             state.Run=null;state.Profile.Gold=900;PermanentRules.Purchase(state.Profile,"attack");var unlocks=Json(state.Profile.UnlockedWeapons);var profile=Json(state.Profile);state.Validate();var fresh=new AdamSession(state,CatalogReader.Round(Genesis,1),"bible");Check.Equal(2,state.SchemaVersion);Check.Equal(profile,Json(state.Profile));Check.Equal(unlocks,Json(state.Profile.UnlockedWeapons));Check.Equal(1,fresh.RoundNumber);state.Validate();
         }));

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BibleSurvivor.Core;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace BibleSurvivor.Unity
         public readonly AdamVisualQualityWorld VisualQuality=new AdamVisualQualityWorld();
         public readonly AdamPolishContacts PolishContacts=new AdamPolishContacts();
         readonly AdamPolishFlash polishFlash=new AdamPolishFlash();
+        readonly AdamExpandedWeaponView expandedWeapons=new AdamExpandedWeaponView();
         public bool PolishEnabled=>AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Thud,out _);
         AdamR02Art r02;
         AdamR03Art r03;
@@ -133,7 +135,10 @@ namespace BibleSurvivor.Unity
             var nextBoss=host.Session.Boss;
             VisualQuality.Observe(next);
             if(host.Session.Inventory.Weapons.ContainsKey("jawbone"))
-                JawboneSwing.Observe(next,host.Session.AttackProfile("jawbone").Amount,WeaponRules.Get("jawbone",host.Session.Inventory.Weapons["jawbone"]).BurstInterval);
+            {
+                var jawbone = host.Session.AttackProfile("jawbone");
+                JawboneSwing.Observe(next, jawbone.Amount, jawbone.BurstInterval);
+            }
             if(bossVisual!=null && nextBoss!=null)
             {
                 if(nextBoss.NextAttackAt>bossVisual.NextAttackAt)bossImpactAt=next.Time;
@@ -172,6 +177,9 @@ namespace BibleSurvivor.Unity
 
                 foreach(var id in new List<int>(reactions.Keys))
                     if(!previousPositions.ContainsKey(id) || reactions[id]<=Clock)reactions.Remove(id);
+                if(host.Session.CombatRulesVersion==2)
+                    expandedWeapons.Observe(source, Snapshot, next,
+                        (float)host.Session.LionRoarRadius(false), (float)host.Session.LionRoarRadius(true));
                 Snapshot=next;
                 wasActive=active;
             }
@@ -191,7 +199,7 @@ namespace BibleSurvivor.Unity
         public double PlayerSeconds => PlayerMotion=="death" ? Math.Max(0,Clock-deathAt) : Clock;
         public void Clear()
         {
-            JawboneSwing.Clear();VisualQuality.Clear();PolishContacts.Clear();
+            JawboneSwing.Clear();VisualQuality.Clear();PolishContacts.Clear();expandedWeapons.Clear();
             source=null; Snapshot=null; Clock=0; deathAt=-1; wasActive=false; PlayerMotion="idle";
             previousPositions.Clear();reactions.Clear();frameImpacts.Clear();reportedKills.Clear();
             impactCursor=0;ConsumedImpacts=0;DroppedImpacts=0;PlayerHitUntil=0;
@@ -199,7 +207,7 @@ namespace BibleSurvivor.Unity
             bossVisual=null;chariotVisual=null;bossDeathAt=-1;bossImpactAt=-1;
             chargeFacing.Clear();
         }
-        public void Dispose(){Clear();polishFlash.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();damageZone.Dispose();aimedProjectile.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
+        public void Dispose(){Clear();polishFlash.Dispose();expandedWeapons.Dispose();r02?.Dispose();r02=null;exodusR01?.Dispose();exodusR01=null;exodusR02?.Dispose();exodusR02=null;exodusR03?.Dispose();exodusR03=null;exodusR04?.Dispose();exodusR04=null;exodusR05?.Dispose();exodusR05=null;exodusR06?.Dispose();exodusR06=null;danger.Dispose();damageZone.Dispose();aimedProjectile.Dispose();chargeLane.Dispose();chariotLane.Dispose();}
 
         // Leviticus and later books reuse the reviewed Exodus R06 art for equivalent movement roles.
         static string SourceActor(string id)
@@ -368,6 +376,7 @@ namespace BibleSurvivor.Unity
                     art.Draw(effect.Clip,Point(effect.Position.x,effect.Position.y),scale,Clock-effect.Started);
             if(host.Session.IsActive)
             {
+                if(host.Session.CombatRulesVersion==2)expandedWeapons.DrawGround(projection,snap,FeedbackEnabled);
                 var monsters=host.Session.Targets;var experience=host.Session.DroppedExperience;
                 foreach(var enemy in snap.Enemies)
                     if(monsters!=null && monsters.TryGetValue(enemy.Id,out var monster))
@@ -512,6 +521,7 @@ namespace BibleSurvivor.Unity
                 else{if(r03==null)r03=new AdamR03Art();r03.Draw(AdamR03Art.BossDeath,Point(bossFeet.x,bossFeet.y),scale,Math.Max(0,Clock-bossDeathAt),bossLeft);}
             }
 
+            if(host.Session.IsActive && host.Session.CombatRulesVersion==2)expandedWeapons.DrawActors(projection,snap,FeedbackEnabled);
             // All six layers share ONE parent reflection about the registered feet pivot.
             var feet=Point(snap.PlayerX,snap.PlayerY); var matrix=GUI.matrix;
             if(PlayerLeft) GUI.matrix=matrix*FacingMatrix(feet+arena.position,Vector2.left);
@@ -530,20 +540,32 @@ namespace BibleSurvivor.Unity
                 art.Draw("wpn_sling-stone_spin_8",anchor,scale,Clock);
                 GUI.matrix=before;
             }
+            var sling = snap.Weapons.FirstOrDefault(weapon => weapon.WeaponId == "sling")?.SlingCombat;
+            if (sling?.Support != null)
+                foreach (var stone in sling.Support)
+                    art.Draw("wpn_sling-stone_spin_8", Point(stone.X, stone.Y), scale, Clock);
             VisualQuality.SlingRelease(arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
             foreach(var weapon in snap.Weapons)
             {
                 if(weapon.WeaponId=="bible" && weapon.ActiveUntil>snap.Time)
                 {
                     var profile=host.Session.AttackProfile("bible");
-                    for(var i=0;i<profile.Amount;i++)
+                    var amount = weapon.FrozenOrbitCount == 0 ? profile.Amount : weapon.FrozenOrbitCount;
+                    var nativeRadius = weapon.FrozenOrbitCount == 0
+                        ? snap.Tuning.BibleOrbitRadius * profile.AreaMultiplier : weapon.FrozenOrbitRadius;
+                    var ranks = host.Session.BibleRanks();
+                    for(var i=0;i<amount;i++)
                     {
-                        var angle=snap.Time*2.5*WeaponRules.Get("bible",host.Session.Inventory.Weapons["bible"]).RotationSpeedMultiplier+i*Math.PI*2/profile.Amount;
-                        var radius=snap.Tuning.BibleOrbitRadius*profile.AreaMultiplier;
-                        var pos=Point(snap.PlayerX+(float)(Math.Cos(angle)*radius),snap.PlayerY+(float)(Math.Sin(angle)*radius));
+                        var pose = ranks.Book(new System.Numerics.Vector2(snap.PlayerX, snap.PlayerY), i, amount, snap.Time,
+                            host.Session.BibleRotationMultiplier, weapon.ActiveSince, weapon.BibleMotionCycle, nativeRadius,
+                            snap.Tuning.BibleOrbitRadius, new System.Numerics.Vector2(weapon.BibleCrowdX, weapon.BibleCrowdY),
+                            weapon.BibleEvolution?.InnerAngleOffset ?? 0);
+                        var angle = pose.Angle;
+                        var radius = pose.Radius;
+                        var pos = Point(pose.Position.X, pose.Position.Y);
                         if(FeedbackEnabled&&AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Page,out _))
                         {
-                            var tint=GUI.color;try{for(var age=2;age>=1;age--){var behind=angle-age*12*Mathf.Deg2Rad;var ghost=Point(snap.PlayerX+(float)(Math.Cos(behind)*radius),snap.PlayerY+(float)(Math.Sin(behind)*radius));GUI.color=new Color(1,1,1,age==1?.45f:.2f);art.Draw("wpn_bible-book_spin_16",ghost,scale,Clock);}}finally{GUI.color=tint;}
+                            var tint=GUI.color;try{for(var age=2;age>=1;age--){var behind=angle-pose.RotationSign*age*12*Mathf.Deg2Rad;var ghost=Point(snap.PlayerX+(float)(Math.Cos(behind)*radius),snap.PlayerY+(float)(Math.Sin(behind)*radius));GUI.color=new Color(1,1,1,age==1?.45f:.2f);art.Draw("wpn_bible-book_spin_16",ghost,scale,Clock);}}finally{GUI.color=tint;}
                         }
                         art.Draw("fx_bible-glow_static_20",pos,scale); art.Draw("wpn_bible-book_spin_16",pos,scale,Clock);
                     }
@@ -552,7 +574,9 @@ namespace BibleSurvivor.Unity
                 {
                     AdamVisualQualityWorld.SwingFx(art,JawboneSwing,arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
                     JawboneSwing.Draw(art,arena,feet,scale,PlayerLeft,snap.Time,
-                        (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled);
+                        (float)(weapon.LastJawboneReach > 0 ? weapon.LastJawboneReach :
+                            snap.Tuning.JawboneRange * host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled,
+                        (float)host.Session.JawboneArcDegrees);
                 }
             }
             beforeTelegraphs?.Invoke();

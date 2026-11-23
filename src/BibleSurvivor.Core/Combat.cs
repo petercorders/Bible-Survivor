@@ -12,10 +12,18 @@ namespace BibleSurvivor.Core
         public double DurationBonus {get;set;}
         public double ProjectileSpeedBonus {get;set;}
         public int ExtraAmount {get;set;}
+        internal int ExtraPierce { get; set; }
+        internal double BurstReduction { get; set; }
+        internal double TravelDistanceBonus { get; set; }
+        internal double PlacedRadiusBonus { get; set; }
+        internal double RegionShapeBonus { get; set; }
+        internal double OrbitDistanceBonus { get; set; }
     }
     public sealed class CombatStats
     {
         public double Damage {get; private set;}
+        internal double UncappedDamage { get; private set; }
+        internal double OriginalBaseDamage { get; private set; }
         public int Amount {get; private set;}
         public int Pierce {get; private set;}
         public double Duration {get; private set;}
@@ -24,6 +32,15 @@ namespace BibleSurvivor.Core
         public double AreaMultiplier {get; private set;}
         public bool IsOrbit {get; private set;}
         public double ProjectileSpeedMultiplier {get; private set;}
+        internal double OrbitCollisionMultiplier { get; private set; } = 1;
+        internal double PulseRadiusMultiplier { get; private set; } = 1;
+        internal double AttackRadius { get; private set; }
+        internal double AttackReach { get; private set; }
+        internal double AttackWidth { get; private set; }
+        internal double AttackSpeed { get; private set; }
+        internal double AttackTravelDistance { get; private set; }
+        internal double AttackDelayAdvance { get; private set; }
+        internal double SlingTravelMultiplier { get; private set; } = 1;
         internal CombatStats Evolved(string form)
         {
             var copy=(CombatStats)MemberwiseClone();
@@ -44,11 +61,87 @@ namespace BibleSurvivor.Core
             var baseStats=WeaponRules.Get(id,level);
             var duration=baseStats.Duration*(1+bonuses.DurationBonus);
             var cooldown=baseStats.Cooldown*Math.Max(.2,1-bonuses.CooldownReduction);
-            var result=new CombatStats { Damage=baseStats.Damage*(1+bonuses.DamageBonus),Amount=baseStats.Amount+bonuses.ExtraAmount,
+            var attackDamage = baseStats.Damage * (1 + bonuses.DamageBonus);
+            var result=new CombatStats { Damage=attackDamage,UncappedDamage=attackDamage,OriginalBaseDamage=baseStats.Damage,Amount=baseStats.Amount+bonuses.ExtraAmount,
                 Pierce=baseStats.Pierce,Duration=duration,Cycle=duration+cooldown,BurstInterval=baseStats.BurstInterval,
                 AreaMultiplier=baseStats.AreaMultiplier+bonuses.AreaBonus,IsOrbit=id=="bible",ProjectileSpeedMultiplier=1+bonuses.ProjectileSpeedBonus };
             Guard.NonNegative(result.Damage,nameof(result.Damage)); Guard.NonNegative(result.Cycle,nameof(result.Cycle));
             Guard.NonNegative(result.AreaMultiplier,nameof(result.AreaMultiplier)); return result;
+        }
+
+        internal static CombatStats ForExpanded(string id, int level, CombatBonuses bonuses, string? form,
+            double collisionBonus = 0)
+        {
+            bonuses.DamageBonus = Math.Min(1.25, bonuses.DamageBonus);
+            bonuses.DurationBonus = Math.Min(.75, bonuses.DurationBonus);
+            bonuses.ProjectileSpeedBonus = Math.Min(.75, bonuses.ProjectileSpeedBonus);
+            // Whirlwind grows the books' strike radius, not the distance of their orbit.
+            var orbitCollisionBonus = id == "bible" ? bonuses.AreaBonus : 0;
+            if (id == "bible" || id == "sling") bonuses.AreaBonus = 0;
+            var stats = For(id, level, bonuses);
+            stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + collisionBonus);
+            stats.PulseRadiusMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus + bonuses.RegionShapeBonus);
+            if (id == "bible") stats.AreaMultiplier += bonuses.OrbitDistanceBonus;
+            if (id == "sling")
+            {
+                stats.AreaMultiplier += collisionBonus;
+                stats.Pierce = Math.Min(8, stats.Pierce + bonuses.ExtraPierce);
+                stats.SlingTravelMultiplier += bonuses.TravelDistanceBonus;
+            }
+            // Choose the evolved sling's base volley before adding stones and specialization.
+            // EvolutionRules.Evolved retains the v1 final-count maximum for older runs.
+            if (form == EvolutionRules.Sling) stats.Amount = EvolutionRules.SlingMinimum + bonuses.ExtraAmount;
+            else if (form != null) stats = stats.Evolved(form);
+            stats.Amount = Math.Min(ExpandedAmountLimit(id), stats.Amount);
+            stats.AreaMultiplier = Math.Min(2.5, stats.AreaMultiplier);
+            if (!stats.IsOrbit && bonuses.BurstReduction > 0)
+                stats.BurstInterval = new PermanentTempoProfile(0, bonuses.BurstReduction, 0)
+                    .BurstInterval(stats.BurstInterval);
+            var batch = stats.IsOrbit ? 0 : (stats.Amount - 1) * stats.BurstInterval;
+            stats.Cycle = Math.Max(stats.Cycle, Math.Max(.15, batch + BattleWorld.FixedStep));
+            return stats;
+        }
+
+        internal static int ExpandedAmountLimit(string id) => id == "bible" ? 7 : id == "jawbone" ? 6 : 8;
+
+        internal static CombatStats ForScheduled(ExpandedWeaponProfile profile, int level, CombatBonuses bonuses,
+            int specialization, bool masteryFour = false, bool masteryFive = false, double collisionBonus = 0)
+        {
+            var basis = profile.AtLevel(level);
+            var original = profile.AtLevel(1);
+            var weapon = profile.WeaponId;
+            var radiusMastery = weapon switch
+            {
+                "fire_pillar" => masteryFour,
+                "cross" or "daniel_lion" => masteryFive,
+                _ => false,
+            };
+            var radiusBonus = (weapon == "cross" ? collisionBonus : bonuses.AreaBonus) + (radiusMastery ? .10 : 0);
+            if (weapon == "lightning" || weapon == "fire_pillar") radiusBonus += bonuses.PlacedRadiusBonus;
+            if (weapon == "fire_pillar") radiusBonus += bonuses.RegionShapeBonus;
+            var reachBonus = bonuses.AreaBonus +
+                (weapon == "wilderness_voice" ? .20 * specialization + (masteryFour ? .10 : 0) : 0);
+            var widthBonus = bonuses.AreaBonus + (weapon == "elijah_chariot" && masteryFour ? .10 : 0);
+            var speedBonus = (weapon == "daniel_lion" ? 0 : bonuses.ProjectileSpeedBonus) +
+                (weapon == "moses_staff" && masteryFive || weapon == "daniel_lion" && masteryFour ? .12 : 0);
+            var travelBonus = bonuses.TravelDistanceBonus + ((weapon == "moses_staff" || weapon == "cross") && masteryFour ? .12 : 0);
+            var delayAdvance = masteryFive && (weapon == "wilderness_voice" || weapon == "fire_pillar" ||
+                weapon == "elijah_chariot") ? .08 : 0;
+            return new CombatStats
+            {
+                Damage = Math.Max(1, basis.Damage * Math.Min(2.25, 1 + bonuses.DamageBonus)),
+                UncappedDamage = basis.Damage * (1 + bonuses.DamageBonus),
+                OriginalBaseDamage = basis.Damage,
+                Cycle = Math.Max(.15, basis.Cycle * Math.Max(.20, 1 - bonuses.CooldownReduction)),
+                Amount = Math.Min(profile.MaximumOriginalAmount, basis.Amount + bonuses.ExtraAmount),
+                AttackRadius = Math.Min(original.Radius * 2.5, basis.Radius + original.Radius * radiusBonus),
+                AttackReach = Math.Min(original.Reach * 2.5, basis.Reach + original.Reach * reachBonus),
+                AttackWidth = Math.Min(original.Width * 2.5, basis.Width + original.Width * widthBonus),
+                Duration = basis.Duration * Math.Min(1.75, 1 + bonuses.DurationBonus),
+                AttackSpeed = basis.Speed * Math.Min(1.75, 1 + speedBonus),
+                AttackTravelDistance = profile.TravelDistance * (1 + travelBonus),
+                AttackDelayAdvance = delayAdvance,
+            };
         }
     }
     public sealed class AttackEmission

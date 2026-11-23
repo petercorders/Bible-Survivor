@@ -1,0 +1,52 @@
+# 영구 스킬 #47 개발 상태
+
+창세기부터 R180까지 설치된 캠페인과 공통 120종, 무기 전용 300종의 첫 출시 범위를 대상으로 한다. 설계는 Draft #43의 0d020b5fbce79a5f4112eca7cc2b3c87c085066e, 기존 개발 기준은 71800d9165244934260c0ea2cd6216a5faec7804다.
+
+| 확인 | 상태 | 재현 |
+|---|---|---|
+| 카탈로그 | 420개 ID, 442 구매 단계, 22개 트리와 378,050골드. 선행 도달·R60/R180 투자 표본·레거시 가격 일치 | Core PermanentSkillCatalogTests |
+| 저장 거래 | 스키마 1~3의 읽기와 원본 보관, 표시한 가격·랭크·환불 목록 검증, 원래 단가 환불, 동일 요청, 오류 후 주 파일 재확인 | Core PermanentSkillSaveTests |
+| 전체 거래 원장 | 통제 프로필에서 442단계 모두 순차 거래하고 중간마다 재개. 총 378,050골드 환불과 멱등 재시도, 거래 전후 새 도전의 랭크 고정을 확인 | Core PermanentSkillSaveTests |
+| 초기 효과 | P01 0.74 거리 보석, P02 물맷돌 기본 연사 저장·재개, 진화형 8발 계산. 체력·방어 단계의 합산 조건 | Core PermanentSkillCombatTests |
+| 공통 효과 | 회복·기동·경험치·수집을 실제 전투에 연결. 이동 방향·보석·원본 처치·즉시 회복 상태를 보존하고 다음 라운드에서 초기화 | Core PermanentSkillCombatTests 및 PermanentRecoveryRulesTests |
+| 공통 치명타 | 첫 원본 적중, 정예·보스, 체력, 거리, 무이동, 연속 표식을 조건으로 확률과 배율을 적용. 거리는 플레이어에서 대상까지 계산하고, 같은 무기의 연속 세 원본 적중마다 표식을 갱신. 무기별 난수와 순번·표식을 저장 | Core PermanentSkillCombatTests의 턱뼈 실타격 및 복원 |
+| 공통 원본 피해 | 정예·보스, 첫 원본, 내 체력·대상 체력, 세 번째 대상, 피격, 거리와 연속 표식을 가산. 모든 장착 무기가 원본 기본 피해와 대상 순서를 전달하고 예약 상태를 저장 | Core 원본 규칙, 턱뼈와 예약 번개 실타격, 무기별 기본 피해 및 순번 재생 |
+| 신규 무기 | 7종의 기본·진화 상태와 공격 전략. R03 통제 시험에서 각 형태를 장착해 월드 저장 후 같은 입력으로 복원 | Core ExpandedWeaponProgressionTests와 무기별 시험 |
+| 무기 기초 효과 | 10종 무기의 기초 1~5를 연결. 성경 첫 주기와 진화 파동, 턱뼈 외곽 타격, 투사체 치수·속력, 번개·외침·불기둥·병거의 예약 상태를 확인 | Core PermanentSkillCombatTests 및 무기별 시험 |
+| 추가 무기 분기 | 성경 회전, 턱뼈 반각, 물맷돌 조준·치명, 번개 표적·연쇄, 외침과 불기둥 효과, 지팡이 진화 수로, 십자가 구간별 속력·예산, 사자 표적·첫 공격·도약 | Core PermanentSkillCombatTests 및 무기별 시험 |
+| 공통 투사체 | 속력·충돌 반경·유한 관통. 물맷돌과 십자가에 일관되게 연결하고 물맷돌의 비행 거리와 저장된 관통 상태를 확인 | Core PermanentSkillCombatTests |
+| 곧은 궤적 | 십자가의 표적 지정 부채꼴 편차 12°→10.8°, 지팡이의 정예 조준 편차 5°→4.5°. 방향 발사와 단일 정조준 각도 유지 | [#47 Q2 결정](https://github.com/petercorders/Bible-Survivor/issues/47#issuecomment-7095019041), PermanentSkillCombatTests의 가장자리 적중 및 비행 중 저장 재생, PermanentShotRulesTests의 단일·무표적·같은 위치 표적 |
+| 공통 공격 주기 | 최초 원본 공격, 피격, 경과 시간, 정예 처치, 무피격 누적, 보스 본체 활성, 연사 및 원본 반복 간격을 새 도전의 실제 공격 일정에 반영 | Core PermanentSkillCombatTests와 PermanentTempoRulesTests |
+| 불수레 추가 효과 | 주행 거리·평행 간격·차체 밀침과 진화 회오리 반경·불길 수명을 저장하고 Unity 경계 표시가 해당 개체의 값을 읽음 | Core ExpandedElijahChariotTests 및 PermanentSkillCombatTests |
+| 번개·십자가·불기둥 추가 효과 | 번개 강타와 정예 천둥, 십자가 전진·귀환 잔광과 정예 후속 효과, 불기둥 자연 종료 잔불·재 및 다섯 번째 근접 불자리 | Core 무기별 시험, 저장 재개 및 보조 슬롯 거절 |
+| 번개·십자가 후속 갈래 | 번개 전도·지면 전류·진화 연쇄, 십자가 추가 왕복·궤적 교차·반환점 회전. 접촉 후속 공격은 해당 원본의 치명 전 피해를 읽고 원본과 보조 슬롯을 구분 | Core ExpandedLightningTests·ExpandedCrossTests, 계수 변이 및 실제 도전 저장 |
+| 보스 진입 순서 | 번개·십자가·불기둥의 주기와 번개 낙점 순번을 유지하며 준비된 일반 웨이브 공격을 제거. 이어하기로 다시 발생하지 않는 것을 확인 | Core PermanentSkillCombatTests의 R03 일반 전투→보스 인트로→보스 |
+| 지팡이·불수레 방어·추가 화염 | 원본 물결과 차체의 실제 적탄 접촉에 별도 확률 스트림을 사용. 기존 순서에서 살아남은 이동체만 제거하며 전역 성공 대기와 무기별 대기를 검증 | Core 무기별 변이 및 저장 복원, 실제 프로그램의 이동체 한도 시험 진행 |
+| 불기둥 추가 갈래 | 대상별 연속 체류 틱, 채택 원본을 바탕으로 한 불씨와 후속 불자리, 선형 연결과 일반 처치 후 다음 주기의 반경 강화. 오래된 저장과 적중 시각의 반올림을 검증 | Core ExpandedFirePillarTests 및 체크포인트 재생 |
+| 턱뼈 기술·밀침 | 예정된 두 번째 반전과 주기별 보조 타격, 내려찍기, 정예 표식, 강한 손목과 충격파. 반전 직전 저장을 불러와 동일한 적중과 방향을 확인 | Core ExpandedJawboneRanksTests, PermanentSkillCombatTests |
+| 진화 불기둥·사자 | 불기둥의 군집 이동 가속·외곽 틱·이동 불자리를 연결. 사자는 도약 조준과 추적 전환, 체력 조건, 협동 할퀴기와 표식을 실제 적중 처리와 저장에 연결 | Core 무기별 직렬화·변이 재현, Player 화면 별도 검증 |
+| 조건부 타격 치수 | 저체력 및 플레이어 근처 6명 기준에서 타격 치수 갱신. 턱뼈 최근 실타격 도달을 저장해 Unity가 읽음 | Core 구매 전후 5·6명 비교와 진화형 실타격 저장 |
+| 공통 공격 범위 | 타격 치수, 근접 반각, 편도 거리, 지정 위치 원형 반경, 회전 거리 및 발사체 충돌 반경을 구분. 물결·불수레에도 편도 거리를 적용하고 이동 중 생긴 잔불에는 지정 위치 보너스를 적용하지 않음 | Core 무기별 시험과 PermanentSkillCombatTests의 월드 재개 |
+| 사자 추가 효과 | 개별 포효 일정·반경·밀침·타격 대기, 진화 마지막 도약 처치의 추가 도약과 진화 할퀴기 반경을 연결 | Core ExpandedDanielLionTests 및 PermanentSkillCombatTests |
+| 외침·불기둥·물맷돌 추가 효과 | 외침의 잠긴 조준과 주기·추가 메아리, 불기둥의 이동 예측·설치 거리·피해·진화 감속, 물맷돌의 연사·치명 배율·관통을 연결. 진화 외침의 방향 보너스는 전방 기준으로 계산하고 추가 메아리는 마지막 기본 메아리의 반경을 사용 | Core 무기별 시험, 보스 입장과 발사체 체크포인트 |
+| 추가 치수·기간·경로 | 저체력 원본 지속과 진화 잔류 지속을 합산. 십자가는 귀환 시작을 반시계 20°로 정해 0.4초에 걸쳐 직선 추적으로 돌아오고, 불수레는 조준·수렴·개별 예고 시차를 기록 | Core 무기별 시험과 월드 재개 |
+| 전역 예약 | 원본 발사체 192칸과 보조 구역 16칸을 공유하는 출시 경로의 일부를 상한에 맞추고, 병거 보조 슬롯 부족 시 차체를 유지. 현재 연결된 경로의 원본·보조 억제 건수를 저장 | Core ExpandedElijahChariotTests, ExpandedFirePillarTests 및 월드 재개 |
+| 설치 캠페인 | v2에서 180개 라운드와 보스 60개를 통제 입력으로 진행. 책 진입과 대표 보스 월드·보상·R180 정산을 저장 후 복원 | Core ExpandedCampaignReplayTests |
+| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 420개 ID·442개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
+| 물맷돌 분기 | 순환 표적, 동시 연사 적중, 도탄과 귀환, 관통 파열, 진화 연사와 예약 치명을 전투에서 처리. 도탄이 이동 중인 저장을 다시 열어 같은 보조 적중을 확인 | Core PermanentSkillCombatTests 및 월드 재생 |
+| 성경 궤도와 외침 집계 | 밀집 방향 외곽과 지정 책 한 권의 안쪽·역회전 경로를 화면과 공유하고, 실제 적중으로 외침 표식·마무리·대상별 반복을 집계 | Core ExpandedBibleRanksTests·ExpandedWildernessVoiceTests |
+| 성경·턱뼈·외침 분기 | 성경의 원본 책·페이지·잉크·방어·파동·성역, 턱뼈 조건부 연사·전체 반경·밀침 충돌·회복, 외침의 원본 처치·피격과 적탄 상쇄. 일반 웨이브에서 보스에 진입할 때 대상과 이전 공격을 비우고 발동 순번과 상태를 보존 | ExpandedBibleLifecycleTests·ExpandedBibleSupportsTests·ExpandedBibleEvolutionTests·ExpandedJawboneRanksTests·ExpandedWildernessVoiceTests, PermanentSkillCombatTests의 R03 보스 인트로 저장 |
+| 공통 지속 활성화 | 성경·외침·불기둥의 첫 지속체, 원본 처치에 의한 기간 연장, 불자리 밀집 조건, 십자가의 귀환 기한, 진화 원본 지속 | PermanentSkillCombatTests와 각 무기 코어 시험 |
+| 전체 랭크 전투 체크포인트 | 전체 442단계 투자 프로필에서 무기 6칸 조합 두 가지의 R03 기본형·진화형을 각각 20번 저장하고, 동일 입력으로 재생해 전투 상태를 비교 | PermanentSkillCombatTests의 Every purchased rank survives mixed six-weapon checkpoints in both forms |
+| 확인 대기 | 효과별 단독 조합, 밀집 전투 실시간 전환, 장치 입력·모바일 | 고정 설계 save-and-acceptance.md |
+
+기준 Unity PlayMode는 38/40이며 #46의 두 시각 효과 단정을 같은 기준본에서 다시 확인했다. 변경 빌드의 전체 결과는 별도로 기록한다. macOS QA Player는 독립 저장 경로에서 실제 키보드로 구매·환불 확인과 각각의 취소를 시험했다. 테스트 잔액은 600 → 500 → 600이었다. 660×440 Editor 포인터 시험은 일시정지에서 진입해 선행 이동과 구매·환불의 확인과 취소를 재현했다. 기존 v1 도전은 시간과 ID를 유지하고 재개했다.
+
+`python3 tools/report_permanent_skill_coverage.py`로 442개 구매 단계의 명세·가격·상점 연결·실행 경로를 TSV로 출력한다. 상점 연결과 단계별 인수 검증은 각각 기록한다.
+
+Claude Design 담당은 UI·무기 시안 14개를 제작했다. [#47 결정](https://github.com/petercorders/Bible-Survivor/issues/47#issuecomment-7092122492)에 따라 잉크·청동 UI와 아이콘, 기본 사자 32×32, 수호자 48×48의 제작 원본을 요청했다. Unity의 검증용 윤곽선은 실제 저효과 판정 경계의 기반이며 63개 제작 원본의 오프라인 계약 검사가 끝났다. 독립 QA는 macOS Player 두 종류의 6슬롯 구성에서 7무기와 기본·진화, 일반·저효과를 확인했다. 검수된 63개 원본을 Unity에 등록했다. 1280×720 재검증에서 다섯 포커스 테두리와 발이 같은 사자 두 종을 구분했다. 좁은 화면에서 다섯 상태 비교, 실시간 겹침 전환, 사례별 프레임, 장치 입력과 성능은 남아 있다.
+
+번개 `weapon.lightning.a.03`은 승인대로 최초 고유 배정을 유지하고 후보가 부족하면 직전 표적에서 가장 먼 후보에 재배정한다. 유효 후보가 두 명이면 두 표적을 순환하고, 세 명이면 네 번째 낙점이 기본 순환과 달라질 수 있다. `a.04` 재조준은 새 후보를 우선하며, 선택에 사용한 이전 표적과 예정된 착탄 시각을 저장한다.
+
+
+[#44 UI Draft](https://github.com/petercorders/Bible-Survivor/pull/44)의 비교 기준은 3405908d68f7c3b29a7554ac3b4f463387f495d2다. 현재 #47 개발 빌드에는 해당 SHA가 들어 있지 않다. 공통 접점은 AdamGame, AdamArtWorld, AdamChoiceText와 Host·라운드 UI 시험이다. #47에서 제목·일시정지 진입, Enter 포커스 우선순위, 일시정지 및 재개, 성장 선택, 화면 크기 변경을 검증한다. 두 변경을 포함하는 빌드의 통합 회귀는 이후 검증 대상으로 남긴다.

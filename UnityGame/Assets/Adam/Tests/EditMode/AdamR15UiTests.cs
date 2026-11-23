@@ -138,7 +138,7 @@ public sealed class AdamR15UiTests
             game.SetLifecycle(false,true);game.SelectSlot(slot);game.EnterCommand();
             CollectionAssert.AreEqual(run,Bytes(h.State.Run));
             game.SetLifecycle(true,false);game.SelectSlot(slot);var newId=h.State.Run.RunId;
-            Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreEqual(2,h.State.SchemaVersion);
+            Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreEqual(SaveFormat.CurrentVersion,h.State.SchemaVersion);Assert.AreEqual(2,h.Session.CombatRulesVersion);
             Assert.AreNotEqual(id,newId);Assert.IsTrue(h.Session.Inventory.Weapons.ContainsKey(AdamGame.Weapons[slot]));
             CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));Assert.IsFalse(h.ExodusComplete);
             game.SelectSlot((slot+1)%3);game.EnterCommand();Assert.AreEqual(newId,h.State.Run.RunId);

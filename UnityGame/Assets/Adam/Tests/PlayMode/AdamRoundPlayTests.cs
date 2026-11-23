@@ -110,7 +110,12 @@ public sealed class AdamRoundPlayTests
         CompleteR01();var host=game.Host;host.SetPaused(false);
         for(var i=0;i<20 && host.World.Capture().Enemies.Count<2;i++)host.Tick(.1);
         host.Checkpoint();var path=Path.Combine(directory,"save.json");var store=new SaveStore(path);var state=store.Load();
-        foreach(var e in state.Run.World.Enemies){var angle=weapon=="bible"?(state.Run.World.Time+1d/60)*2.5:0;e.X=(float)Math.Cos(angle)*1.4f;e.Y=(float)Math.Sin(angle)*1.4f;}state.Run.World.Weapons.Clear();state.Run.Weapons.Clear();state.Run.Weapons.Add(weapon,1);store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));
+        foreach(var e in state.Run.World.Enemies){var angle=weapon=="bible"?(state.Run.World.Time+1d/60)*2.5:0;e.X=(float)Math.Cos(angle)*1.4f;e.Y=(float)Math.Sin(angle)*1.4f;}
+        state.Run.World.Weapons.Clear();
+        state.Run.World.Projectiles.Clear();
+        state.Run.Weapons.Clear();
+        state.Run.Weapons.Add(weapon,1);
+        store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));
         game.enabled=false;string expected=null;
         foreach(var enabled in new[]{false,true})
         {
@@ -282,9 +287,9 @@ public sealed class AdamRoundPlayTests
     }
     [UnityTest]public IEnumerator R10DigitAndEnterInOneFrameUseExplicitNewChallengeOnly()
     {
-        var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(host.State.Profile);game.Initialize(host);game.SetLifecycle(true,false);yield return null;
+        var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(SaveStore.PreviewPermanentProfile(host.State));game.Initialize(host);game.SetLifecycle(true,false);yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
-        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(2,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+        Assert.AreEqual(1,host.Session.RoundNumber);Assert.AreNotEqual(old,host.State.Run.RunId);Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);Assert.AreEqual(2,host.Session.CombatRulesVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
     }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}

@@ -21,7 +21,8 @@ public sealed class AdamImpactTests
         foreach(var enemy in snapshot.Enemies){enemy.X=1;enemy.Y=0;}
         // Two actual swept projectiles plus the jawbone hit land in the same Core step.
         snapshot.NextProjectileId=3;
-        for(var i=1;i<=2;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=.8f,VelocityX=100,Lifetime=1,Damage=lethal?1000:.1,RemainingPierce=1,Radius=.1});
+        for(var i=1;i<=2;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=.8f,
+            VelocityX=(float)snapshot.Tuning.SlingSpeed,Lifetime=1,Damage=lethal?1000:.1,RemainingPierce=1,Radius=.1});
         snapshot.Weapons.Clear();snapshot.Weapons.Add(new BattleWeaponState{WeaponId="jawbone",NextCycle=100});
         store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Assert.IsTrue(host.Reload(),host.Error);host.SetPaused(false);return host;
     }

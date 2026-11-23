@@ -24,7 +24,7 @@ namespace BibleSurvivor.Core
                 if (info.Length > SaveFormat.MaximumBytes) throw new InvalidDataException("Legacy source too large to archive");
                 var bytes = File.ReadAllBytes(pair.Source);
                 files.Add(pair.Name, bytes);
-                metadata.Files.Add(Describe(pair.Name, bytes));
+                metadata.Files.Add(Describe(pair.Name, bytes, maximumVersion: 2));
             }
             if (files.Count == 0) throw new InvalidDataException("Legacy migration requires original bytes");
             using (var output = new MemoryStream())
@@ -35,6 +35,35 @@ namespace BibleSurvivor.Core
             var destination = path + ".pre-v2";
             if (Directory.Exists(destination)) { VerifyPublishedArchive(destination); return; }
             if (File.Exists(destination)) throw new IOException("Legacy archive path already exists as a file");
+            Publish(destination, files, beforePublish);
+        }
+
+        internal static void EnsureSkillTree(string path, int sourceVersion, byte[] source, Action? beforePublish)
+        {
+            var files = new Dictionary<string, byte[]> { ["source.json"] = source };
+            if (File.Exists(path + ".bak"))
+            {
+                if (new FileInfo(path + ".bak").Length > SaveFormat.MaximumBytes)
+                    throw new InvalidDataException("Legacy backup too large to archive");
+                files.Add("backup.json", File.ReadAllBytes(path + ".bak"));
+            }
+            var validatedSource = Describe("source.json", source);
+            if (validatedSource.Validity != "valid" || validatedSource.SchemaVersion != sourceVersion)
+                throw new InvalidDataException("Permanent skill migration requires a validated original");
+            var metadata = new ArchiveMetadata { Files = new List<ArchiveFile> { validatedSource } };
+            if (files.TryGetValue("backup.json", out var backup))
+                metadata.Files.Add(Describe("backup.json", backup));
+            using var output = new MemoryStream();
+            new DataContractJsonSerializer(typeof(ArchiveMetadata)).WriteObject(output, metadata);
+            var manifest = output.ToArray();
+            files.Add("manifest.json", manifest);
+            var destination = path + ".pre-skilltree-v" + sourceVersion + "-" + Hash(manifest);
+            if (Directory.Exists(destination)) { Verify(destination, files); return; }
+            Publish(destination, files, beforePublish);
+        }
+
+        private static void Publish(string destination, Dictionary<string, byte[]> files, Action? beforePublish)
+        {
             var temporary = destination + ".tmp-" + Guid.NewGuid().ToString("N");
             Directory.CreateDirectory(temporary);
             try
@@ -98,12 +127,18 @@ namespace BibleSurvivor.Core
             }
         }
 
-        private static ArchiveFile Describe(string name, byte[] bytes)
+        private static ArchiveFile Describe(string name, byte[] bytes, int maximumVersion = SaveFormat.CurrentVersion)
         {
             var result = new ArchiveFile { Name = name, Sha256 = Hash(bytes), Validity = "invalid" };
             try
             {
                 result.SchemaVersion = SaveFormat.Probe(bytes);
+                if (result.SchemaVersion > maximumVersion)
+                {
+                    result.SchemaVersion = 0;
+                    result.Validity = "future";
+                    return result;
+                }
                 using var input = new MemoryStream(bytes);
                 var state = new DataContractJsonSerializer(typeof(GameSnapshot)).ReadObject(input) as GameSnapshot;
                 if (state == null) return result;

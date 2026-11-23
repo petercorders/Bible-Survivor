@@ -41,7 +41,7 @@ public sealed class AdamR14HostTests
     {
         var h=Start(path);if(death)h.Session.Damage(100000);else h.Session.Advance(180);Assert.IsTrue(h.Checkpoint(),h.Error);var profile=Bytes(h.State.Profile);var id=h.State.Run?.RunId;var run=Bytes(h.State.Run);var disk=File.ReadAllBytes(path);h=new AdamHost(AdamCatalog.Load(),new SaveStore(path));h.Tick(30);CollectionAssert.AreEqual(run,Bytes(h.State.Run));CollectionAssert.AreEqual(disk,File.ReadAllBytes(path));Assert.IsFalse(h.TryEnterExodus());
         if(!death){Assert.IsFalse(h.ContentComplete);Assert.IsTrue(h.AwaitingR15);Assert.AreEqual(15,h.State.Run.RoundNumber);var fourth=Bytes(h.State.Run.CompletedFourthBoss);h.SetPaused(false);Assert.AreEqual(15,h.Session.RoundNumber);CollectionAssert.AreEqual(fourth,Bytes(h.State.Run.CompletedFourthBoss));CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));return;}
-        h.Start("sling");Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreEqual(2,h.State.SchemaVersion);Assert.IsNull(h.State.Run.CompletedFourthBoss);Assert.AreNotEqual(id,h.State.Run.RunId);CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));
+        h.Start("sling");Assert.AreEqual(1,h.Session.RoundNumber);Assert.AreEqual(SaveFormat.CurrentVersion,h.State.SchemaVersion);Assert.AreEqual(2,h.Session.CombatRulesVersion);Assert.IsNull(h.State.Run.CompletedFourthBoss);Assert.AreNotEqual(id,h.State.Run.RunId);CollectionAssert.AreEqual(profile,Bytes(h.State.Profile));
     }
     [Test]public void CanonicalRound14SpeedsAndCheckpointKeepAllEarlierFingerprintsAndReject15Combat()
     {

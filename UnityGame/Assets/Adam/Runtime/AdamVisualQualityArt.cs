@@ -29,9 +29,11 @@ namespace BibleSurvivor.Unity
         public static readonly string[] Bundles={"UI","World","Effects"};
         static readonly List<UnityEngine.Object> ownedPresentation=new List<UnityEngine.Object>();
         static AdamVisualQualityArt(){Application.quitting+=Release;}
+        public const string Issue47Root = "Issue47Weapons/";
+        public const string Issue47ManifestSha = "57da9f519f73a19f45226a414ee348c8a23efc333d34e1818555d4ff0e179995";
         static Dictionary<string,AdamArtClip> clips;
         static Dictionary<string,Sprite[]> sprites;
-        public static string ManifestSha(string bundle)=>bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:bundle=="Frontispiece03"?FrontispieceManifestSha:bundle=="Book03"?BookManifestSha:bundle=="Polish02"?PolishManifestSha:throw new InvalidOperationException("Unknown visual bundle");
+        public static string ManifestSha(string bundle)=>bundle=="Issue47"?Issue47ManifestSha:bundle=="UI"?UiManifestSha:bundle=="World"?WorldManifestSha:bundle=="Effects"?EffectsManifestSha:bundle=="Frontispiece03"?FrontispieceManifestSha:bundle=="Book03"?BookManifestSha:bundle=="Polish02"?PolishManifestSha:throw new InvalidOperationException("Unknown visual bundle");
         public static string[] Ids(string bundle)
         {
             switch(bundle)
@@ -39,6 +41,30 @@ namespace BibleSurvivor.Unity
                 case "UI":return new[]{"ui_panel_9slice_16","ui_card_9slice_24","ui_button_9slice_16","ui_arrow_6x9","ui_slot_18","ui_pip_2","ui_bar-frame_9slice_8x6","ui_bar-hp_tile_1x2","ui_bar-xp_tile_1x4","ui_swatch_12","ui_badge-evolve_8","ui_keycap_9slice_12","ui_chip_9slice_8","ui_bar-boss_tile_1x4","ui_rule_tile_2x1"};
                 case "World":return new[]{"til_eden_grass-a_static_32","til_eden_grass-b_static_32","til_eden_grass-c_static_32","til_eden_grass-d_static_32","til_eden_meadow-a_static_32","til_eden_meadow-b_static_32","til_eden_path-16mask_static_32","fx_shadow_static_16x6","fx_shadow-snake_static_20x4","fx_shadow-wide_static_24x6","fx_shadow-small_static_12x4","dec_eden_canopy-shade_static_64"};
                 case "Effects":return new[]{"fx_hit-spark_hit_16","fx_enemy-death_burst_32","fx_jawbone-swing-trail_hit_64","fx_jawbone-swing-edge_hit_64"};
+                case "Issue47": return new[]
+                {
+                    "ico_wpn_moses-staff_static_32", "ico_evo_red-sea-path_static_32", "ico_wpn_wilderness-voice_static_32",
+                    "ico_evo_wilderness-proclamation_static_32", "ico_wpn_lightning_static_32", "ico_evo_thunder-judgment_static_32",
+                    "ico_wpn_fire-pillar_static_32", "ico_evo_wilderness-guidance_static_32", "ico_wpn_daniel-lion_static_32",
+                    "ico_evo_den-guardian_static_32", "ico_wpn_cross_static_32", "ico_evo_passion-radiance_static_32",
+                    "ico_wpn_elijah-chariot_static_32", "ico_evo_ascending-chariot_static_32", "ui_skill-node_9slice_16",
+                    "ico_ui_link_static_16", "ico_ui_diamond_static_16", "ico_ui_round_static_16",
+                    "ico_ui_lock_static_16", "ico_ui_check_static_16", "ico_ui_cross_static_16",
+                    "ico_ui_question_static_16", "ico_ui_refresh_static_16", "wpn_daniel-lion_walk_32",
+                    "wpn_daniel-lion_return_32", "wpn_daniel-lion_roar_32", "fx_daniel-lion_claw_32",
+                    "fx_daniel-lion_roar-piece_32", "wpn_den-guardian_walk_48", "wpn_den-guardian_leap_48",
+                    "wpn_den-guardian_roar_48", "wpn_den-guardian_return_48", "fx_wilderness-voice_mouth_32",
+                    "fx_wilderness-voice_crest_32", "fx_wilderness-voice_aim-lock_32", "fx_wilderness-proclamation_echo-1_32",
+                    "fx_wilderness-proclamation_echo-2_32", "fx_wilderness-proclamation_echo-3_32", "fx_lightning-mark_32",
+                    "fx_lightning-bolt_64", "fx_lightning-flash_64", "fx_thunder-judgment_chain-node_32",
+                    "fx_thunder-judgment_wave-spark_32", "wpn_moses-staff_wave_32", "fx_moses-staff_hit_32",
+                    "fx_moses-staff_wave-end_32", "fx_red-sea-path_channel_32", "fx_fire-pillar_ignite_64",
+                    "fx_fire-pillar_column_64", "fx_fire-pillar_column-end_64", "fx_wilderness-guidance_column-move_64",
+                    "fx_wilderness-guidance_ember_32", "wpn_cross_fly-out_32", "wpn_cross_fly-back_32",
+                    "fx_cross_hit_32", "fx_cross_recover_32", "fx_passion-radiance_thorn_32",
+                    "fx_elijah-chariot_lane_32", "fx_elijah-chariot_lane-end_32", "wpn_elijah-chariot_body_64",
+                    "fx_elijah-chariot_end_64", "fx_ascending-chariot_whirl-piece_32", "fx_ascending-chariot_flame_32"
+                };
                 case "Frontispiece03":return new[]{"bg_book-horizon_static_400x55","ui_band-fade_static_16x55"};
                 case "Book03":return new[]{"til_exodus_sand-a_static_32","til_exodus_sand-b_static_32","til_exodus_sand-c_static_32","til_exodus_sand-d_static_32","til_exodus_flag-a_static_32","til_exodus_flag-b_static_32","til_exodus_path-16mask_static_32","dec_exodus_pebbles-1_11x8","dec_exodus_scrub-1_16x10","dec_ground-hollow_static_64","ui_book-crest_static_32"};
                 case "Polish02":return new[]{"ico_wpn_bible_emblem_32","ico_wpn_jawbone_emblem_32","ico_wpn_sling_emblem_32","ico_atk-shape_static_16","ui_focus-bracket_9slice_12","fx_jawbone-thud_hit_24","fx_sling-windup_loop_24","fx_sling-crack_hit_16","fx_bible-page-flare_hit_16"};
@@ -81,9 +107,10 @@ namespace BibleSurvivor.Unity
             if(Resources.Load<TextAsset>(PolishRoot+"manifest")!=null)bundles.Add("Polish02");
             if(Resources.Load<TextAsset>(BookRoot+"manifest")!=null)bundles.Add("Book03");
             if(Resources.Load<TextAsset>(FrontispieceRoot+"manifest")!=null)bundles.Add("Frontispiece03");
+            if(Resources.Load<TextAsset>(Issue47Root+"manifest")!=null)bundles.Add("Issue47");
             foreach(var bundle in bundles)
             {
-                var path=bundle=="Frontispiece03"?FrontispieceRoot:bundle=="Book03"?BookRoot:bundle=="Polish02"?PolishRoot:Root+bundle+"/";
+                var path=bundle=="Issue47"?Issue47Root:bundle=="Frontispiece03"?FrontispieceRoot:bundle=="Book03"?BookRoot:bundle=="Polish02"?PolishRoot:Root+bundle+"/";
                 var text=Resources.Load<TextAsset>(path+"manifest");if(text==null)throw new InvalidOperationException("Missing visual manifest "+bundle);
                 foreach(var a in Parse(text.bytes,bundle).assets)
                 {

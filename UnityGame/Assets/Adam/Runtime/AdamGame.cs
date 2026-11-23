@@ -8,7 +8,7 @@ using EnhancedTouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace BibleSurvivor.Unity
 {
-    public sealed class AdamGame : MonoBehaviour
+    public sealed partial class AdamGame : MonoBehaviour
     {
         public bool AutoInitialize = true;
         public AdamHost Host { get; private set; }
@@ -36,7 +36,7 @@ namespace BibleSurvivor.Unity
         string startIdentity;
         bool UiMotionEnabled=>ArtWorld.FeedbackEnabled&&AdamHud.PolishEnabled;
         public int StartFocus=>startStage.Focus;
-        public bool StartStageAvailable=>AdamHud.PolishEnabled&&Host!=null&&Host.Error==null&&!Host.Suspended&&!DeathPresentationVisible&&
+        public bool StartStageAvailable=>AdamHud.PolishEnabled&&Host!=null&&!Host.PermanentSkillsOpen&&Host.Error==null&&!Host.Suspended&&!DeathPresentationVisible&&
             (Host.Session==null||(!Host.Session.IsActive&&Host.Session.CurrentHealth<=0&&Host.Session.PendingChoices.Count==0&&
             Host.Session.Stage!="boss_reward"&&Host.Session.Stage!="boss_settlement"&&Host.Session.Stage!="round_settlement"&&
             !Host.BookComplete&&!Host.AwaitingNextRound));
@@ -126,6 +126,12 @@ namespace BibleSurvivor.Unity
 #endif
             previousTouchSafe = safe;
             var keys = Keyboard.current;
+            if (HandlePermanentSkillInput(keys))
+            {
+                Host.SetMovement(Vector2.zero);
+                UpdatePresentation(Time.unscaledDeltaTime);
+                return;
+            }
             var identity=StartStageAvailable?(Host.Session==null?"start":"death"):"";
             if(identity!=startIdentity){startIdentity=identity;startStage.Reset();}
             if(StartStageAvailable&&keys!=null)
@@ -202,7 +208,8 @@ namespace BibleSurvivor.Unity
         }
         public void EnterCommand()
         {
-            if(Host==null||Host.Error!=null||Host.Suspended||commandFrame==Time.frameCount)return;
+            if(Host==null||Host.PermanentSkillsOpen||Host.Error!=null||Host.Suspended||commandFrame==Time.frameCount)return;
+            if(PermanentSkillEntryHasFocus){OpenPermanentSkillMenu(SkillEntryScreen);return;}
             if(StartStageAvailable){SelectSlot(startStage.Focus);return;}
             if(Host.CanEnterExodus)EnterExodus();
             else if(Host.CanEnterLeviticus)EnterLeviticus();
@@ -258,7 +265,7 @@ namespace BibleSurvivor.Unity
         }
         public void SelectSlot(int slot)
         {
-            if (Host == null || Host.Error != null || Host.Suspended || DeathPresentationVisible || commandFrame == Time.frameCount || slot < 0 || slot > 2) return;
+            if (Host == null || Host.PermanentSkillsOpen || Host.Error != null || Host.Suspended || DeathPresentationVisible || commandFrame == Time.frameCount || slot < 0 || slot > 2) return;
             commandFrame = Time.frameCount;
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
             if(Host.Session?.Stage=="boss_reward")
@@ -293,6 +300,11 @@ namespace BibleSurvivor.Unity
             var instruction = new GUIStyle(label) { font = mobile?fonts.Body:fonts.Small, fontSize = mobile ? 20 : 16, wordWrap = true, normal = { textColor = AdamHud.Secondary } };
             if (Host == null)
             { GUI.Label(new Rect(30,120,width-60,160),startupError ?? "저장 기록을 불러오는 중…",label);return; }
+            if (Host.PermanentSkillsOpen)
+            {
+                DrawPermanentSkills(width, height);
+                return;
+            }
             var session = Host.Session;
             if(session!=null && !modalOpen){if(AdamHud.PolishEnabled)DrawHud(width,height,session,mobile);else DrawLegacyHud(width,height,session,mobile);}
             var arena = Arena(width,height);
@@ -378,12 +390,13 @@ namespace BibleSurvivor.Unity
                 if(nextChapter!=0)
                 {
                     GUI.enabled=enabled && CanEnterChapter(nextChapter);
-                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),AdamRoundPresentation.StartCard(nextChapter),button))EnterChapter(nextChapter);
+                    if(ArtButton(AdamChoiceText.ChapterAction(panel,0),CompetingEnterHint(AdamRoundPresentation.StartCard(nextChapter)),button))EnterChapter(nextChapter);
                 }
                 GUI.enabled=enabled && !Host.Suspended;
                 for(var i=0;i<3;i++)
                     if(ArtButton(AdamChoiceText.ChapterAction(panel,i+(nextChapter!=0?1:0)),AdamChoiceText.StartCard(Weapons[i],i,true),button,Weapons[i]))SelectSlot(i);
                 GUI.enabled=enabled;
+                DrawPermanentSkillEntry(new Rect(width-184, 8, 168, 36), "책 완료");
             }
             else if (session == null || !session.IsActive)
             {
@@ -394,6 +407,8 @@ namespace BibleSurvivor.Unity
                     Modal(width,height,heading,session==null?"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요":"새 도전은 성장 초기화 · 영구 골드와 해금 유지");
                     for(var i=0;i<3;i++)if(ArtButton(mobile?AdamMobileLayout.StartButton(width,height,i):new Rect(width/2-240,height/2-15+i*58,480,50),AdamChoiceText.StartCard(Weapons[i],i),button,Weapons[i]))SelectSlot(i);
                 }
+                var entryY = AdamHud.PolishEnabled && !mobile ? height - 47 : 8;
+                DrawPermanentSkillEntry(new Rect(width-184, entryY, 168, 38), session == null ? "시작 화면" : "다시 도전");
             }
             else if (Host.Paused || Host.Suspended)
             {
@@ -488,7 +503,7 @@ namespace BibleSurvivor.Unity
             var previous=GUI.enabled;GUI.enabled=previous&&StartStageAvailable;
             for(var i=0;i<3;i++)
             {
-                var hit=AdamStartStage.Card(width,height,i);var focused=startStage.Focus==i;
+                var hit=AdamStartStage.Card(width,height,i);var focused=startStage.Focus==i&&!PermanentSkillEntryHasFocus;
                 var display=AdamStartStage.Visual(hit,focused,uiMotion.Elapsed,ArtWorld.FeedbackEnabled,i);
                 GUI.SetNextControlName("adam:start:"+Weapons[i]);
                 var pointerConfirm=Event.current.isMouse;var clicked=GUI.Button(hit,GUIContent.none,clearButton)&&pointerConfirm;
@@ -512,10 +527,13 @@ namespace BibleSurvivor.Unity
                 if(clicked)SelectSlot(i);
             }
             GUI.enabled=previous;
-            var legend="← → 고르기    Enter "+(death?"새 도전":"시작")+"    1 2 3 바로 "+(death?"새 도전":"시작");
+            var action=death?"새 도전":"시작";
+            var legend=PermanentSkillEntryHasFocus?"← → 무기 고르기    1 2 3 바로 "+action:
+                "← → 고르기    Enter "+action+"    1 2 3 바로 "+action;
             if(AdamBookTitle.Enabled)
                 GUI.Label(new Rect(16,height-68,width-32,22),death?"새 도전은 성장 초기화 · 영구 골드와 해금 유지":"이동하면 자동 공격 · 빛나는 보석을 모아 성장하세요",HudText(16,AdamHud.Secondary,false,TextAnchor.MiddleCenter));
-            GUI.Label(new Rect(16,height-(AdamBookTitle.Enabled?38:58),width-32,26),legend,HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
+            var legendWidth = CanShowPermanentSkillEntry ? width - 210 : width - 32;
+            GUI.Label(new Rect(16,height-(AdamBookTitle.Enabled?38:58),legendWidth,26),legend,HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
         }
         void DrawFocusBracket(Rect rect)
         {
@@ -547,10 +565,7 @@ namespace BibleSurvivor.Unity
             AdamHud.Bar(art,xp,"ui_bar-xp_tile_1x4",AdamHud.Fraction(session.Growth.Experience,required));
             GUI.Label(new Rect(xp.x,63,xp.width,22),$"경험치 {session.Growth.Experience:0.#} / {required}",HudText(16,AdamHud.Muted,false,TextAnchor.MiddleRight));
             var footer=AdamHud.Footer(width,height);AdamHud.Fill(footer,AdamHud.Ink1);AdamHud.Rule(art,new Rect(0,footer.y,width,2),true);
-            var slot=0;foreach(var pair in session.Inventory.Weapons)
-            {AdamHud.Item(art,AdamHud.InventorySlot(height,slot++,true),pair.Key,pair.Value,8,session.Inventory.Forms.ContainsKey(pair.Key),body);}
-            slot=0;foreach(var pair in session.Inventory.Passives)
-            {AdamHud.Item(art,AdamHud.InventorySlot(height,slot++,false),pair.Key,pair.Value,pair.Key=="stones"?2:5,false,HudText(16,AdamHud.Secondary));}
+            DrawInventory(height,session,body);
             var hintX=Mathf.Max(350,width*.5f);var y=height-74;
             Hint(hintX,y,mobile?"드래그":"WASD",mobile?"이동":"이동",mobile?50:42);Hint(hintX+84,y,"Esc","정지",30);Hint(hintX+158,y,"Enter","재개",44);
             Hint(hintX,y+24,"1–3","선택",34);Hint(hintX+80,y+24,"F6",ArtWorld.FeedbackEnabled?"효과 기본":"효과 낮음",26);Hint(hintX+192,y+24,"F7",ImpactAudio?.Muted==true?"소리 끔":"소리 켬",26);
@@ -586,15 +601,28 @@ namespace BibleSurvivor.Unity
             AdamHud.Bar(art,xp,"ui_bar-xp_tile_1x4",AdamHud.Fraction(session.Growth.Experience,required));
             GUI.Label(AdamHud.ExperienceValue(width),$"{session.Growth.Experience:0.#} / {required}",HudText(16,AdamHud.Muted,false,TextAnchor.MiddleRight));
             var footer=AdamHud.Footer(width,height);AdamHud.Fill(footer,AdamHud.Ink1);AdamHud.Rule(art,new Rect(0,footer.y,width,2),true);
-            var slot=0;foreach(var pair in session.Inventory.Weapons)
-            {AdamHud.Item(art,AdamHud.InventorySlot(height,slot++,true),pair.Key,pair.Value,8,session.Inventory.Forms.ContainsKey(pair.Key),body);}
-            slot=0;foreach(var pair in session.Inventory.Passives)
-            {AdamHud.Item(art,AdamHud.InventorySlot(height,slot++,false),pair.Key,pair.Value,pair.Key=="stones"?2:5,false,HudText(16,AdamHud.Secondary));}
+            DrawInventory(height,session,body);
             var hintX=width-136;var y=height-68;
             Hint(hintX,y,mobile?"드래그":"WASD","이동",mobile?50:42);
             var chipX=width-136;
             if(!ArtWorld.FeedbackEnabled){StateChip(new Rect(chipX,height-44,104,24),"효과 낮음");chipX-=112;}
             if(ImpactAudio?.Muted==true)StateChip(new Rect(chipX,height-44,104,24),"소리 끔");
+        }
+        void DrawInventory(float height, AdamSession session, GUIStyle text)
+        {
+            var rules = session.CombatRulesVersion;
+            var slot = 0;
+            foreach (var pair in session.Inventory.Weapons)
+            {
+                var evolved = session.Inventory.Forms.TryGetValue(pair.Key, out var form);
+                var iconId = evolved && rules == 2 && ExpandedWeaponRules.TryGetByEvolution(form, out _) ? form : pair.Key;
+                AdamHud.Item(art, AdamHud.InventorySlot(height, slot++, true, rules), iconId, pair.Value, 8, evolved, text);
+            }
+
+            slot = 0;
+            foreach (var pair in session.Inventory.Passives)
+                AdamHud.Item(art, AdamHud.InventorySlot(height, slot++, false, rules), pair.Key, pair.Value,
+                    pair.Key == "stones" ? 2 : 5, false, text);
         }
         void Hint(float x,float y,string key,string description,float keyWidth)
         {var text=HudText(16,AdamHud.Muted);AdamHud.Key(art,new Rect(x,y,keyWidth,21),key,text);GUI.Label(new Rect(x+keyWidth+4,y,90,21),description,text);}
@@ -627,7 +655,9 @@ namespace BibleSurvivor.Unity
         void DrawPauseOverlay(float width, float height)
         {
             EnsureStyles();
-            if(drawingMobile||!AdamHud.PolishEnabled)Modal(width,height,"일시정지 · 저장됨",drawingMobile?"손가락을 놓은 뒤 아래 재개를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.":"이동 입력을 놓은 뒤 Enter 또는 아래 재개를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.");
+            var resumeInput = PermanentSkillEntryHasFocus ? "아래 재개" : "Enter 또는 아래 재개";
+            var resumeHelp = $"이동 입력을 놓은 뒤 {resumeInput}를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.";
+            if(drawingMobile||!AdamHud.PolishEnabled)Modal(width,height,"일시정지 · 저장됨",drawingMobile?"손가락을 놓은 뒤 아래 재개를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.":resumeHelp);
             else
             {
                 var panel=AdamHud.PausePanel(width,height);FillPanel(panel);AdamHud.Panel(art,MotionRect(panel));
@@ -636,15 +666,20 @@ namespace BibleSurvivor.Unity
                 PauseSetting(AdamHud.PauseSetting(panel,1),"F7","소리",ImpactAudio?.Muted==true?"끔":"켬");
                 PauseSetting(AdamHud.PauseSetting(panel,2),"F8","음량",$"{ImpactAudio?.Volume*100:0}%");
                 PauseSetting(AdamHud.PauseSetting(panel,3),"F9","입자",ImpactParticles?.Enabled==true?"켬":"끔");
-                GUI.Label(MotionRect(new Rect(panel.x+24,panel.y+218,panel.width-48,40)),"이동 입력을 놓은 뒤 Enter 또는 아래 재개를 누르세요.\n앱 중단 중에는 전투 시간이 흐르지 않습니다.",HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
+                GUI.Label(MotionRect(new Rect(panel.x+24,panel.y+218,panel.width-48,40)),resumeHelp,HudText(16,AdamHud.Muted,false,TextAnchor.MiddleCenter));
             }
             var enabled = GUI.enabled;
             GUI.enabled = enabled && Host != null && Host.Error == null && !Host.Suspended;
-            if (ArtButton(AdamHud.PauseResume(width,height,drawingMobile), drawingMobile ? "재개" : "재개 (Enter)", button))
+            if (ArtButton(AdamHud.PauseResume(width,height,drawingMobile), drawingMobile ? "재개" : CompetingEnterHint("재개 (Enter)"), button))
             {
                 ResumePlay(); inputReleased = false; touchStarted = false;
             }
             GUI.enabled = enabled;
+            var resume = AdamHud.PauseResume(width, height, drawingMobile);
+            var entry = width >= 640
+                ? new Rect(resume.xMax + 12, resume.y, width - resume.xMax - 26, resume.height)
+                : new Rect(resume.center.x - 84, resume.yMax + 8, 168, 44);
+            DrawPermanentSkillEntry(entry, "일시정지");
         }
         void PauseSetting(Rect rect,string key,string name,string value)
         {

@@ -6,7 +6,7 @@ using NVector = System.Numerics.Vector2;
 namespace BibleSurvivor.Unity
 {
     // Single-thread owner. Failed commits freeze the exact payload/revision/operation until retry or explicit reload.
-    public sealed class AdamHost
+    public sealed partial class AdamHost
     {
         readonly AdamCatalog catalog;
         readonly SaveStore store;
@@ -24,7 +24,7 @@ namespace BibleSurvivor.Unity
         public bool Paused { get; private set; } = true;
         public bool Suspended { get; private set; }
         public Vector2 Movement { get; private set; }
-        public bool CanPlay => Error == null && !Paused && !Suspended && Session != null && Session.IsActive && Session.PendingChoices.Count == 0;
+        public bool CanPlay => !PermanentSkillsOpen && Error == null && !Paused && !Suspended && Session != null && Session.IsActive && Session.PendingChoices.Count == 0;
         public bool AwaitingR02 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==2 && Session?.RoundNumber==1;
         public bool AwaitingR03 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==3 && Session?.RoundNumber==2;
         public bool AwaitingR04 => State?.Run?.Stage=="between_rounds" && State.Run.RoundNumber==4 && Session?.RoundNumber==3;
@@ -44,7 +44,7 @@ namespace BibleSurvivor.Unity
             State.Run.RoundNumber!=JoshuaContent.GlobalRoundNumber && State.Run.RoundNumber!=JudgesContent.GlobalRoundNumber &&
             State.Run.RoundNumber!=RuthContent.GlobalRoundNumber && State.Run.RoundNumber!=FirstSamuelContent.GlobalRoundNumber &&
             !LaterCampaignBooks.StartsBook(State.Run.RoundNumber) && State.Run.RoundNumber<=catalog.LastInstalledRound;
-        bool CanEnterChapter => Error==null && !Suspended && operation==null && chapterCandidate==null;
+        bool CanEnterChapter => !PermanentSkillsOpen && Error==null && !Suspended && operation==null && chapterCandidate==null;
         public bool CanEnterExodus => CanEnterChapter && catalog.ExodusInstalled && Session?.CanEnterExodus==true;
         public bool LeviticusInstalled => catalog.LeviticusInstalled;
         public bool CanEnterLeviticus => CanEnterChapter && LeviticusInstalled && Session?.CanEnterLeviticus==true;
@@ -83,12 +83,13 @@ namespace BibleSurvivor.Unity
         public bool RuthComplete => Session?.RuthComplete == true;
         // Any completed book or the installed endpoint: the run is kept and a new challenge is a separate choice.
         public bool BookComplete => Session?.ChapterComplete==true || ExodusComplete || LeviticusComplete || NumbersComplete || DeuteronomyComplete || JoshuaComplete || JudgesComplete || RuthComplete || UpcomingLaterBook!=null || ContentComplete;
-        public bool CanStartNew => Error==null && chapterCandidate==null && State!=null &&
+        public bool CanStartNew => !PermanentSkillsOpen && Error==null && chapterCandidate==null && State!=null &&
             (State.Run==null || (BookComplete && Session.PendingChoices.Count==0));
         bool RoundEntryReady => AwaitingNextRound && Session.PendingChoices.Count==0 && completedCheckpoint;
         public AdamHost(AdamCatalog catalog, SaveStore store) { this.catalog = catalog; this.store = store; Reload(); }
         public bool Reload()
         {
+            if (PermanentSkillsOpen) return false;
             try
             {
                 var loaded = store.Load() ?? GameSnapshot.New();
@@ -105,7 +106,8 @@ namespace BibleSurvivor.Unity
         {
             if (Error != null || !CanStartNew || (weapon!="bible" && weapon!="jawbone" && weapon!="sling")) return;
             // Explicit new challenge button only; completed checkpoint is otherwise preserved.
-            State.Run = null;completedCheckpoint=false;
+            State = SaveStore.PrepareNewChallenge(State);
+            completedCheckpoint=false;
             Session = new AdamSession(State, catalog.Definition, weapon);
             World = new BattleWorld(Session, catalog.Speeds, 7);
             Paused = false; Movement = Vector2.zero; Checkpoint();
@@ -152,7 +154,7 @@ namespace BibleSurvivor.Unity
         public void SetMovement(Vector2 value) { Movement = CanPlay ? Vector2.ClampMagnitude(value, 1) : Vector2.zero; }
         public void Tick(double delta)
         {
-            if(Error==null && !Paused && !Suspended)
+            if(!PermanentSkillsOpen && Error==null && !Paused && !Suspended)
             {
                 if(RoundEntryReady){EnterNextRound();return;}
                 if(Session?.Stage=="boss_settlement" && Session.PendingChoices.Count==0){CompleteBossSettlement();return;}
@@ -167,36 +169,36 @@ namespace BibleSurvivor.Unity
         }
         public bool Choose(string id)
         {
-            if (Error != null || Suspended || Session == null || !Session.PendingChoices.ContainsId(id)) return false;
+            if (PermanentSkillsOpen || Error != null || Suspended || Session == null || !Session.PendingChoices.ContainsId(id)) return false;
             var accepted = Session.Choose(id);
             if (accepted) { completedCheckpoint=false;Movement=Vector2.zero;if(Checkpoint() && !Paused && !Suspended && RoundEntryReady)EnterNextRound(); }
             return accepted;
         }
         public bool ChooseBossReward(string rewardId,string candidateId)
         {
-            if(Error!=null || Suspended || Session==null)return false;
+            if(PermanentSkillsOpen || Error!=null || Suspended || Session==null)return false;
             var accepted=Session.ChooseBossReward(rewardId,candidateId);
             if(accepted){Movement=Vector2.zero;Checkpoint();}
             return accepted;
         }
         public bool PromoteBossReward()
         {
-            if(Error!=null || Suspended || Session==null || !Session.PromoteBossReward())return false;
+            if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.PromoteBossReward())return false;
             return Checkpoint();
         }
         public bool CompleteBossSettlement()
         {
-            if(Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
+            if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
             Movement=Vector2.zero;return Checkpoint();
         }
         public bool CompleteNormalSettlement()
         {
-            if(Error!=null || Suspended || Session==null || !Session.CompleteNormalSettlement())return false;
+            if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.CompleteNormalSettlement())return false;
             Movement=Vector2.zero;return Checkpoint();
         }
         public void SetPaused(bool value)
         {
-            if (Error != null) return;
+            if (PermanentSkillsOpen || Error != null) return;
             Paused = value; Movement = Vector2.zero;
             // Host gating preserves world clock; core pause flag is deliberately not used as a second pause owner.
             if (Session != null && Session.IsActive) Session.Pause(false);
@@ -220,16 +222,17 @@ namespace BibleSurvivor.Unity
         public void SetSuspended(bool value)
         {
             Suspended = value; Movement = Vector2.zero;
-            if (value) { Paused = true; Checkpoint(); }
+            if (value) { Paused = true; if (State?.Run != null) Checkpoint(); }
             // Resume always requires explicit player confirmation.
         }
         public bool Checkpoint()
         {
-            if (Error != null) return false;
+            if (PermanentSkillsOpen || Error != null) return false;
             if (State == null) return true;
             completedCheckpoint=false;
             Session?.Capture();
             if (State.Run != null) State.Run.World = Session != null && Session.IsActive ? World?.Capture() : null;
+            SaveStore.PreparePermanentCheckpoint(State);
             operation = Guid.NewGuid().ToString("N");
             return RetrySave();
         }
@@ -248,6 +251,7 @@ namespace BibleSurvivor.Unity
                 if(chapterCandidate!=null)
                 {
                     // A failed or uncertain attempt retains this exact candidate, old revision and operation for retry.
+                    SaveStore.PreparePermanentCheckpoint(chapterCandidate);
                     var committed=store.Commit(chapterCandidate,revision,operation);
                     var loaded=store.Load() ?? throw new InvalidOperationException("Chapter entry readback is missing");
                     if(loaded.Revision!=committed || loaded.LastOperationId!=operation)

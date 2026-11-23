@@ -8,8 +8,32 @@ namespace BibleSurvivor.Unity
 {
     public static class AdamBossPresentation
     {
-        public static string FormName(string form)=>form==EvolutionRules.Bible?"성역의 성경":form==EvolutionRules.Jawbone?"천 명의 턱뼈":form==EvolutionRules.Sling?"다섯 돌의 물맷돌":throw new ArgumentException("Unknown form");
-        public static string EvolutionEffect(string form)=>form==EvolutionRules.Bible?"회전 유지 · 2초마다 성역 파동":form==EvolutionRules.Jawbone?"타격 범위 +25% · 적 밀치기":form==EvolutionRules.Sling?"최소 5연발 · 최대 체력 적 우선":throw new ArgumentException("Unknown form");
+        public static string FormName(string form)
+        {
+            if (ExpandedWeaponRules.TryGetByEvolution(form, out var weapon)) return weapon.EvolutionName;
+            return form switch
+            {
+                EvolutionRules.Bible => "성역의 성경",
+                EvolutionRules.Jawbone => "천 명의 턱뼈",
+                EvolutionRules.Sling => "다섯 돌의 물맷돌",
+                _ => throw new ArgumentException("Unknown form", nameof(form)),
+            };
+        }
+
+        public static string EvolutionEffect(string form) => form switch
+        {
+            EvolutionRules.Bible => "회전 유지 · 2초마다 성역 파동",
+            EvolutionRules.Jawbone => "타격 범위 +25% · 적 밀치기",
+            EvolutionRules.Sling => "최소 5연발 · 최대 체력 적 우선",
+            "wilderness_proclamation" => "360° 음파 · 0.5/1초 뒤 45%/30% 메아리",
+            "thunder_judgment" => "70% 피해로 최대 3회 전이 · 0.5초 후 40% 천둥파",
+            "red_sea_path" => "물결 폭 +20% · 2초 수로, 0.5초마다 35% 피해",
+            "wilderness_guidance" => "적 군집을 향해 이동 · 1단위마다 25% 잔불",
+            "den_guardian" => "수호자의 세 번째 타격 후 연쇄 도약 · 4초마다 포효",
+            "passion_radiance" => "편도 6회 적중 · 궤적에 1.5초간 35% 빛 가시",
+            "ascending_chariot" => "차체 밖 회오리 45% · 경로에 35% 불길",
+            _ => throw new ArgumentException("Unknown form", nameof(form)),
+        };
         public static string Forms(AdamSession session)=>string.Join(" · ",session.Inventory.Forms.Values.Select(FormName));
         public static string Card(BossRewardCandidate candidate,int slot,AdamSession session)
         {
