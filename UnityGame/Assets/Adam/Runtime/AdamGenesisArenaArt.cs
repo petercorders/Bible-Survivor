@@ -12,6 +12,7 @@ namespace BibleSurvivor.Unity
         static readonly Color Ochre = new Color32(116, 89, 67, 255);
         static readonly Color LightWood = new Color32(141, 112, 83, 255);
         static readonly Color Silver = new Color32(146, 151, 154, 255);
+        static readonly Color Canvas = new Color32(153, 132, 102, 255);
         static readonly Color Lapis = new Color32(64, 88, 150, 255);
 
         public static void Draw(AdamArt art, AdamWorldProjection projection, int round)
@@ -39,7 +40,13 @@ namespace BibleSurvivor.Unity
             switch (motif)
             {
                 case Motif.Eden: Eden(art, stamp, east); break;
+                case Motif.Field: Field(art, stamp, east); break;
                 case Motif.Ark: Ark(stamp, east); break;
+                case Motif.Tent: Tent(stamp, east); break;
+                case Motif.Gate: Gate(art, stamp, east); break;
+                case Motif.Well: Well(stamp, east); break;
+                case Motif.Bethel: Bethel(art, stamp, east); break;
+                case Motif.Granary: Granary(stamp, east); break;
                 case Motif.Hall: Hall(art, stamp, east); break;
             }
         }
@@ -61,6 +68,25 @@ namespace BibleSurvivor.Unity
             }
             stamp.Fill(-17, -9, 10, 1, Silver * .65f);
             ExistingOrFill(art, stamp, Rock, 1, 4, 14, 9, Ochre);
+        }
+
+        static void Field(AdamArt art, Stamp stamp, bool east)
+        {
+            if (east)
+            {
+                stamp.Fill(-17, 8, 34, 6, Clay);
+                stamp.Fill(-13, 0, 26, 9, Ochre);
+                stamp.Fill(-15, -3, 30, 4, Canvas);
+                ExistingOrFill(art, stamp, Rock, 17, 4, 14, 9, Ochre);
+                return;
+            }
+            stamp.Fill(-29, -18, 58, 36, Clay);
+            for (var row = 0; row < 6; row++)
+            {
+                var x = row * 9 - 25;
+                stamp.Fill(x, -15, 4, 30, Ochre);
+                stamp.Fill(x + 1, -10, 1, 19, LightWood);
+            }
         }
 
         static void Ark(Stamp stamp, bool east)
@@ -94,6 +120,101 @@ namespace BibleSurvivor.Unity
             stamp.Fill(x + 23, y + 1, 2, 13, LightWood);
         }
 
+        static void Tent(Stamp stamp, bool east)
+        {
+            if (east)
+            {
+                stamp.Fill(-23, -12, 46, 19, Ink);
+                stamp.Fill(-20, 4, 40, 3, Lapis);
+                for (var i = 0; i < 6; i++)
+                    stamp.Fill(-18 + i * 7, -9 + i * 5 % 11, 2, 2, Silver);
+                return;
+            }
+            stamp.Fill(-34, 11, 68, 5, Clay);
+            for (var row = 0; row < 7; row++)
+                stamp.Fill(-5 - row * 4, -19 + row * 4, 10 + row * 8, 4,
+                    row % 2 == 0 ? Canvas : LightWood);
+            stamp.Fill(-10, 1, 20, 12, Ochre);
+            stamp.Fill(-6, 3, 12, 10, Ink);
+            stamp.Fill(-1, -17, 2, 29, Clay);
+        }
+
+        static void Gate(AdamArt art, Stamp stamp, bool east)
+        {
+            if (east)
+            {
+                stamp.Fill(-22, 7, 44, 8, Clay);
+                stamp.Fill(-8, -13, 13, 21, Silver);
+                stamp.Fill(-5, -16, 7, 5, Canvas);
+                stamp.Fill(0, -12, 4, 20, Canvas);
+                ExistingOrFill(art, stamp, Rock, 8, 4, 14, 9, Ochre);
+                return;
+            }
+            stamp.Fill(-34, 11, 68, 8, Clay);
+            stamp.Fill(-31, -12, 62, 9, Canvas);
+            for (var x = -30; x < 30; x += 14)
+                stamp.Fill(x, -18, 8, 6, Ochre);
+            stamp.Fill(-31, -4, 17, 20, Ochre);
+            stamp.Fill(14, -4, 17, 20, Ochre);
+            stamp.Fill(-14, -4, 28, 8, Ink);
+            stamp.Fill(-9, 4, 18, 13, LightWood);
+        }
+
+        static void Well(Stamp stamp, bool east)
+        {
+            stamp.Fill(-21, 1, 42, 15, Ochre);
+            stamp.Fill(-24, -8, 48, 11, Canvas);
+            stamp.Fill(-18, -5, 36, 7, east ? Clay : Lapis);
+            stamp.Fill(-18, 12, 36, 3, Clay);
+            stamp.Fill(-2, 4, 2, 8, LightWood);
+            if (east) return;
+            stamp.Fill(-19, -19, 4, 15, Clay);
+            stamp.Fill(15, -19, 4, 15, Clay);
+            stamp.Fill(-22, -22, 44, 4, LightWood);
+            stamp.Fill(-1, -18, 2, 14, Canvas);
+            stamp.Fill(24, 3, 9, 9, LightWood);
+            stamp.Fill(26, 0, 5, 3, Ochre);
+            stamp.Fill(26, 11, 5, 3, Clay);
+        }
+
+        static void Bethel(AdamArt art, Stamp stamp, bool east)
+        {
+            stamp.Fill(-29, 8, 58, 8, Ink);
+            if (east)
+            {
+                ExistingOrFill(art, stamp, Rock, -13, 1, 14, 9, Ochre);
+                stamp.Fill(7, 5, 17, 3, Clay);
+                return;
+            }
+            stamp.Fill(-8, -18, 15, 29, Ochre);
+            stamp.Fill(-5, -22, 11, 6, Silver);
+            stamp.Fill(-8, -16, 10, 24, Canvas);
+            stamp.Fill(-16, 7, 30, 5, Clay);
+            ExistingOrFill(art, stamp, Rock, 11, 3, 14, 9, Ochre);
+        }
+
+        static void Granary(Stamp stamp, bool east)
+        {
+            if (east)
+            {
+                stamp.Fill(-25, -16, 50, 30, Clay);
+                stamp.Fill(-22, -13, 44, 19, Ink);
+                for (var x = -20; x < 20; x += 8)
+                    stamp.Fill(x, -15, 2, 23, Silver);
+                stamp.Fill(-22, -7, 44, 2, Canvas);
+                return;
+            }
+            stamp.Fill(-29, -10, 58, 25, Ochre);
+            stamp.Fill(-26, -16, 52, 5, Clay);
+            stamp.Fill(-31, -12, 62, 4, Canvas);
+            stamp.Fill(-10, -5, 20, 21, Ink);
+            for (var x = -25; x <= 17; x += 42)
+            {
+                stamp.Fill(x, 5, 10, 9, LightWood);
+                stamp.Fill(x + 2, 3, 6, 2, Canvas);
+            }
+        }
+
         static void Hall(AdamArt art, Stamp stamp, bool east)
         {
             stamp.Fill(-35, -19, 70, 36, Clay);
@@ -116,12 +237,16 @@ namespace BibleSurvivor.Unity
             stamp.Fill(10, 4, 7, 1, Silver);
         }
 
-        internal static bool CanReuse(Sprite sprite) => sprite != null && sprite.texture != null;
+        internal static Sprite PropSprite(AdamArt art, string id)
+        {
+            var sprite = art?.FindSprite(id);
+            return sprite != null && sprite.texture != null ? sprite : null;
+        }
 
         static void ExistingOrFill(AdamArt art, Stamp stamp, string id, int x, int y, int width, int height, Color fallback)
         {
-            var sprite = art?.FindSprite(id);
-            if (!CanReuse(sprite))
+            var sprite = PropSprite(art, id);
+            if (sprite == null)
             {
                 stamp.Fill(x + 2, y + 2, width - 4, height - 3, fallback);
                 return;

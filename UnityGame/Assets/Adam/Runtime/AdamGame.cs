@@ -142,6 +142,7 @@ namespace BibleSurvivor.Unity
             if(keys?.f6Key.wasPressedThisFrame == true) ArtWorld.FeedbackEnabled = !ArtWorld.FeedbackEnabled;
             if (BeginSavedCinematic() && !CinematicPlaying) return;
             if (UpdateCinematic(keys)) return;
+            if (HandleGenesisStoryInput(keys)) return;
             if (keys?.f5Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.Creation)) return;
             if (keys?.f10Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.GenesisEnding)) return;
             if (HandlePermanentSkillInput(keys))
@@ -382,6 +383,11 @@ namespace BibleSurvivor.Unity
             var instruction = new GUIStyle(label) { font = mobile?fonts.Body:fonts.Small, fontSize = mobile ? 20 : 16, wordWrap = true, normal = { textColor = AdamHud.Secondary } };
             if (Host == null)
             { GUI.Label(new Rect(30,120,width-60,160),startupError ?? "저장 기록을 불러오는 중…",label);return; }
+            if (genesisStoryRound != 0)
+            {
+                DrawGenesisStory(width, height);
+                return;
+            }
             if (Host.PermanentSkillsOpen)
             {
                 DrawPermanentSkills(width, height);
@@ -500,6 +506,7 @@ namespace BibleSurvivor.Unity
             {
                 DrawPauseOverlay(width, height);
             }
+            DrawGenesisStoryEntry(width);
         }
         void DrawBookActions(float width,float height,bool mobile)
         {
