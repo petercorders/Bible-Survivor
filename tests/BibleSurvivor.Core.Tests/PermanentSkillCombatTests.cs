@@ -8,12 +8,15 @@ using BibleSurvivor.Sim;
 
 namespace BibleSurvivor.Core.Tests;
 
-internal static class PermanentSkillCombatTests
+internal static partial class PermanentSkillCombatTests
 {
     private static readonly Dictionary<string, double> Speeds = new() { ["a1"] = .45, ["a2"] = .6, ["a3"] = .35 };
 
     public static void Register(Action<string, Action> test)
     {
+        RegisterLightningMasteryEvidence(test);
+        RegisterArmorEvidence(test);
+        RegisterOriginalPowerEvidence(test);
         var starters = new[] { "bible", "jawbone", "sling" };
         foreach (var weapon in starters.Concat(ExpandedWeaponRules.All.Select(profile => profile.WeaponId)))
         foreach (var upgrade in new[] { "01", "02", "03" })

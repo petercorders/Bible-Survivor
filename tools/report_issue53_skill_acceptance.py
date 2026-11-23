@@ -37,6 +37,44 @@ AUDITED_TESTS = {
     ),
 }
 
+# These cases create their individual ranks through the shop transaction and
+# compare live world events across the boundary and after reopening the save.
+COMBAT_EVIDENCE = {
+    **{f"weapon.lightning.base.{index:02}@1": ("Lightning", boundary)
+       for index, boundary in enumerate((
+           "원본 피해 +10%p, 착탄 전 무피해",
+           "4초 → 3.8초, 다음 주기 직전/개시 틱",
+           "1 → 2회 낙뢰, 두 번째 표적 실제 피해",
+           "반경 0.80 → 0.88, 안쪽·사이·바깥 실제 피해",
+           "지연 0.15 → 0.07초, 이전 틱 무피해",
+       ), 1)},
+    **{f"weapon.lightning.{suffix}@1": ("Lightning", boundary) for suffix, boundary in (
+        ("a.01", "군집 반경 1.5 안/밖과 다른 표적의 실제 피해"),
+        ("a.02", "탐색거리 안/밖의 정예와 일반 표적"),
+        ("a.04", "착탄 전 표적 사망/생존, 1회 재조준 소비와 원래 낙뢰 시각"),
+        ("a.05", "고립 반경 2의 양쪽 1.99/2.01 배치"),
+        ("b.01", "대상 HP 75%/74.9%"),
+    )},
+    **{f"armor@{rank}": ("Armor", "접촉 피해 감소와 최소 피해 1")
+       for rank in range(1, 4)},
+    **{f"common.armor.{index:02}@1": ("Armor", boundary)
+       for index, boundary in enumerate((
+           "R09 본체 접촉/사슬 투사체", "R09 사슬 투사체/본체 접촉",
+           "피격 전 HP 30%/30.1%", "피격 간격 8초/7.999초",
+           "정예/일반 적 접촉", "반경 3 이내 6/5체",
+           "접촉 피해 감소와 최소 피해 1", "피격 전 HP 90%/89.9%",
+           "일반 웨이브/R03 활성 보스 본체 접촉, 인트로 무피해",
+       ), 2)},
+    **{f"common.power.{index:02}@1": ("Power", boundary)
+       for index, boundary in enumerate((
+           "정예/일반 표적", "주기 첫/두 번째 타격",
+           "대상 HP 25%/25.1%", "내 HP 90%/89.9%",
+           "동일 낙뢰 두 번째/세 번째 표적", "착탄 시 피격 후 3초/3.001초",
+           "거리 경계 4의 양쪽 3.99/4.01 배치", "연속 세 번째/네 번째·표식 만료",
+           "R03 보스 HP 25%/25.1%와 일반 적 HP 25% 대조",
+       ), 2)},
+}
+
 
 def lookup_sites(skill, tree):
     keys = {path: [skill] for path in SOURCE_FILES}
@@ -111,6 +149,12 @@ def main():
             row["저장 재생 근거"] = f"Health upgrade {stage}: HP 보존과 재실행 후 동일 피해"
         if re.fullmatch(r"weapon\.[a-z_]+\.base\.0[123]", skill):
             supplemental = f"Mastery profile {stage}: 구매 전후 착용 무기의 수치·비착용 무기 대조·재개 수치"
+        if stage in COMBAT_EVIDENCE:
+            family, boundary = COMBAT_EVIDENCE[stage]
+            test = f"{family} combat and replay {stage}"
+            row["발동 근거"] = f"{test}: 구매 전후 실제 전투 결과 대조"
+            row["경계 근거"] = f"{test}: {boundary}"
+            row["저장 재생 근거"] = f"{test}: 전투 스냅숏 저장·복원 후 결과 일치"
         row.update(zip(extra, (sites, f"Purchase boundary {stage}", supplemental)))
         output.writerow(row)
         counts["ranks"] += 1
