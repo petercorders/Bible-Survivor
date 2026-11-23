@@ -14,6 +14,10 @@ namespace BibleSurvivor.Core
         [DataMember] public long Gold { get; set; }
         [DataMember] public Dictionary<string, int> Upgrades { get; set; } = new Dictionary<string, int>();
         [DataMember] public List<string> UnlockedWeapons { get; set; } = new List<string> { "bible", "jawbone", "sling" };
+        [DataMember(EmitDefaultValue=false)] public Dictionary<string, List<int>>? PaidRanks { get; set; }
+        [DataMember(EmitDefaultValue=false)] public int? HighestSettledRound { get; set; }
+        [DataMember(EmitDefaultValue=false)] public List<string>? EvolvedWeapons { get; set; }
+        [DataMember(EmitDefaultValue=false)] public PermanentSkillReceipt? LastPermanentSkillReceipt { get; set; }
     }
 
     [DataContract]
@@ -51,6 +55,9 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public double? NormalEndedAt {get;set;}
         [DataMember(EmitDefaultValue=false)] public bool RoundCompletionApplied {get;set;}
         [DataMember(EmitDefaultValue=false)] public int PreviousNormalRound {get;set;}
+        [DataMember(EmitDefaultValue=false)] public string? CampaignLayout { get; set; }
+        [DataMember(EmitDefaultValue=false)] public int? CombatRulesVersion { get; set; }
+        [DataMember(EmitDefaultValue=false)] public int? PermanentCatalogVersion { get; set; }
     }
 
     [DataContract]
@@ -74,16 +81,43 @@ namespace BibleSurvivor.Core
         public void Validate()
         {
             if (SchemaVersion > SaveFormat.CurrentVersion) throw new UnsupportedSaveVersionException();
-            if ((SchemaVersion != 1 && SchemaVersion != 2 && SchemaVersion != SaveFormat.CurrentVersion) || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
+            if (SchemaVersion < 1 || Revision < 0 || Profile == null || Profile.Gold < 0 || LastOperationId == null ||
                 Profile.Upgrades == null || Profile.UnlockedWeapons == null || Profile.UnlockedWeapons.Distinct().Count() != Profile.UnlockedWeapons.Count ||
                 Profile.UnlockedWeapons.Any(string.IsNullOrWhiteSpace)) throw new InvalidDataException("Invalid profile snapshot");
-            PermanentRules.Validate(Profile.Upgrades);
+            var skillTree = SchemaVersion == SaveFormat.CurrentVersion;
+            if (skillTree)
+            {
+                PermanentProfile.Validate(Profile, Revision);
+                if (Profile.LastPermanentSkillReceipt is { } receipt && receipt.ResultingRevision == Revision &&
+                    receipt.OperationId != LastOperationId)
+                    throw new InvalidDataException("Permanent skill receipt does not match the saved operation");
+            }
+            else
+            {
+                if (Profile.PaidRanks != null || Profile.HighestSettledRound != null || Profile.EvolvedWeapons != null ||
+                    Profile.LastPermanentSkillReceipt != null)
+                    throw new UnsupportedSaveVersionException();
+                PermanentRules.Validate(Profile.Upgrades);
+            }
             if (OldTestamentClear is { } clear &&
                 (string.IsNullOrWhiteSpace(clear.RunId) || clear.CompletedAtUnixMilliseconds <= 0 ||
                  clear.CompletedAtUnixMilliseconds > DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()))
                 throw new InvalidDataException("Invalid Old Testament clear receipt");
             if (Run == null) return;
-            var r10 = SchemaVersion == 3;
+            if (skillTree && ((Run.CombatRulesVersion != 1 && Run.CombatRulesVersion != 2) ||
+                (Run.CampaignLayout != "genesis" && Run.CampaignLayout != "campaign")) ||
+                !skillTree && (Run.CombatRulesVersion != null || Run.CampaignLayout != null || Run.PermanentCatalogVersion != null))
+                throw new UnsupportedSaveVersionException();
+            var expandedCombat = Run.CombatRulesVersion == 2;
+            if (expandedCombat && (Run.PermanentCatalogVersion is not int catalog ||
+                !PermanentSkillCatalog.SupportsVersion(catalog)))
+                throw new UnsupportedSaveVersionException();
+            if (!expandedCombat && Run.PermanentCatalogVersion != null)
+                throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
+            var layoutVersion = skillTree
+                ? Run.CampaignLayout == "campaign" ? SaveFormat.CampaignVersion : SaveFormat.GenesisVersion
+                : SchemaVersion;
+            var r10 = layoutVersion == SaveFormat.CampaignVersion;
             if(r10 && !SaveFormat.SupportedChapterLifecycle(Run.RoundNumber,Run.Stage))
                 throw new UnsupportedSaveVersionException();
             var normalRound=Run.Stage=="between_rounds"?Run.RoundNumber-1:Run.RoundNumber;
@@ -99,7 +133,7 @@ namespace BibleSurvivor.Core
             if(!laterCampaign&&Run.CompletedFifthBoss!=null||!sixthHistory&&Run.CompletedSixthBoss!=null||(!expansion||normalRound==21)&&Run.LaterBossHistory!=null)throw new UnsupportedSaveVersionException();
             if(!r10 && (Run.CompletedThirdBoss!=null||Run.CompletedFourthBoss!=null))throw new UnsupportedSaveVersionException();
             if (string.IsNullOrWhiteSpace(Run.RunId) || Run.RoundNumber < 1 || Run.RoundNumber > (r10?CampaignContent.LastInstalledRound+1:10) ||
-                (Run.Stage=="normal" && Run.RoundNumber>(r10?CampaignContent.LastInstalledRound:SchemaVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
+                (Run.Stage=="normal" && Run.RoundNumber>(r10?CampaignContent.LastInstalledRound:layoutVersion==1?2:9)) || (Run.Stage=="between_rounds" && Run.RoundNumber<2) ||
                 (Run.RoundFingerprint!=null && string.IsNullOrWhiteSpace(Run.RoundFingerprint)) ||
                 (Run.RoundFingerprint==null && (Run.Stage=="normal" ? Run.RoundNumber!=1 : Run.RoundNumber!=2)) ||
                 (Run.Stage != "normal" && Run.Stage != "between_rounds" && Run.Stage!="boss_intro" && Run.Stage!="boss" && Run.Stage!="boss_reward" && Run.Stage!="boss_settlement" && Run.Stage!="round_settlement") || Run.Level < 1 || Run.Level > 10000 ||
@@ -110,12 +144,13 @@ namespace BibleSurvivor.Core
             if (Run.Drops == null || Run.Drops.Any(x=>x.Key <= 0 || x.Value < 0) || Run.PendingLevels < 0 || Run.ChoiceSerial < 1 ||
                 Run.Choices == null || Run.Choices.Count > 3 || Run.Choices.Distinct().Count() != Run.Choices.Count ||
                 (Run.PendingLevels == 0) != (Run.Choices.Count == 0)) throw new InvalidDataException("Invalid pending progression");
-            PermanentRules.Validate(Run.PermanentSnapshot);
+            if (expandedCombat) PermanentSkillCatalog.ForVersion(Run.PermanentCatalogVersion!.Value).ValidateRanks(Run.PermanentSnapshot);
+            else PermanentRules.Validate(Run.PermanentSnapshot);
             if(Run.Wave!=null && (Run.Wave.Active==null || Run.Wave.Active.Any(x=>x==null)))
                 throw new InvalidDataException("Invalid active enemy collection");
             var bossStage=Run.Stage=="boss_intro"||Run.Stage=="boss"||Run.Stage=="boss_reward"||Run.Stage=="boss_settlement"||(Run.Stage=="between_rounds"&&(Run.RoundNumber==4||Run.RoundNumber==7||Run.RoundNumber==10||r10&&(Run.RoundNumber==13||Run.RoundNumber==16||Run.RoundNumber==19||expansionBoss)));
-            if(bossStage!=(Run.Boss!=null)||bossStage&&((r10?(Run.Boss!.EncounterRound!=12&&Run.Boss.EncounterRound!=15&&Run.Boss.EncounterRound!=18&&!expansionBoss):SchemaVersion!=2)||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
-            if(Run.Forms!=null&&((SchemaVersion!=2&&!r10)||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
+            if(bossStage!=(Run.Boss!=null)||bossStage&&((r10?(Run.Boss!.EncounterRound!=12&&Run.Boss.EncounterRound!=15&&Run.Boss.EncounterRound!=18&&!expansionBoss):layoutVersion!=2)||Run.RoundNumber!=Run.Boss!.EncounterRound+(Run.Stage=="between_rounds"?1:0)))throw new InvalidDataException("Invalid boss lifecycle");
+            if(Run.Forms!=null&&((layoutVersion!=2&&!r10)||Run.RoundNumber<3))throw new InvalidDataException("Evolution requires R03 schema2");
             Run.Boss?.Validate(Run);
             var r12=r10&&(Run.RoundNumber==12&&Run.Stage!="between_rounds"||Run.RoundNumber==13&&Run.Stage=="between_rounds");
             var r15=r10&&(Run.RoundNumber==15&&Run.Stage!="between_rounds"||Run.RoundNumber==16&&Run.Stage=="between_rounds");
@@ -130,7 +165,7 @@ namespace BibleSurvivor.Core
             var lateNormal=normalRound==4||normalRound==5||normalRound==7||normalRound==8||r10&&!r12&&!r15&&!r18&&!expansionBoss;
             if(lateNormal)
             {
-                if((SchemaVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(laterCampaign?normalRound-1:normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
+                if((layoutVersion!=2&&!r10)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(r10?(laterCampaign?normalRound-1:normalRound==14?13:normalRound==13?12:normalRound==11?10:8):normalRound==8?7:normalRound==7?5:normalRound==5?4:0)||(Run.Stage!="normal"&&Run.Stage!="round_settlement"&&Run.Stage!="between_rounds")||
                     Run.RoundCompletionApplied!=(Run.Stage=="between_rounds")||(Run.Stage=="normal")!=(Run.NormalEndedAt==null)||
                     (Run.NormalEndedAt.HasValue&&(!Finite(Run.NormalEndedAt.Value)||Run.NormalEndedAt<0||Run.NormalEndedAt>180))||
                     (Run.Stage=="round_settlement"&&(Run.Drops.Count!=0||Run.PendingLevels==0))||(Run.Stage=="between_rounds"&&Run.PendingLevels!=0))
@@ -139,7 +174,7 @@ namespace BibleSurvivor.Core
             }
             else if(r06||r09||r12||r15||r18||expansionBoss)
             {
-                if((SchemaVersion!=2&&!r12&&!r15&&!r18&&!expansionBoss)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(expansionBoss?normalRound-1:r18?17:r15?14:r12?11:r09?8:5)||Run.RoundCompletionApplied||Run.NormalEndedAt!=null||
+                if((layoutVersion!=2&&!r12&&!r15&&!r18&&!expansionBoss)||Run.CompletedBoss==null||Run.PreviousNormalRound!=(expansionBoss?normalRound-1:r18?17:r15?14:r12?11:r09?8:5)||Run.RoundCompletionApplied||Run.NormalEndedAt!=null||
                     (Run.Stage!="normal"&&Run.Stage!="boss_intro"&&Run.Stage!="boss"&&Run.Stage!="boss_reward"&&Run.Stage!="boss_settlement"&&Run.Stage!="between_rounds")||
                     (Run.Boss!=null&&Run.Boss.EncounterRound!=(expansionBoss?normalRound:r18?18:r15?15:r12?12:r09?9:6)))throw new InvalidDataException("Invalid R06 history/lifecycle");
             }
@@ -211,7 +246,7 @@ namespace BibleSurvivor.Core
                         (Run.Stage!="boss"&&Run.World.HostileProjectiles.Count!=0)||Run.World.HostileProjectiles.Any(p=>p.BornAt<(Run.Boss?.NormalEndedAt??180)+2+attackPeriod-1e-7||Math.Abs((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/attackPeriod-Math.Round((p.BornAt-(Run.Boss?.NormalEndedAt??180)-2)/attackPeriod))>1e-6))throw new InvalidDataException("Hostile checkpoint outside R09 attack lifecycle");
                 }
                 else if(Run.World.HostileProjectiles!=null||Run.World.NextHostileId!=0)throw new InvalidDataException("Hostile checkpoint outside R09");
-                if(Run.Boss!=null && (Run.World.SchemaVersion!=Run.Boss.Rules.WorldVersion||Math.Abs(Run.World.Time-Run.Boss.CombatTime)>1e-7||
+                if(Run.Boss!=null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:Run.Boss.Rules.WorldVersion)||Math.Abs(Run.World.Time-Run.Boss.CombatTime)>1e-7||
                     !Run.World.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Boss.Health==0?Array.Empty<int>():
                         Run.Boss.Supports.Select(x=>x.Id).Append(Run.Boss.Rules.BossActorId)).OrderBy(x=>x))||
                     (Run.Boss.Health==0&&(Run.World.Projectiles.Count!=0||Run.World.Weapons.Count!=0))||
@@ -229,7 +264,12 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Evolution ledger target outside issued actors");
                 if(Run.World.Weapons.Any(w=>w.WeaponForm!=(Run.Forms!=null&&Run.Forms.TryGetValue(w.WeaponId,out var form)?form:null)))
                     throw new InvalidDataException("World weapon form does not match inventory");
-                if(Run.Boss==null && (Run.World.SchemaVersion!=(normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
+                if (expandedCombat && Run.World.Weapons.Any(w => !Run.Weapons.ContainsKey(w.WeaponId)))
+                    throw new InvalidDataException("Expanded weapon clock requires equipped weapon");
+                if(Run.Boss==null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
+                if (expandedCombat && ((Run.World.Charges != null) != (normalRound >= 4) ||
+                    (Run.World.HostileProjectiles != null) != chainWorld))
+                    throw new InvalidDataException("Expanded world does not match the encounter layout");
                 if((r06||chainWorld||dashWorld&&Run.Boss!=null)&&(Run.World.Charges==null||Run.World.Charges.Count!=0))throw new InvalidDataException("R06 cannot inherit D3 charges");
                 if((normalRound==5||normalRound==7||normalRound==8||r10&&!r12)&&(Run.World.Charges?.Count!=0||Run.Wave?.Active.Any(x=>x.MonsterId=="d3"||x.SpawnedAt.HasValue)==true))throw new InvalidDataException("R04 charge leaked into R05");
                 if((lateNormal||r12&&Run.Stage=="normal") && (Run.World.Charges==null||!Run.World.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual((Run.Wave?.Active??new List<SpawnedEnemy>()).Where(x=>BattleWorld.UsesNormalCharge(normalRound,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))||
@@ -272,29 +312,99 @@ namespace BibleSurvivor.Core
         private readonly object gate = new object();
         private readonly Action? beforeReplace;
         private readonly Action? beforeMigrationArchivePublish;
+        private readonly Action? beforePermanentConfirmation;
         public string Path { get; }
-        public SaveStore(string path, Action? beforeReplace = null, Action? beforeMigrationArchivePublish = null)
-        { Path = System.IO.Path.GetFullPath(path); this.beforeReplace = beforeReplace; this.beforeMigrationArchivePublish = beforeMigrationArchivePublish; }
+        public SaveStore(string path, Action? beforeReplace = null, Action? beforeMigrationArchivePublish = null,
+            Action? beforePermanentConfirmation = null)
+        {
+            Path = System.IO.Path.GetFullPath(path);
+            this.beforeReplace = beforeReplace;
+            this.beforeMigrationArchivePublish = beforeMigrationArchivePublish;
+            this.beforePermanentConfirmation = beforePermanentConfirmation;
+        }
 
         public GameSnapshot? Load()
         {
             lock (gate)
             {
-                return LoadCore(out _);
+                return LoadCore(out _, out _);
             }
         }
         public GameSnapshot? LoadBackup() { lock (gate) return File.Exists(Path + ".bak") ? Read(Path + ".bak") : null; }
 
-        private GameSnapshot? LoadCore(out int sourceVersion)
+        public GameSnapshot? LoadConfirmed()
+        {
+            lock (gate)
+            {
+                if (File.Exists(Path)) return Read(Path);
+                if (File.Exists(Path + ".bak")) throw new IOException("Primary save needs recovery");
+                return null;
+            }
+        }
+
+        public static ProfileState PreviewPermanentProfile(GameSnapshot snapshot)
+        {
+            var copy = Copy(snapshot);
+            PermanentProfile.Upgrade(copy);
+            return copy.Profile;
+        }
+
+        private GameSnapshot? LoadCore(out int sourceVersion, out byte[]? source)
         {
             sourceVersion = SaveFormat.GenesisVersion;
-            if (!File.Exists(Path)) return File.Exists(Path + ".bak") ? Read(Path + ".bak", out sourceVersion) : null;
-            try { return Read(Path, out sourceVersion); }
+            source = null;
+            if (!File.Exists(Path)) return File.Exists(Path + ".bak") ? Read(Path + ".bak", out sourceVersion, out source) : null;
+            try { return Read(Path, out sourceVersion, out source); }
             catch (UnsupportedSaveVersionException) { throw; }
             catch (Exception error) when (error is SerializationException || error is InvalidDataException || error is ArgumentException)
             {
-                if (File.Exists(Path + ".bak")) return Read(Path + ".bak", out sourceVersion);
+                if (File.Exists(Path + ".bak")) return Read(Path + ".bak", out sourceVersion, out source);
                 throw new InvalidDataException("Save corrupt and no valid backup available", error);
+            }
+        }
+
+        // Keep the last profile operation across regular checkpoints. Only the primary
+        // may confirm a purchase or refund that may already have replaced it.
+        public GameSnapshot TransactPermanent(PermanentSkillCommand command)
+        {
+            if (command == null) throw new ArgumentNullException(nameof(command));
+            lock (gate)
+            {
+                using var fileLock = LockFile();
+                var sourceVersion = SaveFormat.GenesisVersion;
+                byte[]? source = null;
+                GameSnapshot current;
+                if (File.Exists(Path)) current = Read(Path, out sourceVersion, out source);
+                else if (File.Exists(Path + ".bak")) throw new IOException("Confirm or recover the primary save before a permanent skill transaction");
+                else current = GameSnapshot.New();
+
+                var receipt = current.Profile.LastPermanentSkillReceipt;
+                if (receipt?.OperationId == command.OperationId)
+                {
+                    if (receipt.RequestDigest != command.Digest)
+                        throw new PermanentSkillRejectedException("Permanent skill operation ID payload mismatch");
+                    return current;
+                }
+                if (current.Revision != command.ExpectedRevision)
+                    throw new PermanentSkillRejectedException("Stale permanent skill command revision");
+
+                PermanentProfile.Upgrade(current);
+                var delta = command.Apply(current.Profile);
+                current.Revision = checked(current.Revision + 1);
+                current.LastOperationId = command.OperationId;
+                current.Profile.LastPermanentSkillReceipt = new PermanentSkillReceipt
+                {
+                    OperationId = command.OperationId, ExpectedRevision = command.ExpectedRevision,
+                    RequestDigest = command.Digest, ResultingRevision = current.Revision, GoldDelta = delta
+                };
+                current.Validate();
+                Publish(current, sourceVersion, source);
+                beforePermanentConfirmation?.Invoke();
+                var confirmed = Read(Path);
+                if (confirmed.Revision != current.Revision || confirmed.LastOperationId != command.OperationId ||
+                    confirmed.Profile.LastPermanentSkillReceipt?.RequestDigest != command.Digest)
+                    throw new IOException("Permanent skill transaction could not be confirmed from the primary save");
+                return confirmed;
             }
         }
 
@@ -317,10 +427,8 @@ namespace BibleSurvivor.Core
             state.Validate();
             lock (gate)
             {
-                Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-                // Single process host + OS lock across store instances. No silent last-writer-wins.
-                using var fileLock = new FileStream(Path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-                var current = LoadCore(out var sourceVersion);
+                using var fileLock = LockFile();
+                var current = LoadCore(out var sourceVersion, out var source);
                 var revision = current?.Revision ?? 0;
                 if (current != null && current.LastOperationId == operationId)
                 {
@@ -328,29 +436,47 @@ namespace BibleSurvivor.Core
                     return current.Revision;
                 }
                 if (revision != expectedRevision) throw new InvalidOperationException("Stale save revision; reload before retry");
+                if (sourceVersion == SaveFormat.CurrentVersion && state.SchemaVersion != SaveFormat.CurrentVersion)
+                    throw new InvalidOperationException("Cannot downgrade a permanent skill save");
+                if (state.SchemaVersion == SaveFormat.CurrentVersion)
+                    PermanentProfile.RequireUnchangedInvestment(current?.Profile ?? new ProfileState(), state.Profile);
                 var candidate = Decode(Encode(state));
                 candidate.Revision = checked(revision + 1); candidate.LastOperationId = operationId;
-                var staged = Path + ".tmp-" + Guid.NewGuid().ToString("N");
-                try
-                {
-                    using (var output = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                    { var bytes = Encode(candidate); output.Write(bytes, 0, bytes.Length); output.Flush(true); }
-                    Read(staged);
-                    if (sourceVersion == 1) SaveMigrationArchive.Ensure(Path, beforeMigrationArchivePublish);
-                    beforeReplace?.Invoke();
-                    if (File.Exists(Path))
-                    {
-                        // If primary is corrupt, keep the last valid backup instead of backing up corruption.
-                        var primaryValid = true;
-                        try { Read(Path); }
-                        catch (Exception error) when (error is SerializationException || error is InvalidDataException || error is ArgumentException) { primaryValid = false; }
-                        File.Replace(staged, Path, primaryValid ? Path + ".bak" : null);
-                    }
-                    else File.Move(staged, Path);
-                    return candidate.Revision;
-                }
-                finally { if (File.Exists(staged)) File.Delete(staged); }
+                candidate.Profile.LastPermanentSkillReceipt = current?.Profile.LastPermanentSkillReceipt;
+                Publish(candidate, sourceVersion, source);
+                return candidate.Revision;
             }
+        }
+
+        private FileStream LockFile()
+        {
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
+            return new FileStream(Path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        }
+
+        private void Publish(GameSnapshot candidate, int sourceVersion, byte[]? source)
+        {
+            var staged = Path + ".tmp-" + Guid.NewGuid().ToString("N");
+            try
+            {
+                using (var output = new FileStream(staged, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                { var bytes = Encode(candidate); output.Write(bytes, 0, bytes.Length); output.Flush(true); }
+                Read(staged);
+                if (sourceVersion == 1) SaveMigrationArchive.Ensure(Path, beforeMigrationArchivePublish);
+                if (candidate.SchemaVersion == SaveFormat.CurrentVersion && sourceVersion < SaveFormat.CurrentVersion && source != null)
+                    SaveMigrationArchive.EnsureSkillTree(Path, sourceVersion, source, beforeMigrationArchivePublish);
+                beforeReplace?.Invoke();
+                if (File.Exists(Path))
+                {
+                    // If primary is corrupt, preserve the last valid backup.
+                    var primaryValid = true;
+                    try { Read(Path); }
+                    catch (Exception error) when (error is SerializationException || error is InvalidDataException || error is ArgumentException) { primaryValid = false; }
+                    File.Replace(staged, Path, primaryValid ? Path + ".bak" : null);
+                }
+                else File.Move(staged, Path);
+            }
+            finally { if (File.Exists(staged)) File.Delete(staged); }
         }
 
         public static GameSnapshot Copy(GameSnapshot state) => Decode(Encode(state));
@@ -360,22 +486,22 @@ namespace BibleSurvivor.Core
             var copy = Decode(Encode(state)); copy.Revision = 0; copy.LastOperationId = "";
             return Encoding.UTF8.GetString(Encode(copy));
         }
-        private static GameSnapshot Read(string path) => Read(path, out _);
-        private static GameSnapshot Read(string path, out int sourceVersion)
+        private static GameSnapshot Read(string path) => Read(path, out _, out _);
+        private static GameSnapshot Read(string path, out int sourceVersion, out byte[] bytes)
         {
             var info = new FileInfo(path); if (info.Length > SaveFormat.MaximumBytes) throw new InvalidDataException("Save too large");
-            var bytes = File.ReadAllBytes(path);
-            sourceVersion = SaveFormat.Probe(bytes);
-            return Decode(bytes);
+            bytes = File.ReadAllBytes(path);
+            return Decode(bytes, out sourceVersion);
         }
         private static byte[] Encode(GameSnapshot state)
         {
             using var stream = new MemoryStream();
             new DataContractJsonSerializer(typeof(GameSnapshot)).WriteObject(stream, state); return stream.ToArray();
         }
-        private static GameSnapshot Decode(byte[] bytes)
+        private static GameSnapshot Decode(byte[] bytes) => Decode(bytes, out _);
+        private static GameSnapshot Decode(byte[] bytes, out int sourceVersion)
         {
-            var sourceVersion = SaveFormat.Probe(bytes); // Header before typed Run: future bodies must never trigger backup recovery.
+            sourceVersion = SaveFormat.Probe(bytes); // Header before typed Run: future bodies must never trigger backup recovery.
             using var stream = new MemoryStream(bytes);
             var state = new DataContractJsonSerializer(typeof(GameSnapshot)).ReadObject(stream) as GameSnapshot;
             if (state == null || state.SchemaVersion != sourceVersion) throw new InvalidDataException("Missing or inconsistent save state");
@@ -392,6 +518,7 @@ namespace BibleSurvivor.Core
             ["armor"] = new[] {250,600,1100}, ["move"] = new[] {100,250,450}, ["pickup"] = new[] {60,120,220,360,540},
             ["growth"] = new[] {300,650,1100}, ["cooldown"] = new[] {500,1000,1800}, ["regen"] = new[] {200,450,800} };
         public static int Rank(IReadOnlyDictionary<string,int> values, string key) => values.TryGetValue(key, out var rank) ? rank : 0;
+        internal static List<int> LegacyRankPrices(string id, int rank) => Prices[id].Take(rank).ToList();
         internal static void Validate(Dictionary<string,int> values)
         {
             if (values.Any(x => !Prices.ContainsKey(x.Key) || x.Value < 1 || x.Value > Prices[x.Key].Length))

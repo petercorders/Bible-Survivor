@@ -24,6 +24,7 @@ namespace BibleSurvivor.Core
         public double AreaMultiplier {get; private set;}
         public bool IsOrbit {get; private set;}
         public double ProjectileSpeedMultiplier {get; private set;}
+        internal double OrbitCollisionMultiplier { get; private set; } = 1;
         internal CombatStats Evolved(string form)
         {
             var copy=(CombatStats)MemberwiseClone();
@@ -50,6 +51,29 @@ namespace BibleSurvivor.Core
             Guard.NonNegative(result.Damage,nameof(result.Damage)); Guard.NonNegative(result.Cycle,nameof(result.Cycle));
             Guard.NonNegative(result.AreaMultiplier,nameof(result.AreaMultiplier)); return result;
         }
+
+        internal static CombatStats ForExpanded(string id, int level, CombatBonuses bonuses, string? form)
+        {
+            bonuses.DamageBonus = Math.Min(1.25, bonuses.DamageBonus);
+            bonuses.DurationBonus = Math.Min(.75, bonuses.DurationBonus);
+            bonuses.ProjectileSpeedBonus = Math.Min(.75, bonuses.ProjectileSpeedBonus);
+            // Whirlwind grows the books' strike radius, not the distance of their orbit.
+            var orbitCollisionBonus = id == "bible" ? bonuses.AreaBonus : 0;
+            if (id == "bible" || id == "sling") bonuses.AreaBonus = 0;
+            var stats = For(id, level, bonuses);
+            stats.OrbitCollisionMultiplier = Math.Min(2.5, 1 + orbitCollisionBonus);
+            // Choose the evolved sling's base volley before adding stones and specialization.
+            // EvolutionRules.Evolved retains the v1 final-count maximum for older runs.
+            if (form == EvolutionRules.Sling) stats.Amount = EvolutionRules.SlingMinimum + bonuses.ExtraAmount;
+            else if (form != null) stats = stats.Evolved(form);
+            stats.Amount = Math.Min(ExpandedAmountLimit(id), stats.Amount);
+            stats.AreaMultiplier = Math.Min(2.5, stats.AreaMultiplier);
+            var batch = stats.IsOrbit ? 0 : (stats.Amount - 1) * stats.BurstInterval;
+            stats.Cycle = Math.Max(stats.Cycle, Math.Max(.15, batch + BattleWorld.FixedStep));
+            return stats;
+        }
+
+        internal static int ExpandedAmountLimit(string id) => id == "bible" ? 7 : id == "jawbone" ? 6 : 8;
     }
     public sealed class AttackEmission
     {

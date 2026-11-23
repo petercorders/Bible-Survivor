@@ -13,9 +13,10 @@ namespace BibleSurvivor.Core
     // completely different Run representation; that must not be mistaken for recoverable corruption.
     public static class SaveFormat
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
+        public const int CampaignVersion = 3;
         public const int GenesisVersion = 2;
-        private const int CurrentWorldVersion = 5;
+        private const int CurrentWorldVersion = BattleSnapshot.ExpandedVersion;
         internal const int MaximumBytes = 4 * 1024 * 1024;
         private static readonly HashSet<string> EnvelopeFields = new HashSet<string> {
             "SchemaVersion", "Revision", "LastOperationId", "Profile", "Run", "OldTestamentClear" };
@@ -31,7 +32,8 @@ namespace BibleSurvivor.Core
             internal ContentShape? Item;
         }
         private static readonly ContentShape Value = new ContentShape();
-        private static readonly ContentShape SupportedContent = BuildSupportedContent();
+        private static readonly ContentShape LegacyContent = BuildSupportedContent(false);
+        private static readonly ContentShape SupportedContent = BuildSupportedContent(true);
 
         private static ContentShape Object(string values, params (string Name, ContentShape Shape)[] children)
         {
@@ -41,10 +43,18 @@ namespace BibleSurvivor.Core
             return new ContentShape { Members = members };
         }
         private static ContentShape Array(ContentShape item) => new ContentShape { Item = item };
-        private static ContentShape BuildSupportedContent()
+        private static ContentShape BuildSupportedContent(bool skillTree)
         {
             var integerMap = Array(Object("Key Value"));
             var profile = Object("Gold UnlockedWeapons", ("Upgrades", integerMap));
+            if (skillTree)
+            {
+                profile.Members!.Add("PaidRanks", Array(Object("Key Value")));
+                profile.Members.Add("HighestSettledRound", Value);
+                profile.Members.Add("EvolvedWeapons", Value);
+                profile.Members.Add("LastPermanentSkillReceipt",
+                    Object("OperationId ExpectedRevision RequestDigest ResultingRevision GoldDelta"));
+            }
             var wave = Object("Elapsed Cursor Paused Expired", ("Active", Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))));
             var entity = Object("Id X Y");
             var projectile = Object("Id X Y VelocityX VelocityY Lifetime Damage RemainingPierce Radius HitIds");
@@ -60,6 +70,12 @@ namespace BibleSurvivor.Core
                 ("AimedShot",Object("OriginX OriginY DirectionX DirectionY")),("ChariotCharge",Object("Phase DirectionX DirectionY Until")),("ChainDirections",Array(Object("X Y"))),("Supports",Array(Object("Id MonsterId Health ContactDamage RawExperience SpawnedAt"))),("Reward",reward));
             var run = Object(string.Join(" ", RunFields), ("PermanentSnapshot", integerMap),
                 ("Weapons", integerMap), ("Passives", integerMap), ("Drops", integerMap), ("Wave", wave), ("World", world), ("Boss",boss),("CompletedBoss",boss),("CompletedSecondBoss",boss),("CompletedThirdBoss",boss),("CompletedFourthBoss",boss),("CompletedFifthBoss",boss),("CompletedSixthBoss",boss),("LaterBossHistory",Array(boss)),("Forms",integerMap));
+            if (skillTree)
+            {
+                run.Members!.Add("CampaignLayout", Value);
+                run.Members.Add("CombatRulesVersion", Value);
+                run.Members.Add("PermanentCatalogVersion", Value);
+            }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));
         }
@@ -132,33 +148,70 @@ namespace BibleSurvivor.Core
             if (fields.Select(x => x.Name).Distinct().Count() != fields.Length)
                 throw new InvalidDataException("Duplicate save envelope field");
             var run = fields.SingleOrDefault(x => x.Name == "Run");
+            var skillTree = version == CurrentVersion;
+            if (skillTree) CheckSupportedContent(root, SupportedContent);
+            var layoutVersion = version;
+            var expandedCombat = false;
             if (run != null && run.GetAttribute("type") == "object")
             {
                 var members = run.ChildNodes.OfType<XmlElement>().ToArray();
                 if (members.Select(x => x.Name).Distinct().Count() != members.Length)
                     throw new InvalidDataException("Duplicate run field for this save format");
-                CheckWorldVersion(members.SingleOrDefault(x => x.Name == "World"));
-                var worldVersion=members.SingleOrDefault(x=>x.Name=="World")?.ChildNodes.OfType<XmlElement>().SingleOrDefault(x=>x.Name=="SchemaVersion")?.InnerText;
-                var r12=version==3&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")||
+                var world = members.SingleOrDefault(x => x.Name == "World");
+                CheckWorldVersion(world);
+                if (skillTree)
+                {
+                    var layout = members.SingleOrDefault(member => member.Name == "CampaignLayout");
+                    var rules = members.SingleOrDefault(member => member.Name == "CombatRulesVersion");
+                    if (rules?.GetAttribute("type") != "number" || rules.InnerText.Length == 0 ||
+                        rules.InnerText.Any(character => character < '0' || character > '9') ||
+                        rules.InnerText.All(character => character == '0') ||
+                        layout?.GetAttribute("type") != "string" || string.IsNullOrWhiteSpace(layout.InnerText))
+                        throw new InvalidDataException("Invalid permanent skill run contract fields");
+                    if (rules.InnerText != "1" && rules.InnerText != "2")
+                        throw new UnsupportedSaveVersionException();
+                    expandedCombat = rules.InnerText == "2";
+                    if (expandedCombat)
+                    {
+                        var catalog = members.SingleOrDefault(member => member.Name == "PermanentCatalogVersion");
+                        if (catalog?.GetAttribute("type") != "number")
+                            throw new InvalidDataException("Expanded combat requires a permanent skill catalog version");
+                        if (!int.TryParse(catalog.InnerText, NumberStyles.None, CultureInfo.InvariantCulture, out var catalogVersion) ||
+                            !PermanentSkillCatalog.SupportsVersion(catalogVersion))
+                            throw new UnsupportedSaveVersionException();
+                    }
+                    layoutVersion = layout?.InnerText switch
+                    {
+                        "genesis" => GenesisVersion,
+                        "campaign" => CampaignVersion,
+                        _ => throw new UnsupportedSaveVersionException(),
+                    };
+                }
+                var worldVersion=world?.ChildNodes.OfType<XmlElement>().SingleOrDefault(x=>x.Name=="SchemaVersion")?.InnerText;
+                if (!expandedCombat && worldVersion == BattleSnapshot.ExpandedVersion.ToString(CultureInfo.InvariantCulture))
+                    throw new UnsupportedSaveVersionException();
+                var r12=layoutVersion==CampaignVersion&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")||
                     members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="13")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
                 if(worldVersion=="5"&&!r12)
                 {
                     var roundText=members.SingleOrDefault(x=>x.Name=="RoundNumber")?.InnerText;
                     var betweenRounds=members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds");
-                    if(version!=3||!int.TryParse(roundText,out var worldRound)||
+                    if(layoutVersion!=CampaignVersion||!int.TryParse(roundText,out var worldRound)||
                         BossDefinition.Find(worldRound-(betweenRounds?1:0))?.WorldVersion!=5)
                         throw new UnsupportedSaveVersionException();
                 }
-                if (members.Any(x => !RunFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown run field for this save format");
+                if (members.Any(x => !RunFields.Contains(x.Name) &&
+                    !(skillTree && (x.Name == "CampaignLayout" || x.Name == "CombatRulesVersion" || x.Name == "PermanentCatalogVersion"))))
+                    RejectUnsupportedContent(version, "Unknown run field for this save format");
                 var boss=members.SingleOrDefault(x=>x.Name=="Boss");
                 if(!r12&&boss?.ChildNodes.OfType<XmlElement>().Any(x=>x.Name=="RoundNumber"&&x.InnerText=="12")==true)throw new UnsupportedSaveVersionException();
-                var r15=version==3&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="15")&&members.Any(x=>x.Name=="Stage"&&x.InnerText!="between_rounds")||members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="16")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
+                var r15=layoutVersion==CampaignVersion&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="15")&&members.Any(x=>x.Name=="Stage"&&x.InnerText!="between_rounds")||members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="16")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
                 if(!r15&&boss?.ChildNodes.OfType<XmlElement>().Any(x=>x.Name=="RoundNumber"&&x.InnerText=="15")==true)throw new UnsupportedSaveVersionException();
-                var r18=version==3&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="18")&&members.Any(x=>x.Name=="Stage"&&x.InnerText!="between_rounds")||members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="19")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
+                var r18=layoutVersion==CampaignVersion&&(members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="18")&&members.Any(x=>x.Name=="Stage"&&x.InnerText!="between_rounds")||members.Any(x=>x.Name=="RoundNumber"&&x.InnerText=="19")&&members.Any(x=>x.Name=="Stage"&&x.InnerText=="between_rounds"));
                 if(!r18&&boss?.ChildNodes.OfType<XmlElement>().Any(x=>x.Name=="RoundNumber"&&x.InnerText=="18")==true)throw new UnsupportedSaveVersionException();
                 var savedBossRound=boss?.ChildNodes.OfType<XmlElement>().FirstOrDefault(x=>x.Name=="RoundNumber")?.InnerText;
                 var hasExpansionBoss=int.TryParse(savedBossRound,out var laterBoss)&&laterBoss>=21;
-                if(version<3&&hasExpansionBoss)throw new UnsupportedSaveVersionException();
+                if(layoutVersion<CampaignVersion&&hasExpansionBoss)throw new UnsupportedSaveVersionException();
                 if(version==1 && (boss!=null||members.Any(x=>x.Name=="Forms"||x.Name=="CompletedBoss"||x.Name=="CompletedSecondBoss"||x.Name=="NormalEndedAt"||x.Name=="RoundCompletionApplied"||x.Name=="PreviousNormalRound")))throw new InvalidDataException("Schema1 cannot contain Boss");
                 if(boss!=null && boss.GetAttribute("type")=="object")
                 {
@@ -173,8 +226,8 @@ namespace BibleSurvivor.Core
                     var policy=rewardFields.SingleOrDefault(x=>x.Name=="PolicyId");
                     if(policy!=null && policy.GetAttribute("type")=="string" && policy.InnerText!=BossDefinition.LegacyPolicy&&!BossDefinition.IsProductionPolicy(policy.InnerText))throw new UnsupportedSaveVersionException();
                 }
-                if(version<3 && members.Any(x=>x.Name=="CompletedThirdBoss"||x.Name=="CompletedFourthBoss"||x.Name=="CompletedFifthBoss"||x.Name=="CompletedSixthBoss"||x.Name=="LaterBossHistory"))throw new UnsupportedSaveVersionException();
-                if(version==3)
+                if(layoutVersion<CampaignVersion && members.Any(x=>x.Name=="CompletedThirdBoss"||x.Name=="CompletedFourthBoss"||x.Name=="CompletedFifthBoss"||x.Name=="CompletedSixthBoss"||x.Name=="LaterBossHistory"))throw new UnsupportedSaveVersionException();
+                if(layoutVersion==CampaignVersion)
                 {
                     var stage3=members.SingleOrDefault(x=>x.Name=="Stage");
                     var round3=members.SingleOrDefault(x=>x.Name=="RoundNumber");
@@ -188,7 +241,7 @@ namespace BibleSurvivor.Core
                     if(hasExpansionBoss&&laterBoss!=normalRound)
                         throw new UnsupportedSaveVersionException();
                 }
-                if (version == GenesisVersion)
+                if (layoutVersion == GenesisVersion)
                 {
                     var stage = members.SingleOrDefault(x => x.Name == "Stage");
                     if (stage != null && stage.GetAttribute("type") == "string" && stage.InnerText != "normal" && stage.InnerText != "between_rounds" && stage.InnerText!="boss_intro" && stage.InnerText!="boss" && stage.InnerText!="boss_reward" && stage.InnerText!="boss_settlement" && stage.InnerText!="round_settlement")
@@ -202,7 +255,7 @@ namespace BibleSurvivor.Core
                 }
             }
             if (fields.Any(x => !EnvelopeFields.Contains(x.Name))) RejectUnsupportedContent(version, "Unknown save envelope field");
-            if (version >= GenesisVersion) CheckSupportedContent(root, SupportedContent);
+            if (version >= GenesisVersion && !skillTree) CheckSupportedContent(root, LegacyContent);
             if (version >= GenesisVersion) CheckForms(root);
             return version;
         }

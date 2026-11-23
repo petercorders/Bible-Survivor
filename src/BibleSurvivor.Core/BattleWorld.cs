@@ -132,6 +132,8 @@ namespace BibleSurvivor.Core
     [DataContract]
     public sealed class BattleSnapshot
     {
+        internal const int ExpandedVersion = 6;
+        internal const int ExpandedProjectileLimit = 256;
         [DataMember] public int SchemaVersion {get;set;}=1;
         [DataMember(EmitDefaultValue=false)] public List<EnemyChargeState>? Charges {get;set;}
         [DataMember(EmitDefaultValue=false)] public List<HostileProjectileState>? HostileProjectiles {get;set;}
@@ -158,15 +160,17 @@ namespace BibleSurvivor.Core
         [DataMember] public List<BattleSpeedState> MonsterSpeeds {get;set;}=new List<BattleSpeedState>();
         public void Validate()
         {
-            if((SchemaVersion!=1&&SchemaVersion!=2&&SchemaVersion!=3&&SchemaVersion!=4&&SchemaVersion!=5)||Tuning==null)throw new ArgumentException("Unsupported battle snapshot");
+            if(SchemaVersion < 1 || SchemaVersion > ExpandedVersion || Tuning==null)
+                throw new ArgumentException("Unsupported battle snapshot");
             Tuning.Validate();
-            if(SchemaVersion>=3)
+            var expanded = SchemaVersion == ExpandedVersion;
+            if(expanded ? Charges != null : SchemaVersion>=3)
             {
                 if(Charges==null||Charges.Any(x=>x==null)||Charges.Select(x=>x.Id).Distinct().Count()!=Charges.Count)throw new ArgumentException("Invalid charge collection");
                 foreach(var charge in Charges)charge.Validate(Time);
             }
             else if(Charges!=null)throw new ArgumentException("Charge state requires World3");
-            if(SchemaVersion==4)
+            if(expanded ? HostileProjectiles != null : SchemaVersion==4)
             {
                 if(HostileProjectiles==null||HostileProjectiles.Count>BossDefinition.ChainCap||HostileProjectiles.Any(x=>x==null)||HostileProjectiles.Select(x=>x.Id).Distinct().Count()!=HostileProjectiles.Count||NextHostileId<1||(NextHostileId-1)%3!=0)throw new ArgumentException("Invalid hostile collection");
                 foreach(var hostile in HostileProjectiles)hostile.Validate(Time,NextHostileId);
@@ -176,7 +180,8 @@ namespace BibleSurvivor.Core
                 1e-9||!Position(PlayerX,PlayerY)||!Position(FacingX,FacingY)||
                 Math.Abs((double)FacingX*FacingX+(double)FacingY*FacingY-1)>.0001||RandomState==0||NextProjectileId<1||
                 BossKills<0||BossKills>1||ShotsFired<0||Hits<0||Kills<0||Collected<0||DamageTaken<0||Enemies==null||Drops==null||Projectiles==null||Weapons==null||MonsterSpeeds==null||
-                Enemies.Count>120||Drops.Count>6210||Projectiles.Count>Tuning.MaxProjectiles||Weapons.Count>6)
+                Enemies.Count>120||Drops.Count>6210||Projectiles.Count>Tuning.MaxProjectiles||
+                expanded && Projectiles.Count>ExpandedProjectileLimit||Weapons.Count>6)
                 throw new ArgumentException("Invalid battle snapshot");
             // JSON can explicitly contain null entries even though these public DTO lists are non-nullable in C#.
             // Reject before any selector dereferences an entry so SaveStore can use its corrupt-save fallback.
@@ -199,7 +204,7 @@ namespace BibleSurvivor.Core
             {
                 if(w.WeaponForm!=null)
                 {
-                    if((SchemaVersion!=2&&SchemaVersion!=3&&SchemaVersion!=4&&SchemaVersion!=5)||EvolutionRules.Base(w.WeaponForm)!=w.WeaponId||!Finite(w.NextPulse)||w.NextPulse<0||w.NextPulse>Time+EvolutionRules.PulsePeriod+1e-7||!Finite(w.PulseUntil)||w.PulseUntil<0||w.PulseUntil>Time+EvolutionRules.PulseLifetime+1e-7||w.FocusTargetId<0||
+                    if(SchemaVersion==1||EvolutionRules.Base(w.WeaponForm)!=w.WeaponId||!Finite(w.NextPulse)||w.NextPulse<0||w.NextPulse>Time+EvolutionRules.PulsePeriod+1e-7||!Finite(w.PulseUntil)||w.PulseUntil<0||w.PulseUntil>Time+EvolutionRules.PulseLifetime+1e-7||w.FocusTargetId<0||
                         (w.PulseHitIds!=null&&(w.PulseHitIds.Any(x=>x<1)||w.PulseHitIds.Count!=w.PulseHitIds.Distinct().Count()))||
                         (w.FormHits!=null&&(w.FormHits.Any(x=>x==null||x.Id<1||!Finite(x.At)||x.At<0||x.At>Time+1e-7)||w.FormHits.Select(x=>x.Id).Distinct().Count()!=w.FormHits.Count)))
                         throw new ArgumentException("Invalid evolution clock");
@@ -215,6 +220,13 @@ namespace BibleSurvivor.Core
                     w.OrbitHits.Select(x=>x.Id).Distinct().Count()!=w.OrbitHits.Count||
                     w.OrbitHits.Any(x=>x.Id<=0||!Finite(x.At)||x.At<0||x.At>Time+1e-8))
                     throw new ArgumentException("Invalid weapon clock");
+                if (expanded && (w.BurstsRemaining != w.PendingBursts.Count ||
+                    w.PendingBursts.Count >= CombatStats.ExpandedAmountLimit(w.WeaponId) ||
+                    (w.PendingBursts.Count == 0 ? w.NextBurst != 0 :
+                        w.WeaponId == "bible" || w.NextBurst != w.PendingBursts[0] ||
+                        w.PendingBursts[0] <= Time || w.PendingBursts[w.PendingBursts.Count - 1] >= w.NextCycle ||
+                        w.PendingBursts.Zip(w.PendingBursts.Skip(1), (earlier, later) => later <= earlier).Any(outOfOrder => outOfOrder))))
+                    throw new ArgumentException("Invalid expanded weapon volley");
             }
         }
         private static void ValidateEntities(List<BattleEntityState> entries)
@@ -690,10 +702,11 @@ namespace BibleSurvivor.Core
                 clock.NextPulse=SimulationTime+EvolutionRules.PulsePeriod;clock.PulseUntil=SimulationTime+EvolutionRules.PulseLifetime;
                 clock.PulseHitIds=new List<int>();ShotsFired++;
             }
-            if(SimulationTime>=clock.PulseUntil)return;
+            var expanded = Session.CombatRulesVersion == 2;
+            if(SimulationTime + (expanded ? 1e-9 : 0) >= clock.PulseUntil)return;
             foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
             {
-                if(clock.PulseHitIds!.Contains(pair.Key)||!FormHitReady(clock,pair.Key)||Vector2.DistanceSquared(pair.Value,PlayerPosition)>Math.Pow(EvolutionRules.PulseRadius+TargetRadius(pair.Key),2))continue;
+                if(clock.PulseHitIds!.Contains(pair.Key)||!FormHitReady(clock,pair.Key)||Vector2.DistanceSquared(pair.Value,PlayerPosition)>Math.Pow(EvolutionRules.PulseRadius*profile.OrbitCollisionMultiplier+TargetRadius(pair.Key),2))continue;
                 clock.PulseHitIds.Add(pair.Key);Hit(pair.Key,profile.Damage,"bible",pair.Value);RecordFormHit(clock,pair.Key);
                 if(!Session.CanAttack)break;
             }
@@ -702,21 +715,24 @@ namespace BibleSurvivor.Core
         {
             if(!Session.CanAttack)return;
             var profile=Session.AttackProfile(clock.WeaponId);
+            var expanded = Session.CombatRulesVersion == 2;
+            var projectileLimit = expanded ? Math.Min(tuning.MaxProjectiles, BattleSnapshot.ExpandedProjectileLimit) : tuning.MaxProjectiles;
             if(clock.NextCycle<=SimulationTime+1e-9)
             {
-                clock.ActiveSince=SimulationTime;clock.ActiveUntil=SimulationTime+profile.Duration;
-                clock.NextCycle=SimulationTime+profile.Cycle;
+                var scheduled = expanded ? clock.NextCycle : SimulationTime;
+                clock.ActiveSince=scheduled;clock.ActiveUntil=scheduled+profile.Duration;
+                clock.NextCycle=scheduled+profile.Cycle;
                 clock.BurstsRemaining=profile.IsOrbit?0:profile.Amount;
-                clock.NextBurst=SimulationTime;
+                clock.NextBurst=expanded&&profile.IsOrbit?0:scheduled;
                 if(clock.WeaponForm==EvolutionRules.Sling)clock.FocusTargetId=StrongestTarget();
                 if(profile.IsOrbit)ShotsFired+=profile.Amount;
-                else for(var burst=0;burst<profile.Amount;burst++)clock.PendingBursts.Add(SimulationTime+
-                    burst*WeaponRules.Get(clock.WeaponId,Session.Inventory.Weapons[clock.WeaponId]).BurstInterval);
+                else for(var burst=0;burst<profile.Amount;burst++)
+                    clock.PendingBursts.Add(scheduled + burst*profile.BurstInterval);
             }
             if(profile.IsOrbit)
             {
                 if(clock.WeaponForm==EvolutionRules.Bible)Pulse(clock,profile);
-                if(!Session.CanAttack||SimulationTime>=clock.ActiveUntil)return;
+                if(!Session.CanAttack||SimulationTime+(expanded?1e-9:0)>=clock.ActiveUntil)return;
                 foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
                 {
                     var old=clock.OrbitHits.FirstOrDefault(x=>x.Id==pair.Key);
@@ -726,7 +742,8 @@ namespace BibleSurvivor.Core
                     {
                         var angle=SimulationTime*2.5*WeaponRules.Get("bible",Session.Inventory.Weapons["bible"]).RotationSpeedMultiplier+book*2*Math.PI/profile.Amount;
                         var position=PlayerPosition+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)(tuning.BibleOrbitRadius*profile.AreaMultiplier);
-                        if(Vector2.DistanceSquared(position,pair.Value)>(tuning.BookRadius+TargetRadius(pair.Key))*(tuning.BookRadius+TargetRadius(pair.Key)))continue;
+                        var strikeRadius = tuning.BookRadius * profile.OrbitCollisionMultiplier + TargetRadius(pair.Key);
+                        if (Vector2.DistanceSquared(position,pair.Value)>strikeRadius*strikeRadius) continue;
                         if(old==null){old=new BattleHitState{Id=pair.Key};clock.OrbitHits.Add(old);}old.At=SimulationTime;
                         Hit(pair.Key,profile.Damage,"bible",position);
                         if(clock.WeaponForm==EvolutionRules.Bible)RecordFormHit(clock,pair.Key);break;
@@ -748,7 +765,7 @@ namespace BibleSurvivor.Core
                         if(!Session.CanAttack)break;
                     }
                 }
-                else if(enemies.Count>0&&projectiles.Count<tuning.MaxProjectiles)
+                else if(enemies.Count>0&&projectiles.Count<projectileLimit)
                 {
                     if(clock.WeaponForm==EvolutionRules.Sling&&!enemies.ContainsKey(clock.FocusTargetId))clock.FocusTargetId=StrongestTarget();
                     var target=clock.WeaponForm==EvolutionRules.Sling?new KeyValuePair<int,Vector2>(clock.FocusTargetId,enemies[clock.FocusTargetId]):
@@ -835,7 +852,9 @@ namespace BibleSurvivor.Core
         private double NextUnit()=>NextUInt()/(double)uint.MaxValue;
         public BattleSnapshot Capture()=>new BattleSnapshot{Time=SimulationTime,Remainder=remainder,PlayerX=PlayerPosition.X,PlayerY=PlayerPosition.Y,
             FacingX=facing.X,FacingY=facing.Y,RandomState=random,NextProjectileId=nextProjectile,ShotsFired=ShotsFired,Hits=Hits,Kills=Kills,
-            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.RoundNumber>=4?Session.BossRules?.WorldVersion??3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
+            Collected=Collected,DamageTaken=DamageTaken,BossKills=BossKills,SchemaVersion=Session.CombatRulesVersion==2
+                ? BattleSnapshot.ExpandedVersion
+                : Session.RoundNumber>=4?Session.BossRules?.WorldVersion??3:Session.Encounter!=null||Session.Inventory.Forms.Count>0?2:1,
             HostileProjectiles=Session.BossRules?.UsesChainProjectiles==true?hostileProjectiles.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,NextHostileId=Session.BossRules?.UsesChainProjectiles==true?nextHostile:0,
             Charges=Session.RoundNumber>=4?charges.Values.OrderBy(x=>x.Id).Select(x=>x.Copy()).ToList():null,Tuning=tuning.Copy(),
             Enemies=enemies.OrderBy(x=>x.Key).Select(x=>new BattleEntityState{Id=x.Key,X=x.Value.X,Y=x.Value.Y}).ToList(),
@@ -853,7 +872,10 @@ namespace BibleSurvivor.Core
                 !snapshot.Enemies.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Keys.OrderBy(x=>x))||
                 !snapshot.Drops.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.DroppedExperience.Keys.OrderBy(x=>x))||
                 snapshot.Weapons.Any(x=>!session.Inventory.Weapons.ContainsKey(x.WeaponId)||x.WeaponForm!=(session.Inventory.Forms.TryGetValue(x.WeaponId,out var f)?f:null)))throw new ArgumentException("Checkpoint does not match session");
-            if(session.RoundNumber>=4&&(snapshot.SchemaVersion!=(session.BossRules?.WorldVersion??3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
+            var expanded = session.CombatRulesVersion == 2;
+            if ((snapshot.SchemaVersion == BattleSnapshot.ExpandedVersion) != expanded)
+                throw new ArgumentException("Checkpoint combat rules do not match session");
+            if(session.RoundNumber>=4&&(!expanded&&snapshot.SchemaVersion!=(session.BossRules?.WorldVersion??3)||snapshot.Charges==null||!snapshot.Charges.Select(x=>x.Id).OrderBy(x=>x).SequenceEqual(session.Targets.Values.Where(x=>UsesNormalCharge(session.RoundNumber,x.MonsterId)).Select(x=>x.Id).OrderBy(x=>x))))throw new ArgumentException("Charge checkpoint does not match actors");
             world.PlayerPosition=new Vector2(snapshot.PlayerX,snapshot.PlayerY);world.facing=new Vector2(snapshot.FacingX,snapshot.FacingY);
             world.random=snapshot.RandomState;world.remainder=snapshot.Remainder;world.SimulationTime=snapshot.Time;world.nextProjectile=snapshot.NextProjectileId;
             world.BossKills=snapshot.BossKills;world.ShotsFired=snapshot.ShotsFired;world.Hits=snapshot.Hits;world.Kills=snapshot.Kills;world.Collected=snapshot.Collected;world.DamageTaken=snapshot.DamageTaken;

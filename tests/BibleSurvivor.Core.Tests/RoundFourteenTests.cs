@@ -59,7 +59,7 @@ internal static class RoundFourteenTests
         }));
         test("R14 future R16 World5 boss5 receipt unknown preserves primary backup",()=>Store(store=>{
             var (state,game)=Start();var world=new BattleWorld(game,Speeds,7);world.Advance(1,Vector2.Zero);game.Capture();state.Run!.World=world.Capture();store.Commit(state,0,"supported");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=16,n=>n["Run"]!["Stage"]="boss",n=>n["Run"]!["World"]!["SchemaVersion"]=5,n=>n["Run"]!["FutureR16"]=true,n=>n["Run"]!["CompletedFourthBoss"]!["Version"]=5,n=>n["Run"]!["CompletedFourthBoss"]!["Future"]=true,n=>n["SchemaVersion"]=4})
+            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=16,n=>n["Run"]!["Stage"]="boss",n=>n["Run"]!["World"]!["SchemaVersion"]=5,n=>n["Run"]!["FutureR16"]=true,n=>n["Run"]!["CompletedFourthBoss"]!["Version"]=5,n=>n["Run"]!["CompletedFourthBoss"]!["Future"]=true,n=>n["SchemaVersion"]=SaveFormat.CurrentVersion+1})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
         }));
         test("R14 four history required death explicit new challenge preserve profile R01 schema2",()=>{

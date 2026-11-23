@@ -58,7 +58,7 @@ internal static class RoundElevenTests
         }));
         test("R11 unsupported R16 combat preserves primary backup and death new challenge uses R01 schema2",()=>Store(store=>{
             var (state,game)=Start();store.Commit(state,0,"start");var original=File.ReadAllText(store.Path);File.WriteAllText(store.Path+".bak",original);
-            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=16,n=>n["Run"]!["RoundFingerprint"]=ExodusContent.Round().Fingerprint,n=>n["Run"]!["FutureR16"]=true,n=>n["SchemaVersion"]=4})
+            foreach(var change in new Action<JsonNode>[] {n=>n["Run"]!["RoundNumber"]=16,n=>n["Run"]!["RoundFingerprint"]=ExodusContent.Round().Fingerprint,n=>n["Run"]!["FutureR16"]=true,n=>n["SchemaVersion"]=SaveFormat.CurrentVersion+1})
             {var node=JsonNode.Parse(original)!;change(node);var future=node.ToJsonString();File.WriteAllText(store.Path,future);Check.Throws<UnsupportedSaveVersionException>(()=>store.Load());Check.Throws<UnsupportedSaveVersionException>(()=>store.Commit(GameSnapshot.New(),1,"overwrite"));Check.Equal(future,File.ReadAllText(store.Path));Check.Equal(original,File.ReadAllText(store.Path+".bak"));}
             var profile=Json(state.Profile);game.Damage(100000);Check.True(state.Run==null);Check.Equal(profile,Json(state.Profile));state.Validate();var fresh=new AdamSession(state,CatalogReader.Round("content/genesis/catalog.json",1),"bible");Check.Equal(1,fresh.RoundNumber);Check.Equal(2,state.SchemaVersion);Check.Equal(profile,Json(state.Profile));state.Validate();
         }));

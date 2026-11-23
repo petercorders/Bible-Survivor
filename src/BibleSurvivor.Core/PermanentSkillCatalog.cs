@@ -75,14 +75,15 @@ namespace BibleSurvivor.Core
     public sealed class PermanentSkillCatalog
     {
         public const int CurrentVersion = 1;
-        public static PermanentSkillCatalog Current { get; } = new PermanentSkillCatalog();
+        private static readonly PermanentSkillCatalog V1 = new PermanentSkillCatalog(
+            "BibleSurvivor.Core.PermanentSkillCatalog.v1.tsv");
+        public static PermanentSkillCatalog Current => ForVersion(CurrentVersion);
         private readonly IReadOnlyDictionary<string, PermanentSkillNode> byId;
 
         public IReadOnlyList<PermanentSkillNode> Nodes { get; }
 
-        private PermanentSkillCatalog()
+        private PermanentSkillCatalog(string resource)
         {
-            const string resource = "BibleSurvivor.Core.PermanentSkillCatalog.v1.tsv";
             using var stream = typeof(PermanentSkillCatalog).Assembly.GetManifestResourceStream(resource)
                 ?? throw new InvalidOperationException("Missing permanent skill catalog resource");
             using var reader = new StreamReader(stream, new UTF8Encoding(false, true));
@@ -100,6 +101,10 @@ namespace BibleSurvivor.Core
         }
 
         public PermanentSkillNode Find(string id) => byId[id];
+        internal bool TryFind(string id, out PermanentSkillNode node) => byId.TryGetValue(id, out node!);
+        internal static bool SupportsVersion(int version) => version == 1;
+        internal static PermanentSkillCatalog ForVersion(int version) =>
+            SupportsVersion(version) ? V1 : throw new UnsupportedSaveVersionException();
 
         internal void ValidateRanks(IReadOnlyDictionary<string, int> ranks)
         {

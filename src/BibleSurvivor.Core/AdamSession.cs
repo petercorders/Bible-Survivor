@@ -78,15 +78,26 @@ namespace BibleSurvivor.Core
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
         public double MoveSpeedMultiplier => 1 + .05 * PermanentRules.Rank(run.PermanentSnapshot,"move") + .1 * Passive("underwear");
         public double PickupRangeMultiplier => 1 + .1 * PermanentRules.Rank(run.PermanentSnapshot,"pickup");
+        public int CombatRulesVersion => run.CombatRulesVersion ?? 1;
         public double LastRetaliationDamage {get; private set;}
         public CombatStats AttackProfile(string weaponId)
         {
             if(!Inventory.Weapons.TryGetValue(weaponId,out var level)) throw new InvalidOperationException("Weapon not equipped");
-            var profile=CombatStats.For(weaponId,level,new CombatBonuses {
+            var bonuses = new CombatBonuses {
                 DamageBonus=DamageMultiplier-1,ExtraAmount=Passive("stones"),DurationBonus=.1*Passive("cloud"),
                 CooldownReduction=.02*PermanentRules.Rank(run.PermanentSnapshot,"cooldown")+.08*Passive("thunder"),
-                AreaBonus=.1*Passive("whirlwind"),ProjectileSpeedBonus=.1*Passive("east_wind") });
-            return Inventory.Forms.TryGetValue(weaponId,out var form)?profile.Evolved(form):profile;
+                AreaBonus=.1*Passive("whirlwind"),ProjectileSpeedBonus=.1*Passive("east_wind") };
+            Inventory.Forms.TryGetValue(weaponId, out var form);
+            if (CombatRulesVersion == 2)
+            {
+                var skillPrefix = "weapon." + weaponId + ".base.";
+                bonuses.DamageBonus += .10 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "01");
+                bonuses.CooldownReduction += .05 * PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "02");
+                bonuses.ExtraAmount += PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");
+                return CombatStats.ForExpanded(weaponId, level, bonuses, form);
+            }
+            var profile = CombatStats.For(weaponId, level, bonuses);
+            return form != null ? profile.Evolved(form) : profile;
         }
         public IReadOnlyList<string> PendingChoices => run.Choices.AsReadOnly();
 
@@ -100,7 +111,14 @@ namespace BibleSurvivor.Core
             var hp = 100 * (1 + 0.1 * PermanentRules.Rank(state.Profile.Upgrades,"health"));
             run = new RunState { RunId = Guid.NewGuid().ToString("N"), Health = hp, MaxHealth = hp,
                 PermanentSnapshot = new Dictionary<string,int>(state.Profile.Upgrades), RoundFingerprint=definition.Fingerprint };
-            state.SchemaVersion = SaveFormat.GenesisVersion; state.Run = run; Capture();
+            if (state.SchemaVersion == SaveFormat.CurrentVersion)
+            {
+                run.CampaignLayout = "genesis";
+                run.CombatRulesVersion = 2;
+                run.PermanentCatalogVersion = PermanentSkillCatalog.CurrentVersion;
+            }
+            else state.SchemaVersion = SaveFormat.GenesisVersion;
+            state.Run = run; Capture();
         }
 
         private AdamSession(GameSnapshot state, RoundDefinition definition)
@@ -135,7 +153,9 @@ namespace BibleSurvivor.Core
             var candidate=SaveStore.Copy(state);
             var entering=candidate.Run!;
             entering.CompletedThirdBoss=entering.Boss!.Copy();entering.Boss=null;
-            candidate.SchemaVersion=3;entering.Stage="normal";entering.RoundFingerprint=next.Fingerprint;
+            if (candidate.SchemaVersion == SaveFormat.CurrentVersion) entering.CampaignLayout = "campaign";
+            else candidate.SchemaVersion = SaveFormat.CampaignVersion;
+            entering.Stage="normal";entering.RoundFingerprint=next.Fingerprint;
             entering.NormalEndedAt=null;entering.RoundCompletionApplied=false;
             entering.Wave=new WaveDirector(next).Snapshot();entering.World=null;entering.Drops.Clear();entering.LastHitTime=-1;
             candidate.Validate();_ = Resume(candidate,next);return candidate;
@@ -390,6 +410,7 @@ namespace BibleSurvivor.Core
             run.World=null; // An earlier host checkpoint cannot describe the completed arena.
             if (definition.UnlockWeaponId != null && !state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))
                 state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
+            RecordSettlement();
             run.Health = run.MaxHealth; run.Stage = "between_rounds"; run.RoundNumber = definition.Number + 1;
         }
         private bool UsesNormalSettlement=>definition.Number==4||definition.Number==5||
@@ -401,6 +422,7 @@ namespace BibleSurvivor.Core
             if(!IsCurrent||!UsesNormalSettlement||run.Stage!="round_settlement"||run.PendingLevels!=0||run.RoundCompletionApplied)return false;
             state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
             if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
+            RecordSettlement();
             run.Health=run.MaxHealth;run.RoundCompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=definition.Number+1;run.World=null;Capture();return true;
         }
         public bool PromoteBossReward()
@@ -423,7 +445,13 @@ namespace BibleSurvivor.Core
             // Refuse a stale/capped grant before changing inventory, money or the receipt.
             var preview=EquipmentInventory.Restore(Inventory.Weapons,Inventory.Passives,Inventory.Forms);
             if(candidate.Kind=="evolution"&&!preview.TryEvolve(candidate.ItemId)||candidate.Kind=="item"&&!preview.TryChoose(candidate.ItemId,Passives.Contains(candidate.ItemId)))return false;
-            if(candidate.Kind=="evolution") { if(!Inventory.TryEvolve(candidate.ItemId))return false; }
+            if(candidate.Kind=="evolution")
+            {
+                if(!Inventory.TryEvolve(candidate.ItemId))return false;
+                var evolved = state.Profile.EvolvedWeapons;
+                var weapon = EvolutionRules.Base(candidate.ItemId);
+                if (evolved != null && !evolved.Contains(weapon)) evolved.Add(weapon);
+            }
             else if(candidate.Kind=="item") { if(!Inventory.TryChoose(candidate.ItemId,Passives.Contains(candidate.ItemId)))return false; }
             else if(candidate.Kind=="gold") { state.Profile.Gold=checked(state.Profile.Gold+candidate.Gold);reward.GoldApplied=true; }
             else return false;
@@ -441,10 +469,16 @@ namespace BibleSurvivor.Core
             if(!IsCurrent||run.Stage!="boss_settlement"||run.PendingLevels!=0||run.Boss?.Reward?.Applied!=true||run.Boss.CompletionApplied)return false;
             state.Profile.Gold=checked(state.Profile.Gold+definition.CompletionGold);
             if(definition.UnlockWeaponId!=null&&!state.Profile.UnlockedWeapons.Contains(definition.UnlockWeaponId))state.Profile.UnlockedWeapons.Add(definition.UnlockWeaponId);
+            RecordSettlement();
             run.Health=run.MaxHealth;run.Boss.CompletionApplied=true;run.Stage="between_rounds";run.RoundNumber=definition.Number+1;run.World=null;Capture();return true;
         }
         private void CreditKill()
         { if (++run.KillRemainder == 5) { state.Profile.Gold = checked(state.Profile.Gold + 1); run.KillRemainder = 0; } }
+        private void RecordSettlement()
+        {
+            if (state.Profile.HighestSettledRound is int settled)
+                state.Profile.HighestSettledRound = Math.Max(settled, definition.Number);
+        }
         private void BossDefeated(DateTimeOffset? clearTime)
         {
             var boss=run.Boss!;
@@ -465,6 +499,8 @@ namespace BibleSurvivor.Core
         }
         public void Purchase(string key, int displayedPrice)
         {
+            if (state.SchemaVersion == SaveFormat.CurrentVersion)
+                throw new InvalidOperationException("Permanent skill purchases require a profile transaction");
             if (PermanentRules.NextPrice(state.Profile,key) != displayedPrice) throw new InvalidOperationException("Price changed; refresh selection");
             PermanentRules.Purchase(state.Profile,key);
         }
