@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 
 namespace BibleSurvivor.Core
 {
-    public enum ExpandedCrossHitKind { Outbound, Return, Thorns, Afterglow, EliteThorn, EliteLight, ExtraPass, RecoveryWave, TurnSpin, IntersectionLight }
+    public enum ExpandedCrossHitKind { Outbound, Return, Thorns, Afterglow, EliteThorn, EliteLight, ExtraPass, RecoveryWave, TurnSpin, IntersectionLight, ReturnSpin }
 
     public readonly struct ExpandedCrossRankOptions
     {
@@ -38,6 +38,7 @@ namespace BibleSurvivor.Core
         public bool WidenDamageRegion { get; }
         public bool SpinAtTurn { get; }
         public bool LightAtIntersection { get; }
+        public bool SpinAtReturn { get; }
         public double ResidualDurationBonus { get; }
 
         public ExpandedCrossRankOptions(bool accelerateOutbound = false, bool prioritizeElite = false,
@@ -48,7 +49,7 @@ namespace BibleSurvivor.Core
             bool expandFirstReturnBudget = false, double residualDurationBonus = 0, bool leaveAfterglow = false,
             bool extendAfterglow = false, bool boostReturningAfterglow = false, bool eliteHitThorn = false,
             bool eliteKillLight = false, bool launchExtraPass = false, bool empowerThornOverlap = false,
-            bool widenThornRadius = false, bool waveOnRecovery = false, bool widenDamageRegion = false, bool spinAtTurn = false, bool lightAtIntersection = false)
+            bool widenThornRadius = false, bool waveOnRecovery = false, bool widenDamageRegion = false, bool spinAtTurn = false, bool lightAtIntersection = false, bool spinAtReturn = false)
         {
             if (!ExpandedWeaponRules.ValidResidualDurationBonus(residualDurationBonus))
                 throw new ArgumentOutOfRangeException(nameof(residualDurationBonus));
@@ -80,6 +81,7 @@ namespace BibleSurvivor.Core
             WidenDamageRegion = widenDamageRegion;
             SpinAtTurn = spinAtTurn;
             LightAtIntersection = lightAtIntersection;
+            SpinAtReturn = spinAtReturn;
             ResidualDurationBonus = residualDurationBonus;
         }
 
@@ -95,7 +97,7 @@ namespace BibleSurvivor.Core
                 ExpandedWeaponRules.ResidualDurationBonus(ranks, true),
                 Has("weapon.cross.d.01"), Has("weapon.cross.d.02"), Has("weapon.cross.d.03"),
                 Has("weapon.cross.d.04"), Has("weapon.cross.d.05"), Has("weapon.cross.b.05"), Has("weapon.cross.e.02"),
-                Has("weapon.cross.e.03"), Has("weapon.cross.e.04"), Has("common.area.09"), Has("weapon.cross.e.05"), Has("weapon.cross.c.05"));
+                Has("weapon.cross.e.03"), Has("weapon.cross.e.04"), Has("common.area.09"), Has("weapon.cross.e.05"), Has("weapon.cross.c.05"), Has("weapon.cross.a.05"));
         }
     }
 
@@ -220,6 +222,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool WiderDamageRegion { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool SpinsAtTurn { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? SpinEndsAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool SpinsAtReturn { get; set; }
 
         public double OutboundSpeed => TrainedOutboundSpeed ?? Speed;
         public double ReturnSpeed => TrainedReturnSpeed ?? Speed;
@@ -314,6 +317,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public double? NextRecoveryWaveAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextIntersectionAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? NextTurnSpinAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? NextReturnSpinAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public List<ExpandedCrossTrajectoryState>? RecentTrajectories { get; set; }
         public int ActiveTrailCount => Shots.Sum(shot => shot.ActiveTrailCount);
         [DataMember(EmitDefaultValue = false)] public double? NextEliteThornAt { get; set; }
@@ -330,6 +334,7 @@ namespace BibleSurvivor.Core
             NextRecoveryWaveAt = NextRecoveryWaveAt,
             NextIntersectionAt = NextIntersectionAt,
             NextTurnSpinAt = NextTurnSpinAt,
+            NextReturnSpinAt = NextReturnSpinAt,
             RecentTrajectories = RecentTrajectories?.Select(piece => piece.Copy()).ToList(),
             NextEliteThornAt = NextEliteThornAt,
             NextEliteLightAt = NextEliteLightAt,
@@ -361,6 +366,7 @@ namespace BibleSurvivor.Core
                 !ExpandedCross.ValidCooldown(NextRecoveryWaveAt, now, ExpandedCross.RecoveryWaveCooldown) ||
                 !ExpandedCross.ValidCooldown(NextIntersectionAt, now, ExpandedCross.IntersectionCooldown) ||
                 !ExpandedCross.ValidCooldown(NextTurnSpinAt, now, ExpandedCross.TurnSpinCooldown) ||
+                !ExpandedCross.ValidCooldown(NextReturnSpinAt, now, ExpandedCross.ReturnSpinCooldown) ||
                 !evolved && (NextRecoveryWaveAt.HasValue || NextTurnSpinAt.HasValue) ||
                 !ExpandedCross.Finite(NextCycle) || NextCycle < 0 ||
                 NextCycle > now + ExpandedCross.MaximumCycle + ExpandedCross.Epsilon ||
@@ -397,7 +403,7 @@ namespace BibleSurvivor.Core
                     shot.SpinsAtTurn && (!evolved || shot.Cycle % 4 != 0 || !spinCycles.Add(shot.Cycle) ||
                         shot.LaunchIndex is > 0) || !shot.SpinsAtTurn && shot.SpinEndsAt.HasValue ||
                     shot.IsExtraPass && (!shot.IsFlying || shot.Cycle % 5 != 0 || !extraCycles.Add(shot.Cycle) ||
-                        shot.LeavesThorns || shot.LeavesAfterglow || shot.WavesOnRecovery || shot.SpinsAtTurn || shot.LaunchIndex.HasValue ||
+                        shot.LeavesThorns || shot.LeavesAfterglow || shot.WavesOnRecovery || shot.SpinsAtTurn || shot.SpinsAtReturn || shot.LaunchIndex.HasValue ||
                         shot.DamageLevel != 0 || shot.OriginalBaseDamage != 0) ||
                     shot.ExpandedFirstReturnBudget != (shot.LaunchIndex == 0 && shot.Cycle % 6 == 0))
                     throw new ArgumentException("Invalid expanded cross shot");
@@ -498,7 +504,7 @@ namespace BibleSurvivor.Core
                 !shot.LeavesThorns && (shot.ExtendedThorns || shot.EmpoweredThornOverlap || shot.WiderThornRadius) ||
                 !shot.LeavesAfterglow && (shot.ExtendedAfterglow || shot.BoostReturningAfterglow) ||
                 !shot.LeavesThorns && !shot.LeavesAfterglow && shot.ResidualDurationBonus != 0 ||
-                !shot.LeavesThorns && !shot.LeavesAfterglow && !shot.WavesOnRecovery && !shot.SpinsAtTurn &&
+                !shot.LeavesThorns && !shot.LeavesAfterglow && !shot.WavesOnRecovery && !shot.SpinsAtTurn && !shot.SpinsAtReturn &&
                     (shot.WidenedSupportShape || shot.WiderDamageRegion) ||
                 shot.LeavesAfterglow != (shot.Afterglow != null))
                 throw new ArgumentException("Invalid expanded cross trail");
@@ -565,6 +571,9 @@ namespace BibleSurvivor.Core
         internal const double TurnSpinRadius = .8;
         internal const double TurnSpinDuration = .5;
         internal const double TurnSpinCooldown = 1;
+        internal const double ReturnSpinCooldown = 2;
+        private const double ReturnSpinRadius = 1;
+        private const double ReturnSpinFactor = .30;
         private const double TurnSpinFactor = .35;
         private const double ExtraPassFactor = .35;
         private const double ThornOverlapFactor = .12;
@@ -591,7 +600,8 @@ namespace BibleSurvivor.Core
             Func<double>? nextCycleDuration = null, Action<int>? recordOriginalSuppression = null,
             Action? recordSupportSuppression = null, Func<bool>? reserveSupportShot = null,
             Action<Vector2, double>? emitRecoveryWave = null, Func<ExpandedCrossHit, double?>? applyOriginalHit = null,
-            Action<Vector2, double>? emitTurnSpin = null, Action<Vector2, double>? emitIntersectionLight = null)
+            Action<Vector2, double>? emitTurnSpin = null, Action<Vector2, double>? emitIntersectionLight = null,
+            Action<Vector2, double>? emitReturnSpin = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -616,6 +626,7 @@ namespace BibleSurvivor.Core
             if (state.NextRecoveryWaveAt <= now + Epsilon) state.NextRecoveryWaveAt = null;
             if (state.NextIntersectionAt <= now + Epsilon) state.NextIntersectionAt = null;
             if (state.NextTurnSpinAt <= now + Epsilon) state.NextTurnSpinAt = null;
+            if (state.NextReturnSpinAt <= now + Epsilon) state.NextReturnSpinAt = null;
             var consideredIntersection = false;
             Action<ExpandedCrossShotState, Vector2, Vector2, double, double>? noteMovement = rankOptions.LightAtIntersection
                 ? NoteIntersection : (Action<ExpandedCrossShotState, Vector2, Vector2, double, double>?)null;
@@ -628,10 +639,10 @@ namespace BibleSurvivor.Core
                 if (!shot.IsExtraPass && (applyOriginalHit != null || rankOptions.EliteHitThorn || rankOptions.EliteKillLight))
                     original = attack => ApplyOriginalWithEliteBursts(state, shot, now, attack, rankOptions, isElite,
                         targets, applyHit, reserveTrail, recordSupportSuppression, applyOriginalHit);
-                Func<bool>? beginSpin = shot.SpinsAtTurn && !shot.Returning && !shot.SpinEndsAt.HasValue &&
-                    !state.NextTurnSpinAt.HasValue ? () => BeginTurnSpin(shot) : (Func<bool>?)null;
+                Action<double>? atTurn = (shot.SpinsAtTurn || shot.SpinsAtReturn) && !shot.Returning
+                    ? turnAt => ApplyTurnEffects(shot, turnAt) : (Action<double>?)null;
                 var caught = Move(shot, now, playerPosition, shot.HitBudget(evolved), shot.ReturnBudget(evolved),
-                    targets, previousTargets, original, beginSpin, shot.IsExtraPass ? null : noteMovement);
+                    targets, previousTargets, original, atTurn, shot.IsExtraPass ? null : noteMovement);
                 if (caught && shot.WavesOnRecovery && !state.NextRecoveryWaveAt.HasValue &&
                     EmitBurst(state, shot, ExpandedCrossHitKind.RecoveryWave, shot.Position,
                         RecoveryWaveRadius * shot.DamageAreaScale, shot.Damage * RecoveryWaveFactor,
@@ -673,7 +684,7 @@ namespace BibleSurvivor.Core
                 else if (evolved) recordSupportSuppression?.Invoke();
                 var spinsAtTurn = evolved && rankOptions.SpinAtTurn && index == 0 && state.Cycle % 4 == 0;
                 var wavesOnRecovery = evolved && rankOptions.WaveOnRecovery;
-                var hasDamageArea = leavesThorns || wavesOnRecovery || spinsAtTurn;
+                var hasDamageArea = leavesThorns || wavesOnRecovery || spinsAtTurn || rankOptions.SpinAtReturn;
                 var shot = new ExpandedCrossShotState
                 {
                     Id = state.NextShotId, Cycle = state.Cycle, EmittedAt = now, SimulatedAt = now,
@@ -690,6 +701,7 @@ namespace BibleSurvivor.Core
                     WiderThornRadius = leavesThorns && rankOptions.WidenThornRadius,
                     WavesOnRecovery = wavesOnRecovery,
                     SpinsAtTurn = spinsAtTurn,
+                    SpinsAtReturn = rankOptions.SpinAtReturn,
                     ShortenedRehitInterval = rankOptions.ShortenRehitInterval,
                     WidenedSupportShape = hasDamageArea && rankOptions.WidenSupportShape,
                     WiderDamageRegion = hasDamageArea && rankOptions.WidenDamageRegion,
@@ -745,13 +757,41 @@ namespace BibleSurvivor.Core
             }
             return emitted;
 
-            bool BeginTurnSpin(ExpandedCrossShotState shot)
+            void ApplyTurnEffects(ExpandedCrossShotState shot, double turnAt)
             {
-                if (!EmitBurst(state, shot, ExpandedCrossHitKind.TurnSpin, shot.Position, shot.SpinRadius,
-                    shot.Damage * TurnSpinFactor, targets, applyHit, reserveTrail, recordSupportSuppression, emit: emitTurnSpin))
-                    return false;
-                state.NextTurnSpinAt = now + TurnSpinCooldown;
-                return true;
+                var center = shot.Position;
+                var hold = shot.SpinsAtTurn && !state.NextTurnSpinAt.HasValue &&
+                    ReserveRegion(state, reserveTrail, recordSupportSuppression);
+                if (hold)
+                {
+                    shot.SpinEndsAt = turnAt + TurnSpinDuration;
+                    state.NextTurnSpinAt = now + TurnSpinCooldown;
+                    emitTurnSpin?.Invoke(center, shot.SpinRadius);
+                }
+
+                var pulse = shot.SpinsAtReturn && !state.NextReturnSpinAt.HasValue &&
+                    ReserveRegion(state, reserveTrail, recordSupportSuppression);
+                var pulseRadius = ReturnSpinRadius * shot.DamageAreaScale;
+                if (pulse)
+                {
+                    state.NextReturnSpinAt = now + ReturnSpinCooldown;
+                    emitReturnSpin?.Invoke(center, pulseRadius);
+                }
+
+                if (!hold && !pulse) return;
+                var inner = (float)shot.SpinRadius;
+                var outer = (float)pulseRadius;
+                foreach (var id in targets().Keys.OrderBy(id => id).ToArray())
+                {
+                    if (!targets().TryGetValue(id, out var position)) continue;
+                    var distance = Vector2.DistanceSquared(center, position);
+                    if (hold && distance <= inner * inner + Epsilon)
+                        applyHit(new ExpandedCrossHit(ExpandedCrossHitKind.TurnSpin, id, position, center, shot,
+                            shot.Damage * TurnSpinFactor));
+                    else if (pulse && distance <= outer * outer + Epsilon)
+                        applyHit(new ExpandedCrossHit(ExpandedCrossHitKind.ReturnSpin, id, position, center, shot,
+                            shot.Damage * ReturnSpinFactor));
+                }
             }
 
             void NoteIntersection(ExpandedCrossShotState shot, Vector2 from, Vector2 to, double fromAt, double toAt)
@@ -843,7 +883,7 @@ namespace BibleSurvivor.Core
 
         private static bool Move(ExpandedCrossShotState shot, double now, Vector2 player, int outboundBudget, int returnBudget,
             Func<IReadOnlyDictionary<int, Vector2>> targets, IReadOnlyDictionary<int, Vector2> previous,
-            Func<ExpandedCrossHit, bool> applyHit, Func<bool>? beginSpin,
+            Func<ExpandedCrossHit, bool> applyHit, Action<double>? atTurn,
             Action<ExpandedCrossShotState, Vector2, Vector2, double, double>? noteMovement)
         {
             var start = shot.SimulatedAt;
@@ -861,7 +901,7 @@ namespace BibleSurvivor.Core
                     var destination = shot.Start + shot.Direction * (float)shot.Distance;
                     Advance(shot, destination, start, until, start, now, outboundBudget, targets, previous, applyHit, noteMovement);
                     if (!reachedTurn) return false;
-                    if (beginSpin?.Invoke() == true) shot.SpinEndsAt = turnAt + TurnSpinDuration;
+                    atTurn?.Invoke(turnAt);
                 }
                 var departAt = shot.SpinEndsAt ?? turnAt;
                 if (now + Epsilon < departAt) return false;
@@ -1115,13 +1155,9 @@ namespace BibleSurvivor.Core
                 (isEligible == null || isEligible(target.Key)));
             var ids = (isEligible != null ? eligible.OrderBy(target => Vector2.DistanceSquared(center, target.Value)).ThenBy(target => target.Key) :
                 eligible.OrderBy(target => target.Key)).Select(target => target.Key).ToArray();
-            var activeWithoutTarget = kind is ExpandedCrossHitKind.RecoveryWave or ExpandedCrossHitKind.TurnSpin or ExpandedCrossHitKind.IntersectionLight;
+            var activeWithoutTarget = kind is ExpandedCrossHitKind.RecoveryWave or ExpandedCrossHitKind.IntersectionLight;
             if (ids.Length == 0 && !activeWithoutTarget) return false;
-            if (state.ActiveTrailCount >= MaximumTrails || reserveTrail?.Invoke() == false)
-            {
-                recordSupportSuppression?.Invoke();
-                return false;
-            }
+            if (!ReserveRegion(state, reserveTrail, recordSupportSuppression)) return false;
             emit?.Invoke(center, radius);
             var accepted = 0;
             foreach (var id in ids)
@@ -1132,6 +1168,13 @@ namespace BibleSurvivor.Core
                     accepted++;
             }
             return activeWithoutTarget || accepted > 0;
+        }
+
+        private static bool ReserveRegion(ExpandedCrossState state, Func<bool>? reserveTrail, Action? recordSupportSuppression)
+        {
+            if (state.ActiveTrailCount < MaximumTrails && reserveTrail?.Invoke() != false) return true;
+            recordSupportSuppression?.Invoke();
+            return false;
         }
 
         internal static double AreaScale(bool widenSupportShape, bool widenDamageRegion) =>

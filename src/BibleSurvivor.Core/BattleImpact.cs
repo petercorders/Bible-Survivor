@@ -19,7 +19,7 @@ namespace BibleSurvivor.Core
         {Sequence=sequence;Step=step;Time=time;Cause=cause;TargetId=targetId;Position=position;Damage=damage;Killed=killed;WeaponForm=weaponForm;}
     }
 
-    public enum BattleAreaEffectKind { LightningStrike, LightningAftershock, LightningEliteThunder, CrossRecovery, CrossIntersection }
+    public enum BattleAreaEffectKind { LightningStrike, LightningAftershock, LightningEliteThunder, CrossRecovery, CrossIntersection, CrossReturnSpin, ChariotEndExplosion, ChariotCrossingWhirlwind, ChariotEndFlame, LightningChain, StaffHit, CrossHit, LionClaw }
 
     // Holds presentation coordinates from the actual effect emission, kept only in live world memory.
     public readonly struct BattleAreaEffect

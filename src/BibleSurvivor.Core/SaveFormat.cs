@@ -85,25 +85,35 @@ namespace BibleSurvivor.Core
             {
                 world.Members!.Add("OriginalSuppressions", Value);
                 world.Members.Add("SupportSuppressions", Value);
+                world.Members.Add("NextHostileEraseAt", Value);
+                world.Members.Add("ChariotDeflectRandom", Value);
+                world.Members.Add("ChariotDeflectionAttempts", Array(Object("PathId ProjectileId")));
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle NextCurrentAt NextGroundLinkAt NextGroundBurstAt NextEvolutionForkAt NextEliteChainMarkAt EliteChainDamageUntil",
                     ("RecentStrikeHits", Array(Object("Id At"))), ("CurrentMarks", Array(Object("Id At"))),
                     ("GroundCurrents", Array(Object("Id Cycle X Y StartedAt EndsAt NextPulse Radius Damage"))),
                     ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain UsesFarthestReuse PredecessorTargetId PredecessorX PredecessorY OriginalBaseDamage IsolatedDamage HighHealthDamage RepeatStrikeDamage WiderLastStrike EliteThunderOnHit EliteThunder CurrentRanks GroundRanks EvolutionRanks")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
                     ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho OriginalBaseDamage")))));
-                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle NextClosingEmberAt NextClosingAshAt NextCloseRangeAt NextEliteExtensionAt NormalBurstKills NextNormalBurstAt NextEliteReignitionAt NextCyclePulseAt",
-                    ("Regions", Array(Object("Id Ember SupportKind X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage OriginalBaseDamage RepeatedHeat NativeDuration EliteExtensionUsed",
-                        ("Contacts", Array(Object("TargetId LastDueAt ConsecutiveHits"))))))));
-                world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle",
-                    ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane WidenedSupportShape WiderDamageRegion ResidualDurationBonus OriginalBaseDamage OriginalHitCount")))));
-                world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle NextEliteThornAt NextEliteLightAt ExtraPassesEmitted NextExtraPassAt NextRecoveryWaveAt NextIntersectionAt NextTurnSpinAt",
+                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle NextClosingEmberAt NextClosingAshAt NextCloseRangeAt NextEliteExtensionAt NormalBurstKills NextNormalBurstAt NextEliteReignitionAt NextCyclePulseAt SparkHitCount NextSparkAt NextLinkAt RadiusKillCount RadiusBoostUntil NextRadiusBoostAt",
+                    ("Spark", Object("TargetId X Y StartedAt LastStepAt ParentDamage MakesFire RegionShapeBonus RegionDurationBonus")),
+                    ("Regions", Array(Object("Id Ember SupportKind X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage OriginalBaseDamage RepeatedHeat NativeDuration EliteExtensionUsed AdaptiveHeat",
+                        ("Contacts", Array(Object("TargetId LastDueAt ConsecutiveHits"))),
+                        ("HeatTimers", Array(Object("TargetId EnteredAt LastHitAt"))))))));
+                world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle NextReturnAt NextEndPillarAt NextEliteSplashAt NextResidualCrossAt NextResidualEndAt NextWaterScreenAt NextEncirclingWaveAt NextHostileEraseAt HostileEraseRandomState LastCycleStartedAt LastPlayerHurtObservedAt NextHurtAdvanceAt NextEvolvedReturnAt NextEliteKillLaneAt",
+                    ("EliteKillLane", Object("SourceWaveId Cycle VictimId StartedAt EndsAt NextPulseAt X Y DirectionX DirectionY Width Damage")),
+                    ("ReturnWaves", Array(Object("SourceWaveId Cycle StartedAt LastStepAt X Y DirectionX DirectionY Width Damage Distance HitIds FromEvolvedLane TravelRange TravelSpeed"))),
+                    ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane WidenedSupportShape WiderDamageRegion ResidualDurationBonus OriginalBaseDamage OriginalHitCount TechniqueRanks TurnAtDistance TurnDirectionX TurnDirectionY ResidualLaneRanks ResidualLaneStartedAt ResidualLaneTicks ResidualLaneWidthBonus ResidualLaneDurationBonus ResidualLaneEdgeIds ResidualLaneOverlapIds ErasesHostileProjectiles HostileEraseAttemptIds ReturnsEvolvedLane LeavesEliteKillLane")))));
+                world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle NextEliteThornAt NextEliteLightAt ExtraPassesEmitted NextExtraPassAt NextRecoveryWaveAt NextIntersectionAt NextTurnSpinAt NextReturnSpinAt",
                     ("RecentTrajectories", Array(Object("ShotId StartX StartY EndX EndY FromAt ToAt StartsAtLaunch"))),
-                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt TrainedOutboundSpeed TrainedReturnSpeed IncreasedLegBudget IncreasedSharedLegBudget ExtendedThorns ShortenedRehitInterval WidenedSupportShape FirstOutboundDamage ReturnDamage CurvedReturn PreviouslyHitReturnDamage MultipleHitDamage ExpandedFirstReturnBudget LaunchIndex DamageLevel ResidualDurationBonus OriginalBaseDamage LeavesAfterglow ExtendedAfterglow BoostReturningAfterglow NextAfterglowAt IsExtraPass EmpoweredThornOverlap WiderThornRadius WavesOnRecovery WiderDamageRegion SpinsAtTurn SpinEndsAt",
+                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt TrainedOutboundSpeed TrainedReturnSpeed IncreasedLegBudget IncreasedSharedLegBudget ExtendedThorns ShortenedRehitInterval WidenedSupportShape FirstOutboundDamage ReturnDamage CurvedReturn PreviouslyHitReturnDamage MultipleHitDamage ExpandedFirstReturnBudget LaunchIndex DamageLevel ResidualDurationBonus OriginalBaseDamage LeavesAfterglow ExtendedAfterglow BoostReturningAfterglow NextAfterglowAt IsExtraPass EmpoweredThornOverlap WiderThornRadius WavesOnRecovery WiderDamageRegion SpinsAtTurn SpinEndsAt SpinsAtReturn",
                         ("HitTargets", Array(Object("Id Outbound Returned LastHitAt"))),
                         ("Thorns", Array(Object("StartX StartY EndX EndY BornAt Returning"))),
                         ("Afterglow", Array(Object("StartX StartY EndX EndY BornAt Returning"))))))));
-                world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle SuppressedOriginals",
-                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail WidenedSupportShape WiderDamageRegion StaggerIndex ResidualDurationBonus OriginalBaseDamage")))));
+                world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle SuppressedOriginals NextSparkAt NextEndExplosionAt NextWindAt NextGuaranteedWindAt NextDeflectAt IntersectionCheckedAt NextCrossingAt NextEndFlameAt NextProcessionAt ProcessionUntil NextReverseAt NextCrossChildAt",
+                    ("SupportChariots", Array(Object("Kind SourcePathId Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance HitIds"))),
+                    ("Winds", Array(Object("SourcePathId Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Damage Distance HitIds Guaranteed Wider WiderHitShape TurnDirectionX TurnDirectionY"))),
+                    ("Spark", Object("SourcePathId Cycle TargetId X Y Damage SpawnedAt SteppedAt")),
+                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail WidenedSupportShape WiderDamageRegion StaggerIndex ResidualDurationBonus OriginalBaseDamage MakesOriginFire OriginFireTicks MakesBasicTrail WidensEvolvedTrail ExplodesAtEnd RewardsBodyHits FollowsWithWind GuaranteesWind WindChecked WidensWind WidensWindHitShape TracksCrossing MakesEndFlame TurnsMidway MidpointTurnResolved TurnDirectionX TurnDirectionY ReversesAtEnd HasCrossingChild")))));
                 world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits KillLeapReadyAt",
                     ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget ExtendedLeash FirstClawPhaseResolved NextPackRoarAt ClawHasteUntil"))),
                     ("Leap", Object("At OriginX OriginY Damage VisitedIds EmpoweredDamage FollowupOnKill"))));
@@ -133,6 +143,9 @@ namespace BibleSurvivor.Core
                 run.Members.Add("BossEntryLightningStrikes", Value);
                 run.Members.Add("BossEntryFireCycle", Value);
                 run.Members.Add("BossEntryCrossCycle", Value);
+                run.Members.Add("BossEntryStaffCycle", Value);
+                run.Members.Add("BossEntryStaffWaves", Value);
+                run.Members.Add("BossEntryChariot", Object("Cycle NextPathId SuppressedOriginals NextProcessionAt ProcessionUntil"));
             }
             return Object(string.Join(" ", EnvelopeFields), ("Profile", profile), ("Run", run),
                 ("OldTestamentClear", Object("RunId CompletedAtUnixMilliseconds")));

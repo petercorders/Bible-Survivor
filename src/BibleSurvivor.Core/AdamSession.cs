@@ -136,6 +136,9 @@ namespace BibleSurvivor.Core
             streams[weaponId] = current;
             return profile.Resolve(current / 4294967296d).Damage;
         }
+        internal double? LastPlayerHurtAt => run.LastHitTime < 0 ? (double?)null : run.LastHitTime;
+        internal uint NextWeaponProcState(string proc, uint previous) =>
+            PermanentOriginalHitRules.NextCriticalState(run.RunId, definition.Number, proc, previous);
         internal bool TrackOriginalCycles => HasExpandedSkill("common.crit.03") || HasExpandedSkill("common.power.03");
         internal bool TrackOriginalMarks => HasExpandedSkill("common.crit.09") || HasExpandedSkill("common.power.09");
         internal bool IsEliteActor(int id) =>
@@ -164,7 +167,12 @@ namespace BibleSurvivor.Core
             extendOnEliteKill: HasExpandedSkill("weapon.fire_pillar.b.05"),
             normalKillBurst: HasExpandedSkill("weapon.fire_pillar.c.03"),
             eliteReignition: HasExpandedSkill("weapon.fire_pillar.d.04"),
-            cyclePulse: HasExpandedSkill("weapon.fire_pillar.d.05"));
+            cyclePulse: HasExpandedSkill("weapon.fire_pillar.d.05"),
+            adaptiveHeat: HasExpandedSkill("weapon.fire_pillar.d.03"),
+            sparkOnSixthHit: HasExpandedSkill("weapon.fire_pillar.c.01"),
+            sparkLeavesFire: HasExpandedSkill("weapon.fire_pillar.c.02"),
+            linkNearbyPillars: HasExpandedSkill("weapon.fire_pillar.c.04"),
+            empowerAfterKills: HasExpandedSkill("weapon.fire_pillar.c.05"));
         private double StaticRegionShapeBonus() =>
             (HasExpandedSkill("common.area.01") ? .04 : 0) + (HasExpandedSkill("common.area.09") ? .06 : 0);
         internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
@@ -189,13 +197,24 @@ namespace BibleSurvivor.Core
             run.Stage == "boss" ? (run.BossEntryLightningCycle, run.BossEntryLightningStrikes) : default;
         internal long BossEntryFireCycle => run.Stage == "boss" ? run.BossEntryFireCycle : 0;
         internal long BossEntryCrossCycle => run.Stage == "boss" ? run.BossEntryCrossCycle : 0;
-        internal void RecordWeaponCadenceAtBossEntry(ExpandedLightningState? lightning, ExpandedFirePillarState? fire, ExpandedCrossState? cross)
+        internal (long Cycle, long Waves) BossEntryStaffCadence =>
+            run.Stage == "boss" ? (run.BossEntryStaffCycle, run.BossEntryStaffWaves) : default;
+        internal ChariotBossEntryCadence? BossEntryChariot => run.Stage == "boss" ? run.BossEntryChariot : null;
+        internal void RecordWeaponCadenceAtBossEntry(ExpandedLightningState? lightning, ExpandedFirePillarState? fire,
+            ExpandedCrossState? cross, ExpandedMosesStaffState? staff, ExpandedElijahChariotState? chariot)
         {
             if (CombatRulesVersion != 2) return;
             run.BossEntryLightningCycle = lightning?.Cycle ?? 0;
             run.BossEntryLightningStrikes = lightning == null ? 0 : lightning.NextStrikeId - 1;
             run.BossEntryFireCycle = fire?.Cycle ?? 0;
             run.BossEntryCrossCycle = cross?.Cycle ?? 0;
+            run.BossEntryStaffCycle = staff?.Cycle ?? 0;
+            run.BossEntryStaffWaves = staff == null ? 0 : staff.NextWaveId - 1;
+            run.BossEntryChariot = chariot != null && chariot.Cycle > 0 ? new ChariotBossEntryCadence
+            {
+                Cycle = chariot.Cycle, NextPathId = chariot.NextPathId, SuppressedOriginals = chariot.SuppressedOriginals,
+                NextProcessionAt = chariot.NextProcessionAt, ProcessionUntil = chariot.ProcessionUntil,
+            } : null;
         }
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
@@ -495,6 +514,9 @@ namespace BibleSurvivor.Core
             target.BossEntryLightningStrikes = 0;
             target.BossEntryFireCycle = 0;
             target.BossEntryCrossCycle = 0;
+            target.BossEntryStaffCycle = 0;
+            target.BossEntryStaffWaves = 0;
+            target.BossEntryChariot = null;
         }
 
         public void Advance(double seconds)

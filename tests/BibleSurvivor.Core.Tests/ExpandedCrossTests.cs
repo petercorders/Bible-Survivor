@@ -11,6 +11,92 @@ internal static class ExpandedCrossTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Cross a.05 returns with a saved two-second rotation cooldown at the exact reversal", () =>
+        {
+            var ranks = Rank("a.05");
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            var firings = new List<double>();
+            Step(state, 0, targets, hits, cycle: 1, ranks: ranks);
+            targets[1] = new Vector2(5, 1);
+            targets[2] = new Vector2(5, 1.001f);
+            for (var tick = 1; tick <= 50; tick++)
+            {
+                var now = tick / 60d;
+                Step(state, now, targets, hits, cycle: 1, ranks: ranks,
+                    emitReturnSpin: (center, radius) =>
+                    {
+                        Check.Equal(new Vector2(5, 0), center);
+                        Check.Near(1, radius);
+                        firings.Add(now);
+                    });
+                if (tick == 49) Check.Equal(0, firings.Count);
+            }
+            Check.Equal(1, firings.Count);
+            var spin = hits.Single(value => value.Kind == ExpandedCrossHitKind.ReturnSpin);
+            Check.Equal(1, spin.TargetId);
+            Check.Near(9, spin.Damage);
+            Check.True(!spin.IsOriginal && spin.OriginalBaseDamage == 0 && spin.TargetOrdinal == 0);
+            state = RoundTrip(state);
+            state.Validate(50 / 60d, false);
+            Check.Near(170 / 60d, state.NextReturnSpinAt!.Value);
+            Check.True(state.Shots[0].Returning);
+            targets.Clear();
+            for (var tick = 51; tick <= 170; tick++)
+            {
+                var now = tick / 60d;
+                Step(state, now, targets, hits, cycle: 1, ranks: ranks,
+                    emitReturnSpin: (_, _) => firings.Add(now));
+                if (tick == 169) Check.Equal(1, firings.Count);
+            }
+            Check.Equal(2, firings.Count);
+            Check.Near(170 / 60d, firings[1]);
+            state.Validate(170 / 60d, false);
+        });
+
+        test("Cross a.05 and e.05 resolve one strongest overlap while retaining the return ring and the evolution hold", () =>
+        {
+            var ranks = ExpandedCrossRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.cross.a.05"] = 1, ["weapon.cross.e.05"] = 1,
+                ["common.area.01"] = 1, ["common.area.09"] = 1,
+            });
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            var state = new ExpandedCrossState { Cycle = 3 };
+            Step(state, 0, targets, hits, evolved: true, ranks: ranks);
+            targets[1] = new Vector2(5, .879f);
+            targets[2] = new Vector2(5, 1.099f);
+            targets[3] = new Vector2(5, 1.101f);
+            var radii = new List<double>();
+            Step(state, 50 / 60d, targets, hits, evolved: true,
+                emitTurnSpin: (_, radius) => radii.Add(radius), emitReturnSpin: (_, radius) => radii.Add(radius));
+            Check.Equal(2, radii.Count);
+            Check.Near(.88, radii[0]);
+            Check.Near(1.1, radii[1]);
+            var spinningHits = hits.Where(value => value.Kind is ExpandedCrossHitKind.TurnSpin or ExpandedCrossHitKind.ReturnSpin).ToArray();
+            Check.True(spinningHits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.Near(10.5, spinningHits[0].Damage);
+            Check.Equal(ExpandedCrossHitKind.TurnSpin, spinningHits[0].Kind);
+            Check.Near(9, spinningHits[1].Damage);
+            Check.Equal(ExpandedCrossHitKind.ReturnSpin, spinningHits[1].Kind);
+            Check.True(state.Shots[0].IsSpinning);
+            state.Validate(50 / 60d, true);
+
+            hits.Clear();
+            targets.Clear();
+            var capacity = new ExpandedCrossState { Cycle = 3 };
+            Step(capacity, 0, targets, hits, evolved: true, ranks: ranks);
+            targets[1] = new Vector2(5, .87f);
+            var suppressed = 0;
+            Step(capacity, 50 / 60d, targets, hits, evolved: true, reserveTrail: () => capacity.ActiveTrailCount < 2,
+                supportSuppressed: () => suppressed++);
+            Check.Equal(1, suppressed);
+            Check.True(capacity.NextTurnSpinAt.HasValue && !capacity.NextReturnSpinAt.HasValue);
+            Check.Near(10.5, hits.Single().Damage);
+        });
+
         test("Cross c.05 emits once at the swept intersection of distinct originals and persists its cooldown", () =>
         {
             var ranks = ExpandedCrossRankOptions.FromRanks(new Dictionary<string, int>
@@ -998,7 +1084,7 @@ internal static class ExpandedCrossTests
         Func<ExpandedCrossHit, bool>? apply = null, Action? supportSuppressed = null,
         Func<bool>? reserveSupportShot = null, Action<Vector2, double>? emitRecoveryWave = null,
         Func<ExpandedCrossHit, double?>? applyOriginalHit = null, Action<Vector2, double>? emitTurnSpin = null,
-        Action<Vector2, double>? emitIntersectionLight = null) =>
+        Action<Vector2, double>? emitIntersectionLight = null, Action<Vector2, double>? emitReturnSpin = null) =>
         ExpandedCross.Step(state, now, player ?? Vector2.Zero, facing ?? Vector2.UnitX, evolved ? 8 : 1,
             evolved, damage, cycle, count, .28, 5, speed, () => targets, previous ?? targets, hit =>
             {
@@ -1007,7 +1093,7 @@ internal static class ExpandedCrossTests
                 return true;
             }, reserveOriginal, reserveTrail, ranks, isElite, recordSupportSuppression: supportSuppressed,
             reserveSupportShot: reserveSupportShot, emitRecoveryWave: emitRecoveryWave, applyOriginalHit: applyOriginalHit,
-            emitTurnSpin: emitTurnSpin, emitIntersectionLight: emitIntersectionLight);
+            emitTurnSpin: emitTurnSpin, emitIntersectionLight: emitIntersectionLight, emitReturnSpin: emitReturnSpin);
 
     private static ExpandedCrossState RoundTrip(ExpandedCrossState state)
     {

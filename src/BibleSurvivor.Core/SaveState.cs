@@ -71,6 +71,19 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue=false)] public long BossEntryLightningStrikes { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryFireCycle { get; set; }
         [DataMember(EmitDefaultValue=false)] public long BossEntryCrossCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryStaffCycle { get; set; }
+        [DataMember(EmitDefaultValue=false)] public long BossEntryStaffWaves { get; set; }
+        [DataMember(EmitDefaultValue=false)] public ChariotBossEntryCadence? BossEntryChariot { get; set; }
+    }
+
+    [DataContract]
+    public sealed class ChariotBossEntryCadence
+    {
+        [DataMember(IsRequired=true)] public long Cycle { get; set; }
+        [DataMember(IsRequired=true)] public long NextPathId { get; set; }
+        [DataMember(IsRequired=true)] public int SuppressedOriginals { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? NextProcessionAt { get; set; }
+        [DataMember(EmitDefaultValue=false)] public double? ProcessionUntil { get; set; }
     }
 
     [DataContract]
@@ -130,7 +143,8 @@ namespace BibleSurvivor.Core
                 Run.PermanentRecovery != null || Run.CriticalRandomStates != null || Run.FirstBibleAttackUsed ||
                 Run.NoHitCarrySeconds != 0 || Run.LastTempoEliteKillAt.HasValue || Run.TempoOpeningUsed ||
                 Run.BossEntryVoiceCycle != 0 || Run.BossEntryLightningCycle != 0 ||
-                Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0))
+                Run.BossEntryLightningStrikes != 0 || Run.BossEntryFireCycle != 0 || Run.BossEntryCrossCycle != 0 ||
+                Run.BossEntryStaffCycle != 0 || Run.BossEntryStaffWaves != 0 || Run.BossEntryChariot != null))
                 throw new InvalidDataException("Legacy combat cannot contain an expanded permanent skill catalog");
             foreach (var encounter in PermanentProfile.EncounterHistory(Run))
                 if (encounter.Reward is { } reward &&
@@ -206,8 +220,19 @@ namespace BibleSurvivor.Core
                 if (InvalidBossCadence(Run.BossEntryLightningCycle, "lightning") ||
                     Run.BossEntryLightningStrikes < Run.BossEntryLightningCycle ||
                     Run.BossEntryLightningStrikes > 4 * Run.BossEntryLightningCycle ||
-                    InvalidBossCadence(Run.BossEntryFireCycle, "fire_pillar") || InvalidBossCadence(Run.BossEntryCrossCycle, "cross"))
+                    InvalidBossCadence(Run.BossEntryFireCycle, "fire_pillar") || InvalidBossCadence(Run.BossEntryCrossCycle, "cross") ||
+                    InvalidBossCadence(Run.BossEntryStaffCycle, "moses_staff") || Run.BossEntryStaffWaves < 0 ||
+                    Run.BossEntryStaffWaves > 4 * Run.BossEntryStaffCycle)
                     throw new InvalidDataException("Invalid weapon cadence at boss entry");
+                if (Run.BossEntryChariot is { } entry &&
+                    (entry.Cycle <= 0 || InvalidBossCadence(entry.Cycle, "elijah_chariot") || entry.NextPathId < 1 ||
+                     entry.NextPathId > entry.Cycle * 4 + 1 || entry.SuppressedOriginals < 0 ||
+                     entry.SuppressedOriginals > entry.Cycle * 4 || entry.NextPathId - 1 + entry.SuppressedOriginals < entry.Cycle ||
+                     entry.ProcessionUntil.HasValue && entry.ProcessionUntil != entry.NextProcessionAt ||
+                     entry.NextProcessionAt is double procession && (!Finite(procession) || procession < 0 ||
+                         procession > combatTime + 6 + 1e-9 ||
+                         PermanentRules.Rank(Run.PermanentSnapshot, "weapon.elijah_chariot.e.05") == 0)))
+                    throw new InvalidDataException("Invalid chariot cadence at boss entry");
                 if (Run.MaxHealth != PermanentCombatRules.StartingHealth(Run.PermanentSnapshot, true))
                     throw new InvalidDataException("Expanded run health does not match its starting ranks");
             }
@@ -343,7 +368,12 @@ namespace BibleSurvivor.Core
                 if (Run.World.Lightning is { } boltCadence && (boltCadence.Cycle < Run.BossEntryLightningCycle ||
                     boltCadence.NextStrikeId - 1 < Run.BossEntryLightningStrikes) ||
                     Run.World.FirePillar is { } fireCadence && fireCadence.Cycle < Run.BossEntryFireCycle ||
-                    Run.World.Cross is { } crossCadence && crossCadence.Cycle < Run.BossEntryCrossCycle)
+                    Run.World.Cross is { } crossCadence && crossCadence.Cycle < Run.BossEntryCrossCycle ||
+                    Run.World.MosesStaff is { } staffCadence && (staffCadence.Cycle < Run.BossEntryStaffCycle ||
+                        staffCadence.NextWaveId - 1 < Run.BossEntryStaffWaves) ||
+                    Run.World.ElijahChariot is { } chariotCadence && Run.BossEntryChariot is { } chariotEntry &&
+                        (chariotCadence.Cycle < chariotEntry.Cycle || chariotCadence.NextPathId < chariotEntry.NextPathId ||
+                            chariotCadence.SuppressedOriginals < chariotEntry.SuppressedOriginals))
                     throw new InvalidDataException("World weapon cadence precedes boss entry");
                 var permanentRanks = Run.PermanentSnapshot;
                 bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
@@ -354,6 +384,11 @@ namespace BibleSurvivor.Core
                         if (HasRank(prefix + (index + 1).ToString("D2"))) flags |= 1 << index;
                     return flags;
                 }
+                if ((Run.World.ChariotDeflectRandom.HasValue || Run.World.ChariotDeflectionAttempts != null) &&
+                    !HasRank("weapon.elijah_chariot.d.04") ||
+                    Run.World.NextHostileEraseAt.HasValue && !HasRank("weapon.elijah_chariot.d.04") &&
+                    !HasRank("weapon.moses_staff.d.02") && !HasRank("weapon.bible.b.03"))
+                    throw new InvalidDataException("Hostile erase state requires a frozen defensive rank");
                 var lightningCurrentRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.c.");
                 var lightningGroundRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.d.");
                 var lightningEvolutionRanks = Run.World.Lightning == null ? 0 : WeaponNodeFlags("weapon.lightning.e.") >> 1;
@@ -425,14 +460,21 @@ namespace BibleSurvivor.Core
                     fire.NextEliteExtensionAt.HasValue && !HasRank("weapon.fire_pillar.b.05") ||
                     (fire.NormalBurstKills != 0 || fire.NextNormalBurstAt.HasValue) && !HasRank("weapon.fire_pillar.c.03") ||
                     fire.NextEliteReignitionAt.HasValue && !HasRank("weapon.fire_pillar.d.04") ||
-                    fire.NextCyclePulseAt.HasValue && !HasRank("weapon.fire_pillar.d.05")))
+                    fire.NextCyclePulseAt.HasValue && !HasRank("weapon.fire_pillar.d.05") ||
+                    (fire.Spark != null || fire.SparkHitCount != 0 || fire.NextSparkAt.HasValue) && !HasRank("weapon.fire_pillar.c.01") ||
+                    fire.Spark?.MakesFire == true && !HasRank("weapon.fire_pillar.c.02") ||
+                    fire.NextLinkAt.HasValue && !HasRank("weapon.fire_pillar.c.04") ||
+                    (fire.RadiusBoostUntil.HasValue || fire.NextRadiusBoostAt.HasValue || fire.RadiusKillCount != 0) &&
+                        !HasRank("weapon.fire_pillar.c.05")))
                     throw new InvalidDataException("Fire pillar cooldowns require their frozen ranks");
                 if (Run.World.FirePillar?.Regions.Any(region =>
                     region.Ember && region.Radius > ExpandedFirePillar.SupportRadius(region.SupportKind) * (1 + possibleArea.HitShapeBonus + permanentArea.RegionShapeBonus) + 1e-8 ||
                     region.SupportKind == ExpandedFireSupportKind.ClosingEmber && !HasRank("weapon.fire_pillar.b.03") ||
                     region.SupportKind == ExpandedFireSupportKind.CloseRange && !HasRank("weapon.fire_pillar.a.05") ||
                     region.SupportKind == ExpandedFireSupportKind.EliteReignition && !HasRank("weapon.fire_pillar.d.04") ||
+                    region.SupportKind == ExpandedFireSupportKind.SparkFire && !HasRank("weapon.fire_pillar.c.02") ||
                     region.RepeatedHeat && !HasRank("weapon.fire_pillar.b.04") ||
+                    region.AdaptiveHeat && !HasRank("weapon.fire_pillar.d.03") ||
                     region.NativeDuration.HasValue && !HasRank("weapon.fire_pillar.b.05") ||
                     region.IncreasedCoreDamage && !HasRank("weapon.fire_pillar.b.02") ||
                     region.IncreasedIgnitionDamage && !HasRank("weapon.fire_pillar.d.01")) == true)
@@ -481,7 +523,34 @@ namespace BibleSurvivor.Core
                         (region.SupportKind == ExpandedFireSupportKind.EvolvedEmber ? evolvedEmberBonus : 0) + 1e-8 ||
                         region.EndsAt - region.StartedAt < ExpandedFirePillar.EmberLifetime - 1e-8)) == true)
                     throw new InvalidDataException("Fire pillar ember lifetime does not match its frozen ranks");
+                var staffSuffixes = new[] { "a.04", "a.05", "b.02", "b.03", "b.04", "b.05" };
+                var staffTechniques = 0;
+                for (var index = 0; index < staffSuffixes.Length; index++)
+                    if (HasRank("weapon.moses_staff." + staffSuffixes[index])) staffTechniques |= 1 << index;
+                if (Run.World.MosesStaff is { } staff && ((staff.NextReturnAt.HasValue || staff.ReturnWaves?.Any(wave => !wave.FromEvolvedLane) == true) &&
+                    !HasRank("weapon.moses_staff.a.04") || staff.NextEndPillarAt.HasValue && !HasRank("weapon.moses_staff.b.02") ||
+                    staff.NextEliteSplashAt.HasValue && !HasRank("weapon.moses_staff.b.04") ||
+                    staff.NextResidualCrossAt.HasValue && !HasRank("weapon.moses_staff.c.04") ||
+                    staff.NextResidualEndAt.HasValue && !HasRank("weapon.moses_staff.c.05") ||
+                    staff.NextWaterScreenAt.HasValue && !HasRank("weapon.moses_staff.d.01") ||
+                    (staff.NextHostileEraseAt.HasValue || staff.HostileEraseRandomState.HasValue) && !HasRank("weapon.moses_staff.d.02") ||
+                    (staff.LastPlayerHurtObservedAt.HasValue || staff.NextHurtAdvanceAt.HasValue || staff.LastCycleStartedAt.HasValue) && !HasRank("weapon.moses_staff.d.03") ||
+                    staff.NextEncirclingWaveAt.HasValue && !HasRank("weapon.moses_staff.d.05") ||
+                    (staff.NextEvolvedReturnAt.HasValue || staff.ReturnWaves?.Any(wave => wave.FromEvolvedLane) == true) &&
+                        !HasRank("weapon.moses_staff.e.04") ||
+                    (staff.NextEliteKillLaneAt.HasValue || staff.EliteKillLane != null) && !HasRank("weapon.moses_staff.e.05")))
+                    throw new InvalidDataException("Staff techniques require their frozen ranks");
+                var staffResidualRanks = Run.World.MosesStaff == null ? 0 : WeaponNodeFlags("weapon.moses_staff.c.");
+                var staffResidualLifetimeBonus = ExpandedWeaponRules.ResidualDurationBonus(permanentRanks,
+                    Run.World.MosesStaff?.Evolved == true);
                 if (Run.World.MosesStaff?.Waves.Any(wave =>
+                    (wave.TechniqueRanks & ~staffTechniques) != 0 || (wave.ResidualLaneRanks & ~staffResidualRanks) != 0 ||
+                    (wave.ErasesHostileProjectiles || wave.HostileEraseAttemptIds != null) && !HasRank("weapon.moses_staff.d.02") ||
+                    wave.HostileEraseAttemptIds?.Any(id => id >= Run.World.NextHostileId) == true ||
+                    wave.ReturnsEvolvedLane && !HasRank("weapon.moses_staff.e.04") ||
+                    wave.LeavesEliteKillLane && !HasRank("weapon.moses_staff.e.05") ||
+                    wave.ResidualLaneWidthBonus > possibleArea.HitShapeBonus + permanentArea.RegionShapeBonus + 1e-8 ||
+                    wave.ResidualLaneDurationBonus > staffResidualLifetimeBonus + 1e-8 ||
                     wave.IncreasedKnockback && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.b.01") == 0 ||
                     wave.WidenedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.01") == 0 ||
                     wave.EmpoweredLaneEdge && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.02") == 0 ||
@@ -492,9 +561,11 @@ namespace BibleSurvivor.Core
                     (cross.ExtraPassesEmitted != 0 || cross.NextExtraPassAt.HasValue) && !HasRank("weapon.cross.b.05") ||
                     cross.NextRecoveryWaveAt.HasValue && !HasRank("weapon.cross.e.04") ||
                     (cross.RecentTrajectories != null || cross.NextIntersectionAt.HasValue) && !HasRank("weapon.cross.c.05") ||
-                    cross.NextTurnSpinAt.HasValue && !HasRank("weapon.cross.e.05")))
+                    cross.NextTurnSpinAt.HasValue && !HasRank("weapon.cross.e.05") ||
+                    cross.NextReturnSpinAt.HasValue && !HasRank("weapon.cross.a.05")))
                     throw new InvalidDataException("Cross cooldowns require their frozen ranks");
                 if (Run.World.Cross?.Shots.Any(shot =>
+                    shot.SpinsAtReturn && !HasRank("weapon.cross.a.05") ||
                     shot.IsExtraPass && !HasRank("weapon.cross.b.05") ||
                     shot.EmpoweredThornOverlap && !HasRank("weapon.cross.e.02") ||
                     shot.WiderThornRadius && !HasRank("weapon.cross.e.03") ||
@@ -526,6 +597,39 @@ namespace BibleSurvivor.Core
                         (lion.KillLeapReadyAt.HasValue || lion.Leap?.FollowupOnKill == true) &&
                         PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.e.02") == 0))
                     throw new InvalidDataException("Daniel lion bonuses require their frozen ranks");
+                if (Run.World.ElijahChariot is { } chariotSkills && (
+                    (chariotSkills.Spark != null || chariotSkills.NextSparkAt.HasValue) && !HasRank("weapon.elijah_chariot.c.01") ||
+                    chariotSkills.NextEndExplosionAt.HasValue && !HasRank("weapon.elijah_chariot.c.03") ||
+                    (chariotSkills.NextWindAt.HasValue || chariotSkills.Winds != null) && !HasRank("weapon.elijah_chariot.d.02") ||
+                    chariotSkills.NextGuaranteedWindAt.HasValue && !HasRank("weapon.elijah_chariot.d.05") ||
+                    chariotSkills.NextDeflectAt.HasValue && !HasRank("weapon.elijah_chariot.d.04") ||
+                    chariotSkills.NextReverseAt.HasValue && !HasRank("weapon.elijah_chariot.a.05") ||
+                    chariotSkills.NextCrossChildAt.HasValue && !HasRank("weapon.elijah_chariot.b.05") ||
+                    chariotSkills.SupportChariots?.Any(support => !HasRank(support.Kind == ExpandedElijahChariotSupportKind.Reverse
+                        ? "weapon.elijah_chariot.a.05" : "weapon.elijah_chariot.b.05")) == true ||
+                    (chariotSkills.IntersectionCheckedAt.HasValue || chariotSkills.NextCrossingAt.HasValue) && !HasRank("weapon.elijah_chariot.e.03") ||
+                    chariotSkills.NextEndFlameAt.HasValue && !HasRank("weapon.elijah_chariot.e.04") ||
+                    (chariotSkills.NextProcessionAt.HasValue || chariotSkills.ProcessionUntil.HasValue) && !HasRank("weapon.elijah_chariot.e.05") ||
+                    chariotSkills.Winds?.Any(wind =>
+                        wind.Guaranteed && !HasRank("weapon.elijah_chariot.d.05") ||
+                        wind.Wider && !HasRank("weapon.elijah_chariot.d.03") ||
+                        wind.WiderHitShape && !HasRank("common.area.01") ||
+                        wind.TurnDirectionX.HasValue && !HasRank("weapon.elijah_chariot.a.04")) == true ||
+                    chariotSkills.Paths.Any(path =>
+                        path.MakesOriginFire && !HasRank("weapon.elijah_chariot.c.02") ||
+                        (path.MakesBasicTrail || path.WidensEvolvedTrail) && !HasRank("weapon.elijah_chariot.c.04") ||
+                        path.ExplodesAtEnd && !HasRank("weapon.elijah_chariot.c.03") ||
+                        path.RewardsBodyHits && !HasRank("weapon.elijah_chariot.c.05") ||
+                        path.FollowsWithWind && !HasRank("weapon.elijah_chariot.d.02") ||
+                        path.GuaranteesWind && !HasRank("weapon.elijah_chariot.d.05") ||
+                        path.WidensWind && !HasRank("weapon.elijah_chariot.d.03") ||
+                        path.WidensWindHitShape && !HasRank("common.area.01") ||
+                        path.TurnsMidway && !HasRank("weapon.elijah_chariot.a.04") ||
+                        path.ReversesAtEnd && !HasRank("weapon.elijah_chariot.a.05") ||
+                        path.HasCrossingChild && !HasRank("weapon.elijah_chariot.b.05") ||
+                        path.TracksCrossing && !HasRank("weapon.elijah_chariot.e.03") ||
+                        path.MakesEndFlame && !HasRank("weapon.elijah_chariot.e.04"))))
+                    throw new InvalidDataException("Chariot support requires its frozen ranks");
                 var maxChariotRange = ExpandedElijahChariot.MaximumUntrainedRange * (1 + permanentArea.FlightDistanceBonus) +
                     (PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.a.01") > 0 ? ExpandedElijahChariot.TravelBonus : 0);
                 if (Run.World.ElijahChariot?.Paths.Any(path =>

@@ -1151,6 +1151,45 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("Evolved Staff return saves without owning the unrelated base return branch", () =>
+        {
+            WithStore(store =>
+            {
+                const string catalog = "content/genesis/catalog.json";
+                var state = ExpandedProfile(store, "weapon.moses_staff.e.04");
+                Check.True(!state.Profile.Upgrades.ContainsKey("weapon.moses_staff.a.04"));
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                for (var round = 2; round <= 3; round++)
+                {
+                    session.Advance(180);
+                    while (session.PendingChoices.Count != 0) Check.True(session.Choose(session.PendingChoices[0]));
+                    session = session.StartNextRound(CatalogReader.Round(catalog, round));
+                }
+                var staff = ExpandedWeaponRules.Get("moses_staff");
+                for (var rank = 0; rank < 8; rank++) Check.True(session.Inventory.TryChoose(staff.WeaponId, false));
+                Check.True(session.Inventory.TryChoose(staff.PassiveId, true));
+                Check.True(session.Inventory.TryEvolve(staff.EvolutionId));
+                var definition = CatalogReader.Round(catalog, 3);
+                var speeds = CatalogReader.MonsterSpeeds(catalog);
+                var world = new BattleWorld(session, speeds, 7);
+                BattleSnapshot? candidate = null;
+                for (var tick = 0; tick < 720; tick++)
+                {
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    var snapshot = world.Capture();
+                    if (snapshot.MosesStaff?.ReturnWaves?.Any(wave => wave.FromEvolvedLane) != true) continue;
+                    candidate = snapshot;
+                    break;
+                }
+                Check.True(candidate != null);
+                state.Run!.World = candidate;
+                store.Commit(state, state.Revision, "save-evolved-staff-return");
+                var saved = store.Load()!;
+                var resumed = BattleWorld.Restore(AdamSession.Resume(saved, definition), speeds, saved.Run!.World!);
+                Check.True(resumed.Capture().MosesStaff!.ReturnWaves!.All(wave => wave.FromEvolvedLane));
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>

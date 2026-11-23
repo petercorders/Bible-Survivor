@@ -11,6 +11,651 @@ internal static class ExpandedMosesStaffTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Staff evolved closure launches one real endpoint-to-origin return with frozen parent geometry", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.05", "e.04"));
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState { Evolved = true };
+            var suppressed = 0;
+            var allowReturn = true;
+            void Tick(double now) => ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX,
+                8, true, 40, 3, 1, .9, 7, 5, () => targets, targets, hit => { hits.Add(hit); return true; },
+                rankOptions: ranks, isElite: _ => false, reserveSupportProjectile: () => allowReturn,
+                recordSupportSuppression: () => suppressed++);
+
+            Tick(0);
+            Tick(.1);
+            targets[2] = new Vector2(1, 3);
+            Tick(.2);
+            Tick(1.4);
+            var wave = state.Waves.Single();
+            var terminal = wave.Position;
+            var width = wave.Width;
+            Check.True(terminal.Y > 1);
+            var blocked = RoundTrip(state);
+            state = RoundTrip(state);
+            state.Validate(1.4, true);
+            targets.Clear();
+            Tick(2.099);
+            Check.True(state.ReturnWaves == null);
+            Tick(2.1);
+            var child = state.ReturnWaves!.Single();
+            Check.True(child.FromEvolvedLane);
+            Check.Equal(terminal, child.Origin);
+            Check.Near(terminal.Length(), child.Range);
+            Check.Near(width, child.Width);
+            Check.Near(5, child.Speed);
+            Check.Near(20, child.Damage);
+            Check.Near(2.1, child.StartedAt);
+            Check.Near(5.1, state.NextEvolvedReturnAt!.Value);
+            Check.True(!state.NextReturnAt.HasValue);
+            Check.True(Vector2.Distance(child.Origin + child.Direction * (float)child.Range, Vector2.Zero) < 1e-6f);
+            targets[3] = terminal + child.Direction * .5f;
+            state = RoundTrip(state);
+            state.Validate(2.1, true);
+            hits.Clear();
+            Tick(2.3);
+            var childHit = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.EvolvedReturnWave);
+            Check.Equal(3, childHit.TargetId);
+            Check.Near(20, childHit.Damage);
+            Check.Equal(0, childHit.TargetOrdinal);
+            Check.Near(1, state.ReturnWaves!.Single().Distance);
+
+            state = blocked;
+            allowReturn = false;
+            Tick(2.1);
+            Check.Equal(1, suppressed);
+            Check.True(state.ReturnWaves == null && !state.NextEvolvedReturnAt.HasValue);
+            Check.True(state.Waves.Count == 0);
+        });
+
+        test("Staff accepted elite original kill leaves one directional lane with saved precritical amount and expiry", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("e.05"));
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.UnitX, [2] = new Vector2(2.99f, .4f), [3] = new Vector2(2.99f, .401f),
+                [4] = new Vector2(.95f, 0), [5] = new Vector2(3.001f, 0),
+            };
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState { Evolved = true };
+            var emittedSuppression = 0;
+            var allowArea = true;
+            void Tick(double now, bool evolved = true) => ExpandedMosesStaff.Step(state, now, Vector2.Zero,
+                Vector2.UnitX, 8, evolved, 40, 3, 1, .9, 7, 5, () => targets, targets,
+                hit => { hits.Add(hit); return true; }, rankOptions: ranks, isElite: id => id == 1 || id == 4,
+                reserveLane: () => allowArea, recordSupportSuppression: () => emittedSuppression++,
+                applyOriginalHit: hit =>
+                {
+                    if (hit.TargetId != 1 && hit.TargetId != 4) return hit.Damage;
+                    targets.Remove(hit.TargetId);
+                    return 50;
+                });
+
+            Tick(0);
+            state = RoundTrip(state);
+            Tick(.2);
+            var lane = state.EliteKillLane!;
+            Check.Equal(1, lane.VictimId);
+            Check.Equal(Vector2.UnitX, lane.Origin);
+            Check.Equal(Vector2.UnitX, lane.Direction);
+            Check.Near(.8, lane.Width);
+            Check.Near(2, lane.Length);
+            Check.Near(15, lane.Damage);
+            Check.Near(1.2, lane.EndsAt);
+            Check.Near(.7, lane.NextPulseAt);
+            Check.Near(5.2, state.NextEliteKillLaneAt!.Value);
+            Check.Equal(2, state.ActiveLaneCount);
+            Check.Equal(1, state.ActiveExtraGroups);
+            Check.Equal(2, hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.EliteKillLane).TargetId);
+            Check.True(!targets.ContainsKey(4));
+            state = RoundTrip(state);
+            state.Validate(.2, true);
+            hits.Clear();
+            Tick(.7);
+            Check.Equal(2, hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.EliteKillLane).TargetId);
+            Tick(1.2);
+            Check.Equal(1, hits.Count(hit => hit.Kind == ExpandedMosesStaffHitKind.EliteKillLane));
+            Check.True(state.EliteKillLane == null);
+
+            allowArea = true;
+            state = new ExpandedMosesStaffState();
+            targets[1] = Vector2.UnitX;
+            Tick(0, false);
+            Tick(.2, false);
+            Check.True(state.EliteKillLane == null && !state.NextEliteKillLaneAt.HasValue);
+
+            state = new ExpandedMosesStaffState { Evolved = true };
+            targets[1] = Vector2.UnitX;
+            Tick(0);
+            allowArea = false;
+            Tick(.2);
+            Check.Equal(1, emittedSuppression);
+            Check.True(state.EliteKillLane == null && !state.NextEliteKillLaneAt.HasValue);
+        });
+
+        test("Staff evolved kill lane cannot displace the four already reserved extra groups", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("c.01", "e.05"));
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var state = new ExpandedMosesStaffState { Evolved = true };
+            var suppressions = 0;
+            void Tick(double now) => ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX, 8,
+                true, 40, 3, 4, .9, 7, 5, () => targets, targets, _ => true, rankOptions: ranks,
+                isElite: _ => true, reserveLane: () => true, recordSupportSuppression: () => suppressions++,
+                applyOriginalHit: hit => targets.Remove(hit.TargetId) ? 40 : null);
+            Tick(0);
+            Check.Equal(4, state.ActiveExtraGroups);
+            Check.Equal(8, state.ActiveLaneCount);
+            state = RoundTrip(state);
+            Tick(.2);
+            Check.True(!targets.ContainsKey(1));
+            Check.Equal(1, suppressions);
+            Check.Equal(4, state.ActiveExtraGroups);
+            Check.Equal(8, state.ActiveLaneCount);
+            Check.True(state.EliteKillLane == null);
+            state.Validate(.2, true);
+        });
+
+        test("Staff defensive wave attempts the earliest surviving crossing before a later lower ID", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("d.02"));
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2>();
+            var hostiles = new List<ExpandedMosesStaffHostileSweep>
+            {
+                new ExpandedMosesStaffHostileSweep(1, Vector2.UnitX, Vector2.UnitX, .1),
+                new ExpandedMosesStaffHostileSweep(2, Vector2.UnitX * .2f, Vector2.UnitX * .2f, .1),
+            };
+            var erased = new List<long>();
+            void Tick(double now) => ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX,
+                8, false, 40, 3, 1, .9, 7, 5, () => targets, targets, _ => true,
+                rankOptions: ranks, hostileSweeps: () => hostiles, nextHostileEraseRandom: _ => 1, eraseHostile: id =>
+                {
+                    erased.Add(id);
+                    return hostiles.RemoveAll(shot => shot.Id == id) == 1;
+                });
+            Tick(0);
+            Tick(.2);
+            Check.True(erased.SequenceEqual(new[] { 2L }));
+        });
+
+        test("Staff launch defenses separate the forward water screen from the surrounded circle", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("d.01", "d.05"));
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1.2f, 0), [2] = new Vector2((float)Math.Cos(Math.PI / 6), .5f),
+                [3] = new Vector2(0, 1), [4] = new Vector2(-1, 0), [5] = new Vector2(0, -1),
+                [6] = new Vector2(2, 0), [7] = new Vector2(2.001f, 0),
+                [8] = new Vector2(.86f, .51f),
+            };
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState();
+            Step(state, 0, targets, hits, amount: 2, ranks: ranks);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.WaterScreen)
+                .Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.EncirclingWave)
+                .Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3, 4, 5, 6, 8 }));
+            Check.True(hits.All(hit => hit.WaveId == 1 && hit.TargetOrdinal == 0 && hit.OriginalBaseDamage == 0));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.WaterScreen).All(hit => hit.Damage == 10));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.EncirclingWave).All(hit => hit.Damage == 12));
+            Check.Near(2, state.NextWaterScreenAt!.Value);
+            Check.Near(4, state.NextEncirclingWaveAt!.Value);
+            state = RoundTrip(state);
+            state.Validate(0, false);
+
+            hits.Clear();
+            Step(state, 3, targets, hits, ranks: ranks);
+            Check.True(hits.Any(hit => hit.Kind == ExpandedMosesStaffHitKind.WaterScreen));
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.EncirclingWave));
+
+            state = new ExpandedMosesStaffState();
+            targets.Remove(6);
+            targets.Remove(8);
+            hits.Clear();
+            Step(state, 0, targets, hits, ranks: ranks);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.EncirclingWave));
+            Check.True(!state.NextEncirclingWaveAt.HasValue);
+
+            state = new ExpandedMosesStaffState();
+            hits.Clear();
+            Step(state, 0, targets, hits, original: () => false, ranks: ranks);
+            Check.Equal(0, hits.Count);
+            Check.True(!state.NextWaterScreenAt.HasValue);
+        });
+
+        test("Staff defensive contact rolls once per wave and hostile sweep and saves the independent RNG", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("d.02"));
+            var state = new ExpandedMosesStaffState();
+            var actors = new Dictionary<int, Vector2>();
+            var hostiles = new Dictionary<long, ExpandedMosesStaffHostileSweep>
+            {
+                [1] = new ExpandedMosesStaffHostileSweep(1, new Vector2(.4f, 0), new Vector2(.4f, 0), .1),
+                [9] = new ExpandedMosesStaffHostileSweep(9, new Vector2(.4f, 2), new Vector2(.4f, 2), .1),
+            };
+            var rolls = 0;
+            var successes = new List<long>();
+            var allowed = false;
+            void Tick(double now) => ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX, 8,
+                false, 40, 3, 1, .9, 7, 5, () => actors, actors, _ => true, rankOptions: ranks,
+                hostileSweeps: () => hostiles.Values.ToArray(), canEraseHostile: () => allowed, eraseHostile: id =>
+                {
+                    successes.Add(id);
+                    return hostiles.Remove(id);
+                }, nextHostileEraseRandom: previous =>
+                {
+                    rolls++;
+                    if (rolls == 1) { Check.True(!previous.HasValue); return 858993460u; }
+                    Check.Equal(858993460u, previous!.Value);
+                    return 858993459u;
+                });
+
+            Tick(0);
+            Tick(.02);
+            Check.Equal(0, rolls);
+            allowed = true;
+            Tick(.1);
+            Check.Equal(1, rolls);
+            Check.True(!state.NextHostileEraseAt.HasValue);
+            Check.True(state.Waves.Single().HostileEraseAttemptIds!.SequenceEqual(new[] { 1L }));
+            state = RoundTrip(state);
+            state.Validate(.1, false);
+            var exceedsChainCapacity = RoundTrip(state);
+            exceedsChainCapacity.Waves.Single().HostileEraseAttemptIds = Enumerable
+                .Range(1, BossDefinition.ChainCap + 1).Select(id => (long)id).ToList();
+            Check.Throws<ArgumentException>(() => exceedsChainCapacity.Validate(.1, false));
+            hostiles[1] = new ExpandedMosesStaffHostileSweep(1, new Vector2(.65f, 0), new Vector2(.9f, 0), .1);
+            Tick(.14);
+            Check.Equal(1, rolls);
+            hostiles[2] = new ExpandedMosesStaffHostileSweep(2, new Vector2(.85f, 1), new Vector2(.85f, -1), .1);
+            Tick(.2);
+            Check.Equal(2, rolls);
+            Check.True(successes.SequenceEqual(new[] { 2L }));
+            Check.Near(2.2, state.NextHostileEraseAt!.Value);
+            Check.Equal(858993459u, state.HostileEraseRandomState!.Value);
+            Check.True(state.Waves.Single().HostileEraseAttemptIds!.SequenceEqual(new[] { 1L }));
+            state = RoundTrip(state);
+            state.Validate(.2, false);
+            hostiles.Remove(1);
+            hostiles[3] = new ExpandedMosesStaffHostileSweep(3, new Vector2(1.2f, 0), new Vector2(1.2f, 0), .1);
+            Tick(.25);
+            Check.Equal(2, rolls);
+            Check.True(state.Waves.Single().HostileEraseAttemptIds == null);
+        });
+
+        test("Staff hurt advance consumes one accepted hurt, honors cooldown across restore, and preserves the cycle floor", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("d.03"));
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2>();
+            int Tick(double now, double? hurt = null, double period = 3) =>
+                ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX, 8, false, 40,
+                    period, 1, .9, 7, 5, () => targets, targets, _ => true,
+                    rankOptions: ranks, lastPlayerHurtAt: hurt);
+
+            Check.Equal(1, Tick(0));
+            Check.Near(3, state.NextCycle);
+            Check.Equal(0, Tick(1, 1));
+            Check.Near(2.75, state.NextCycle);
+            Check.Near(6, state.NextHurtAdvanceAt!.Value);
+            state = RoundTrip(state);
+            state.Validate(1, false);
+            Check.Equal(0, Tick(2, 1));
+            Check.Equal(0, Tick(2.1, 2.1));
+            Check.Near(2.75, state.NextCycle);
+            Check.Near(2.1, state.LastPlayerHurtObservedAt!.Value);
+            Check.Equal(1, Tick(2.75, 2.1));
+            Check.Equal(1, Tick(5.75, 2.1));
+            Check.Near(8.75, state.NextCycle);
+            Check.Equal(0, Tick(6, 6));
+            Check.Near(8.5, state.NextCycle);
+            Check.Near(11, state.NextHurtAdvanceAt!.Value);
+
+            state = new ExpandedMosesStaffState();
+            Tick(0, period: .2);
+            Check.Equal(0, Tick(.05, .05, .2));
+            Check.Near(.15, state.NextCycle);
+            Check.Equal(0, Tick(.149, .05, .2));
+            Check.Equal(1, Tick(.15, .05, .2));
+            Check.Near(.15, state.LastCycleStartedAt!.Value);
+        });
+
+        test("Staff lane movement membership tests live residual or evolved geometry at inclusive edges", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("c.01"));
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState();
+            Step(state, 0, targets, hits, ranks: ranks);
+            Check.True(!ExpandedMosesStaff.IsPlayerInLane(state, Vector2.Zero));
+            Step(state, .2, targets, hits, ranks: ranks);
+            Check.True(ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .35f)));
+            Check.True(!ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .351f)));
+            state = RoundTrip(state);
+            Step(state, 1.7, targets, hits, ranks: ranks);
+            Check.True(!ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .35f)));
+
+            state = new ExpandedMosesStaffState { Evolved = true };
+            Step(state, 0, targets, hits, evolved: true, ranks: ranks);
+            Step(state, .2, targets, hits, evolved: true, ranks: ranks);
+            Check.True(ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .35f)));
+            Check.True(ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .6f)));
+            Check.True(!ExpandedMosesStaff.IsPlayerInLane(state, new Vector2(1, .601f)));
+        });
+
+        test("Staff residual lane saves its independent width, longer lifetime, outer-entry ledger, and pulse phase", () =>
+        {
+            var nodes = StaffRanks("c.01", "c.02", "c.03");
+            nodes.Add("common.duration.02", 1);
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(nodes);
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [2] = new Vector2(.3f, .28f), [3] = new Vector2(.3f, .279f), [4] = new Vector2(.3f, .351f),
+            };
+            var hits = new List<ExpandedMosesStaffHit>();
+            Step(state, 0, targets, hits, ranks: ranks);
+            state = RoundTrip(state);
+            Step(state, .1, targets, hits);
+            var wave = state.Waves.Single();
+            Check.Equal((byte)7, wave.ResidualLaneRanks);
+            Check.True(wave.HasResidualLane && !wave.HasLane);
+            Check.Near(.1, wave.ResidualLaneStartedAt!.Value);
+            Check.Near(.7, wave.ResidualLaneWidth);
+            Check.Near(1.8, wave.ResidualLaneDuration);
+            Check.True(wave.ResidualLaneEdgeIds!.SequenceEqual(new[] { 2 }));
+            var extra = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualEdge);
+            Check.Equal(2, extra.TargetId);
+            Check.Near(8, extra.Damage);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualLane)
+                .Select(hit => hit.TargetId).SequenceEqual(new[] { 2, 3 }));
+            Check.True(hits.Where(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualLane)
+                .All(hit => hit.Damage == 10 && hit.TargetOrdinal == 0 && hit.OriginalBaseDamage == 0));
+            state = RoundTrip(state);
+            state.Validate(.1, false);
+            hits.Clear();
+            targets[5] = new Vector2(.35f, 0);
+            var previous = targets.ToDictionary(pair => pair.Key, pair => pair.Value);
+            previous[5] = new Vector2(.35f, .5f);
+            Step(state, .2, targets, hits, previousTargets: previous);
+            Check.Equal(5, hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualEdge).TargetId);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.ResidualLane));
+            hits.Clear();
+            Step(state, .6, targets, hits);
+            Step(state, 1.1, targets, hits);
+            Step(state, 1.6, targets, hits);
+            Check.Equal(9, hits.Count(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualLane));
+            Step(state, 1.9, targets, hits);
+            Check.Equal(9, hits.Count(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualLane));
+            Check.Equal(0, state.ActiveResidualLaneCount);
+
+            state = new ExpandedMosesStaffState { Evolved = true };
+            hits.Clear();
+            Step(state, 0, targets, hits, evolved: true, ranks: ranks);
+            Step(state, .1, targets, hits, evolved: true, ranks: ranks);
+            Check.Equal(2, state.ActiveLaneCount);
+            Check.True(state.Waves.Single().HasLane && state.Waves.Single().HasResidualLane);
+            Check.Near(14, hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.Lane && hit.TargetId == 3).Damage);
+            Check.Near(10, hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualLane && hit.TargetId == 3).Damage);
+        });
+
+        test("Staff residual crossing finds overlap after the pivot and records each first pair across restore", () =>
+        {
+            var oldRanks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.05", "c.01", "c.04"));
+            var newRanks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("c.01", "c.04"));
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedMosesStaffHit>();
+            void Tick(double now, Vector2 position = default, Vector2 direction = default,
+                double wait = 3, ExpandedMosesStaffRankOptions ranks = default) =>
+                ExpandedMosesStaff.Step(state, now, position, direction, 8, false, 40, wait,
+                    1, .9, 7, 5, () => targets, targets, hit => { hits.Add(hit); return true; },
+                    rankOptions: ranks, isElite: _ => false);
+
+            Tick(0, wait: .5, ranks: oldRanks);
+            Tick(.1);
+            targets[99] = new Vector2(1, 3);
+            Tick(.2);
+            Check.Near(.5, state.Waves[0].TurnAtDistance!.Value);
+            targets.Clear();
+            Tick(.5, new Vector2(3, -2), Vector2.UnitY, ranks: newRanks);
+            targets[1] = new Vector2(3, .4f);
+            targets[2] = new Vector2(3, -2);
+            Tick(.84);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.ResidualCross));
+            state = RoundTrip(state);
+            hits.Clear();
+            Tick(.98);
+            var cross = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualCross);
+            Check.Equal(1, cross.TargetId);
+            Check.Equal(2L, cross.WaveId);
+            Check.Near(12, cross.Damage);
+            Check.Near(3.98, state.NextResidualCrossAt!.Value);
+            Check.True(state.Waves[1].ResidualLaneOverlapIds!.SequenceEqual(new[] { 1L }));
+            state = RoundTrip(state);
+            state.Validate(.98, false);
+            hits.Clear();
+            Tick(1);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.ResidualCross));
+        });
+
+        test("Staff residual natural ending uses the bent midpoint and can be cancelled by changing form", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.05", "c.01", "c.05"));
+            var state = new ExpandedMosesStaffState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedMosesStaffHit>();
+            void Tick(double now, bool evolved = false) => Step(state, now, targets, hits,
+                evolved: evolved, ranks: ranks, speed: 6, isElite: _ => false);
+            Tick(0);
+            Tick(.15);
+            targets[90] = new Vector2(1, 3);
+            Tick(.2);
+            Tick(1.2);
+            var cancelled = RoundTrip(state);
+            targets.Clear();
+            targets[2] = new Vector2(3.45f, 1.65f);
+            targets[3] = new Vector2(3.45f, -1.1f);
+            hits.Clear();
+            state = RoundTrip(state);
+            Tick(1.649);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.ResidualEnd));
+            Tick(1.65);
+            var end = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ResidualEnd);
+            Check.Equal(2, end.TargetId);
+            Check.Near(10, end.Damage);
+            Check.Near(4.65, state.NextResidualEndAt!.Value);
+            Check.Equal(0, state.ActiveResidualLaneCount);
+
+            state = cancelled;
+            state.ResetForForm(true, 1.64);
+            hits.Clear();
+            Tick(1.65, true);
+            Check.True(hits.All(hit => hit.Kind != ExpandedMosesStaffHitKind.ResidualEnd));
+            Check.True(!state.NextResidualEndAt.HasValue);
+        });
+
+        test("Staff extra residual lanes honor the four-group limit without suppressing original waves", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("c.01"));
+            var empty = new Dictionary<int, Vector2>();
+            var state = new ExpandedMosesStaffState();
+            var suppression = 0;
+            int Tick(double now, int amount) => ExpandedMosesStaff.Step(state, now, Vector2.Zero,
+                Vector2.UnitX, 8, false, 40, .5, amount, .9, 7, 5, () => empty, empty, _ => true,
+                rankOptions: ranks, recordSupportSuppression: () => suppression++);
+            Check.Equal(4, Tick(0, 4));
+            Check.Equal(4, state.ActiveResidualLaneCount);
+            Check.Equal(1, Tick(.5, 1));
+            Check.Equal(1, suppression);
+            Check.Equal(5, state.ActiveWaveCount);
+            Check.Equal(4, state.ActiveResidualLaneCount);
+            Check.True(!state.Waves[^1].HasResidualLane && state.Waves[^1].ResidualLaneRanks == 0);
+            state = RoundTrip(state);
+            state.Validate(.5, false);
+        });
+
+        test("Staff endpoint return and pillar share the parent endpoint but retain distinct reservations and cooldowns", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.04", "b.02"));
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(3, .99f), [2] = new Vector2(3, 1.01f) };
+            var hits = new List<ExpandedMosesStaffHit>();
+            var state = new ExpandedMosesStaffState();
+            var suppression = 0;
+            void Tick(double now, bool allowReturn = true, bool allowPillar = true, double wait = .5) =>
+                ExpandedMosesStaff.Step(state, now, Vector2.Zero, Vector2.UnitX, 8, false, 40, wait, 1,
+                    .9, 3, 6, () => targets, targets, hit => { hits.Add(hit); return true; },
+                    reserveLane: () => allowPillar, rankOptions: ranks, reserveSupportProjectile: () => allowReturn,
+                    recordSupportSuppression: () => suppression++);
+
+            Tick(0);
+            Check.Equal((byte)5, state.Waves.Single().TechniqueRanks);
+            state = RoundTrip(state);
+            Tick(.5);
+            Check.Equal(ExpandedMosesStaffHitKind.EndPillar, hits.Single().Kind);
+            Check.Equal(1, hits.Single().TargetId);
+            Check.Near(14, hits.Single().Damage);
+            Check.Near(2.5, state.NextEndPillarAt!.Value);
+            Check.Near(2.5, state.NextReturnAt!.Value);
+            var child = state.ReturnWaves!.Single();
+            Check.Equal(1L, child.SourceWaveId);
+            Check.Equal(new Vector2(3, 0), child.Origin);
+            Check.Equal(-Vector2.UnitX, child.Direction);
+            Check.Near(.6, child.Width);
+            Check.Near(.5, child.StartedAt);
+            state.Validate(.5, false);
+            state = RoundTrip(state);
+            targets[3] = new Vector2(2, .29f);
+            targets[4] = new Vector2(2, .31f);
+            hits.Clear();
+            Tick(.75);
+            var returnHit = hits.Single(hit => hit.Kind == ExpandedMosesStaffHitKind.ReturnWave);
+            Check.Equal(3, returnHit.TargetId);
+            Check.Near(14, returnHit.Damage);
+            Check.Equal(0, returnHit.TargetOrdinal);
+            Check.Near(0, returnHit.OriginalBaseDamage);
+            Check.Near(1.5, state.ReturnWaves!.Single().Distance);
+            state = RoundTrip(state);
+            state.Validate(.75, false);
+            Tick(1);
+            Check.True(state.ReturnWaves == null);
+            Check.Equal(1, hits.Count(hit => hit.Kind == ExpandedMosesStaffHitKind.ReturnWave));
+            Check.Equal(0, suppression);
+
+            state = new ExpandedMosesStaffState();
+            hits.Clear();
+            Tick(0);
+            Tick(.5, allowReturn: false, allowPillar: false);
+            Check.Equal(2, suppression);
+            Check.True(state.ReturnWaves == null && !state.NextReturnAt.HasValue && !state.NextEndPillarAt.HasValue);
+            Check.True(hits.All(hit => hit.Kind == ExpandedMosesStaffHitKind.Wave));
+        });
+
+        test("Staff first ordinary target bends once by at most twelve degrees and freezes both lane segments", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("a.05"));
+            var targets = new Dictionary<int, Vector2> { [1] = new Vector2(5, 2) };
+            var state = new ExpandedMosesStaffState { Evolved = true };
+            var hits = new List<ExpandedMosesStaffHit>();
+            void Tick(double now, ExpandedMosesStaffRankOptions activeRanks = default) =>
+                Step(state, now, targets, hits, evolved: true, speed: 5, ranks: activeRanks, isElite: id => id == 1);
+
+            Tick(0, ranks);
+            Tick(.2);
+            var wave = state.Waves.Single();
+            Check.True(!wave.TurnAtDistance.HasValue);
+            Check.Equal(new Vector2(1, 0), wave.Position);
+            targets.Add(2, new Vector2(1.5f, 3));
+            Tick(.3);
+            wave = state.Waves.Single();
+            Check.Near(1, wave.TurnAtDistance!.Value);
+            Check.Near(12, Math.Atan2(wave.TravelDirection.Y, wave.TravelDirection.X) * 180 / Math.PI, 1e-4);
+            Check.Equal(Vector2.UnitX, wave.TurnPosition);
+            state.Validate(.3, true);
+            state = RoundTrip(state);
+            targets.Clear();
+            targets[20] = new Vector2(1.5f, -.5f);
+            targets[30] = new Vector2(5.5f, .95f);
+            targets[31] = new Vector2(5.5f, -.05f);
+            hits.Clear();
+            Tick(1.2);
+            wave = state.Waves.Single();
+            Check.Near(12, Math.Atan2(wave.TravelDirection.Y, wave.TravelDirection.X) * 180 / Math.PI, 1e-4);
+            Check.True(hits.Any(hit => hit.Kind == ExpandedMosesStaffHitKind.Wave && hit.TargetId == 30));
+            Check.True(hits.Any(hit => hit.Kind == ExpandedMosesStaffHitKind.Lane && hit.TargetId == 30));
+            Check.True(hits.All(hit => hit.TargetId != 31));
+            state.Validate(1.2, true);
+        });
+
+        test("Staff near damage uses the inclusive two-unit origin and elite splash consumes actual precritical damage", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("b.03", "b.04"));
+            var targets = new Dictionary<int, Vector2>
+            {
+                [2] = new Vector2(2, 0), [3] = new Vector2(2.001f, .02f),
+                [4] = new Vector2(2, 1.2f), [5] = new Vector2(2, 1.2001f),
+            };
+            var state = new ExpandedMosesStaffState();
+            var originals = new List<ExpandedMosesStaffHit>();
+            var supports = new List<ExpandedMosesStaffHit>();
+            void Tick(double now, bool rejectElite = false) => ExpandedMosesStaff.Step(state, now, Vector2.Zero,
+                Vector2.UnitX, 8, false, 40, 3, 1, .9, 7, 6, () => targets, targets,
+                hit => { supports.Add(hit); return true; }, rankOptions: ranks, isElite: id => id == 2,
+                applyOriginalHit: hit =>
+                {
+                    originals.Add(hit);
+                    return hit.TargetId == 2 ? rejectElite ? null : 54 : hit.Damage;
+                });
+
+            Tick(0);
+            state = RoundTrip(state);
+            Tick(.4);
+            Check.Near(43.2, originals.Single(hit => hit.TargetId == 2).Damage);
+            Check.Near(40, originals.Single(hit => hit.TargetId == 3).Damage);
+            Check.True(supports.Select(hit => hit.TargetId).SequenceEqual(new[] { 2, 3, 4 }));
+            Check.True(supports.All(hit => hit.Kind == ExpandedMosesStaffHitKind.EliteSplash &&
+                hit.Damage == 13.5 && hit.TargetOrdinal == 0 && hit.OriginalBaseDamage == 0));
+            Check.Near(2.4, state.NextEliteSplashAt!.Value);
+            state = RoundTrip(state);
+            state.Validate(.4, false);
+
+            state = new ExpandedMosesStaffState();
+            supports.Clear();
+            Tick(0);
+            Tick(.4, rejectElite: true);
+            Check.True(supports.Count == 0 && !state.NextEliteSplashAt.HasValue);
+        });
+
+        test("Staff fourth cycle enhances only its first emitted original with level-one width and additive damage", () =>
+        {
+            var ranks = ExpandedMosesStaffRankOptions.FromRanks(StaffRanks("b.05"));
+            var state = new ExpandedMosesStaffState { Cycle = 3, NextWaveId = 4 };
+            var hits = new List<ExpandedMosesStaffHit>();
+            var targets = new Dictionary<int, Vector2>();
+            Step(state, 0, targets, hits, amount: 2, width: 1.08, ranks: ranks);
+            Check.True(state.Waves.Select(wave => wave.TechniqueRanks).SequenceEqual(new byte[] { 32, 0 }));
+            Check.Near(1.215, state.Waves[0].Width);
+            Check.Near(44, state.Waves[0].Damage);
+            Check.Near(1.08, state.Waves[1].Width);
+            Check.Near(40, state.Waves[1].Damage);
+            state = RoundTrip(state);
+            state.Validate(0, false);
+
+            state = new ExpandedMosesStaffState { Evolved = true, Cycle = 3, NextWaveId = 4 };
+            Step(state, 0, targets, hits, evolved: true, amount: 2, width: 1.08, ranks: ranks);
+            Check.Near(1.458, state.Waves[0].Width);
+            Check.Near(44, state.Waves[0].Damage);
+            Check.Near(1.296, state.Waves[1].Width);
+            Check.Near(40, state.Waves[1].Damage);
+
+            state = new ExpandedMosesStaffState { Cycle = 4, NextWaveId = 5 };
+            Step(state, 0, targets, hits, amount: 2, ranks: ranks);
+            Check.True(state.Waves.All(wave => wave.TechniqueRanks == 0));
+        });
+
         test("Expanded staff emits forward symmetric 15 degree waves without targets and preserves the exact cycle", () =>
         {
             var state = new ExpandedMosesStaffState();
@@ -327,6 +972,9 @@ internal static class ExpandedMosesStaffTests
 
     private static ExpandedMosesStaffRankOptions Rank(string id) => ExpandedMosesStaffRankOptions.FromRanks(
         new Dictionary<string, int> { ["weapon.moses_staff." + id] = 1 });
+
+    private static Dictionary<string, int> StaffRanks(params string[] nodes) =>
+        nodes.ToDictionary(node => "weapon.moses_staff." + node, _ => 1);
 
     private static void CheckAngles(ExpandedMosesStaffState state, params double[] expected)
     {

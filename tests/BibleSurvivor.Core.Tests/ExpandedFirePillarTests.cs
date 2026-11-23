@@ -441,6 +441,139 @@ internal static class ExpandedFirePillarTests
             }
         });
 
+        test("Pillar adaptive heat starts per target after a continuous second and never doubles a shared pulse", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(false, null, false, adaptiveHeat: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero, [2] = Vector2.UnitX * 4 };
+            var hits = new List<(int Tick, int Target)>();
+            void Step(ExpandedFirePillarState current, int tick) =>
+                Tick(current, tick / 60d, targets, hit => hits.Add((tick, hit.TargetId)), settings: ranks);
+            for (var tick = 0; tick <= 60; tick++)
+            {
+                if (tick == 18) targets[2] = new Vector2(.3f, 0);
+                Step(state, tick);
+            }
+            var restored = Restore(state);
+            restored.Validate(1, false);
+            for (var tick = 61; tick < 120; tick++) Step(restored, tick);
+            Check.True(hits.Where(hit => hit.Target == 1).Select(hit => hit.Tick).SequenceEqual(new[] { 9, 39, 68, 96 }));
+            Check.True(hits.Where(hit => hit.Target == 2).Select(hit => hit.Tick).SequenceEqual(new[] { 39, 69, 98 }));
+
+            var left = Restore(state);
+            targets[1] = Vector2.UnitX * 4;
+            Step(left, 61);
+            targets[1] = Vector2.Zero;
+            hits.Clear();
+            for (var tick = 62; tick <= 69; tick++) Step(left, tick);
+            Check.True(hits.Where(hit => hit.Target == 1).Select(hit => hit.Tick).SequenceEqual(new[] { 69 }));
+        });
+
+        test("Fire d.03 checkpoint accepts a target first seen on a rounded ignition tick", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(false, null, false, adaptiveHeat: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero, [2] = Vector2.UnitX * 4 };
+            void Step(double now) => ExpandedFirePillar.Step(state, now, Vector2.Zero,
+                false, 10, 3, 1, .9, 2, () => targets, _ => { }, delayAdvance: .08, settings: ranks);
+            Step(0);
+            for (var tick = 1; tick <= 4; tick++) Step(tick / 60d);
+            targets[2] = new Vector2(.4f, 0);
+            Step(5 / 60d);
+            var saved = Restore(state);
+            saved.Validate(5 / 60d, false);
+            var timer = saved.Regions.Single().HeatTimers!.Single(entry => entry.TargetId == 2);
+            Check.Near(5 / 60d, timer.EnteredAt);
+            Check.Near(timer.EnteredAt, timer.LastHitAt!.Value);
+        });
+
+        test("New pillar elite followup uses the accepted parent damage and remains a support after restore", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(false, null, false, eliteReignition: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX * 1.4f };
+            var supports = new List<ExpandedFirePillarHit>();
+            void Step(ExpandedFirePillarState current, double now) =>
+                ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 12, 3, 1, .9, 2,
+                    () => targets, supports.Add, settings: ranks, level: 1, isElite: id => id == 1,
+                    applyOriginalHit: hit =>
+                    {
+                        if (hit.TargetId == 1) targets.Remove(1);
+                        return 20;
+                    });
+            Step(state, 0);
+            Step(state, .15);
+            var restored = Restore(state);
+            var support = restored.Regions.Single(region => region.SupportKind == ExpandedFireSupportKind.EliteReignition);
+            Check.Near(7, support.Damage);
+            Check.Near(.7, support.Radius);
+            Check.Near(5.15, restored.NextEliteReignitionAt!.Value);
+            Step(restored, 10 / 60d);
+            Check.Equal(2, supports.Single().TargetId);
+            Check.Equal(0, supports.Single().TargetOrdinal);
+            Check.True(supports.Single().IsEmber);
+        });
+
+        test("Sixth fire original emits a moving spark and its one authorized child survives serialization", () =>
+        {
+            var state = new ExpandedFirePillarState { SparkHitCount = 5 };
+            var ranks = new ExpandedFirePillarSettings(false, null, false, sparkOnSixthHit: true, sparkLeavesFire: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX * 2.7f };
+            var support = new List<ExpandedFirePillarHit>();
+            void Step(ExpandedFirePillarState current, double now) =>
+                ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 12, 3, 1, .9, 2,
+                    () => targets, support.Add, settings: ranks, level: 1, applyOriginalHit: _ => 20);
+            Step(state, 0);
+            Step(state, .15);
+            Check.Equal(2, state.Spark!.TargetId);
+            Check.Near(2.15, state.NextSparkAt!.Value);
+            Step(state, .25);
+            Check.Near(1.6, state.Spark.X, 1e-6);
+            var resumed = Restore(state);
+            resumed.Validate(.25, false);
+            Step(resumed, .45);
+            Check.True(resumed.Spark == null);
+            Check.True(support.All(hit => hit.TargetId == 2 && hit.IsEmber && hit.TargetOrdinal == 0));
+            Check.True(support.Select(hit => hit.Damage).SequenceEqual(new[] { 5d, 4d }));
+            Check.Near(.6, resumed.Regions.Single(region => region.SupportKind == ExpandedFireSupportKind.SparkFire).Radius);
+            Step(resumed, .46);
+            Check.Equal(2, support.Count);
+        });
+
+        test("Fire consecutive births link within two units and an original kill empowers only the next cycle", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var ranks = new ExpandedFirePillarSettings(false, null, false, linkNearbyPillars: true);
+            var hits = new List<ExpandedFirePillarHit>();
+            var centers = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX * 3 };
+            var presentAtLink = new Dictionary<int, Vector2>(centers)
+            {
+                [3] = new Vector2(2, .29f), [4] = new Vector2(2, .31f),
+            };
+            ExpandedFirePillar.Step(state, 0, Vector2.Zero, false, 10, 3, 2, .9, 2,
+                () => state.Regions.Count >= 2 ? presentAtLink : centers, hits.Add, settings: ranks);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
+            Check.True(hits.All(hit => hit.Damage == 3 && hit.IsEmber));
+            Check.Near(3, state.NextLinkAt!.Value);
+
+            var growth = new ExpandedFirePillarState { RadiusKillCount = 14 };
+            var growRanks = new ExpandedFirePillarSettings(false, null, false, empowerAfterKills: true);
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX, [2] = Vector2.UnitX * 3 };
+            void Step(ExpandedFirePillarState current, double now) => ExpandedFirePillar.Step(current, now,
+                Vector2.Zero, false, 10, 3, 1, .9, 2, () => targets, _ => { }, settings: growRanks,
+                applyOriginalHit: hit => { if (hit.TargetId == 1) targets.Remove(1); return 10; });
+            Step(growth, 0);
+            Step(growth, .15);
+            Check.Near(5.15, growth.RadiusBoostUntil!.Value);
+            var saved = Restore(growth);
+            saved.Validate(.15, false);
+            Step(saved, 3);
+            Check.Near(1.035, saved.Regions.Single().Radius);
+            Check.True(saved.RadiusBoostUntil == null);
+            Step(saved, 6);
+            Check.Near(.9, saved.Regions.Single().Radius);
+        });
+
     }
 
     private static ExpandedFirePillarState Restore(ExpandedFirePillarState state)
