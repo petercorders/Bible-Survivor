@@ -197,14 +197,32 @@ namespace BibleSurvivor.Unity
             Check(persisted.Run.RunId==run && persisted.Run.RoundNumber==10 && persisted.Run.CompletedThirdBoss.CompletionApplied,
                 "fresh confirmation writes R10 of same run with its R09 receipt");
             Check(persisted.Profile.Gold == priorGold + 160,"R10 preserves one settlement award");
+            Check(game.CinematicPlaying && game.Host.World.SimulationTime == 0 &&
+                game.Host.World.Capture().Remainder == 0, "R10 opening precedes its first combat tick");
+            Check(Timeline.Kind == AdamCinematicKind.ExodusOpening, "R10 plays its own opening");
+            yield return SaveImage("r10-opening-hall");
+            yield return WaitUntil(4.3f);
+            yield return SaveImage("r10-opening-brickworks");
+            yield return WaitUntil(10.3f);
+            yield return SaveImage("r10-opening-arena");
+            Keys(Key.Enter, Key.D); yield return null;
+            Check(!game.CinematicPlaying && game.Host.World.SimulationTime == 0,
+                "R10 skip and held movement do not reach the world");
+            yield return null;
+            Check(game.Host.World.Capture().Remainder == 0, "held skip leaves the accumulator untouched");
+            Keys(); yield return null;
+            game.Initialize(new AdamHost(AdamCatalog.Load(),store));
+            Check(!game.CinematicPlaying && game.Host.Session.RoundNumber == 10 && game.Host.Paused,
+                "R10 reopens as a saved round without replay");
             Complete();
         }
 
         IEnumerator CheckMissing(string save, string fixture)
         {
             Check(Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.Creation)) == null &&
-                Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.GenesisEnding)) == null,
-                "both resources absent");
+                Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.GenesisEnding)) == null &&
+                Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.ExodusOpening)) == null,
+                "all three resources absent");
             Keys(Key.Digit1); yield return null; Keys(); yield return null;
             var run = game.Host.State.Run.RunId;
             Check(!game.CinematicPlaying && new SaveStore(save).LoadConfirmed().Run.RunId == run,
@@ -223,8 +241,11 @@ namespace BibleSurvivor.Unity
             Check(!game.CinematicPlaying && game.Host.Session.ChapterComplete &&
                 store.LoadConfirmed().Run.Boss.CompletionApplied, "missing ending falls back to R09 completion");
             Keys(Key.Enter); yield return null; Keys(); yield return null;
-            Check(store.LoadConfirmed().Run.RunId == run && store.LoadConfirmed().Run.RoundNumber == 10,
+            Check(!game.CinematicPlaying && store.LoadConfirmed().Run.RunId == run && store.LoadConfirmed().Run.RoundNumber == 10,
                 "missing ending leads to R10 of same run");
+            Keys(Key.D); yield return new WaitForSecondsRealtime(.25f); Keys(); yield return null;
+            Check(game.Host.World.SimulationTime > 0 && game.Host.World.PlayerPosition.X > 0,
+                "missing Exodus opening allows movement and timer");
         }
 
         void Complete()

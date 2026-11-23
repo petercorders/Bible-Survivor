@@ -1,3 +1,4 @@
+using BibleSurvivor.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,6 +9,17 @@ namespace BibleSurvivor.Unity
         readonly AdamCinematic cinematic = new AdamCinematic();
         bool releaseCinematicControls;
         public bool CinematicPlaying => cinematic.Active;
+
+        bool BeginSavedCinematic()
+        {
+            var kind = Host.TakeSavedCinematic();
+            if (kind != AdamCinematicKind.ExodusOpening) return BeginCinematic(kind);
+
+            // The entry confirmation also owns a retry of that same save operation.
+            if (!Host.Suspended && Host.Paused) SetPlayPaused(false);
+            if (!BeginCinematic(kind)) FinishCinematic();
+            return true;
+        }
 
         bool BeginCinematic(AdamCinematicKind kind)
         {
@@ -87,7 +99,11 @@ namespace BibleSurvivor.Unity
             var horizon = AdamVisualQualityArt.Sprite(AdamBookTitle.Horizon, 0);
             var actor = art.Sprite("chr_player_layer-base_idle_32", 0);
             var scroll = art.Sprite("ico_psv_scroll_static_16", 0);
-            AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, ArtWorld.FeedbackEnabled);
+            if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
+                ArtWorld.DrawBackdrop(art, new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
+                    ExodusContent.GlobalRoundNumber);
+            else
+                AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, ArtWorld.FeedbackEnabled);
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one);
 
             var cut = cinematic.Current;

@@ -120,7 +120,9 @@ namespace BibleSurvivor.Unity
             World = new BattleWorld(Session, catalog.Speeds, 7);
             Paused = false; Movement = Vector2.zero; Checkpoint();
         }
-        public bool TryEnterExodus() => CanEnterExodus && TryEnterChapter(ExodusContent.GlobalRoundNumber);
+        public bool TryEnterExodus() => TryEnterExodus(false);
+        internal bool TryEnterExodus(bool showOpening) => CanEnterExodus &&
+            TryEnterChapter(ExodusContent.GlobalRoundNumber, showOpening);
         public bool TryEnterLeviticus() => CanEnterLeviticus && TryEnterChapter(LeviticusContent.GlobalRoundNumber);
         public bool TryEnterNumbers() => CanEnterNumbers && TryEnterChapter(NumbersContent.GlobalRoundNumber);
         public bool TryEnterDeuteronomy() => CanEnterDeuteronomy && TryEnterChapter(DeuteronomyContent.GlobalRoundNumber);
@@ -129,7 +131,7 @@ namespace BibleSurvivor.Unity
         public bool TryEnterRuth() => CanEnterRuth && TryEnterChapter(RuthContent.GlobalRoundNumber);
         public bool TryEnterFirstSamuel() => CanEnterFirstSamuel && TryEnterChapter(FirstSamuelContent.GlobalRoundNumber);
         public bool TryEnterLaterBook() => CanEnterLaterBook && TryEnterChapter(UpcomingLaterBook.FirstRound);
-        bool TryEnterChapter(int round)
+        bool TryEnterChapter(int round, bool showOpening = false)
         {
             try
             {
@@ -152,6 +154,7 @@ namespace BibleSurvivor.Unity
                 candidate.Run.World=new BattleWorld(preview,catalog.SpeedsFor(definition.Number),7).Capture();
                 candidate.Validate();
                 chapterCandidate=candidate;operation=Guid.NewGuid().ToString("N");
+                if (showOpening) cinematicAfterSave = AdamCinematicKind.ExodusOpening;
                 Paused=true;Movement=Vector2.zero;
                 var accepted=RetrySave();
                 if(accepted && !Suspended)Paused=false;
@@ -262,13 +265,17 @@ namespace BibleSurvivor.Unity
                     // A failed or uncertain attempt retains this exact candidate, old revision and operation for retry.
                     SaveStore.PreparePermanentCheckpoint(chapterCandidate);
                     var committed=store.Commit(chapterCandidate,revision,operation);
-                    var loaded=store.Load() ?? throw new InvalidOperationException("Chapter entry readback is missing");
-                    if(loaded.Revision!=committed || loaded.LastOperationId!=operation)
+                    var loaded=(cinematicAfterSave == AdamCinematicKind.ExodusOpening ? store.LoadConfirmed() : store.Load())
+                        ?? throw new InvalidOperationException("Chapter entry readback is missing");
+                    if(loaded.Revision!=committed || loaded.LastOperationId!=operation ||
+                        loaded.Run?.RunId!=chapterCandidate.Run.RunId ||
+                        loaded.Run.RoundNumber!=chapterCandidate.Run.RoundNumber)
                         throw new InvalidOperationException("Chapter entry readback changed; reload before new input");
                     var session=AdamSession.Resume(loaded,catalog.ForRound(chapterCandidate.Run.RoundNumber));
                     var world=BattleWorld.Restore(session,catalog.SpeedsFor(session.RoundNumber),loaded.Run.World);
                     // Publish only after Commit, Load, validation, Resume and World reconstruction all succeed.
                     State=loaded;Session=session;World=world;revision=committed;
+                    PublishSavedCinematic();
                     chapterCandidate=null;operation=null;Error=null;RequiresNewerGame=false;
                     Paused=true;Movement=Vector2.zero;sinceSave=0;completedCheckpoint=false;return true;
                 }
@@ -284,14 +291,16 @@ namespace BibleSurvivor.Unity
                 }
                 revision = committedRevision;
                 State.Revision = revision; State.LastOperationId = operation;
-                if (cinematicAfterSave != AdamCinematicKind.None)
-                {
-                    savedCinematic = cinematicAfterSave;
-                    cinematicAfterSave = AdamCinematicKind.None;
-                }
+                PublishSavedCinematic();
                 operation = null; Error = null; RequiresNewerGame = false; sinceSave = 0;completedCheckpoint=AwaitingNextRound;return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
+        }
+        void PublishSavedCinematic()
+        {
+            if (cinematicAfterSave == AdamCinematicKind.None) return;
+            savedCinematic = cinematicAfterSave;
+            cinematicAfterSave = AdamCinematicKind.None;
         }
         internal AdamCinematicKind TakeSavedCinematic()
         {

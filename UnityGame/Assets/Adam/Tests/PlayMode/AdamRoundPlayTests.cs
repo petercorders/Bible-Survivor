@@ -312,6 +312,10 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
+        Keys();yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        Keys();yield return null;
         for(var round=10;round<=180;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
@@ -423,6 +427,18 @@ public sealed class AdamRoundPlayTests
         var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(SaveStore.PreviewPermanentProfile(host.State));game.Initialize(host);game.SetLifecycle(true,false);yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
         Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(old,host.State.Run.RunId);Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+        Assert.IsTrue(game.CinematicPlaying);
+        yield return null;
+        Assert.IsTrue(game.CinematicPlaying);
+        Keys();yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        yield return null;
+        Assert.Zero(host.World.SimulationTime);
+        Assert.Zero(host.World.Capture().Remainder);
+        Assert.IsTrue(host.Reload(),host.Error);
+        Assert.AreEqual(10,host.Session.RoundNumber);
+        Assert.IsFalse(game.CinematicPlaying);
     }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}

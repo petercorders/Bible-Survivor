@@ -140,7 +140,7 @@ namespace BibleSurvivor.Unity
             previousTouchSafe = safe;
             var keys = Keyboard.current;
             if(keys?.f6Key.wasPressedThisFrame == true) ArtWorld.FeedbackEnabled = !ArtWorld.FeedbackEnabled;
-            BeginCinematic(Host.TakeSavedCinematic());
+            if (BeginSavedCinematic() && !CinematicPlaying) return;
             if (UpdateCinematic(keys)) return;
             if (keys?.f5Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.Creation)) return;
             if (keys?.f10Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.GenesisEnding)) return;
@@ -178,7 +178,7 @@ namespace BibleSurvivor.Unity
             var slot = keys == null ? -1 : keys.digit1Key.wasPressedThisFrame ? 0 : keys.digit2Key.wasPressedThisFrame ? 1 : keys.digit3Key.wasPressedThisFrame ? 2 : -1;
             if (slot >= 0) SelectSlot(slot);
             if (keys != null && keys.enterKey.wasPressedThisFrame) EnterCommand();
-            if (CinematicPlaying || BeginCinematic(Host.TakeSavedCinematic())) return;
+            if (CinematicPlaying || releaseCinematicControls || BeginSavedCinematic()) return;
             var movement = KeyboardMovement(keys);
             var pressed = false;
             foreach (var touch in EnhancedTouch.activeTouches)
@@ -212,7 +212,7 @@ namespace BibleSurvivor.Unity
             Host.Tick(Time.unscaledDeltaTime);
             bossStaging.AfterTick(stagingBefore, Host, ImpactAudio, isActiveAndEnabled);
             RecordSortieTransition(tickSession,tickRun);
-            if (BeginCinematic(Host.TakeSavedCinematic())) return;
+            if (BeginSavedCinematic()) return;
             ReleaseOnWorldChange();
             UpdatePresentation(Time.unscaledDeltaTime);
             uiMotion.Advance(UiSequence(),Time.unscaledDeltaTime);
@@ -294,7 +294,7 @@ namespace BibleSurvivor.Unity
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
             switch(round)
             {
-                case ExodusContent.GlobalRoundNumber: Host.TryEnterExodus(); break;
+                case ExodusContent.GlobalRoundNumber: Host.TryEnterExodus(showOpening: true); break;
                 case LeviticusContent.GlobalRoundNumber: Host.TryEnterLeviticus(); break;
                 case NumbersContent.GlobalRoundNumber: Host.TryEnterNumbers(); break;
                 case DeuteronomyContent.GlobalRoundNumber: Host.TryEnterDeuteronomy(); break;
@@ -306,6 +306,7 @@ namespace BibleSurvivor.Unity
             }
             RecordSortieTransition(previous,run);
             inputReleased=false;touchStarted=false;
+            BeginSavedCinematic();
         }
         public void OpenNewChallenge()
         {
@@ -346,7 +347,7 @@ namespace BibleSurvivor.Unity
             else if (Host.Session == null || Host.CanStartNew) Host.Start(Weapons[slot], showCreation: true);
             else if (slot < Host.Session.PendingChoices.Count) Host.Choose(Host.Session.PendingChoices[slot]);
             RecordSortieTransition(previous,run);
-            BeginCinematic(Host.TakeSavedCinematic());
+            BeginSavedCinematic();
             inputReleased = false; touchStarted = false;
         }
         void ChooseBossReward(string rewardId, string candidateId)
@@ -564,6 +565,7 @@ namespace BibleSurvivor.Unity
         {
             var previous=Host.Session;var run=Host.State?.Run?.RunId;
             Host.RetrySave();SyncBossStaging();RecordSortieTransition(previous,run);
+            BeginSavedCinematic();
         }
         void AdvanceSortie(double seconds)
         {

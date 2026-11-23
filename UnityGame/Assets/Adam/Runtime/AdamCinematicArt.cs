@@ -21,6 +21,18 @@ namespace BibleSurvivor.Unity
         public static void Draw(AdamCinematic scene, Sprite horizon, Sprite figure, Sprite scroll, bool motion)
         {
             int beat = motion ? Mathf.FloorToInt(scene.CutElapsed * 8) : 0;
+            if (scene.Kind == AdamCinematicKind.ExodusOpening)
+            {
+                if (scene.CurrentIndex == 0)
+                {
+                    DrawEnding(true, figure, scroll);
+                    var shade = Ink;
+                    shade.a = Mathf.Clamp01((beat - 12) / 20f) * .45f;
+                    if (shade.a > 0) Fill(0, 0, 480, 270, shade);
+                }
+                else DrawBrickworks(figure, beat);
+                return;
+            }
             switch (scene.Current.day)
             {
                 case 1: FirstLight(beat, motion); break;
@@ -158,6 +170,30 @@ namespace BibleSurvivor.Unity
             Fill(x, y + 7, 12, 91, Ochre);
             Fill(x + 2, y + 7, 2, 91, Clay);
             Fill(x - 6, y + 98, 23, 7, Ink);
+        }
+
+        static void DrawBrickworks(Sprite figure, int beat)
+        {
+            Fill(0, 0, 480, 107, Ochre);
+            Fill(0, 107, 480, 163, new Color32(178, 135, 90, 255));
+            Fill(56, 104, 89, 52, Clay);
+            Fill(61, 94, 79, 16, Clay);
+            Fill(77, 126, 41, 30, Ink);
+            Fill(87, 142, 21, 10, Ochre);
+            for (var i = 0; i < 3; i++)
+                Fill(83 + (beat / 4 + i * 2) % 13, 63 + i * 7, 11 - 2 * i, 5, Clay);
+            for (var row = 0; row < 4; row++)
+            for (var column = 0; column < 5 - row; column++)
+            {
+                var x = 329 + column * 22 + row * 7;
+                var y = 171 - row * 9;
+                Fill(x, y, 19, 7, Clay);
+                Fill(x, y, 19, 2, Ochre);
+            }
+            Figure(figure, 172 + beat / 3, 141);
+            Fill(177 + beat / 3, 148, 18, 6, Clay);
+            Figure(figure, 232 - beat / 4, 159, true);
+            Fill(237 - beat / 4, 166, 18, 6, Clay);
         }
 
         public static void DrawEdenSeal(Vector2 origin, int scale)
