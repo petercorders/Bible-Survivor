@@ -313,6 +313,23 @@ namespace BibleSurvivor.Core
                     strike.CanRetarget && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.04") == 0 ||
                     strike.LongerChain && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.e.01") == 0) == true)
                     throw new InvalidDataException("Lightning strike flags require their frozen ranks");
+                if (Run.World.WildernessVoice?.Active.Any(cast => cast.FirstDelay.HasValue) == true &&
+                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.base.05") == 0 ||
+                    Run.World.FirePillar?.Regions.Any(region => region.FirstDelay.HasValue) == true &&
+                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.fire_pillar.base.05") == 0 ||
+                    Run.World.ElijahChariot?.Paths.Any(path => path.FirstDelay.HasValue) == true &&
+                        PermanentRules.Rank(Run.PermanentSnapshot, "weapon.elijah_chariot.base.05") == 0)
+                    throw new InvalidDataException("Advanced weapon delay requires its frozen rank");
+                if (Run.World.WildernessVoice?.Active.Any(cast =>
+                    cast.KnockbackBonus > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.c.01") == 0 ||
+                    cast.CloseKnockbackBonus > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.wilderness_voice.c.02") == 0) == true)
+                    throw new InvalidDataException("Voice cast knockback requires its frozen rank");
+                if (Run.World.MosesStaff?.Waves.Any(wave =>
+                    wave.IncreasedKnockback && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.b.01") == 0 ||
+                    wave.WidenedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.01") == 0 ||
+                    wave.EmpoweredLaneEdge && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.02") == 0 ||
+                    wave.ExtendedLane && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.e.03") == 0) == true)
+                    throw new InvalidDataException("Moses staff wave bonuses require their frozen ranks");
                 if(Run.Boss==null && (Run.World.SchemaVersion!=(expandedCombat?BattleSnapshot.ExpandedVersion:normalRound>=4?roundBoss?.WorldVersion??3:Run.Forms==null?1:2)||Run.World.BossKills!=0))throw new InvalidDataException("Invalid normal world version");
                 if (expandedCombat && ((Run.World.Charges != null) != (normalRound >= 4) ||
                     (Run.World.HostileProjectiles != null) != chainWorld))

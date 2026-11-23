@@ -380,6 +380,8 @@ namespace BibleSurvivor.Core
         private long nextHostile=1;
         private ExpandedLightningState? lightning;
         private readonly ExpandedLightningSettings lightningSettings;
+        private readonly ExpandedFirePillarSettings firePillarSettings;
+        private readonly ExpandedMosesStaffRankOptions mosesStaffRankOptions;
         private ExpandedWildernessVoiceState? wildernessVoice;
         private ExpandedFirePillarState? firePillar;
         private ExpandedMosesStaffState? mosesStaff;
@@ -434,7 +436,12 @@ namespace BibleSurvivor.Core
         public BattleWorld(AdamSession session,IReadOnlyDictionary<string,double> monsterSpeeds,int seed=1,BattleTuning? tuning=null)
         {
             Session=session??throw new ArgumentNullException(nameof(session));
-            if (session.CombatRulesVersion == 2) lightningSettings = session.LightningSettings();
+            if (session.CombatRulesVersion == 2)
+            {
+                lightningSettings = session.LightningSettings();
+                firePillarSettings = session.FirePillarSettings();
+                mosesStaffRankOptions = session.MosesStaffRankOptions();
+            }
             this.tuning=(tuning??new BattleTuning()).Copy();this.tuning.Validate();
             if(monsterSpeeds==null||monsterSpeeds.Count==0||monsterSpeeds.Any(x=>string.IsNullOrWhiteSpace(x.Key)||
                 !BattleSnapshot.Finite(x.Value)||x.Value<=0||x.Value>10))throw new ArgumentException("Invalid monster speeds");
@@ -928,7 +935,7 @@ namespace BibleSurvivor.Core
                     if(clock.WeaponForm==EvolutionRules.Bible&&!FormHitReady(clock,pair.Key))continue;
                     for(var book=0;book<profile.Amount;book++)
                     {
-                        var angle=SimulationTime*2.5*WeaponRules.Get("bible",Session.Inventory.Weapons["bible"]).RotationSpeedMultiplier+book*2*Math.PI/profile.Amount;
+                        var angle=SimulationTime*2.5*Session.BibleRotationMultiplier+book*2*Math.PI/profile.Amount;
                         var position=PlayerPosition+new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle))*(float)(tuning.BibleOrbitRadius*profile.AreaMultiplier);
                         var strikeRadius = tuning.BookRadius * profile.OrbitCollisionMultiplier + TargetRadius(pair.Key);
                         if (Vector2.DistanceSquared(position,pair.Value)>strikeRadius*strikeRadius) continue;
@@ -946,11 +953,12 @@ namespace BibleSurvivor.Core
                 if(clock.WeaponId=="jawbone")
                 {
                     ShotsFired++;
+                    var degrees = Session.JawboneArcDegrees;
                     foreach(var pair in enemies.OrderBy(x=>x.Key).ToArray())
                     {
                         var relative=pair.Value-PlayerPosition;
                         var reach = tuning.JawboneRange * profile.AreaMultiplier;
-                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,reach+TargetRadius(pair.Key),120))
+                        if(HitGeometry.InArc(relative.X,relative.Y,facing.X,facing.Y,reach+TargetRadius(pair.Key),degrees))
                             Hit(pair.Key,Session.JawboneDamage(profile.Damage,relative.Length(),reach),"jawbone",pair.Value);
                         if(!Session.CanAttack)break;
                     }
@@ -989,34 +997,40 @@ namespace BibleSurvivor.Core
                 case "wilderness_voice":
                     wildernessVoice ??= new ExpandedWildernessVoiceState();
                     var voiceCycle = wildernessVoice.Cycle;
+                    var halfAngle = evolved ? 180 : Session.HasExpandedSkill("weapon.wilderness_voice.b.01") ? 53 : 45;
                     ExpandedWildernessVoice.Step(wildernessVoice, SimulationTime, PlayerPosition, facing,
                         Session.Inventory.Weapons[weapon], evolved, profile.Damage, profile.Cycle,
-                        profile.AttackReach, profile.Duration, evolved?180:45, () => enemies,
+                        profile.AttackReach, profile.Duration, halfAngle, () => enemies,
                         hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position,
-                            hit.Position - hit.Center, hit.Knockback, hit.Kind == ExpandedWildernessVoiceHitKind.Primary));
+                            hit.Position - hit.Center, hit.Knockback, hit.Kind == ExpandedWildernessVoiceHitKind.Primary),
+                        delayAdvance: profile.AttackDelayAdvance,
+                        knockbackBonus: Session.HasExpandedSkill("weapon.wilderness_voice.c.01") ? .25 : 0,
+                        closeKnockbackBonus: Session.HasExpandedSkill("weapon.wilderness_voice.c.02") ? .25 : 0);
                     if (wildernessVoice.Cycle != voiceCycle) ShotsFired++;
                     return true;
                 case "fire_pillar":
                     firePillar ??= new ExpandedFirePillarState();
                     ShotsFired += ExpandedFirePillar.Step(firePillar, SimulationTime, PlayerPosition, evolved,
                         profile.Damage, profile.Cycle, profile.Amount, profile.AttackRadius, profile.Duration, () => enemies,
-                        hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, Vector2.Zero, 0, !hit.IsEmber));
+                        hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, Vector2.Zero, 0, !hit.IsEmber),
+                        delayAdvance: profile.AttackDelayAdvance, settings: firePillarSettings);
                     return true;
                 case "moses_staff":
                     mosesStaff ??= new ExpandedMosesStaffState();
                     ShotsFired += ExpandedMosesStaff.Step(mosesStaff, SimulationTime, PlayerPosition, facing,
                         Session.Inventory.Weapons[weapon], evolved, profile.Damage, profile.Cycle, profile.Amount,
-                        profile.AttackWidth, ExpandedWeaponRules.Get(weapon).TravelDistance, profile.AttackSpeed, () => enemies, previous,
+                        profile.AttackWidth, profile.AttackTravelDistance, profile.AttackSpeed, () => enemies, previous,
                         hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, hit.Direction, hit.Knockback,
                             hit.Kind == ExpandedMosesStaffHitKind.Wave),
                         reserveOriginal: () => OriginalProjectileCount < 192,
-                        reserveLane: () => SupportRegionCount < 16);
+                        reserveLane: () => SupportRegionCount < 16,
+                        rankOptions: mosesStaffRankOptions, isElite: Session.IsEliteActor);
                     return true;
                 case "cross":
                     cross ??= new ExpandedCrossState();
                     ShotsFired += ExpandedCross.Step(cross, SimulationTime, PlayerPosition, facing,
                         Session.Inventory.Weapons[weapon], evolved, profile.Damage, profile.Cycle, profile.Amount,
-                        profile.AttackRadius, ExpandedWeaponRules.Get(weapon).TravelDistance, profile.AttackSpeed, () => enemies, previous,
+                        profile.AttackRadius, profile.AttackTravelDistance, profile.AttackSpeed, () => enemies, previous,
                         hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, Vector2.Zero, 0,
                             hit.Kind != ExpandedCrossHitKind.Thorns),
                         reserveOriginal: () => OriginalProjectileCount < 192,
@@ -1027,9 +1041,9 @@ namespace BibleSurvivor.Core
                     var chariotCycle = elijahChariot.Cycle;
                     ExpandedElijahChariot.Step(elijahChariot, SimulationTime, PlayerPosition, facing,
                         Session.Inventory.Weapons[weapon], evolved, profile.Damage, profile.Cycle, profile.Amount,
-                        profile.AttackWidth, profile.AttackSpeed, ExpandedWeaponRules.Get(weapon).TravelDistance, () => enemies,
+                        profile.AttackWidth, profile.AttackSpeed, profile.AttackTravelDistance, () => enemies,
                         hit => ApplyExpandedHit(hit.TargetId, hit.Damage, weapon, hit.Position, Vector2.Zero, 0,
-                            hit.Kind == ExpandedElijahChariotHitKind.Body));
+                            hit.Kind == ExpandedElijahChariotHitKind.Body), delayAdvance: profile.AttackDelayAdvance);
                     if (elijahChariot.Cycle != chariotCycle) ShotsFired += profile.Amount;
                     return true;
                 case "daniel_lion":

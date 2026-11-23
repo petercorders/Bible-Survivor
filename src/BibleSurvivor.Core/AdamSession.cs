@@ -77,6 +77,9 @@ namespace BibleSurvivor.Core
         public IReadOnlyDictionary<int,int> DroppedExperience => new System.Collections.ObjectModel.ReadOnlyDictionary<int,int>(run.Drops);
         public double CurrentHealth => state.Run == run ? run.Health : 0;
         public double DamageMultiplier => 1 + 0.03 * PermanentRules.Rank(run.PermanentSnapshot, "attack") + 0.1 * Passive("hair");
+        public double BibleRotationMultiplier => WeaponRules.Get("bible", Inventory.Weapons["bible"]).RotationSpeedMultiplier +
+            (HasExpandedSkill("weapon.bible.a.01") ? .12 : 0);
+        public double JawboneArcDegrees => HasExpandedSkill("weapon.jawbone.a.01") ? 140 : 120;
         public double MoveSpeedMultiplier => MoveSpeedAt(false);
         public double PickupRangeMultiplier => PickupRangeAt(false);
         private PermanentActionState Actions => run.PermanentActions!;
@@ -112,6 +115,12 @@ namespace BibleSurvivor.Core
         internal ExpandedLightningSettings LightningSettings() =>
             ExpandedLightningSettings.FromRanks(run.PermanentSnapshot,
                 id => Encounter != null && id == BossRules!.BossActorId, IsEliteActor);
+        internal ExpandedFirePillarSettings FirePillarSettings() => new ExpandedFirePillarSettings(
+            HasExpandedSkill("weapon.fire_pillar.a.01"),
+            HasExpandedSkill("weapon.fire_pillar.a.02") ? IsEliteActor : (Func<int, bool>?)null,
+            HasExpandedSkill("weapon.fire_pillar.e.01"));
+        internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
+            ExpandedMosesStaffRankOptions.FromRanks(run.PermanentSnapshot);
         public double LastRetaliationDamage {get; private set;}
         internal double LastDamageReceived { get; private set; }
         public CombatStats AttackProfile(string weaponId) => AttackProfile(weaponId, false);
@@ -133,7 +142,10 @@ namespace BibleSurvivor.Core
                 if (ExpandedWeaponRules.TryGet(weaponId, out var expanded))
                 {
                     bonuses.ExtraAmount = weaponId == "wilderness_voice" ? 0 : specialization;
-                    return CombatStats.ForScheduled(expanded, level, bonuses, specialization);
+                    if (weaponId == "wilderness_voice" && HasExpandedSkill("weapon.wilderness_voice.a.01") ||
+                        weaponId == "fire_pillar" && HasExpandedSkill("weapon.fire_pillar.b.01")) bonuses.DurationBonus += .12;
+                    return CombatStats.ForScheduled(expanded, level, bonuses, specialization,
+                        HasExpandedSkill(skillPrefix + "04"), HasExpandedSkill(skillPrefix + "05"));
                 }
                 bonuses.ExtraAmount += specialization;
                 var collisionBonus = 0d;

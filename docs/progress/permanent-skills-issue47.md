@@ -10,10 +10,11 @@
 | 공통 효과 | 회복·기동·경험치·수집을 실제 전투에 연결. 이동 방향·보석·원본 처치·즉시 회복 상태를 보존하고 다음 라운드에서 초기화 | Core PermanentSkillCombatTests 및 PermanentRecoveryRulesTests |
 | 기본 치명타 | 확률과 배율의 첫 두 노드를 원본 타격에 연결. 무기별 난수 상태를 저장하고 기존 월드 생성 난수와 분리 | Core PermanentSkillCombatTests의 턱뼈 실타격 및 복원 |
 | 신규 무기 | 7종의 기본·진화 상태와 공격 전략. R03 통제 시험에서 각 형태를 장착해 월드 저장 후 같은 입력으로 복원 | Core ExpandedWeaponProgressionTests와 무기별 시험 |
-| 무기 기초 효과 | 성경의 첫 주기 대기·첫 진화 파동과 책 충돌 반경, 턱뼈 도달·외곽 피해, 물맷돌 충돌 반경·속력, 번개 반경·지연·표적 우선순위·추가 연쇄를 전투에 연결 | Core PermanentSkillCombatTests 및 ExpandedLightningTests |
+| 무기 기초 효과 | 10종 무기의 기초 1~5를 연결. 성경 첫 주기와 진화 파동, 턱뼈 외곽 타격, 투사체 치수·속력, 번개·외침·불기둥·병거의 예약 상태를 확인 | Core PermanentSkillCombatTests 및 무기별 시험 |
+| 추가 무기 분기 | 성경 회전·턱뼈 반각, 번개 표적·연쇄, 외침 지속·반각·밀침, 불기둥 표적·지속·잔불, 지팡이 조준·밀침·진화 수로 | Core PermanentSkillCombatTests 및 무기별 시험 |
 | 설치 캠페인 | v2에서 180개 라운드와 보스 60개를 통제 입력으로 진행. 책 진입과 대표 보스 월드·보상·R180 정산을 저장 후 복원 | Core ExpandedCampaignReplayTests |
-| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 105개 ID·127개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
-| 미완료 | 구매 미연결 315개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
+| Unity 상점 | 제목·일시정지 등 진입 화면, 22개 트리 탐색, 상세·선행 이동, 구매·전체 환불과 오류 재시도. 현재 구매 허용 134개 ID·156개 구매 단계 | Unity AdamPermanentSkillHostTests, Editor 포인터 및 macOS QA Player 키보드 증거 |
+| 미완료 | 구매 미연결 286개 ID, 모든 노드의 효과별 재현, 7무기의 자연 해금·진화와 Player 전투 화면, 네이티브 포인터·모바일 | 고정 설계의 save-and-acceptance.md |
 
 기준 Unity PlayMode는 38/40이며 #46의 두 시각 효과 단정을 같은 기준본에서 다시 확인했다. 변경 빌드의 전체 결과는 별도로 기록한다. macOS QA Player는 독립 저장 경로에서 실제 키보드로 구매·환불 확인과 각각의 취소를 시험했다. 테스트 잔액은 600 → 500 → 600이었다. 660×440 Editor 포인터 시험은 일시정지에서 진입해 선행 이동과 구매·환불의 확인과 취소를 재현했다. 기존 v1 도전은 시간과 ID를 유지하고 재개했다.
 

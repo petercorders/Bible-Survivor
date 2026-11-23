@@ -44,6 +44,7 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public float DirectionX { get; set; }
         [DataMember(IsRequired = true)] public float DirectionY { get; set; }
         [DataMember(IsRequired = true)] public double MoveAt { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
         [DataMember(IsRequired = true)] public double Range { get; set; }
         [DataMember(IsRequired = true)] public double Speed { get; set; }
         [DataMember(IsRequired = true)] public double Width { get; set; }
@@ -57,7 +58,8 @@ namespace BibleSurvivor.Core
         public Vector2 Origin => new Vector2(StartX, StartY);
         public Vector2 Direction => new Vector2(DirectionX, DirectionY);
         public Vector2 Position => Origin + Direction * (float)Distance;
-        public double WarningAt => MoveAt - ExpandedElijahChariot.Profile.FirstAttackDelay;
+        public double WarningAt => MoveAt - WarningDelay;
+        private double WarningDelay => FirstDelay ?? ExpandedElijahChariot.Profile.FirstAttackDelay;
         public double EndAt => MoveAt + Range / Speed;
         public bool BodyEnded => Distance >= Range;
 
@@ -121,7 +123,7 @@ namespace BibleSurvivor.Core
                     !BattleSnapshot.Position(path.DirectionX, path.DirectionY) ||
                     Math.Abs(path.Direction.LengthSquared() - 1) > .0001 ||
                     !ExpandedElijahChariot.ValidPath(path.Damage, path.Width, path.Speed, path.Range) ||
-                    !BattleSnapshot.Finite(path.MoveAt) || path.WarningAt < -epsilon || path.WarningAt > now + epsilon ||
+                    !BattleSnapshot.Finite(path.MoveAt) || !ExpandedElijahChariot.ValidDelay(path.FirstDelay) || path.WarningAt < -epsilon || path.WarningAt > now + epsilon ||
                     path.WarningAt + ExpandedElijahChariot.MinimumCycle > NextCycle + epsilon ||
                     path.ExpiresAt(evolved) < now - epsilon ||
                     !BattleSnapshot.Finite(path.Distance) || path.Distance < 0 || path.Distance > path.Range ||
@@ -170,6 +172,7 @@ namespace BibleSurvivor.Core
             (int)Math.Ceiling((Profile.TravelDistance / MinimumSpeed + TrailDuration) / TrailInterval);
         internal const double TimeEpsilon = 1e-9;
         internal const double MinimumCycle = .15;
+        private const double MinimumDelay = .05;
         internal const double TrailInterval = .5;
         internal const double TrailDuration = 1.5;
         internal const int MaximumLiveTargets = 120;
@@ -181,11 +184,13 @@ namespace BibleSurvivor.Core
 
         public static void Step(ExpandedElijahChariotState state, double now, Vector2 playerPosition, Vector2 facing,
             int level, bool evolved, double damage, double cycle, int amount, double width, double speed, double range,
-            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedElijahChariotHit, bool> applyHit)
+            Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedElijahChariotHit, bool> applyHit,
+            double delayAdvance = 0)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
+            if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (!BattleSnapshot.Finite(now) || now < 0 ||
                 !BattleSnapshot.Position(playerPosition.X, playerPosition.Y) || !BattleSnapshot.Position(facing.X, facing.Y) ||
                 level < 1 || level > 8 || evolved && level != 8 || amount < 1 || amount > MaximumAmount ||
@@ -199,7 +204,8 @@ namespace BibleSurvivor.Core
 
             var direction = facing.LengthSquared() > 1e-12f ? Vector2.Normalize(facing) : Vector2.UnitX;
             var perpendicular = new Vector2(-direction.Y, direction.X);
-            var moveAt = state.NextCycle + Profile.FirstAttackDelay;
+            var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - delayAdvance);
+            var moveAt = state.NextCycle + delay;
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle += cycle;
             for (var index = 0; index < amount; index++)
@@ -215,6 +221,7 @@ namespace BibleSurvivor.Core
                     DirectionX = direction.X,
                     DirectionY = direction.Y,
                     MoveAt = moveAt,
+                    FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay,
                     Range = range,
                     Speed = speed,
                     Width = width,
@@ -329,6 +336,9 @@ namespace BibleSurvivor.Core
         private static ExpandedElijahChariotHit Hit(ExpandedElijahChariotPathState path, ExpandedElijahChariotHitKind kind,
             int targetId, Vector2 position, double damage) =>
             new ExpandedElijahChariotHit(kind, targetId, position, damage, path.Id, path.Cycle);
+
+        internal static bool ValidDelay(double? seconds) => !seconds.HasValue ||
+            (BattleSnapshot.Finite(seconds.Value) && seconds.Value >= MinimumDelay && seconds.Value <= Profile.FirstAttackDelay);
 
         internal static bool ValidPath(double damage, double width, double speed, double range) =>
             BattleSnapshot.Finite(damage) && damage >= 1 && damage <= MaximumDamage &&

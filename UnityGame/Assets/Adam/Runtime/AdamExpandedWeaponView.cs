@@ -11,7 +11,6 @@ namespace BibleSurvivor.Unity
         enum Stroke { Solid, Dash, Dot }
 
         const double MarkerLifetime = .14;
-        const float StaffLaneWidth = 1.2f;
         const float CrossThornRadius = .75f / 2;
         const float ChariotTrailWidth = .9f;
         const double ChariotTrailDuration = 1.5;
@@ -24,7 +23,6 @@ namespace BibleSurvivor.Unity
         static readonly Color Lion = new Color32(224, 195, 144, 255);
         static readonly Color Cross = new Color32(245, 232, 200, 255);
         static readonly Color Chariot = new Color32(253, 226, 136, 255);
-        static readonly ExpandedWeaponProfile PillarProfile = ExpandedWeaponRules.Get("fire_pillar");
         static readonly ExpandedWeaponProfile CrossProfile = ExpandedWeaponRules.Get("cross");
 
         readonly Texture2D[] rings = new Texture2D[3];
@@ -111,12 +109,12 @@ namespace BibleSurvivor.Unity
                 foreach (var wave in snap.MosesStaff.Waves)
                     if (wave.HasLane && wave.LaneStartedAt.HasValue)
                         Band(projection, V(wave.Origin), V(wave.Origin) + V(wave.Direction) * (float)wave.LaneLength,
-                            StaffLaneWidth, Staff, Stroke.Dash);
+                            (float)wave.LaneWidth, Staff, Stroke.Dash);
 
             if (snap.FirePillar != null)
                 foreach (var region in snap.FirePillar.Regions)
                 {
-                    var stroke = region.Ember ? Stroke.Dot : snap.Time < region.StartedAt + PillarProfile.FirstAttackDelay ? Stroke.Dash : Stroke.Solid;
+                    var stroke = region.Ember ? Stroke.Dot : snap.Time < region.IgnitionAt ? Stroke.Dash : Stroke.Solid;
                     Ring(projection, new Vector2(region.X, region.Y), (float)region.Radius, Pillar, stroke);
                 }
 
@@ -166,7 +164,7 @@ namespace BibleSurvivor.Unity
             if (snap.FirePillar != null)
                 foreach (var region in snap.FirePillar.Regions)
                 {
-                    if (region.Ember || snap.Time < region.StartedAt + PillarProfile.FirstAttackDelay) continue;
+                    if (region.Ember || snap.Time < region.IgnitionAt) continue;
                     var center = new Vector2(region.X, region.Y);
                     Line(projection, center, center + Vector2.up * .68f, Pillar);
                     if (feedback && EnemyPosition(snap, region.TargetId, out var target))

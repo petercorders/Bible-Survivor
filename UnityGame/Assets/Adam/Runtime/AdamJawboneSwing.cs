@@ -38,19 +38,21 @@ namespace BibleSurvivor.Unity
         }
         public static Rect GripRect(Sprite sprite,Vector2 hand,int scale)=>new Rect(
             hand.x-sprite.pivot.x*scale,hand.y-(sprite.rect.height-sprite.pivot.y)*scale,sprite.rect.width*scale,sprite.rect.height*scale);
-        public void Draw(AdamArt art,Rect arena,Vector2 feet,int scale,bool playerLeft,double clock,float range,bool feedback)
+        public void Draw(AdamArt art,Rect arena,Vector2 feet,int scale,bool playerLeft,double clock,float range,bool feedback,
+            float arcDegrees = 120)
         {
             if(!Active(clock))return;var elapsed=clock-Started;var hand=Hand(feet,scale,playerLeft);
             var matrix=GUI.matrix;var color=GUI.color;
             try
             {
-                // A short arc describes Core's existing120 degree sector/range; it never detects a hit.
-                if(feedback && elapsed>=.03 && elapsed<.11)
+                // The arc projects the live sector without changing hit detection.
+                if((feedback || arcDegrees != 120) && elapsed>=.03 && elapsed<.11)
                 {
                     var aim=Mathf.Atan2(-Direction.y,Direction.x);var radius=range*32*scale;
+                    var segment = arcDegrees / 8;
                     for(var i=0;i<8;i++)
                     {
-                        var a=aim+(-60+i*15)*Mathf.Deg2Rad;var b=aim+(-45+i*15)*Mathf.Deg2Rad;
+                        var a=aim+(-arcDegrees/2+i*segment)*Mathf.Deg2Rad;var b=aim+(-arcDegrees/2+(i+1)*segment)*Mathf.Deg2Rad;
                         var from=feet+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius;
                         var to=feet+new Vector2(Mathf.Cos(b),Mathf.Sin(b))*radius;
                         Line(arena,from,to,scale,new Color(1,.92f,.72f,.65f));

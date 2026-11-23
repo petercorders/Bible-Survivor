@@ -143,6 +143,28 @@ internal static class ExpandedElijahChariotTests
             Check.True(hits.All(hit => hit.Kind == ExpandedElijahChariotHitKind.Body && hit.PathId == 2));
             restored.Validate(2.15, false);
         });
+
+        test("Trained chariot persists its shortened warning and reaches the first sweep exactly once", () =>
+        {
+            var state = new ExpandedElijahChariotState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var hits = new List<ExpandedElijahChariotHit>();
+            Step(state, 0, targets, hits, delayAdvance: .08);
+            Check.Near(0, state.Paths.Single().WarningAt);
+            Check.Near(.07, state.Paths.Single().MoveAt);
+            Step(state, .0699, targets, hits);
+            Check.Equal(0, hits.Count);
+            var restored = Restore(state);
+            restored.Validate(.0699, false);
+            Check.Near(0, restored.Paths.Single().WarningAt);
+            Step(restored, .07, targets, hits);
+            Check.Equal(1, hits.Count);
+            Step(restored, .0701, targets, hits);
+            Check.Equal(1, hits.Count);
+            var capped = new ExpandedElijahChariotState();
+            Step(capped, 0, targets, hits, delayAdvance: 1);
+            Check.Near(.05, capped.Paths.Single().MoveAt);
+        });
     }
 
     private static ExpandedElijahChariotState Restore(ExpandedElijahChariotState state)
@@ -156,10 +178,10 @@ internal static class ExpandedElijahChariotTests
 
     private static void Step(ExpandedElijahChariotState state, double time, Dictionary<int, Vector2> targets,
         List<ExpandedElijahChariotHit> hits, bool evolved = false, int amount = 1, double cycle = 5,
-        double damage = 80, Vector2 player = default, Vector2? facing = null)
+        double damage = 80, Vector2 player = default, Vector2? facing = null, double delayAdvance = 0)
     {
         ExpandedElijahChariot.Step(state, time, player, facing ?? Vector2.UnitX, 8, evolved,
             damage, cycle, amount, width: 1.2, speed: 8, range: 10, () => targets,
-            hit => { hits.Add(hit); return true; });
+            hit => { hits.Add(hit); return true; }, delayAdvance);
     }
 }

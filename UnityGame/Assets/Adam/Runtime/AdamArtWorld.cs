@@ -542,7 +542,7 @@ namespace BibleSurvivor.Unity
                     var profile=host.Session.AttackProfile("bible");
                     for(var i=0;i<profile.Amount;i++)
                     {
-                        var angle=snap.Time*2.5*WeaponRules.Get("bible",host.Session.Inventory.Weapons["bible"]).RotationSpeedMultiplier+i*Math.PI*2/profile.Amount;
+                        var angle=snap.Time*2.5*host.Session.BibleRotationMultiplier+i*Math.PI*2/profile.Amount;
                         var radius=snap.Tuning.BibleOrbitRadius*profile.AreaMultiplier;
                         var pos=Point(snap.PlayerX+(float)(Math.Cos(angle)*radius),snap.PlayerY+(float)(Math.Sin(angle)*radius));
                         if(FeedbackEnabled&&AdamVisualQualityArt.TryGetClip(AdamPolishContacts.Page,out _))
@@ -556,7 +556,8 @@ namespace BibleSurvivor.Unity
                 {
                     AdamVisualQualityWorld.SwingFx(art,JawboneSwing,arena,feet,scale,PlayerLeft,snap.Time,FeedbackEnabled);
                     JawboneSwing.Draw(art,arena,feet,scale,PlayerLeft,snap.Time,
-                        (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled);
+                        (float)(snap.Tuning.JawboneRange*host.Session.AttackProfile("jawbone").AreaMultiplier),FeedbackEnabled,
+                        (float)host.Session.JawboneArcDegrees);
                 }
             }
             beforeTelegraphs?.Invoke();

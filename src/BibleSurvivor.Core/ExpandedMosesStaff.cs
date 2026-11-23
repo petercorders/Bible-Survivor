@@ -12,6 +12,39 @@ namespace BibleSurvivor.Core
         Lane,
     }
 
+    public readonly struct ExpandedMosesStaffRankOptions
+    {
+        public bool WidenWave { get; }
+        public bool WidenFan { get; }
+        public bool PrioritizeElite { get; }
+        public bool IncreaseKnockback { get; }
+        public bool WidenLane { get; }
+        public bool EmpowerLaneEdge { get; }
+        public bool ExtendLane { get; }
+
+        public ExpandedMosesStaffRankOptions(bool widenWave = false, bool widenFan = false, bool prioritizeElite = false,
+            bool increaseKnockback = false, bool widenLane = false, bool empowerLaneEdge = false, bool extendLane = false)
+        {
+            WidenWave = widenWave;
+            WidenFan = widenFan;
+            PrioritizeElite = prioritizeElite;
+            IncreaseKnockback = increaseKnockback;
+            WidenLane = widenLane;
+            EmpowerLaneEdge = empowerLaneEdge;
+            ExtendLane = extendLane;
+        }
+
+        public static ExpandedMosesStaffRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
+        {
+            if (ranks == null) throw new ArgumentNullException(nameof(ranks));
+            bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
+            return new ExpandedMosesStaffRankOptions(
+                Has("weapon.moses_staff.a.01"), Has("weapon.moses_staff.a.02"), Has("weapon.moses_staff.a.03"),
+                Has("weapon.moses_staff.b.01"), Has("weapon.moses_staff.e.01"), Has("weapon.moses_staff.e.02"),
+                Has("weapon.moses_staff.e.03"));
+        }
+    }
+
     public readonly struct ExpandedMosesStaffHit
     {
         public ExpandedMosesStaffHitKind Kind { get; }
@@ -25,15 +58,15 @@ namespace BibleSurvivor.Core
         public long Cycle { get; }
 
         internal ExpandedMosesStaffHit(ExpandedMosesStaffHitKind kind, int targetId, Vector2 position, Vector2 origin,
-            ExpandedMosesStaffWaveState wave)
+            ExpandedMosesStaffWaveState wave, bool laneEdge = false)
         {
             Kind = kind;
             TargetId = targetId;
             Position = position;
             Origin = origin;
             Direction = wave.Direction;
-            Damage = kind == ExpandedMosesStaffHitKind.Wave ? wave.Damage : wave.Damage * ExpandedMosesStaff.LaneDamageFactor;
-            Knockback = kind == ExpandedMosesStaffHitKind.Wave ? ExpandedMosesStaff.Profile.Knockback : 0;
+            Damage = kind == ExpandedMosesStaffHitKind.Wave ? wave.Damage : wave.LaneDamage(laneEdge);
+            Knockback = kind == ExpandedMosesStaffHitKind.Wave ? wave.Knockback : 0;
             WaveId = wave.Id;
             Cycle = wave.Cycle;
         }
@@ -58,14 +91,25 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public bool MakesLane { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? LaneStartedAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public int LaneTicks { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool IncreasedKnockback { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool WidenedLane { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool EmpoweredLaneEdge { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool ExtendedLane { get; set; }
         [DataMember(IsRequired = true)] public List<int> HitIds { get; set; } = new List<int>();
 
         public Vector2 Origin => new Vector2(OriginX, OriginY);
         public Vector2 Direction => new Vector2(DirectionX, DirectionY);
         public Vector2 Position => Origin + Direction * (float)Distance;
         public bool IsMoving => Distance < Range;
-        public bool HasLane => MakesLane && LaneTicks <= ExpandedMosesStaff.LaneTickCount;
+        public bool HasLane => MakesLane && LaneTicks <= LaneTickCount;
         public double LaneLength => HasLane ? Math.Min(Distance, ExpandedMosesStaff.MaximumLaneLength) : 0;
+        public double LaneWidth => ExpandedMosesStaff.BaseLaneWidth * (WidenedLane ? 1.15 : 1);
+        public double LaneDuration => ExpandedMosesStaff.BaseLaneDuration * (ExtendedLane ? 1.20 : 1);
+        internal int LaneTickCount => (int)Math.Ceiling(LaneDuration / ExpandedMosesStaff.LaneInterval);
+        internal int ExpiredLane => LaneTickCount + 1;
+        internal double Knockback => Math.Min(1, ExpandedMosesStaff.Profile.Knockback + (IncreasedKnockback ? .25 : 0));
+        internal double LaneDamage(bool outer) =>
+            Damage * (ExpandedMosesStaff.LaneDamageFactor + (EmpoweredLaneEdge && outer ? .12 : 0));
 
         internal ExpandedMosesStaffWaveState Copy()
         {
@@ -140,12 +184,13 @@ namespace BibleSurvivor.Core
                     throw new ArgumentException("Invalid expanded staff travel");
                 if (!wave.MakesLane)
                 {
-                    if (wave.LaneStartedAt.HasValue || wave.LaneTicks != 0)
+                    if (wave.LaneStartedAt.HasValue || wave.LaneTicks != 0 || wave.WidenedLane ||
+                        wave.EmpoweredLaneEdge || wave.ExtendedLane)
                         throw new ArgumentException("Unexpected expanded staff lane");
                 }
                 else
                 {
-                    if (!Evolved || wave.LaneTicks < 0 || wave.LaneTicks > ExpandedMosesStaff.ExpiredLane ||
+                    if (!Evolved || wave.LaneTicks < 0 || wave.LaneTicks > wave.ExpiredLane ||
                         (wave.HasLane && ++lanes > ExpandedMosesStaff.MaximumLanes))
                         throw new ArgumentException("Invalid expanded staff lane");
                     if (!wave.LaneStartedAt.HasValue)
@@ -157,7 +202,7 @@ namespace BibleSurvivor.Core
                     {
                         var start = wave.LaneStartedAt.Value;
                         var elapsed = now - start + ExpandedMosesStaff.TimeEpsilon;
-                        var expectedTicks = elapsed >= ExpandedMosesStaff.LaneDuration ? ExpandedMosesStaff.ExpiredLane :
+                        var expectedTicks = elapsed >= wave.LaneDuration ? wave.ExpiredLane :
                             1 + (int)Math.Floor(elapsed / ExpandedMosesStaff.LaneInterval);
                         if (!ExpandedMosesStaff.Finite(start) || start <= wave.EmittedAt || start > wave.LastStepAt ||
                             expectedTicks != wave.LaneTicks)
@@ -184,13 +229,11 @@ namespace BibleSurvivor.Core
         internal const double TimeEpsilon = 1e-9;
         internal const double DistanceEpsilon = 1e-6;
         internal const double LaneInterval = .5;
-        internal const double LaneDuration = 2;
-        internal const int LaneTickCount = (int)(LaneDuration / LaneInterval);
-        internal const int ExpiredLane = LaneTickCount + 1;
+        internal const double BaseLaneDuration = 2;
         internal const int MaximumLanes = 16;
         internal const int MaximumLiveTargets = 120;
         internal static readonly int MaximumMovingWaves = MaximumAmount * ((int)Math.Ceiling(MaximumRange / MinimumSpeed / MinimumCycle) + 1);
-        private const double LaneWidth = 1.2;
+        internal const double BaseLaneWidth = 1.2;
         internal const double LaneDamageFactor = .35;
 
         // The caller owns live targets and damage. The result counts waves actually emitted.
@@ -198,12 +241,14 @@ namespace BibleSurvivor.Core
         public static int Step(ExpandedMosesStaffState state, double now, Vector2 playerPosition, Vector2 facing, int level,
             bool evolved, double damage, double cycle, int amount, double widthBeforeForm, double range, double speed,
             Func<IReadOnlyDictionary<int, Vector2>> targets, IReadOnlyDictionary<int, Vector2> previousTargets,
-            Func<ExpandedMosesStaffHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveLane = null)
+            Func<ExpandedMosesStaffHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveLane = null,
+            ExpandedMosesStaffRankOptions rankOptions = default, Func<int, bool>? isElite = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (previousTargets == null) throw new ArgumentNullException(nameof(previousTargets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
+            if (rankOptions.PrioritizeElite && isElite == null) throw new ArgumentNullException(nameof(isElite));
             if (!Finite(now) || now < 0 || !ValidPosition(playerPosition) || !ValidPosition(facing) ||
                 level < 1 || level > 8 || (evolved && level != 8) ||
                 !Finite(damage) || damage < 1 || damage > MaximumDamage ||
@@ -224,15 +269,22 @@ namespace BibleSurvivor.Core
 
             state.Cycle = checked(state.Cycle + 1);
             state.NextCycle += cycle;
-            var width = Math.Min(MaximumWidth, widthBeforeForm * (evolved ? 1.2 : 1));
+            var widthBonus = rankOptions.WidenWave ? Profile.AtLevel(1).Width * .10 : 0;
+            var width = Math.Min(MaximumWidth, (widthBeforeForm + widthBonus) * (evolved ? 1.2 : 1));
             var forward = facing.LengthSquared() > 0 ? Vector2.Normalize(facing) : Vector2.UnitX;
+            var spread = rankOptions.WidenFan ? 20 : Profile.SpreadDegrees;
+            if (rankOptions.PrioritizeElite && TryFindEliteDirection(playerPosition, targets(), isElite!, out var aim))
+            {
+                if (aim != Vector2.Zero) forward = Vector2.Normalize(aim);
+                spread = Math.Min(spread, 5);
+            }
             var moving = state.ActiveWaveCount;
             var lanes = state.ActiveLaneCount;
             var emitted = 0;
             for (var index = 0; index < amount; index++)
             {
                 if (moving + emitted >= MaximumMovingWaves || (reserveOriginal != null && !reserveOriginal())) break;
-                var angle = (index - (amount - 1) * .5) * Profile.SpreadDegrees * Math.PI / 180;
+                var angle = (index - (amount - 1) * .5) * spread * Math.PI / 180;
                 var direction = Rotate(forward, angle);
                 var makesLane = evolved && lanes < MaximumLanes && (reserveLane?.Invoke() ?? true);
                 if (makesLane) lanes++;
@@ -251,11 +303,37 @@ namespace BibleSurvivor.Core
                     Range = range,
                     Speed = speed,
                     MakesLane = makesLane,
+                    IncreasedKnockback = rankOptions.IncreaseKnockback,
+                    WidenedLane = makesLane && rankOptions.WidenLane,
+                    EmpoweredLaneEdge = makesLane && rankOptions.EmpowerLaneEdge,
+                    ExtendedLane = makesLane && rankOptions.ExtendLane,
                 });
                 state.NextWaveId = checked(state.NextWaveId + 1);
                 emitted++;
             }
             return emitted;
+        }
+
+        private static bool TryFindEliteDirection(Vector2 origin, IReadOnlyDictionary<int, Vector2> targets,
+            Func<int, bool> isElite, out Vector2 aim)
+        {
+            const double radiusSquared = 4 * 4;
+            var bestDistance = radiusSquared;
+            var bestId = int.MaxValue;
+            var found = false;
+            aim = Vector2.Zero;
+            foreach (var (id, position) in targets)
+            {
+                var direction = position - origin;
+                var distance = (double)direction.X * direction.X + (double)direction.Y * direction.Y;
+                if (distance > bestDistance || (found && distance == bestDistance && id >= bestId) || !isElite(id))
+                    continue;
+                found = true;
+                bestDistance = distance;
+                bestId = id;
+                aim = direction;
+            }
+            return found;
         }
 
         private static void AdvanceWave(ExpandedMosesStaffWaveState wave, double now,
@@ -296,36 +374,45 @@ namespace BibleSurvivor.Core
             {
                 if (!wave.HasLane || !wave.LaneStartedAt.HasValue) continue;
                 var start = wave.LaneStartedAt.Value;
-                if (start + LaneDuration <= now + TimeEpsilon)
+                if (start + wave.LaneDuration <= now + TimeEpsilon)
                 {
-                    wave.LaneTicks = ExpiredLane;
+                    wave.LaneTicks = wave.ExpiredLane;
                     continue;
                 }
                 var next = start + wave.LaneTicks * LaneInterval;
-                if (wave.LaneTicks == LaneTickCount || next > now + TimeEpsilon) continue;
+                if (wave.LaneTicks == wave.LaneTickCount || next > now + TimeEpsilon) continue;
                 do { wave.LaneTicks++; }
-                while (wave.LaneTicks < LaneTickCount && start + wave.LaneTicks * LaneInterval <= now + TimeEpsilon);
+                while (wave.LaneTicks < wave.LaneTickCount && start + wave.LaneTicks * LaneInterval <= now + TimeEpsilon);
                 due.Add(wave);
             }
             if (due.Count == 0) return;
 
             // Physical contacts use the live target map before support damage. Resolve
             // same-tick lane overlaps once per target, then apply winners in wave/target order.
-            var winners = new Dictionary<int, ExpandedMosesStaffWaveState>();
+            var winners = new Dictionary<int, (ExpandedMosesStaffWaveState Wave, bool Outer)>();
             var live = targets();
-            foreach (var wave in due.OrderByDescending(wave => wave.Damage).ThenBy(wave => wave.Id))
+            foreach (var wave in due)
             {
                 var length = Math.Min(wave.Distance, MaximumLaneLength);
                 foreach (var pair in live)
                 {
-                    if (winners.ContainsKey(pair.Key)) continue;
                     var previous = previousTargets.TryGetValue(pair.Key, out var old) ? old : pair.Value;
-                    if (CrossesLane(previous, pair.Value, wave, length)) winners.Add(pair.Key, wave);
+                    if (!CrossesLane(previous, pair.Value, wave, length, out var outer)) continue;
+                    if (!winners.TryGetValue(pair.Key, out var current))
+                    {
+                        winners.Add(pair.Key, (wave, outer));
+                        continue;
+                    }
+                    var damage = wave.LaneDamage(outer);
+                    var currentDamage = current.Wave.LaneDamage(current.Outer);
+                    if (damage > currentDamage || (damage == currentDamage && wave.Id < current.Wave.Id))
+                        winners[pair.Key] = (wave, outer);
                 }
             }
-            foreach (var hit in winners.OrderBy(entry => entry.Value.Id).ThenBy(entry => entry.Key))
+            foreach (var hit in winners.OrderBy(entry => entry.Value.Wave.Id).ThenBy(entry => entry.Key))
                 if (targets().TryGetValue(hit.Key, out var position))
-                    applyHit(new ExpandedMosesStaffHit(ExpandedMosesStaffHitKind.Lane, hit.Key, position, hit.Value.Origin, hit.Value));
+                    applyHit(new ExpandedMosesStaffHit(ExpandedMosesStaffHitKind.Lane, hit.Key, position,
+                        hit.Value.Wave.Origin, hit.Value.Wave, hit.Value.Outer));
         }
 
         private static bool SweptContact(Vector2 from, Vector2 to, double radius, out float contact)
@@ -346,15 +433,28 @@ namespace BibleSurvivor.Core
             return true;
         }
 
-        private static bool CrossesLane(Vector2 previous, Vector2 current, ExpandedMosesStaffWaveState wave, double length)
+        private static bool CrossesLane(Vector2 previous, Vector2 current, ExpandedMosesStaffWaveState wave, double length,
+            out bool outer)
         {
             var from = previous - wave.Origin;
             var to = current - wave.Origin;
             var direction = wave.Direction;
             var perpendicular = new Vector2(-direction.Y, direction.X);
+            var fromSide = Vector2.Dot(from, perpendicular);
+            var toSide = Vector2.Dot(to, perpendicular);
+            var halfWidth = wave.LaneWidth / 2;
             double first = 0, last = 1;
-            return ClipAxis(Vector2.Dot(from, direction), Vector2.Dot(to, direction), 0, length, ref first, ref last) &&
-                ClipAxis(Vector2.Dot(from, perpendicular), Vector2.Dot(to, perpendicular), -LaneWidth / 2, LaneWidth / 2, ref first, ref last);
+            outer = false;
+            if (!ClipAxis(Vector2.Dot(from, direction), Vector2.Dot(to, direction), 0, length, ref first, ref last) ||
+                !ClipAxis(fromSide, toSide, -halfWidth, halfWidth, ref first, ref last))
+                return false;
+            if (wave.EmpoweredLaneEdge)
+            {
+                var step = (double)toSide - fromSide;
+                var edge = Math.Max(Math.Abs(fromSide + step * first), Math.Abs(fromSide + step * last));
+                outer = edge + DistanceEpsilon >= halfWidth * .75;
+            }
+            return true;
         }
 
         private static bool ClipAxis(double from, double to, double minimum, double maximum, ref double first, ref double last)

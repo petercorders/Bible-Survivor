@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using System.Numerics;
 using System.Text.Json;
 
@@ -52,6 +54,74 @@ internal static class ExpandedFirePillarTests
             Check.Equal(JsonSerializer.Serialize(state), JsonSerializer.Serialize(restored));
             restored.ResetForForm(false, 100 / 60d);
             Check.Equal(0, restored.Regions.Count);
+        });
+
+        test("Trained fire pillar restores its advanced ignition and subsequent exact pulse", () =>
+        {
+            var state = new ExpandedFirePillarState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var hits = new List<ExpandedFirePillarHit>();
+            void Step(ExpandedFirePillarState current, double now, double delayAdvance = 0) =>
+                ExpandedFirePillar.Step(current, now, Vector2.Zero, false, 10, 3, 1, .9, 2,
+                    () => targets, hits.Add, delayAdvance);
+
+            Step(state, 0, .08);
+            Check.Near(.07, state.Regions.Single().NextHit);
+            Step(state, .0699);
+            Check.Equal(0, hits.Count);
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedFirePillarState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedFirePillarState)serializer.ReadObject(save)!;
+            restored.Validate(.0699, false);
+            Step(restored, .07);
+            Check.Equal(1, hits.Count);
+            Step(restored, .0701);
+            Check.Equal(1, hits.Count);
+            Step(restored, .5699);
+            Check.Equal(1, hits.Count);
+            Step(restored, .57);
+            Check.Equal(2, hits.Count);
+            var capped = new ExpandedFirePillarState();
+            Step(capped, 0, 1);
+            Check.Near(.05, capped.Regions.Single().NextHit);
+        });
+
+        test("Fire pillar placement prioritizes crowds then nearby elites and evolves longer embers", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1, 0),
+                [2] = new Vector2(3, 0),
+                [3] = new Vector2(4.8f, 0),
+                [4] = new Vector2(5.4f, 0),
+                [5] = new Vector2(6, 0),
+            };
+            ExpandedFirePillarState Place(ExpandedFirePillarSettings settings)
+            {
+                var state = new ExpandedFirePillarState();
+                ExpandedFirePillar.Step(state, 0, Vector2.Zero, false, 10, 3, 1, .9, 2, () => targets, _ => { },
+                    settings: settings);
+                return state;
+            }
+            Check.Near(1, Place(default).Regions.Single().X);
+            Check.Near(targets[3].X, Place(new ExpandedFirePillarSettings(true, null, false)).Regions.Single().X);
+            Check.Near(3, Place(new ExpandedFirePillarSettings(true, id => id is 2 or 5, false)).Regions.Single().X);
+            targets[2] = new Vector2(4.001f, 0);
+            Check.Near(targets[3].X, Place(new ExpandedFirePillarSettings(true, id => id is 2 or 5, false)).Regions.Single().X);
+
+            var evolved = new ExpandedFirePillarState();
+            targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var extended = new ExpandedFirePillarSettings(false, null, true);
+            ExpandedFirePillar.Step(evolved, 0, Vector2.Zero, true, 20, 3, 1, 1.125, 3, () => targets, _ => { },
+                settings: extended);
+            targets[1] = new Vector2(7, 0);
+            for (var tick = 1; tick <= 55; tick++)
+                ExpandedFirePillar.Step(evolved, tick / 60d, Vector2.Zero, true, 20, 3, 1, 1.125, 3,
+                    () => targets, _ => { }, settings: extended);
+            var ember = evolved.Regions.Single(region => region.Ember);
+            Check.Near(1.20, ember.EndsAt - ember.StartedAt);
         });
     }
 }

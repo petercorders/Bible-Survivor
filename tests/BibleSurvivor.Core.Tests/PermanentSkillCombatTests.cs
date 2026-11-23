@@ -257,6 +257,140 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        test("The remaining six expanded weapon masteries reach real persisted attack shapes", () =>
+        {
+            WithStore(store =>
+            {
+                var weapons = ExpandedWeaponRules.All.Where(weapon => weapon.WeaponId != "lightning").ToArray();
+                var state = ExpandedProfile(store, weapons.Select(weapon => $"weapon.{weapon.WeaponId}.base.05").ToArray());
+                var definition = WaveTests.Adam();
+                foreach (var weapon in weapons)
+                {
+                    state = SaveStore.PrepareNewChallenge(state);
+                    var id = weapon.WeaponId;
+                    var session = new AdamSession(state, definition, "sling");
+                    Check.True(session.Inventory.TryChoose(id, false));
+                    session.Advance(1.5);
+                    var setup = new BattleWorld(session, Speeds, 7).Capture();
+                    foreach (var enemy in setup.Enemies)
+                    {
+                        enemy.X = 2 + enemy.Id;
+                        enemy.Y = 0;
+                    }
+                    var world = BattleWorld.Restore(session, Speeds, setup);
+                    world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    var captured = world.Capture();
+                    state.Run!.World = captured;
+                    store.Commit(state, state.Revision, "expanded-mastery-" + id);
+                    state = store.Load()!;
+                    var restored = state.Run!.World!;
+                    var basis = weapon.AtLevel(1);
+                    var stats = session.AttackProfile(id);
+                    switch (id)
+                    {
+                        case "wilderness_voice":
+                            var voice = restored.WildernessVoice!.Active.Single();
+                            Check.Near(basis.Reach * 1.30, voice.Reach);
+                            Check.Near(.07, voice.FirstDelay!.Value);
+                            break;
+                        case "fire_pillar":
+                            var pillar = restored.FirePillar!.Regions.First();
+                            Check.Near(basis.Radius * 1.10, pillar.Radius);
+                            Check.Near(.07, pillar.IgnitionAt - pillar.StartedAt);
+                            break;
+                        case "moses_staff":
+                            var wave = restored.MosesStaff!.Waves.First();
+                            Check.Near(weapon.TravelDistance * 1.12, wave.Range);
+                            Check.Near(basis.Speed * 1.12, wave.Speed);
+                            break;
+                        case "cross":
+                            var shot = restored.Cross!.Shots.First();
+                            Check.Near(weapon.TravelDistance * 1.12, shot.Range);
+                            Check.Near(basis.Radius * 1.10, shot.Radius);
+                            break;
+                        case "daniel_lion":
+                            Check.True(restored.DanielLion!.Lions.Count > 0);
+                            Check.Near(basis.Speed * 1.12, stats.AttackSpeed);
+                            Check.Near(basis.Radius * 1.10, stats.AttackRadius);
+                            break;
+                        case "elijah_chariot":
+                            var path = restored.ElijahChariot!.Paths.First();
+                            Check.Near(basis.Width * 1.10, path.Width);
+                            Check.Near(.07, path.MoveAt - path.WarningAt);
+                            break;
+                    }
+                }
+            });
+        });
+
+        test("Starter orbit speed and jawbone angle change actual contact without affecting the baseline", () =>
+        {
+            WithStore(store =>
+            {
+                var profile = ExpandedProfile(store, "weapon.bible.a.01", "weapon.jawbone.a.01");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 100, 4) }),
+                });
+                foreach (var weapon in new[] { "bible", "jawbone" })
+                {
+                    var owned = SaveStore.PrepareNewChallenge(profile);
+                    var session = new AdamSession(owned, definition, weapon);
+                    session.Advance(15);
+                    var snapshot = new BattleWorld(session, Speeds, 7).Capture();
+                    var target = snapshot.Enemies[0];
+                    var angle = weapon == "bible"
+                        ? (snapshot.Time + BattleWorld.FixedStep) * 2.5 * 1.12 : 65 * Math.PI / 180;
+                    var radius = weapon == "bible" ? snapshot.Tuning.BibleOrbitRadius : 1.1;
+                    target.X = (float)(Math.Cos(angle) * radius);
+                    target.Y = (float)(Math.Sin(angle) * radius);
+                    foreach (var outside in snapshot.Enemies.Skip(1))
+                    {
+                        outside.X = 100;
+                        outside.Y = 100;
+                    }
+                    var beforeAcquisition = SaveStore.Copy(owned);
+                    beforeAcquisition.Run!.PermanentSnapshot.Remove($"weapon.{weapon}.a.01");
+                    var baseline = AdamSession.Resume(beforeAcquisition, definition);
+                    var baselineWorld = BattleWorld.Restore(baseline, Speeds, snapshot);
+                    var upgradedWorld = BattleWorld.Restore(session, Speeds, snapshot);
+                    baselineWorld.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    upgradedWorld.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                    Check.Near(100, baseline.Targets[target.Id].Health);
+                    Check.True(session.Targets[target.Id].Health < 100);
+                }
+            });
+        });
+
+        test("Purchased staff lane choices survive an evolved World6 checkpoint", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.moses_staff.e.03");
+                const string catalog = "content/genesis/catalog.json";
+                var first = CatalogReader.Round(catalog, 1);
+                var session = new AdamSession(state, first, "sling");
+                session.Advance(180);
+                session = session.StartNextRound(CatalogReader.Round(catalog, 2));
+                session.Advance(180);
+                var third = CatalogReader.Round(catalog, 3);
+                session = session.StartNextRound(third);
+                for (var rank = 0; rank < 8; rank++) Check.True(session.Inventory.TryChoose("moses_staff", false));
+                var staff = ExpandedWeaponRules.Get("moses_staff");
+                Check.True(session.Inventory.TryChoose(staff.PassiveId, true));
+                Check.True(session.Inventory.TryEvolve(staff.EvolutionId));
+                var arena = new BattleWorld(session, CatalogReader.MonsterSpeeds(catalog), 7);
+                arena.Advance(.25, Vector2.Zero);
+                state.Run!.World = arena.Capture();
+                store.Commit(state, state.Revision, "evolved-staff-lane");
+                var saved = store.Load()!;
+                var wave = saved.Run!.World!.MosesStaff!.Waves.First();
+                Check.True(wave.WidenedLane && wave.EmpoweredLaneEdge && wave.ExtendedLane);
+                Check.Near(1.38, wave.LaneWidth);
+                Check.Near(2.4, wave.LaneDuration);
+            });
+        });
+
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>
         {
             WithStore(store =>
@@ -375,8 +509,12 @@ internal static class PermanentSkillCombatTests
         var state = SaveStore.PrepareNewChallenge(GameSnapshot.New());
         state.Profile.HighestSettledRound = 180;
         state.Profile.Gold = 100_000;
-        if (desired.Any(id => id.StartsWith("weapon.lightning.", StringComparison.Ordinal)))
-            state.Profile.UnlockedWeapons.Add("lightning");
+        foreach (var expanded in ExpandedWeaponRules.All)
+            if (desired.Any(id => id.StartsWith($"weapon.{expanded.WeaponId}.", StringComparison.Ordinal)))
+                state.Profile.UnlockedWeapons.Add(expanded.WeaponId);
+        foreach (var id in desired)
+            if (PermanentSkillCatalog.Current.Find(id).RequiredEvolution is string evolution &&
+                !state.Profile.EvolvedWeapons!.Contains(evolution)) state.Profile.EvolvedWeapons.Add(evolution);
         store.Commit(state, state.Revision, "seed-settled-profile");
         state = store.Load()!;
         foreach (var id in desired) BuyPrerequisites(id, 1);

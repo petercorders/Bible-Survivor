@@ -11,6 +11,29 @@ internal static class ExpandedWildernessVoiceTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Trained voice cone and close knockback use the frozen primary cast after restore", () =>
+        {
+            var state = new ExpandedWildernessVoiceState();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(1.2f, 0),
+                [2] = new Vector2(1.201f, 0),
+                [3] = new Vector2(.63f, .75f),
+                [4] = new Vector2(.57f, .80f),
+            };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            var cycle = ExpandedWeaponRules.Get("wilderness_voice").AtLevel(1).Cycle;
+            ExpandedWildernessVoice.Step(state, 0, Vector2.Zero, Vector2.UnitX, 1, false, 15, cycle, 3, .672, 53,
+                () => targets, hits.Add, knockbackBonus: .25, closeKnockbackBonus: .25);
+            var restored = state.Copy();
+            restored.Validate(.1, false);
+            ExpandedWildernessVoice.Step(restored, .15, Vector2.Zero, Vector2.UnitX, 1, false, 15, cycle, 3, .6, 45,
+                () => targets, hits.Add);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
+            Check.Near(.60, hits[0].Knockback);
+            Check.Near(.35, hits[1].Knockback);
+            Check.Near(.672, restored.Active.Single().Duration);
+        });
         test("Wilderness Voice starts without targets and samples current cone center and facing until the exclusive end", () =>
         {
             var state = new ExpandedWildernessVoiceState();
@@ -134,13 +157,39 @@ internal static class ExpandedWildernessVoiceTests
             Check.Equal(3, hits.Single().TargetId);
             state.Validate(.25, true);
         });
+
+        test("Trained wilderness voice freezes its advanced first pulse across restore", () =>
+        {
+            var state = new ExpandedWildernessVoiceState();
+            var targets = new Dictionary<int, Vector2> { [1] = Vector2.UnitX };
+            var hits = new List<ExpandedWildernessVoiceHit>();
+            Step(state, 0, targets, hits, delayAdvance: .08);
+            Check.Near(.07, state.Active.Single().FirstDelay ?? .15);
+            Step(state, .0699, targets, hits);
+            Check.Equal(0, hits.Count);
+            using var save = new MemoryStream();
+            var serializer = new DataContractJsonSerializer(typeof(ExpandedWildernessVoiceState));
+            serializer.WriteObject(save, state);
+            save.Position = 0;
+            var restored = (ExpandedWildernessVoiceState)serializer.ReadObject(save)!;
+            restored.Validate(.0699, false);
+            Step(restored, .07, targets, hits);
+            Check.Equal(1, hits.Count);
+            Step(restored, .0701, targets, hits);
+            Check.Equal(1, hits.Count);
+            Step(restored, .57, targets, hits);
+            Check.Equal(2, hits.Count);
+            var capped = new ExpandedWildernessVoiceState();
+            Step(capped, 0, targets, hits, delayAdvance: 1);
+            Check.Near(.05, capped.Active.Single().FirstDelay ?? .15);
+        });
     }
 
     private static void Step(ExpandedWildernessVoiceState state, double time, Dictionary<int, Vector2> enemies,
         List<ExpandedWildernessVoiceHit> hits, bool evolved = false, Vector2 center = default,
-        Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2)
+        Vector2? facing = null, double cycle = 2.5, double reach = 3, double duration = 2, double delayAdvance = 0)
     {
         ExpandedWildernessVoice.Step(state, time, center, facing ?? Vector2.UnitX, 8, evolved,
-            damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add);
+            damage: 15, cycle, reach, duration, halfAngle: 45, () => enemies, hits.Add, delayAdvance);
     }
 }
