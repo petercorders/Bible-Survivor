@@ -1,0 +1,41 @@
+{
+  "version": 19,
+  "versionId": "1795448087-8d87",
+  "sourceSha256": "fc6a2b55796b82865930c7f53fcc348355b54a10610e4c6f530bdbef05767756",
+  "shadowAlpha": 0.45,
+  "assets": [
+    {
+      "id": "genesis-env-eden-seal",
+      "width": 16,
+      "height": 16,
+      "x": 0,
+      "y": 0,
+      "pivotX": 8,
+      "pivotY": 1,
+      "propSha256": "2b8bf32e62bbeb3a4ae9ec5d9583d82f853606efebabf7079a56ab50e6ae3105",
+      "shadowSha256": "98392119045d3fb382f4fecf7a98a6e39ef0b8b687e33a5609ddcbe226b8f754"
+    },
+    {
+      "id": "genesis-env-ark-frame",
+      "width": 68,
+      "height": 38,
+      "x": -34,
+      "y": -20,
+      "pivotX": 34,
+      "pivotY": 4,
+      "propSha256": "df303a747770075f81b19c945876a3c00c3e9c1e4db5bc4c85bacd6abc1a414e",
+      "shadowSha256": "b435ee9de91d58e2d86a700bfd4950db81258990d11d87b0e4fea65db4b5e529"
+    },
+    {
+      "id": "genesis-env-hall-cup",
+      "width": 9,
+      "height": 11,
+      "x": 9,
+      "y": -6,
+      "pivotX": 4.5,
+      "pivotY": 0,
+      "propSha256": "8ed50399c7e26720e4b986a4d85b92f52266c1a11c968ca93e67472ad8bc8475",
+      "shadowSha256": "7a91b9f239d942d82ab7581f35c3f8cd5654e98a47e04cd08b8df63955a69758"
+    }
+  ]
+}

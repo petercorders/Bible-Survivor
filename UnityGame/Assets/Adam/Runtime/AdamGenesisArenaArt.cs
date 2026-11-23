@@ -56,7 +56,8 @@ namespace BibleSurvivor.Unity
             if (east)
             {
                 ExistingOrFill(art, stamp, Rock, -20, 7, 14, 9, Ochre);
-                AdamCinematicArt.DrawEdenSeal(stamp.Rect(0, 0, 16, 16).position, stamp.Scale);
+                if (!stamp.DrawProp(AdamGenesisPropArt.Seal))
+                    AdamCinematicArt.DrawEdenSeal(stamp.Rect(0, 0, 16, 16).position, stamp.Scale);
                 return;
             }
             // Same blue bend as the creation scene, confined to the western bank.
@@ -96,6 +97,7 @@ namespace BibleSurvivor.Unity
                 Planks(stamp, -17, -6);
                 return;
             }
+            if (stamp.DrawProp(AdamGenesisPropArt.Ark)) return;
             stamp.Fill(-34, 9, 68, 5, Clay);
             stamp.Fill(-29, 14, 58, 4, Ochre);
             for (var rib = 0; rib < 5; rib++)
@@ -231,6 +233,7 @@ namespace BibleSurvivor.Unity
             // A small shelf with the ending's scroll on the east and the story's silver cup next to it.
             stamp.Fill(4, 3, 30, 8, Ink);
             ExistingOrFill(art, stamp, Scroll, 19, -9, 16, 16, Ochre);
+            if (stamp.DrawProp(AdamGenesisPropArt.Cup)) return;
             stamp.Fill(9, -6, 9, 4, Silver);
             stamp.Fill(11, -2, 5, 2, Silver);
             stamp.Fill(13, 0, 1, 4, Silver);
@@ -265,6 +268,7 @@ namespace BibleSurvivor.Unity
             readonly Vector2 origin;
             public readonly int Scale;
             public Stamp(Vector2 origin, int scale) { this.origin = origin; Scale = scale; }
+            public bool DrawProp(string id) => AdamGenesisPropArt.TryDraw(id, origin, Scale);
             public Rect Rect(int x, int y, int width, int height) =>
                 new Rect(origin.x + x * Scale, origin.y + y * Scale, width * Scale, height * Scale);
             public void Fill(int x, int y, int width, int height, Color color) =>
