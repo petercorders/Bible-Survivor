@@ -18,6 +18,9 @@ internal static partial class PermanentSkillCombatTests
         RegisterArmorEvidence(test);
         RegisterOriginalPowerEvidence(test);
         RegisterActionEvidence(test);
+        RegisterExperienceEvidence(test);
+        RegisterRecoveryEvidence(test);
+        RegisterCriticalEvidence(test);
         var starters = new[] { "bible", "jawbone", "sling" };
         foreach (var weapon in starters.Concat(ExpandedWeaponRules.All.Select(profile => profile.WeaponId)))
         foreach (var upgrade in new[] { "01", "02", "03" })
