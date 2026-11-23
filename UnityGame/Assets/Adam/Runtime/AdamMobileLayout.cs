@@ -47,6 +47,12 @@ namespace BibleSurvivor.Unity
             var valueWidth = Mathf.Clamp(Mathf.Floor(width * .26f), 112, 180);
             return new Rect(width - Edge - valueWidth, 92, valueWidth, 22);
         }
+        public static Rect HudFooter(float width, float height) => new Rect(0, height - 110, width, 110);
+        public static Rect HudFooterControl(float width, float height, int slot)
+        {
+            var column = HudColumn(width);
+            return new Rect(Edge + slot * (column + ActionGap), height - 103, Mathf.Min(112, column), 24);
+        }
 
         public static Rect Panel(float width, float height) => CenteredPanel(width, height, 620, 390);
         public static Rect ChoicePanel(float width, float height) => CenteredPanel(width, height, 760, 480);

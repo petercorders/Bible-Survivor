@@ -9,6 +9,7 @@ namespace BibleSurvivor.Unity
     public sealed class AdamImpactParticles : IDisposable
     {
         public const int EmitterCapacity=16, ParticlesPerEmitter=16, Capacity=256, OverlayLayer=30;
+        public const int ChipsPerFrame = 18;
         readonly GameObject root;
         readonly Camera camera;
         readonly Material material;
@@ -67,12 +68,20 @@ namespace BibleSurvivor.Unity
             if(!host.CanPlay){Consume(view);return;} // Freeze existing particles during pause/choice/background, discard late batches.
             ParticleCount=0;
             foreach(var slot in slots){slot.Simulate(Mathf.Clamp(delta,0,.1f),false,false,false);slot.Pause(false);ParticleCount+=slot.particleCount;}
-            var chips=0;
+            var chips = EmitImpacts(view, killed: true, chips: 0);
+            EmitImpacts(view, killed: false, chips: chips);
+            Consume(view);
+        }
+
+        // Reserve the shared frame budget for kills before ordinary hits can consume it.
+        int EmitImpacts(AdamArtWorld view, bool killed, int chips)
+        {
             foreach(var impact in view.FrameImpacts)
             {
-                if(impact.Sequence<=cursor)continue;cursor=impact.Sequence;
+                if(impact.Sequence<=cursor || impact.Killed!=killed)continue;
                 if(impact.TargetId==0 || (impact.Cause!="bible" && impact.Cause!="jawbone" && impact.Cause!="sling"))continue;
-                var count=impact.Cause=="jawbone"?ChipCount(impact.Killed):4;if(chips+count>18)continue;
+                var count=impact.Cause=="jawbone"?ChipCount(impact.Killed):4;
+                if(chips+count>ChipsPerFrame)continue;
                 var priority=impact.Killed?2:1;var found=-1;
                 for(var i=0;i<slots.Length;i++){var candidate=(next+i)%slots.Length;if(slots[candidate].particleCount==0){found=candidate;break;}}
                 if(found<0 && priority==2)for(var i=0;i<slots.Length;i++){var candidate=(next+i)%slots.Length;if(priorities[candidate]<priority){found=candidate;break;}}
@@ -93,6 +102,7 @@ namespace BibleSurvivor.Unity
                 renderers[found].bounds=new Bounds(new Vector3(impact.Position.X,impact.Position.Y,0),new Vector3(2,2,2));
                 ps.Pause(false);ParticleCount+=count;EmittedImpacts++;
             }
+            return chips;
         }
         public static int ChipCount(bool killed)=>killed?10:6;
         public static Vector2 ImpactAxis(Vector2 impact,Vector2 player)=>(impact-player).sqrMagnitude>1e-8f?(impact-player).normalized:Vector2.right;

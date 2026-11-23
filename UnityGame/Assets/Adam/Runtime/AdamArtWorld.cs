@@ -170,7 +170,7 @@ namespace BibleSurvivor.Unity
                     if(differentiated)PolishContacts.Observe(impact,next,FeedbackEnabled);
                     else if(FeedbackEnabled&&ContactStars<3)Emit("fx_hit-spark_hit_16",position);
                     if(FeedbackEnabled||PolishEnabled)reactions[impact.TargetId]=Clock+.09;
-                    if(impact.Killed){reportedKills.Add(impact.TargetId);if(FeedbackEnabled)Emit("fx_enemy-death_burst_32",position);}
+                    if(impact.Killed){reportedKills.Add(impact.TargetId);if(FeedbackEnabled)effectPool.Emit("fx_enemy-death_burst_32",position,Clock,1);}
                 }
                 previousPositions.Clear();
                 foreach(var enemy in next.Enemies) previousPositions[enemy.Id]=new Vector2(enemy.X,enemy.Y);

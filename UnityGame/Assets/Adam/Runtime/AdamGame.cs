@@ -717,10 +717,17 @@ namespace BibleSurvivor.Unity
             var required=ExperienceRules.Required(session.Growth.Level);
             AdamHud.Bar(art,xp,"ui_bar-xp_tile_1x4",AdamHud.Fraction(session.Growth.Experience,required));
             GUI.Label(mobile?AdamMobileLayout.HudExperienceValue(width):AdamHud.ExperienceValue(width),$"{session.Growth.Experience:0.#} / {required}",HudText(16,AdamHud.Muted,false,TextAnchor.MiddleRight));
-            var footer=AdamHud.Footer(width,height);AdamHud.Fill(footer,backing);AdamHud.Rule(art,new Rect(0,footer.y,width,2),true);
+            var footer=mobile?AdamMobileLayout.HudFooter(width,height):AdamHud.Footer(width,height);
+            AdamHud.Fill(footer,backing);AdamHud.Rule(art,new Rect(0,footer.y,width,2),true);
             DrawInventory(height,session,body);
-            var hintX=width-(mobile?146:136);var y=height-68;
-            Hint(hintX,y,mobile?"드래그":"WASD","이동",mobile?50:42);
+            if(mobile)
+            {
+                GUI.Label(AdamMobileLayout.HudFooterControl(width,height,0),"드래그 이동",body);
+                if(!ArtWorld.FeedbackEnabled)StateChip(AdamMobileLayout.HudFooterControl(width,height,1),"효과 낮음");
+                if(ImpactAudio?.Muted==true)StateChip(AdamMobileLayout.HudFooterControl(width,height,2),"소리 끔");
+                return;
+            }
+            Hint(width-136,height-68,"WASD","이동",42);
             var chipX=width-136;
             if(!ArtWorld.FeedbackEnabled){StateChip(new Rect(chipX,height-44,104,24),"효과 낮음");chipX-=112;}
             if(ImpactAudio?.Muted==true)StateChip(new Rect(chipX,height-44,104,24),"소리 끔");
@@ -825,15 +832,16 @@ namespace BibleSurvivor.Unity
         {
             var card=ReferenceEquals(style,choiceButton);
             var name="adam:"+text.Split('\n')[0];GUI.SetNextControlName(name);
-            var focused=focusOverride??(GUI.GetNameOfFocusedControl()==name);var hover=rect.Contains(Event.current.mousePosition);
+            var display=MotionRect(rect);
+            var hitTarget=pointerOnly?display:rect;
+            var focused=focusOverride??(GUI.GetNameOfFocusedControl()==name);var hover=hitTarget.Contains(Event.current.mousePosition);
             var pressed=hover&&GUIUtility.hotControl!=0;
             var state=AdamHud.SurfaceState(GUI.enabled,focused,hover,pressed);
-            var display=MotionRect(rect);
             AdamHud.Panel(art,display,card?"ui_card_9slice_24":"ui_button_9slice_16",state);
             var clear=card?clearChoice:clearButton;
-            // Keep IMGUI focus, capture, disabled behaviour and hit target at the reviewed position.
+            // Book actions keep their hit target on the animated button.
             var canClick=!pointerOnly||Event.current.isMouse;
-            var clicked=GUI.Button(rect,GUIContent.none,clear)&&canClick;
+            var clicked=GUI.Button(hitTarget,GUIContent.none,clear)&&canClick;
             var content=display;if(pressed)content.y+=2;
             var color=GUI.enabled?AdamHud.Primary:AdamHud.Muted;
             if(card)

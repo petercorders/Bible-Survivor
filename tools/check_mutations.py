@@ -15,7 +15,7 @@ CASES = [
     ('stone_cap_regressed', 'Growth.cs', 'id == "stones" ? 2 : 5', 'id == "stones" ? 5 : 5'),
     ('spawn_backlog_early_clear', 'Waves.cs', '(cursor == schedule.Count && active.Count == 0)', '((expired || cursor == schedule.Count) && active.Count == 0)'),
     ('enemy_nan_restored', 'Waves.cs', 'double.IsNaN(enemy.Health) || double.IsInfinity(enemy.Health) || ', ''),
-    ('weapon_kill_credit_lost', 'AdamSession.cs', 'if(damage>=enemy.Health) Kill(id); else Arena!.Hit(id,damage);', 'Arena!.Hit(id,damage);'),
+    ('weapon_kill_credit_lost', 'AdamSession.cs', 'if(damage>=enemy.Health) Kill(id, original); else Arena!.Hit(id,damage);', 'Arena!.Hit(id,damage);'),
     ('completion_resume_refused', 'AdamSession.cs', 'if (definition.Number < 1 || definition.Number > CampaignContent.LastInstalledRound ||', 'if (run.Stage != "normal" || definition.Number < 1 || definition.Number > CampaignContent.LastInstalledRound ||'),
     ('stale_revision_overwrite', 'SaveState.cs', 'if (revision != expectedRevision)', 'if (false)'),
     ('projectile_double_hit', 'BattleWorld.cs', 'if(projectile.HitIds.Contains(enemy.Key))continue;', ''),

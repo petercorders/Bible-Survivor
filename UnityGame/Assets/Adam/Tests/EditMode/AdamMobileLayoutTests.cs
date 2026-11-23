@@ -61,6 +61,30 @@ public sealed class AdamMobileLayoutTests
     [TestCase(390, 812)]
     [TestCase(603, 1167)]
     [TestCase(1125, 569)]
+    public void FooterControlsDoNotCoverLegacyOrExpandedEquipment(float width, float height)
+    {
+        var footer = AdamMobileLayout.HudFooter(width, height);
+        var controls = Enumerable.Range(0, 3).Select(slot => AdamMobileLayout.HudFooterControl(width, height, slot)).ToArray();
+        for (var i = 0; i < controls.Length; i++)
+        {
+            Assert.IsTrue(footer.Contains(controls[i].min));
+            Assert.IsTrue(footer.Contains(controls[i].max));
+            if (i > 0) Assert.Greater(controls[i].xMin, controls[i - 1].xMax);
+            foreach (var version in new[] { 1, 2 })
+            {
+                var weapons = version == 2 ? 6 : 3;
+                var passives = version == 2 ? 6 : 10;
+                for (var slot = 0; slot < weapons; slot++)
+                    Assert.IsFalse(controls[i].Overlaps(AdamHud.InventorySlot(height, slot, true, version)));
+                for (var slot = 0; slot < passives; slot++)
+                    Assert.IsFalse(controls[i].Overlaps(AdamHud.InventorySlot(height, slot, false, version)));
+            }
+        }
+    }
+
+    [TestCase(390, 812)]
+    [TestCase(603, 1167)]
+    [TestCase(1125, 569)]
     [TestCase(800, 390)]
     public void ChoiceCardsAndFourActionRowsStayInsideTheirCenteredPanel(float width, float height)
     {

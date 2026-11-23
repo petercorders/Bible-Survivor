@@ -46,25 +46,27 @@ public sealed class AdamArtPlayTests
         var dir=Path.Combine(Path.GetTempPath(),"adam-art-events-"+Guid.NewGuid().ToString("N"));
         try
         {
-            var host=new AdamHost(AdamCatalog.Load(),new SaveStore(Path.Combine(dir,"save.json")));host.Start("sling");
-            var view=new AdamArtWorld();view.Update(host,0);var slots=view.Effects.ToArray();var killed=0;var sawDeath=false;
-            for(var i=0;i<1800 && host.Session.IsActive;i++)
-            {
-                if(host.Session.PendingChoices.Count>0) host.Choose(host.Session.PendingChoices[0]);
-                host.SetMovement(new Vector2(1,1));host.Tick(.1);view.Update(host,.1f);
-                var id=host.Session.Wave.Active.Keys.FirstOrDefault();
-                if(id!=0)
-                {
-                    host.Session.Hit(id,1);host.Tick(1d/60);view.Update(host,0);
-                    host.Session.Kill(id);host.Tick(1d/60);view.Update(host,0);killed++;
-                    sawDeath |= view.Effects.Any(e=>e.Active&&e.Clip=="fx_enemy-death_burst_32");
-                    Assert.LessOrEqual(view.ActiveEffects,AdamArtWorld.EffectCapacity);
-                }
-                if(killed>AdamArtWorld.EffectCapacity) break;
-            }
-            Assert.IsTrue(sawDeath);Assert.Greater(killed,0);
-            CollectionAssert.AreEqual(slots,view.Effects); // Slots are reused rather than instantiating scene objects.
-            host.Reload();view.Update(host,0);Assert.AreEqual(0,view.ActiveEffects);
+            var host=AdamParticlePlayTests.Fixture(Path.Combine(dir,"save.json"),2,true);
+            using var view=new AdamArtWorld();
+            view.Update(host,0);
+            var slots=view.Effects.ToArray();
+
+            host.Tick(BattleWorld.FixedStep);view.Update(host,0);
+            var hits=view.FrameImpacts.Where(impact=>impact.Cause=="sling").ToArray();
+            Assert.AreEqual(2,hits.Length);
+            Assert.IsFalse(hits[0].Killed);
+            Assert.IsTrue(hits[1].Killed);
+            Assert.IsTrue(view.Effects.Any(effect=>effect.Active&&effect.Clip=="fx_enemy-death_burst_32"));
+            Assert.LessOrEqual(view.ActiveEffects,AdamArtWorld.EffectCapacity);
+            CollectionAssert.AreEqual(slots,view.Effects);
+            view.Update(host,0);
+            Assert.IsEmpty(view.FrameImpacts,"a presentation update must not replay the world's impacts");
+            Assert.IsTrue(host.Reload(),host.Error);
+            view.Update(host,0);Assert.Zero(view.ActiveEffects);
+            host.SetPaused(false);
+            host.Tick(BattleWorld.FixedStep);view.Update(host,0);
+            Assert.IsTrue(view.Effects.Any(effect=>effect.Active&&effect.Clip=="fx_enemy-death_burst_32"));
+            CollectionAssert.AreEqual(slots,view.Effects);
         }
         finally {if(Directory.Exists(dir))Directory.Delete(dir,true);}
     }

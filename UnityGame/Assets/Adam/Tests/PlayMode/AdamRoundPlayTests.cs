@@ -128,9 +128,13 @@ public sealed class AdamRoundPlayTests
         }
         yield return null;
     }
-    AdamHost CompletedGenesisForEntry(string suffix)
+    AdamHost CompletedGenesisForEntry(string suffix, bool expanded=false)
     {
-        var catalog=AdamCatalog.Load();var state=GameSnapshot.New();var session=new AdamSession(state,catalog.ForRound(1),"sling");
+        var catalog=AdamCatalog.Load();
+        var state=GameSnapshot.New();
+        state.OldTestamentClear=new OldTestamentClear{RunId="prior-clear",CompletedAtUnixMilliseconds=1};
+        if(expanded)state=SaveStore.PrepareNewChallenge(state);
+        var session=new AdamSession(state,catalog.ForRound(1),"sling");
         for(var round=1;round<=9;round++)
         {
             session.Advance(180);
@@ -165,22 +169,34 @@ public sealed class AdamRoundPlayTests
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
 
-    [UnityTest] public IEnumerator CompletedBookRejectsNumberKeysAndCancelsWithoutChangingTheSave()
+    [UnityTest] public IEnumerator CompletedLegacyBookRejectsNumberKeysAndCancels() => RejectNumbersAndContinue(false);
+    [UnityTest] public IEnumerator CompletedExpandedBookRejectsNumberKeysAndCancels() => RejectNumbersAndContinue(true);
+
+    IEnumerator RejectNumbersAndContinue(bool expanded)
     {
-        var host=CompletedGenesisForEntry("cancel-new");
-        var old=host.State.Run.RunId;var path=Path.Combine(directory,"cancel-new.json");
+        var host=CompletedGenesisForEntry("cancel-new",expanded);
+        var old=host.State.Run.RunId;
+        var gold=host.State.Profile.Gold;
+        var clear=Json(host.State.OldTestamentClear);
+        var weapons=Json(host.State.Run.Weapons);
+        var passives=Json(host.State.Run.Passives);
+        var path=Path.Combine(directory,"cancel-new.json");
         var bytes=File.ReadAllBytes(path);
         game.Initialize(host);game.SetLifecycle(true,false);
         yield return null;
 
-        Keys(Key.Digit1);yield return null;
-        Assert.AreEqual(old,host.State.Run.RunId);
-        Keys();yield return null;
+        foreach(var key in new[]{Key.Digit1,Key.Digit2,Key.Digit3})
+        {
+            Keys(key);yield return null;
+            Assert.AreEqual(9,host.Session.RoundNumber);
+            CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+        }
         Keys(Key.DownArrow);yield return null;
         Keys(Key.Enter);yield return null;
         Assert.IsTrue(game.NewChallengeOpen);
+        Keys(Key.K);yield return null;
+        Assert.IsFalse(host.PermanentSkillsOpen,"the shop cannot interrupt an open confirmation");
         Keys(Key.Digit2);yield return null;
-        Assert.AreEqual(old,host.State.Run.RunId);
         Keys(Key.Escape);yield return null;
         Assert.IsFalse(game.NewChallengeOpen);
         CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
@@ -188,6 +204,68 @@ public sealed class AdamRoundPlayTests
         Keys(Key.Enter);yield return null;
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(old,host.State.Run.RunId);
+        Assert.AreEqual(gold,host.State.Profile.Gold);
+        Assert.AreEqual(clear,Json(host.State.OldTestamentClear));
+        Assert.AreEqual(weapons,Json(host.State.Run.Weapons));
+        Assert.AreEqual(passives,Json(host.State.Run.Passives));
+    }
+
+    [UnityTest] public IEnumerator CompletedLegacyBookPointerRequiresExplicitConfirmation() => PointerConfirm(false);
+    [UnityTest] public IEnumerator CompletedExpandedBookPointerRequiresExplicitConfirmation() => PointerConfirm(true);
+
+    IEnumerator PointerConfirm(bool expanded)
+    {
+        const int width=660,height=440;
+        var host=CompletedGenesisForEntry("pointer-new",expanded);
+        var path=Path.Combine(directory,"pointer-new.json");
+        var bytes=File.ReadAllBytes(path);
+        var old=host.State.Run.RunId;
+        var gold=host.State.Profile.Gold;
+        var clear=Json(host.State.OldTestamentClear);
+        game.enabled=false;
+        game.Initialize(host);
+        var window=ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game=game;
+            window.minSize=window.maxSize=new Vector2(width,height);
+            window.position=new Rect(40,40,width,height);
+            window.ShowUtility();window.Repaint();yield return null;
+            game.SetLifecycle(true,false);
+
+            Click(window,new Vector2(width/2,396));
+            CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+            Click(window,new Vector2(width/2,232));
+            Assert.IsTrue(game.NewChallengeOpen);
+            CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+            yield return null;
+            Click(window,new Vector2(width/2,178));
+            Assert.IsFalse(game.NewChallengeOpen);
+            CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+            yield return null;
+            Click(window,new Vector2(width/2,232));
+            Assert.IsTrue(game.NewChallengeOpen);
+            yield return null;
+            // With presentation frozen at the first frame, this gap is above the first weapon.
+            Click(window,new Vector2(width/2,217));
+            Assert.IsTrue(game.NewChallengeOpen);
+            CollectionAssert.AreEqual(bytes,File.ReadAllBytes(path));
+            Click(window,new Vector2(width/2,286));
+            Assert.IsFalse(game.NewChallengeOpen);
+            Assert.AreEqual(1,host.Session.RoundNumber);
+            Assert.AreNotEqual(old,host.State.Run.RunId);
+            Assert.AreEqual(2,host.Session.CombatRulesVersion);
+            CollectionAssert.AreEquivalent(new[]{AdamGame.Weapons[1]},host.Session.Inventory.Weapons.Keys);
+            Assert.AreEqual(gold,host.State.Profile.Gold);
+            Assert.AreEqual(clear,Json(host.State.OldTestamentClear));
+        }
+        finally{window.Close();}
+    }
+
+    static void Click(PauseModalPointerWindow window,Vector2 point)
+    {
+        window.SendEvent(new Event{type=EventType.MouseDown,mousePosition=point,button=0,clickCount=1});
+        window.SendEvent(new Event{type=EventType.MouseUp,mousePosition=point,button=0,clickCount=1});
     }
 
     [UnityTest] public IEnumerator CompletedBookNewChallengeRequiresSeparateConfirmationAndDoesNotRepeat()
