@@ -22,11 +22,14 @@ namespace BibleSurvivor.Core
         public bool EmpowerLaneEdge { get; }
         public bool ExtendLane { get; }
         public bool WidenSupportShape { get; }
+        public double ResidualDurationBonus { get; }
 
         public ExpandedMosesStaffRankOptions(bool widenWave = false, bool widenFan = false, bool prioritizeElite = false,
             bool increaseKnockback = false, bool widenLane = false, bool empowerLaneEdge = false, bool extendLane = false,
-            bool widenSupportShape = false)
+            bool widenSupportShape = false, double residualDurationBonus = 0)
         {
+            if (!ExpandedWeaponRules.ValidResidualDurationBonus(residualDurationBonus))
+                throw new ArgumentOutOfRangeException(nameof(residualDurationBonus));
             WidenWave = widenWave;
             WidenFan = widenFan;
             PrioritizeElite = prioritizeElite;
@@ -35,6 +38,7 @@ namespace BibleSurvivor.Core
             EmpowerLaneEdge = empowerLaneEdge;
             ExtendLane = extendLane;
             WidenSupportShape = widenSupportShape;
+            ResidualDurationBonus = residualDurationBonus;
         }
 
         public static ExpandedMosesStaffRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -44,7 +48,8 @@ namespace BibleSurvivor.Core
             return new ExpandedMosesStaffRankOptions(
                 Has("weapon.moses_staff.a.01"), Has("weapon.moses_staff.a.02"), Has("weapon.moses_staff.a.03"),
                 Has("weapon.moses_staff.b.01"), Has("weapon.moses_staff.e.01"), Has("weapon.moses_staff.e.02"),
-                Has("weapon.moses_staff.e.03"), Has("common.area.01"));
+                Has("weapon.moses_staff.e.03"), Has("common.area.01"),
+                ExpandedWeaponRules.ResidualDurationBonus(ranks, true));
         }
     }
 
@@ -99,6 +104,7 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public bool EmpoweredLaneEdge { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedLane { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double ResidualDurationBonus { get; set; }
         [DataMember(IsRequired = true)] public List<int> HitIds { get; set; } = new List<int>();
 
         public Vector2 Origin => new Vector2(OriginX, OriginY);
@@ -109,7 +115,8 @@ namespace BibleSurvivor.Core
         public double LaneLength => HasLane ? Math.Min(Distance, ExpandedMosesStaff.MaximumLaneLength) : 0;
         public double LaneWidth => ExpandedMosesStaff.BaseLaneWidth *
             (1 + (WidenedLane ? .15 : 0) + (WidenedSupportShape ? .04 : 0));
-        public double LaneDuration => ExpandedMosesStaff.BaseLaneDuration * (ExtendedLane ? 1.20 : 1);
+        public double LaneDuration => ExpandedMosesStaff.BaseLaneDuration *
+            (1 + (ExtendedLane ? .20 : 0) + ResidualDurationBonus);
         internal int LaneTickCount => (int)Math.Ceiling(LaneDuration / ExpandedMosesStaff.LaneInterval);
         internal int ExpiredLane => LaneTickCount + 1;
         internal double Knockback => Math.Min(1, ExpandedMosesStaff.Profile.Knockback + (IncreasedKnockback ? .25 : 0));
@@ -190,12 +197,13 @@ namespace BibleSurvivor.Core
                 if (!wave.MakesLane)
                 {
                     if (wave.LaneStartedAt.HasValue || wave.LaneTicks != 0 || wave.WidenedLane ||
-                        wave.EmpoweredLaneEdge || wave.ExtendedLane || wave.WidenedSupportShape)
+                        wave.EmpoweredLaneEdge || wave.ExtendedLane || wave.WidenedSupportShape || wave.ResidualDurationBonus != 0)
                         throw new ArgumentException("Unexpected expanded staff lane");
                 }
                 else
                 {
-                    if (!Evolved || wave.LaneTicks < 0 || wave.LaneTicks > wave.ExpiredLane ||
+                    if (!Evolved || !ExpandedWeaponRules.ValidResidualDurationBonus(wave.ResidualDurationBonus) ||
+                        wave.LaneTicks < 0 || wave.LaneTicks > wave.ExpiredLane ||
                         (wave.HasLane && ++lanes > ExpandedMosesStaff.MaximumLanes))
                         throw new ArgumentException("Invalid expanded staff lane");
                     if (!wave.LaneStartedAt.HasValue)
@@ -248,7 +256,8 @@ namespace BibleSurvivor.Core
             Func<IReadOnlyDictionary<int, Vector2>> targets, IReadOnlyDictionary<int, Vector2> previousTargets,
             Func<ExpandedMosesStaffHit, bool> applyHit, Func<bool>? reserveOriginal = null, Func<bool>? reserveLane = null,
             ExpandedMosesStaffRankOptions rankOptions = default, Func<int, bool>? isElite = null,
-            Func<double>? nextCycleDuration = null)
+            Func<double>? nextCycleDuration = null, Action<int>? recordOriginalSuppression = null,
+            Action? recordSupportSuppression = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
@@ -289,11 +298,16 @@ namespace BibleSurvivor.Core
             var emitted = 0;
             for (var index = 0; index < amount; index++)
             {
-                if (moving + emitted >= MaximumMovingWaves || (reserveOriginal != null && !reserveOriginal())) break;
+                if (moving + emitted >= MaximumMovingWaves || reserveOriginal?.Invoke() == false)
+                {
+                    recordOriginalSuppression?.Invoke(amount - index);
+                    break;
+                }
                 var angle = (index - (amount - 1) * .5) * spread * Math.PI / 180;
                 var direction = Rotate(forward, angle);
                 var makesLane = evolved && lanes < MaximumLanes && (reserveLane?.Invoke() ?? true);
                 if (makesLane) lanes++;
+                else if (evolved) recordSupportSuppression?.Invoke();
                 state.Waves.Add(new ExpandedMosesStaffWaveState
                 {
                     Id = state.NextWaveId,
@@ -314,6 +328,7 @@ namespace BibleSurvivor.Core
                     EmpoweredLaneEdge = makesLane && rankOptions.EmpowerLaneEdge,
                     ExtendedLane = makesLane && rankOptions.ExtendLane,
                     WidenedSupportShape = makesLane && rankOptions.WidenSupportShape,
+                    ResidualDurationBonus = makesLane ? rankOptions.ResidualDurationBonus : 0,
                 });
                 state.NextWaveId = checked(state.NextWaveId + 1);
                 emitted++;

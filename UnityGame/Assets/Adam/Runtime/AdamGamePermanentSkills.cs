@@ -14,8 +14,10 @@ namespace BibleSurvivor.Unity
         private static readonly HashSet<string> PlayablePermanentSkills = new HashSet<string>(StringComparer.Ordinal)
         {
             "attack", "health", "armor", "move", "pickup", "growth", "cooldown", "regen",
-            "common.crit.01", "common.crit.02",
-            "common.duration.01", "common.shot.01", "common.shot.02", "common.shot.03",
+            "common.crit.01", "common.crit.02", "common.crit.03", "common.crit.04", "common.crit.05",
+            "common.crit.06", "common.crit.07", "common.crit.08", "common.crit.09", "common.crit.10",
+            "common.duration.01", "common.duration.02", "common.duration.03", "common.duration.04",
+            "common.shot.01", "common.shot.02", "common.shot.03",
             "common.tempo.02", "common.tempo.03", "common.tempo.04", "common.tempo.05", "common.tempo.06",
             "common.tempo.07", "common.tempo.08", "common.tempo.09", "common.tempo.10",
             "common.area.01", "common.area.02", "common.area.03", "common.area.04", "common.area.05", "common.area.06",
@@ -58,6 +60,7 @@ namespace BibleSurvivor.Unity
             "weapon.lightning.base.01", "weapon.lightning.base.02", "weapon.lightning.base.03",
             "weapon.lightning.base.04", "weapon.lightning.base.05",
             "weapon.lightning.a.01", "weapon.lightning.a.02", "weapon.lightning.e.01",
+            "weapon.lightning.a.03", "weapon.lightning.a.04",
             "weapon.moses_staff.base.01", "weapon.moses_staff.base.02", "weapon.moses_staff.base.03",
             "weapon.moses_staff.base.04", "weapon.moses_staff.base.05",
             "weapon.moses_staff.a.01", "weapon.moses_staff.a.02", "weapon.moses_staff.a.03", "weapon.moses_staff.b.01",
@@ -77,10 +80,14 @@ namespace BibleSurvivor.Unity
             "weapon.cross.base.04", "weapon.cross.base.05",
             "weapon.cross.a.01", "weapon.cross.a.02", "weapon.cross.b.01",
             "weapon.cross.c.01", "weapon.cross.c.02", "weapon.cross.e.01",
+            "weapon.cross.a.03", "weapon.cross.a.04", "weapon.cross.b.02", "weapon.cross.b.03",
+            "weapon.cross.b.04", "weapon.cross.c.03", "weapon.cross.c.04",
             "weapon.elijah_chariot.base.01", "weapon.elijah_chariot.base.02", "weapon.elijah_chariot.base.03",
             "weapon.elijah_chariot.base.04", "weapon.elijah_chariot.base.05",
             "weapon.elijah_chariot.a.01", "weapon.elijah_chariot.b.01", "weapon.elijah_chariot.d.01",
             "weapon.elijah_chariot.e.01", "weapon.elijah_chariot.e.02",
+            "weapon.elijah_chariot.a.02", "weapon.elijah_chariot.a.03",
+            "weapon.elijah_chariot.b.02", "weapon.elijah_chariot.b.03", "weapon.elijah_chariot.b.04",
         };
 
         public static bool OffersPermanentSkillPurchase(string id) => PlayablePermanentSkills.Contains(id);

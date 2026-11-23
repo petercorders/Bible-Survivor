@@ -139,6 +139,7 @@ namespace BibleSurvivor.Unity
                 {
                     var start = V(path.Origin);
                     var direction = V(path.Direction);
+                    if (snap.Time < path.WarningAt) continue;
                     if (snap.Time < path.MoveAt)
                         Band(projection, start, start + direction * (float)path.Range, (float)path.Width, Chariot, Stroke.Dash);
                     else if (snap.ElijahChariot.Evolved && !path.SuppressedTrail)
@@ -214,14 +215,17 @@ namespace BibleSurvivor.Unity
                     if (!shot.IsFlying) continue;
                     var center = new Vector2(shot.X, shot.Y);
                     var returning = shot.ReturnStartedAt.HasValue;
-                    var direction = returning ? (new Vector2(snap.PlayerX, snap.PlayerY) - center).normalized : new Vector2(shot.DirectionX, shot.DirectionY);
+                    var direction = returning && !shot.CurvedReturn
+                        ? (new Vector2(snap.PlayerX, snap.PlayerY) - center).normalized
+                        : new Vector2(shot.DirectionX, shot.DirectionY);
                     var outer = Mathf.Max(.10f, (float)shot.Radius);
                     var horizontal = Vector2.right * outer;
                     var vertical = Vector2.up * outer;
                     Line(projection, center - horizontal, center + horizontal, Cross);
                     Line(projection, center - vertical, center + vertical, Cross);
                     var hits = returning ? shot.ReturnHits : shot.OutboundHits;
-                    var streaks = hits >= shot.HitBudget(snap.Cross.Evolved) ? 1 : 3;
+                    var budget = returning ? shot.ReturnBudget(snap.Cross.Evolved) : shot.HitBudget(snap.Cross.Evolved);
+                    var streaks = hits >= budget ? 1 : 3;
                     for (var i = 0; i < streaks; i++)
                     {
                         var tail = center - direction * (outer + .06f) + Perpendicular(direction) * ((i - (streaks - 1) * .5f) * .11f);

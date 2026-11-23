@@ -105,6 +105,15 @@ namespace BibleSurvivor.Core
 
     public static class ExpandedWeaponRules
     {
+        internal const double MaximumResidualDurationBonus = .11;
+
+        internal static double ResidualDurationBonus(IReadOnlyDictionary<string, int> ranks, bool evolved) =>
+            (PermanentRules.Rank(ranks, "common.duration.02") > 0 ? .05 : 0) +
+            (evolved && PermanentRules.Rank(ranks, "common.duration.04") > 0 ? .06 : 0);
+
+        internal static bool ValidResidualDurationBonus(double amount) =>
+            BattleSnapshot.Finite(amount) && amount >= 0 && amount <= MaximumResidualDurationBonus + 1e-9;
+
         // Base values and unlock metadata from the pinned combat-weapons tables.
         public static IReadOnlyList<ExpandedWeaponProfile> All { get; } = Array.AsReadOnly(new[]
         {

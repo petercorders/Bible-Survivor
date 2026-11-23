@@ -107,8 +107,20 @@ namespace BibleSurvivor.Core
         [DataMember(EmitDefaultValue = false)] public List<int>? VisitedIds { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool CanRetarget { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool LongerChain { get; set; }
+        [DataMember(EmitDefaultValue = false)] public bool UsesFarthestReuse { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int PredecessorTargetId { get; set; }
+        [DataMember(EmitDefaultValue = false)] public float? PredecessorX { get; set; }
+        [DataMember(EmitDefaultValue = false)] public float? PredecessorY { get; set; }
 
         internal Vector2 Position => new Vector2(X, Y);
+        internal Vector2 PredecessorPosition => new Vector2(PredecessorX.GetValueOrDefault(), PredecessorY.GetValueOrDefault());
+
+        internal void SetPredecessor(int targetId, Vector2 position)
+        {
+            PredecessorTargetId = targetId;
+            PredecessorX = targetId == 0 ? (float?)null : position.X;
+            PredecessorY = targetId == 0 ? (float?)null : position.Y;
+        }
 
         internal ExpandedLightningEventState Copy()
         {
@@ -172,7 +184,8 @@ namespace BibleSurvivor.Core
                     !ExpandedLightning.ValidPosition(attack.Position) ||
                     !ExpandedLightning.Finite(attack.At) || attack.At < now - ExpandedLightning.TimeEpsilon ||
                     !ExpandedLightning.Finite(attack.Damage) || attack.Damage <= 0 ||
-                    !ExpandedLightning.Finite(attack.Radius) || attack.Radius <= 0)
+                    !ExpandedLightning.Finite(attack.Radius) || attack.Radius <= 0 ||
+                    !ValidPredecessor(attack))
                     throw new ArgumentException("Invalid expanded lightning event");
 
                 if (attack.Aftershock)
@@ -203,6 +216,25 @@ namespace BibleSurvivor.Core
             }
             if (strikeTime.HasValue && (WaitingForTarget || shockCycles.Contains(Cycle)))
                 throw new ArgumentException("Conflicting expanded lightning events");
+
+            foreach (var attack in Pending.Where(attack => attack.UsesFarthestReuse))
+            {
+                var previous = Pending.Find(candidate => !candidate.Aftershock && candidate.Cycle == attack.Cycle &&
+                    candidate.Id == attack.Id - 1);
+                if (previous != null && (attack.PredecessorTargetId != previous.AssignedTargetId ||
+                    attack.PredecessorPosition != previous.Position))
+                    throw new ArgumentException("Invalid expanded lightning predecessor");
+            }
+        }
+
+        private static bool ValidPredecessor(ExpandedLightningEventState attack)
+        {
+            if (attack.PredecessorTargetId == 0)
+                return !attack.PredecessorX.HasValue && !attack.PredecessorY.HasValue &&
+                    (!attack.UsesFarthestReuse || !attack.Aftershock);
+            return !attack.Aftershock && attack.UsesFarthestReuse && attack.PredecessorTargetId > 0 &&
+                attack.PredecessorX.HasValue && attack.PredecessorY.HasValue &&
+                ExpandedLightning.ValidPosition(attack.PredecessorPosition);
         }
     }
 
@@ -261,12 +293,12 @@ namespace BibleSurvivor.Core
             state.NextCycle = start + (nextCycleDuration?.Invoke() ?? cycle);
             var delay = Math.Max(MinimumDelay, Profile.FirstAttackDelay - settings.DelayAdvance);
             var strikeRadius = Math.Min(MaximumStrikeRadius, radius + Profile.AtLevel(1).Radius * settings.RadiusBonus);
-            var previous = 0;
+            var previous = default(KeyValuePair<int, Vector2>);
             for (var index = 0; index < amount; index++)
             {
                 var target = index >= candidates.Length && settings.DeferPreviousTargetOnReuse
-                    ? PreferredReuse(candidates, previous) : candidates[index % candidates.Length];
-                state.Pending.Add(new ExpandedLightningEventState
+                    ? FarthestReuse(candidates, previous.Key, previous.Value) : candidates[index % candidates.Length];
+                var attack = new ExpandedLightningEventState
                 {
                     Id = state.NextStrikeId,
                     Cycle = state.Cycle,
@@ -278,8 +310,11 @@ namespace BibleSurvivor.Core
                     AssignedTargetId = target.Key,
                     CanRetarget = settings.RetargetOnce,
                     LongerChain = evolved && settings.LongerChain,
-                });
-                previous = target.Key;
+                    UsesFarthestReuse = settings.DeferPreviousTargetOnReuse,
+                };
+                if (attack.UsesFarthestReuse) attack.SetPredecessor(previous.Key, previous.Value);
+                state.Pending.Add(attack);
+                previous = target;
                 state.NextStrikeId = checked(state.NextStrikeId + 1);
             }
         }
@@ -296,14 +331,27 @@ namespace BibleSurvivor.Core
                 .ThenBy(target => target.Key).ToArray();
         }
 
-        private static KeyValuePair<int, Vector2> PreferredReuse(KeyValuePair<int, Vector2>[] candidates, int previous)
+        private static KeyValuePair<int, Vector2> FarthestReuse(KeyValuePair<int, Vector2>[] candidates,
+            int predecessorId, Vector2 predecessorPosition)
         {
-            var alternative = candidates.FirstOrDefault(candidate => candidate.Key != previous);
-            return alternative.Key != 0 ? alternative : candidates[0];
+            if (predecessorId == 0 || candidates.Length < 2) return candidates[0];
+
+            var best = candidates[0];
+            var greatestDistance = -1d;
+            foreach (var candidate in candidates)
+            {
+                if (candidate.Key == predecessorId) continue;
+                var distance = DistanceSquared(candidate.Value, predecessorPosition);
+                if (distance <= greatestDistance) continue;
+                greatestDistance = distance;
+                best = candidate;
+            }
+            return best;
         }
 
         private static void TryRetarget(ExpandedLightningState state, ExpandedLightningEventState attack,
-            Vector2 playerPosition, IReadOnlyDictionary<int, Vector2> targets, ExpandedLightningSettings settings)
+            Vector2 playerPosition, IReadOnlyDictionary<int, Vector2> targets, ExpandedLightningSettings settings,
+            HashSet<(long Cycle, int Id)>? spentAssignments = null)
         {
             if (!attack.CanRetarget || targets.ContainsKey(attack.AssignedTargetId)) return;
             attack.CanRetarget = false;
@@ -311,17 +359,23 @@ namespace BibleSurvivor.Core
             if (candidates.Length == 0) return;
 
             var replacement = candidates[0];
-            if (settings.DeferPreviousTargetOnReuse)
+            if (attack.UsesFarthestReuse)
             {
                 var others = state.Pending.Where(pending => !pending.Aftershock &&
                     pending.Cycle == attack.Cycle && pending.Id != attack.Id).ToArray();
-                var fresh = candidates.FirstOrDefault(candidate => !others.Any(pending => pending.AssignedTargetId == candidate.Key));
-                var previous = others.LastOrDefault(pending => pending.Id < attack.Id)?.AssignedTargetId ?? 0;
-                replacement = fresh.Key != 0 ? fresh : PreferredReuse(candidates, previous);
+                var fresh = candidates.FirstOrDefault(candidate =>
+                    spentAssignments?.Contains((attack.Cycle, candidate.Key)) != true &&
+                    !others.Any(pending => pending.AssignedTargetId == candidate.Key));
+                var predecessor = targets.TryGetValue(attack.PredecessorTargetId, out var livePredecessor)
+                    ? livePredecessor : attack.PredecessorPosition;
+                replacement = fresh.Key != 0 ? fresh : FarthestReuse(candidates, attack.PredecessorTargetId, predecessor);
             }
             attack.AssignedTargetId = replacement.Key;
             attack.X = replacement.Value.X;
             attack.Y = replacement.Value.Y;
+            var successor = state.Pending.Find(next => !next.Aftershock && next.UsesFarthestReuse &&
+                next.Cycle == attack.Cycle && next.Id == attack.Id + 1);
+            successor?.SetPredecessor(replacement.Key, replacement.Value);
         }
 
         private static void ResolveDue(ExpandedLightningState state, double now, Vector2 playerPosition,
@@ -331,17 +385,19 @@ namespace BibleSurvivor.Core
             if (state.Pending.Count == 0) return;
             // Retarget on the first fixed step that observes the assigned actor's death,
             // so the replacement telegraph remains visible until the original due time.
-            foreach (var attack in state.Pending)
-                if (attack.CanRetarget && attack.At > now + TimeEpsilon)
-                    TryRetarget(state, attack, playerPosition, targets(), settings);
+            foreach (var attack in state.Pending.Where(attack => attack.CanRetarget && attack.At > now + TimeEpsilon)
+                .OrderBy(attack => attack.Id))
+                TryRetarget(state, attack, playerPosition, targets(), settings);
 
             var due = state.Pending.Where(attack => attack.At <= now + TimeEpsilon)
                 .OrderBy(attack => attack.At).ThenBy(attack => attack.Id).ToArray();
             if (due.Length == 0) return;
             var shockCycles = new HashSet<long>();
+            var spentAssignments = new HashSet<(long Cycle, int Id)>();
             foreach (var attack in due)
             {
-                if (attack.CanRetarget) TryRetarget(state, attack, playerPosition, targets(), settings);
+                if (attack.CanRetarget) TryRetarget(state, attack, playerPosition, targets(), settings, spentAssignments);
+                if (attack.UsesFarthestReuse) spentAssignments.Add((attack.Cycle, attack.AssignedTargetId));
                 state.Pending.Remove(attack);
                 var kind = attack.Aftershock ? ExpandedLightningHitKind.Aftershock : ExpandedLightningHitKind.Strike;
                 var nearest = HitArea(attack, kind, targets, applyHit);
@@ -354,6 +410,8 @@ namespace BibleSurvivor.Core
                 aftershock.At += AftershockDelay;
                 aftershock.Aftershock = true;
                 aftershock.CanRetarget = false;
+                aftershock.UsesFarthestReuse = false;
+                aftershock.SetPredecessor(0, default);
                 aftershock.Radius = AftershockRadius * (1 + settings.AftershockRadiusBonus);
                 aftershock.Damage *= AftershockDamageFactor;
                 aftershock.VisitedIds = visited;

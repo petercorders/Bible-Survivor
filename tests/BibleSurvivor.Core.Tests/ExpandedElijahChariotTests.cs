@@ -15,14 +15,19 @@ internal static class ExpandedElijahChariotTests
         {
             var state = new ExpandedElijahChariotState();
             var targets = new Dictionary<int, Vector2> { [1] = new Vector2(.2f, -.9f) };
+            var originalSuppression = 0;
+            var supportSuppression = 0;
             var hits = new List<ExpandedElijahChariotHit>();
             void Tick(ExpandedElijahChariotState current, double now) =>
                 ExpandedElijahChariot.Step(current, now, Vector2.Zero, Vector2.UnitX, 8, true, 80, 1.9,
                     3, 1.2, 8, 10, () => targets, hit => { hits.Add(hit); return true; },
                     reserveOriginal: () => BattleWorld.CountOriginalProjectiles(191, null, null, current) < 192,
-                    reserveTrail: () => false);
+                    reserveTrail: () => false, recordOriginalSuppression: count => originalSuppression += count,
+                    recordSupportSuppression: () => supportSuppression++);
             Tick(state, 0);
             Check.Equal(2, state.SuppressedOriginals);
+            Check.Equal(2, originalSuppression);
+            Check.Equal(1, supportSuppression);
             Check.Equal(1, state.Paths.Count);
             Check.True(state.Paths[0].SuppressedTrail);
             Check.Equal(0, BattleWorld.CountSupportRegions(null, null, null, state));
@@ -285,6 +290,144 @@ internal static class ExpandedElijahChariotTests
             Check.True(capped.Paths.Single().SuppressedTrail && !capped.Paths.Single().ExtendedTrail);
             capped.Validate(0, true);
         });
+
+        test("Chariot a.02 aims its real body at the densest eligible center within eight", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = Vector2.UnitX, [2] = new Vector2(0, 8), [3] = new Vector2(.8f, 8), [4] = new Vector2(0, 8.6f),
+            };
+            var hits = new List<ExpandedElijahChariotHit>();
+            var state = new ExpandedElijahChariotState();
+            Step(state, 0, targets, hits, ranks: Rank("a.02"));
+            Check.Equal(Vector2.UnitY, state.Paths.Single().Direction);
+            Step(state, 1.2, targets, hits);
+            Check.Equal(2, hits.Single().TargetId);
+
+            targets[2] = new Vector2(0, 8.001f);
+            var noneWithin = new ExpandedElijahChariotState();
+            Step(noneWithin, 0, targets, hits, ranks: Rank("a.02"));
+            Check.Equal(Vector2.UnitX, noneWithin.Paths.Single().Direction);
+        });
+
+        test("Chariot a.03 orders boss then elite before crowds inside the inclusive eight-unit search", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(2, 0), [2] = new Vector2(2.1f, 0), [3] = new Vector2(2.2f, 0),
+                [11] = new Vector2(-8, 0), [10] = new Vector2(0, 4),
+            };
+            var ranks = ExpandedElijahChariotRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.elijah_chariot.a.02"] = 1, ["weapon.elijah_chariot.a.03"] = 1,
+            });
+            Vector2 Aim()
+            {
+                var state = new ExpandedElijahChariotState();
+                Step(state, 0, targets, new List<ExpandedElijahChariotHit>(), ranks: ranks,
+                    isBoss: id => id == 11, isElite: id => id == 10 || id == 11);
+                return state.Paths.Single().Direction;
+            }
+            Check.Equal(-Vector2.UnitX, Aim());
+            targets[11] = new Vector2(-8.001f, 0);
+            Check.Equal(Vector2.UnitY, Aim());
+            targets[10] = new Vector2(0, 8.001f);
+            Check.Equal(Vector2.UnitX, Aim());
+        });
+
+        test("Chariot b.02 freezes separate paths that converge on the sole boss and respects the travel cap", () =>
+        {
+            var boss = new Vector2(5, 3);
+            var targets = new Dictionary<int, Vector2> { [1] = boss };
+            var state = new ExpandedElijahChariotState();
+            var ranks = Rank("b.02");
+            var hits = new List<ExpandedElijahChariotHit>();
+            Step(state, 0, targets, hits, amount: 3, ranks: ranks, isBoss: id => id == 1);
+            Check.Equal(3, state.Paths.Select(path => path.Origin).Distinct().Count());
+            var restored = Restore(state);
+            restored.Validate(0, false);
+            foreach (var path in restored.Paths)
+                Check.Near(0, Vector2.Distance(boss, path.Origin + path.Direction * (float)path.Range), 2e-6);
+            Step(restored, 1.2, targets, hits, amount: 3, facing: -Vector2.UnitX);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 1, 1 }));
+            Check.Equal(0, restored.Paths.Count);
+
+            targets[1] = new Vector2(13, 0);
+            var far = new ExpandedElijahChariotState();
+            Step(far, 0, targets, hits, amount: 3, ranks: ranks, isBoss: id => id == 1);
+            Check.True(far.Paths.All(path => path.Range == 10));
+            targets[2] = Vector2.UnitY;
+            var two = new ExpandedElijahChariotState();
+            Step(two, 0, targets, hits, amount: 3, ranks: ranks, isBoss: id => id == 1);
+            Check.True(two.Paths.All(path => path.Range == 10 && path.Direction == Vector2.UnitX));
+
+            targets = new Dictionary<int, Vector2> { [1] = Vector2.Zero };
+            var coincident = new ExpandedElijahChariotState();
+            hits.Clear();
+            Step(coincident, 0, targets, hits, ranks: ranks, isBoss: id => id == 1);
+            Step(coincident, .15, targets, hits);
+            Check.Equal(1, hits.Single().TargetId);
+        });
+
+        test("Chariot b.03 restores each 0.12-second warning and movement offset with no early body hit", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(0, -.9f), [2] = Vector2.Zero, [3] = new Vector2(0, .9f),
+            };
+            var state = new ExpandedElijahChariotState();
+            var hits = new List<ExpandedElijahChariotHit>();
+            Step(state, 0, targets, hits, amount: 3, ranks: Rank("b.03"));
+            var loaded = Restore(state);
+            loaded.Validate(0, false);
+            foreach (var (path, index) in loaded.Paths.Select((path, index) => (path, index)))
+            {
+                Check.Equal(index, path.StaggerIndex);
+                Check.Near(index * .12, path.WarningAt);
+                Check.Near(index * .12 + .15, path.MoveAt);
+            }
+            Step(loaded, .149, targets, hits);
+            Check.Equal(0, hits.Count);
+            Step(loaded, .15, targets, hits);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1 }));
+            Step(loaded, .269, targets, hits);
+            Check.Equal(1, hits.Count);
+            Step(loaded, .27, targets, hits);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2 }));
+            Step(loaded, .39, targets, hits);
+            Check.True(hits.Select(hit => hit.TargetId).SequenceEqual(new[] { 1, 2, 3 }));
+            loaded.Validate(.39, false);
+
+            var corrupt = loaded.Copy();
+            corrupt.Paths[2].StaggerIndex = 4;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(.39, false));
+        });
+
+        test("Chariot b.04 spends ten damage points only on the last planned original and caps on its level basis", () =>
+        {
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(0, -.9f), [2] = Vector2.Zero, [3] = new Vector2(0, .9f),
+            };
+            var ranks = Rank("b.04");
+            var hits = new List<ExpandedElijahChariotHit>();
+            var state = new ExpandedElijahChariotState();
+            Step(state, 0, targets, hits, amount: 3, damage: 80, level: 1, ranks: ranks);
+            var loaded = Restore(state);
+            Step(loaded, .15, targets, hits);
+            Check.True(hits.Select(hit => hit.Damage).SequenceEqual(new[] { 80d, 80d, 84d }));
+
+            var cap = new ExpandedElijahChariotState();
+            Step(cap, 0, targets, hits, amount: 3, damage: 89, level: 1, ranks: ranks);
+            Check.Near(90, cap.Paths.Last().Damage);
+
+            var reserved = new ExpandedElijahChariotState();
+            var seats = 2;
+            Step(reserved, 0, targets, hits, amount: 3, damage: 80, level: 1, ranks: ranks,
+                reserveOriginal: () => seats-- > 0);
+            Check.Equal(1, reserved.SuppressedOriginals);
+            Check.True(reserved.Paths.Select(path => path.Damage).SequenceEqual(new[] { 80d, 80d }));
+        });
     }
 
     private static ExpandedElijahChariotRankOptions Rank(string id) => ExpandedElijahChariotRankOptions.FromRanks(
@@ -302,10 +445,12 @@ internal static class ExpandedElijahChariotTests
     private static void Step(ExpandedElijahChariotState state, double time, Dictionary<int, Vector2> targets,
         List<ExpandedElijahChariotHit> hits, bool evolved = false, int amount = 1, double cycle = 5,
         double damage = 80, Vector2 player = default, Vector2? facing = null, double delayAdvance = 0,
-        ExpandedElijahChariotRankOptions ranks = default)
+        ExpandedElijahChariotRankOptions ranks = default, Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null,
+        int level = 8, Func<bool>? reserveOriginal = null)
     {
-        ExpandedElijahChariot.Step(state, time, player, facing ?? Vector2.UnitX, 8, evolved,
+        ExpandedElijahChariot.Step(state, time, player, facing ?? Vector2.UnitX, level, evolved,
             damage, cycle, amount, width: 1.2, speed: 8, range: 10, () => targets,
-            hit => { hits.Add(hit); return true; }, delayAdvance, rankOptions: ranks);
+            hit => { hits.Add(hit); return true; }, delayAdvance, reserveOriginal: reserveOriginal,
+            rankOptions: ranks, isElite: isElite, isBoss: isBoss);
     }
 }

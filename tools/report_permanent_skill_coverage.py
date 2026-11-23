@@ -57,8 +57,6 @@ with content.open(encoding="utf-8") as source:
         audit = "연결, 개별 랭크 인수 미완료" if connected else "실행 경로 미연결"
         if not connected and key.startswith(("common.power.", "common.crit.", "common.tempo.")):
             audit = "계산 단위 시험 있음, 실제 전투 미연결"
-        if key in {"weapon.lightning.a.03", "weapon.lightning.a.04"}:
-            audit = "전투 실험 경로 있음, 단독 효과 설계 판단 대기"
         route = implementation_route(key, tree) if connected else ""
         for rank, price in enumerate(prices.split(","), 1):
             draw.writerow((key, tree, rank, price, requirements, round_number, unlock, evolved,

@@ -330,11 +330,16 @@ namespace BibleSurvivor.Core
                     throw new InvalidDataException("Expanded weapon ledger refers to an unissued actor");
                 if (Run.World.Lightning?.Pending.Any(strike =>
                     strike.CanRetarget && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.04") == 0 ||
+                    strike.UsesFarthestReuse && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.a.03") == 0 ||
                     strike.LongerChain && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.lightning.e.01") == 0) == true)
                     throw new InvalidDataException("Lightning strike flags require their frozen ranks");
                 var permanentRanks = Run.PermanentSnapshot;
                 var permanentArea = expandedCombat ? PermanentAreaRules.Evaluate(permanentRanks) : default;
                 bool HasRank(string id) => PermanentRules.Rank(permanentRanks, id) > 0;
+                if (Run.World.Weapons.Any(weapon => weapon.OriginalHitLedger is { } ledger &&
+                    (!HasRank("common.crit.03") || (ledger.Marks != null || ledger.LastTargetId != 0) &&
+                        !HasRank("common.crit.09"))))
+                    throw new InvalidDataException("Original hit history requires its frozen ranks");
                 if (expandedCombat)
                 {
                     var maximumLifetime = Run.World.Tuning.SlingLifetime * (1 + permanentArea.FlightDistanceBonus);
@@ -392,9 +397,16 @@ namespace BibleSurvivor.Core
                      Run.World.FirePillar?.Regions.Any(region => region.ShortenedPrimaryInterval) == true ||
                      Run.World.Cross?.Shots.Any(shot => shot.ShortenedRehitInterval) == true))
                     throw new InvalidDataException("Shortened primary hit intervals require their frozen rank");
-                var emberLifetime = PermanentRules.Rank(permanentRanks, "weapon.fire_pillar.e.01") > 0 ? 1.2 : 1;
+                var residualBonus = expandedCombat ? ExpandedWeaponRules.ResidualDurationBonus(permanentRanks, true) : 0;
+                if (Run.World.MosesStaff?.Waves.Any(wave => wave.ResidualDurationBonus > residualBonus + 1e-8) == true ||
+                    Run.World.Cross?.Shots.Any(shot => shot.ResidualDurationBonus > residualBonus + 1e-8) == true ||
+                    Run.World.ElijahChariot?.Paths.Any(path => path.ResidualDurationBonus > residualBonus + 1e-8) == true)
+                    throw new InvalidDataException("Residual duration exceeds its frozen ranks");
+                var emberLifetime = ExpandedFirePillar.EmberLifetime *
+                    (1 + (HasRank("weapon.fire_pillar.e.01") ? .20 : 0) + residualBonus);
                 if (Run.World.FirePillar?.Regions.Any(region =>
-                    region.Ember && Math.Abs(region.EndsAt - region.StartedAt - emberLifetime) > 1e-8) == true)
+                    region.Ember && (region.EndsAt - region.StartedAt > emberLifetime + 1e-8 ||
+                        region.EndsAt - region.StartedAt < ExpandedFirePillar.EmberLifetime - 1e-8)) == true)
                     throw new InvalidDataException("Fire pillar ember lifetime does not match its frozen ranks");
                 if (Run.World.MosesStaff?.Waves.Any(wave =>
                     wave.IncreasedKnockback && PermanentRules.Rank(Run.PermanentSnapshot, "weapon.moses_staff.b.01") == 0 ||
@@ -407,7 +419,14 @@ namespace BibleSurvivor.Core
                     shot.TrainedReturnSpeed.HasValue && PermanentRules.Rank(permanentRanks, "weapon.cross.b.01") == 0 ||
                     shot.IncreasedLegBudget && PermanentRules.Rank(permanentRanks, "weapon.cross.c.01") == 0 ||
                     shot.IncreasedSharedLegBudget && PermanentRules.Rank(permanentRanks, "common.shot.03") == 0 ||
-                    shot.ExtendedThorns && PermanentRules.Rank(permanentRanks, "weapon.cross.e.01") == 0) == true)
+                    shot.ExtendedThorns && !HasRank("weapon.cross.e.01") ||
+                    shot.FirstOutboundDamage && !HasRank("weapon.cross.a.04") ||
+                    shot.ReturnDamage && !HasRank("weapon.cross.b.02") ||
+                    shot.CurvedReturn && !HasRank("weapon.cross.b.03") ||
+                    shot.PreviouslyHitReturnDamage && !HasRank("weapon.cross.b.04") ||
+                    shot.MultipleHitDamage && !HasRank("weapon.cross.c.03") ||
+                    shot.LaunchIndex.HasValue && !HasRank("weapon.cross.c.04") ||
+                    shot.DamageLevel > Run.Weapons["cross"]) == true)
                     throw new InvalidDataException("Cross projectile bonuses require their frozen ranks");
                 if (Run.World.DanielLion is { } lion &&
                     (lion.Lions.Any(actor => actor.ExtendedLeash && PermanentRules.Rank(permanentRanks, "weapon.daniel_lion.a.02") == 0 ||
@@ -422,6 +441,7 @@ namespace BibleSurvivor.Core
                     (PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.a.01") > 0 ? ExpandedElijahChariot.TravelBonus : 0);
                 if (Run.World.ElijahChariot?.Paths.Any(path =>
                     path.Range > maxChariotRange + 1e-9 ||
+                    path.StaggerIndex > 0 && !HasRank("weapon.elijah_chariot.b.03") ||
                     path.ForwardKnockback && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.d.01") == 0 ||
                     path.WiderWhirlwind && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.01") == 0 ||
                     path.ExtendedTrail && PermanentRules.Rank(permanentRanks, "weapon.elijah_chariot.e.02") == 0) == true)

@@ -67,6 +67,10 @@ namespace BibleSurvivor.Core
                 weapon.Members.Add("FrozenOrbitCount", Value);
                 weapon.Members.Add("FrozenOrbitRadius", Value);
                 weapon.Members.Add("FrozenOrbitHitRadius", Value);
+                weapon.Members.Add("StarterCycle", Value);
+                weapon.Members.Add("OriginalHitLedger", Object("LatestCycle HitCycles LastTargetId ConsecutiveHits",
+                    ("Marks", Array(Object("Id At")))));
+                projectile.Members!.Add("Cycle", Value);
             }
             var tuning = Object("PlayerSpeed CameraHalfWidth CameraHalfHeight SpawnMargin PlayerRadius EnemyRadius BibleOrbitRadius BookRadius JawboneRange SlingSpeed SlingLifetime PickupRadius MaxProjectiles");
             var world = Object("SchemaVersion Time Remainder NextHostileId PlayerX PlayerY FacingX FacingY RandomState NextProjectileId ShotsFired Hits Kills BossKills Collected DamageTaken",
@@ -75,20 +79,22 @@ namespace BibleSurvivor.Core
                 ("MonsterSpeeds", Array(Object("MonsterId Ratio"))),("HostileProjectiles",Array(Object("Version Id BornAt StartX StartY X Y DirectionX DirectionY Lifetime"))),("Charges",Array(Object("Version Id Phase NextAt Until TargetX TargetY DirectionX DirectionY"))));
             if (skillTree)
             {
+                world.Members!.Add("OriginalSuppressions", Value);
+                world.Members.Add("SupportSuppressions", Value);
                 world.Members!.Add("Lightning", Object("Evolved WaitingForTarget Cycle NextStrikeId NextCycle",
-                    ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain")))));
+                    ("Pending", Array(Object("Id Cycle At X Y Damage Radius AssignedTargetId Aftershock VisitedIds CanRetarget LongerChain UsesFarthestReuse PredecessorTargetId PredecessorX PredecessorY")))));
                 world.Members.Add("WildernessVoice", Object("Evolved Cycle NextCycle",
                     ("Active", Array(Object("Id StartedAt Duration Damage Reach HalfAngle PrimaryPulses EchoesFired FirstDelay KnockbackBonus CloseKnockbackBonus ShortenedPrimaryInterval EchoRadiusBonus FirstPulseDamage FinalPulseKnockback FourthCycleFinalDamage CenteredDamage EdgeKnockback LockedFacingX LockedFacingY DamageLevel UncappedDamage HasExtraEcho")))));
-                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep",
-                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage")))));
+                world.Members.Add("FirePillar", Object("Evolved WaitingForTarget SuppressedOriginal NextId NextCycle LastStep Cycle",
+                    ("Regions", Array(Object("Id Ember X Y StartedAt EndsAt NextHit Damage Radius TargetId NextTargetAt TravelSinceEmber FirstDelay Cycle ShortenedPrimaryInterval BaseDamage IncreasedCoreDamage IncreasedIgnitionDamage")))));
                 world.Members.Add("MosesStaff", Object("Evolved Cycle NextWaveId NextCycle",
-                    ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane WidenedSupportShape")))));
+                    ("Waves", Array(Object("Id Cycle EmittedAt LastStepAt OriginX OriginY DirectionX DirectionY Damage Width Range Speed Distance MakesLane LaneStartedAt LaneTicks HitIds IncreasedKnockback WidenedLane EmpoweredLaneEdge ExtendedLane WidenedSupportShape ResidualDurationBonus")))));
                 world.Members.Add("Cross", Object("Evolved Cycle NextShotId NextCycle",
-                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt TrainedOutboundSpeed TrainedReturnSpeed IncreasedLegBudget IncreasedSharedLegBudget ExtendedThorns ShortenedRehitInterval WidenedSupportShape",
+                    ("Shots", Array(Object("Id Cycle EmittedAt SimulatedAt StartX StartY X Y DirectionX DirectionY Damage Radius Range Speed Distance ReturnStartedAt EndedAt OutboundHits ReturnHits LeavesThorns NextThornAt TrainedOutboundSpeed TrainedReturnSpeed IncreasedLegBudget IncreasedSharedLegBudget ExtendedThorns ShortenedRehitInterval WidenedSupportShape FirstOutboundDamage ReturnDamage CurvedReturn PreviouslyHitReturnDamage MultipleHitDamage ExpandedFirstReturnBudget LaunchIndex DamageLevel ResidualDurationBonus",
                         ("HitTargets", Array(Object("Id Outbound Returned LastHitAt"))),
                         ("Thorns", Array(Object("StartX StartY EndX EndY BornAt Returning"))))))));
                 world.Members.Add("ElijahChariot", Object("Evolved Cycle NextPathId NextCycle SuppressedOriginals",
-                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail WidenedSupportShape")))));
+                    ("Paths", Array(Object("Id Cycle StartX StartY DirectionX DirectionY MoveAt Range Speed Width Damage Distance TrailTicksFired BodyHitCount BodyHitIds WhirlwindCandidateIds FirstDelay SuppressedTrail ForwardKnockback WiderWhirlwind ExtendedTrail WidenedSupportShape StaggerIndex ResidualDurationBonus")))));
                 world.Members.Add("DanielLion", Object("Evolved LastStepAt NextRoarAt GuardianHits KillLeapReadyAt",
                     ("Lions", Array(Object("Index X Y TargetId Returning NextClawAt WaitingForTarget ExtendedLeash FirstClawPhaseResolved NextPackRoarAt ClawHasteUntil"))),
                     ("Leap", Object("At OriginX OriginY Damage VisitedIds EmpoweredDamage FollowupOnKill"))));

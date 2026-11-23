@@ -574,7 +574,7 @@ internal static class PermanentSkillCombatTests
             WithStore(store =>
             {
                 var state = ExpandedProfile(store, "weapon.elijah_chariot.e.02", "weapon.elijah_chariot.a.01",
-                    "weapon.elijah_chariot.b.01", "weapon.elijah_chariot.d.01");
+                    "weapon.elijah_chariot.b.03", "weapon.elijah_chariot.d.01", "common.duration.04");
                 var session = new AdamSession(state, WaveTests.Adam(), "bible");
                 for (var round = 2; round <= 3; round++)
                 {
@@ -597,12 +597,14 @@ internal static class PermanentSkillCombatTests
                 world = BattleWorld.Restore(session, speeds, state.Run!.World!);
                 var paths = world.Capture().ElijahChariot!.Paths;
                 Check.Equal(2, paths.Count);
+                Check.Equal(1, paths[1].StaggerIndex);
+                Check.Near(.12, paths[1].WarningAt - paths[0].WarningAt);
                 Check.Near(1.2, Vector2.Distance(paths[0].Origin, paths[1].Origin), 1e-6);
                 foreach (var path in paths)
                 {
                     Check.Near(11.2, path.Range);
                     Check.Near(1.3225, path.WhirlwindRadius);
-                    Check.Near(1.8, path.TrailDuration);
+                    Check.Near(1.965, path.TrailDuration);
                     Check.True(path.ForwardKnockback);
                 }
             });
@@ -635,12 +637,30 @@ internal static class PermanentSkillCombatTests
             Check.Near(1.11, fire.Regions.Single().NextHit);
         });
 
+        test("Common duration rank adds a low-health original window and additive evolved residual time", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.duration.04");
+                var session = new AdamSession(state, WaveTests.Adam(), "bible");
+                Check.Near(3.15, session.AttackProfile("bible").Duration);
+                session.Damage(70);
+                var world = new BattleWorld(session, Speeds, 7);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var book = world.Capture().Weapons.Single(weapon => weapon.WeaponId == "bible");
+                Check.Near(3.33, book.ActiveUntil - book.ActiveSince);
+                var ranks = state.Run!.PermanentSnapshot;
+                Check.Near(.05, ExpandedWeaponRules.ResidualDurationBonus(ranks, false));
+                Check.Near(.11, ExpandedWeaponRules.ResidualDurationBonus(ranks, true));
+            });
+        });
+
         test("Common area ranks freeze separate hit, orbit, projectile and placed widths in a restored world", () =>
         {
             WithStore(store =>
             {
                 var state = ExpandedProfile(store, "common.area.06", "weapon.wilderness_voice.b.01",
-                    "weapon.cross.a.01", "weapon.elijah_chariot.a.01", "weapon.jawbone.a.01",
+                    "weapon.cross.b.04", "weapon.cross.c.04", "weapon.elijah_chariot.a.01", "weapon.jawbone.a.01",
                     "weapon.lightning.base.01");
                 var definition = WaveTests.Adam();
                 var session = new AdamSession(state, definition, "bible");
@@ -665,8 +685,9 @@ internal static class PermanentSkillCombatTests
                 Check.Near(.105, stone.Radius);
                 Check.Near(setup.Tuning.SlingLifetime * 1.05, stone.Lifetime + BattleWorld.FixedStep);
                 var shot = frozen.Cross!.Shots.First();
-                Check.Near(.28 * 1.05, shot.Radius);
+                Check.Near(.28 * 1.13, shot.Radius);
                 Check.Near(5.25, shot.Range);
+                Check.True(shot.CurvedReturn && shot.PreviouslyHitReturnDamage && shot.LaunchIndex == 0);
                 var cast = frozen.WildernessVoice!.Active.First();
                 Check.Near(57, cast.HalfAngle);
                 Check.Near(3.12, cast.Reach);
@@ -761,6 +782,148 @@ internal static class PermanentSkillCombatTests
                 Check.Equal(beforeBoundary.Cycle + 1, bossVoice.Cycle);
                 Check.Near(1, bossVoice.Active.Single().LockedFacingX!.Value);
             });
+        });
+
+        test("Common critical first-hit bonus applies once per real originating volley", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.crit.03");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 100, 4) }),
+                });
+                var session = new AdamSession(state, definition, "jawbone");
+                session.Advance(2.1);
+                var setup = new BattleWorld(session, Speeds, 7).Capture();
+                var candidates = setup.Enemies.Take(2).ToArray();
+                Check.Equal(2, candidates.Length);
+                foreach (var enemy in setup.Enemies) enemy.X = 100;
+                candidates[0].X = 1;
+                candidates[0].Y = .2f;
+                candidates[1].X = 1;
+                candidates[1].Y = -.2f;
+                var run = state.Run!;
+                const double denominator = 4294967296d;
+                uint Seeded(uint value) => PermanentOriginalHitRules.NextCriticalState(run.RunId, 1, "jawbone", value);
+                bool OnlyOpeningRoll(uint value) => value / denominator > .03 && value / denominator < .08;
+                var seed = (uint)Enumerable.Range(1, 120000).First(value =>
+                    OnlyOpeningRoll(Seeded((uint)value)) && OnlyOpeningRoll(Seeded(Seeded((uint)value))));
+                run.CriticalRandomStates!["jawbone"] = seed;
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                var damage = session.AttackProfile("jawbone").Damage;
+                Check.Near(100 - damage * 1.6, session.Targets[candidates[0].Id].Health);
+                Check.Near(100 - damage, session.Targets[candidates[1].Id].Health);
+                run.World = world.Capture();
+                store.Commit(state, state.Revision, "critical-original-volley");
+                var restored = store.Load()!;
+                var ledger = restored.Run!.World!.Weapons.Single().OriginalHitLedger!;
+                Check.Equal(1L, ledger.LatestCycle);
+                Check.True(!ledger.IsFirst(1) && ledger.IsFirst(2));
+                Check.Equal(Seeded(Seeded(seed)), restored.Run.CriticalRandomStates!["jawbone"]);
+            });
+        });
+
+        test("Common critical same-target mark requires three original hits and restores its expiry", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "common.crit.09");
+                var definition = new RoundDefinition(1, 40, 60, 25, new[]
+                {
+                    new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 60, 1000, 4) }),
+                });
+                var session = new AdamSession(state, definition, "jawbone");
+                session.Advance(2.1);
+                var setup = new BattleWorld(session, Speeds, 7, new BattleTuning { PlayerSpeed = .05 }).Capture();
+                var target = setup.Enemies.First();
+                foreach (var enemy in setup.Enemies) enemy.X = 100;
+                target.X = 1;
+                target.Y = 0;
+                var world = BattleWorld.Restore(session, Speeds, setup);
+                world.Advance(1.2, Vector2.Zero);
+                var secondHit = world.Capture().Weapons.Single().OriginalHitLedger!;
+                Check.Equal(2, secondHit.ConsecutiveHits);
+                Check.True(!secondHit.IsMarked(target.Id, world.SimulationTime));
+                world.Advance(1, Vector2.Zero);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "critical-three-hit");
+                var saved = store.Load()!;
+                var receipt = saved.Run!.World!.Weapons.Single().OriginalHitLedger!;
+                var recorded = receipt.Marks!.Single();
+                Check.Equal(target.Id, recorded.Id);
+                Check.True(receipt.IsMarked(target.Id, recorded.At + 3));
+                Check.True(!receipt.IsMarked(target.Id, recorded.At + 3.001));
+            });
+        });
+
+        test("Suppressed original shots are counted once and remain recorded after reloading", () =>
+        {
+            WithStore(store =>
+            {
+                var state = ExpandedProfile(store, "weapon.sling.base.03");
+                var definition = WaveTests.Adam();
+                var session = new AdamSession(state, definition, "sling");
+                session.Advance(2);
+                var variant = new BattleTuning { MaxProjectiles = 1 };
+                var setup = new BattleWorld(session, Speeds, 7, variant).Capture();
+                foreach (var enemy in setup.Enemies) enemy.X = 12;
+                var world = BattleWorld.Restore(session, Speeds, setup, variant);
+                world.Advance(.2, Vector2.Zero);
+                Check.Equal(1, world.ShotsFired);
+                Check.Equal(1, world.OriginalSuppressions);
+                Check.Equal(0, world.SupportSuppressions);
+                state.Run!.World = world.Capture();
+                store.Commit(state, state.Revision, "count-original-overflow");
+                var saved = store.Load()!;
+                session = AdamSession.Resume(saved, definition);
+                world = BattleWorld.Restore(session, Speeds, saved.Run!.World!, variant);
+                Check.Equal(1, world.OriginalSuppressions);
+                world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                Check.Equal(1, world.OriginalSuppressions);
+            });
+        });
+
+        test("Approved lightning reuse changes the fourth strike with three targets and preserves a two-target rotation", () =>
+        {
+            foreach (var trained in new[] { false, true })
+                foreach (var targetCount in new[] { 2, 3 })
+                    WithStore(store =>
+                    {
+                        var state = ExpandedProfile(store, "weapon.lightning.base.03",
+                            trained ? "weapon.lightning.a.03" : "weapon.lightning.a.02");
+                        var definition = WaveTests.Adam();
+                        var session = new AdamSession(state, definition, "bible");
+                        for (var rank = 0; rank < 8; rank++) Check.True(session.Inventory.TryChoose("lightning", false));
+                        session.Advance(3.5);
+                        var setup = new BattleWorld(session, Speeds, 7).Capture();
+                        var targets = setup.Enemies.OrderBy(enemy => enemy.Id).Take(targetCount).ToArray();
+                        Check.Equal(targetCount, targets.Length);
+                        foreach (var enemy in setup.Enemies)
+                        {
+                            enemy.X = 100;
+                            enemy.Y = 0;
+                        }
+                        targets[0].X = 1.5f;
+                        targets[1].X = -2.5f;
+                        if (targets.Length == 3) targets[2].X = 5.5f;
+                        var world = BattleWorld.Restore(session, Speeds, setup);
+                        world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+                        var frozen = world.Capture();
+                        var slots = frozen.Lightning!.Pending.OrderBy(strike => strike.Id).Select(strike => strike.AssignedTargetId);
+                        var indices = targetCount == 2 ? new[] { 0, 1, 0, 1 } :
+                            new[] { 0, 1, 2, trained ? 1 : 0 };
+                        Check.True(slots.SequenceEqual(indices.Select(index => targets[index].Id)));
+                        state.Run!.World = frozen;
+                        store.Commit(state, state.Revision, "approved-lightning-reuse");
+                        var saved = store.Load()!;
+                        var restoredSession = AdamSession.Resume(saved, definition);
+                        var restored = BattleWorld.Restore(restoredSession, Speeds, saved.Run!.World!);
+                        restored.Advance(.3, Vector2.Zero);
+                        world.Advance(.3, Vector2.Zero);
+                        Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(restored.Capture()));
+                    });
         });
 
         test("P01 pickup purchase and refund affect only new challenges and cross the same drop boundary", () =>

@@ -100,10 +100,17 @@ namespace BibleSurvivor.Core
         }
         public int CombatRulesVersion => run.CombatRulesVersion ?? 1;
         internal bool HasExpandedSkill(string id) => CombatRulesVersion == 2 && PermanentRules.Rank(run.PermanentSnapshot, id) > 0;
-        internal double RollOriginalDamage(string weaponId, double damage)
+        internal double RollOriginalDamage(string weaponId, double damage, int targetId, double targetHealth,
+            double distance, bool firstHitOfCycle, bool hasConsecutiveMark)
         {
             if (CombatRulesVersion != 2 || damage <= 0 || run.CriticalRandomStates == null) return damage;
-            var profile = PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, weaponId, damage);
+            var profile = HasExpandedSkill("common.crit.03")
+                ? PermanentOriginalHitRules.ConditionalCritical(run.PermanentSnapshot, weaponId, damage,
+                    new PermanentOriginalHitContext(Math.Min(1, targetHealth / TargetMaxHealth(targetId)),
+                        HealthRatio, firstHitOfCycle, 1, IsEliteActor(targetId), IsBossActor(targetId), null, distance,
+                        Actions.Moving ? 0 : Math.Round(ActiveRoundTime(CombatTime) - ActiveRoundTime(Actions.StationarySince), 9),
+                        hasConsecutiveMark))
+                : PermanentOriginalHitRules.BaseCritical(run.PermanentSnapshot, weaponId, damage);
             if (!profile.RequiresCriticalRoll) return damage;
             var streams = run.CriticalRandomStates!;
             streams.TryGetValue(weaponId, out var previous);
@@ -125,7 +132,8 @@ namespace BibleSurvivor.Core
             preferSeparatedCenters: HasExpandedSkill("weapon.fire_pillar.a.04"),
             slowInCrowds: HasExpandedSkill("weapon.fire_pillar.e.02"),
             increaseCoreDamage: HasExpandedSkill("weapon.fire_pillar.b.02"),
-            increaseIgnitionDamage: HasExpandedSkill("weapon.fire_pillar.d.01"));
+            increaseIgnitionDamage: HasExpandedSkill("weapon.fire_pillar.d.01"),
+            emberDurationBonus: ExpandedWeaponRules.ResidualDurationBonus(run.PermanentSnapshot, true));
         internal ExpandedWildernessVoiceRankOptions WildernessVoiceRankOptions() =>
             ExpandedWildernessVoiceRankOptions.FromRanks(run.PermanentSnapshot);
         internal ExpandedMosesStaffRankOptions MosesStaffRankOptions() =>
@@ -176,6 +184,7 @@ namespace BibleSurvivor.Core
                 }
                 else bonuses.CooldownReduction += weaponWaitReduction;
                 if (HasExpandedSkill("common.duration.01")) bonuses.DurationBonus += .05;
+                if (HealthRatio <= .30 && HasExpandedSkill("common.duration.03")) bonuses.DurationBonus += .06;
                 if ((weaponId == "sling" || weaponId == "cross" || weaponId == "moses_staff" || weaponId == "elijah_chariot") &&
                     HasExpandedSkill("common.shot.01")) bonuses.ProjectileSpeedBonus += .05;
                 var specialization = PermanentRules.Rank(run.PermanentSnapshot, skillPrefix + "03");

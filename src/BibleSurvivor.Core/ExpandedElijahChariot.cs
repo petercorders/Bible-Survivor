@@ -21,16 +21,32 @@ namespace BibleSurvivor.Core
         public bool WidenWhirlwind { get; }
         public bool ExtendTrail { get; }
         public bool WidenSupportShape { get; }
+        public bool PrioritizeCrowds { get; }
+        public bool PrioritizeElite { get; }
+        public bool ConvergeOnBoss { get; }
+        public bool StaggerFormation { get; }
+        public bool StrengthenLastChariot { get; }
+        public double ResidualDurationBonus { get; }
 
         public ExpandedElijahChariotRankOptions(bool extendTravel = false, bool widenFormation = false,
-            bool knockBack = false, bool widenWhirlwind = false, bool extendTrail = false, bool widenSupportShape = false)
+            bool knockBack = false, bool widenWhirlwind = false, bool extendTrail = false, bool widenSupportShape = false,
+            bool prioritizeCrowds = false, bool prioritizeElite = false, bool convergeOnBoss = false,
+            bool staggerFormation = false, bool strengthenLastChariot = false, double residualDurationBonus = 0)
         {
+            if (!ExpandedWeaponRules.ValidResidualDurationBonus(residualDurationBonus))
+                throw new ArgumentOutOfRangeException(nameof(residualDurationBonus));
             ExtendTravel = extendTravel;
             WidenFormation = widenFormation;
             KnockBack = knockBack;
             WidenWhirlwind = widenWhirlwind;
             ExtendTrail = extendTrail;
             WidenSupportShape = widenSupportShape;
+            PrioritizeCrowds = prioritizeCrowds;
+            PrioritizeElite = prioritizeElite;
+            ConvergeOnBoss = convergeOnBoss;
+            StaggerFormation = staggerFormation;
+            StrengthenLastChariot = strengthenLastChariot;
+            ResidualDurationBonus = residualDurationBonus;
         }
 
         public static ExpandedElijahChariotRankOptions FromRanks(IReadOnlyDictionary<string, int> ranks)
@@ -39,7 +55,9 @@ namespace BibleSurvivor.Core
             bool Has(string id) => ranks.TryGetValue(id, out var rank) && rank > 0;
             return new ExpandedElijahChariotRankOptions(Has("weapon.elijah_chariot.a.01"), Has("weapon.elijah_chariot.b.01"),
                 Has("weapon.elijah_chariot.d.01"), Has("weapon.elijah_chariot.e.01"), Has("weapon.elijah_chariot.e.02"),
-                Has("common.area.01"));
+                Has("common.area.01"), Has("weapon.elijah_chariot.a.02"), Has("weapon.elijah_chariot.a.03"),
+                Has("weapon.elijah_chariot.b.02"), Has("weapon.elijah_chariot.b.03"), Has("weapon.elijah_chariot.b.04"),
+                ExpandedWeaponRules.ResidualDurationBonus(ranks, true));
         }
     }
 
@@ -79,11 +97,13 @@ namespace BibleSurvivor.Core
         [DataMember(IsRequired = true)] public float DirectionY { get; set; }
         [DataMember(IsRequired = true)] public double MoveAt { get; set; }
         [DataMember(EmitDefaultValue = false)] public double? FirstDelay { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int StaggerIndex { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool SuppressedTrail { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ForwardKnockback { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WiderWhirlwind { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool ExtendedTrail { get; set; }
         [DataMember(EmitDefaultValue = false)] public bool WidenedSupportShape { get; set; }
+        [DataMember(EmitDefaultValue = false)] public double ResidualDurationBonus { get; set; }
         [DataMember(IsRequired = true)] public double Range { get; set; }
         [DataMember(IsRequired = true)] public double Speed { get; set; }
         [DataMember(IsRequired = true)] public double Width { get; set; }
@@ -98,13 +118,15 @@ namespace BibleSurvivor.Core
         public Vector2 Direction => new Vector2(DirectionX, DirectionY);
         public Vector2 Position => Origin + Direction * (float)Distance;
         public double WarningAt => MoveAt - WarningDelay;
+        internal double CycleStartedAt => WarningAt - StaggerIndex * ExpandedElijahChariot.StaggerPerChariot;
         private double WarningDelay => FirstDelay ?? ExpandedElijahChariot.Profile.FirstAttackDelay;
         public double EndAt => MoveAt + Range / Speed;
         public bool BodyEnded => Distance >= Range;
         public double WhirlwindRadius => ExpandedElijahChariot.BaseWhirlwindRadius *
             (1 + (WiderWhirlwind ? .15 : 0) + (WidenedSupportShape ? .04 : 0));
         public double TrailWidth => ExpandedElijahChariot.BaseTrailWidth * (WidenedSupportShape ? 1.04 : 1);
-        public double TrailDuration => ExpandedElijahChariot.BaseTrailDuration * (ExtendedTrail ? 1.20 : 1);
+        public double TrailDuration => ExpandedElijahChariot.BaseTrailDuration *
+            (1 + (ExtendedTrail ? .20 : 0) + ResidualDurationBonus);
 
         internal int TrailTickLimit => (int)Math.Ceiling((Range / Speed + TrailDuration - ExpandedElijahChariot.TimeEpsilon) /
             ExpandedElijahChariot.TrailInterval);
@@ -165,6 +187,9 @@ namespace BibleSurvivor.Core
                 throw new ArgumentException("Invalid Elijah chariot clock");
 
             var previousId = 0L;
+            var previousCycle = 0L;
+            var previousCycleStart = 0d;
+            var previousStaggerIndex = 0;
             foreach (var path in Paths)
             {
                 if (path == null || path.Id <= previousId || path.Id >= NextPathId || path.Cycle < 1 || path.Cycle > Cycle ||
@@ -172,8 +197,13 @@ namespace BibleSurvivor.Core
                     !BattleSnapshot.Position(path.DirectionX, path.DirectionY) ||
                     Math.Abs(path.Direction.LengthSquared() - 1) > .0001 ||
                     !ExpandedElijahChariot.ValidPath(path.Damage, path.Width, path.Speed, path.Range) ||
-                    !BattleSnapshot.Finite(path.MoveAt) || !ExpandedElijahChariot.ValidDelay(path.FirstDelay) || path.WarningAt < -epsilon || path.WarningAt > now + epsilon ||
-                    path.WarningAt + ExpandedElijahChariot.MinimumCycle > NextCycle + epsilon ||
+                    !BattleSnapshot.Finite(path.MoveAt) || !ExpandedElijahChariot.ValidDelay(path.FirstDelay) ||
+                    path.StaggerIndex < 0 || path.StaggerIndex >= ExpandedElijahChariot.MaximumAmount ||
+                    path.Cycle < previousCycle || path.Cycle == previousCycle &&
+                        (Math.Abs(path.CycleStartedAt - previousCycleStart) > epsilon ||
+                            previousStaggerIndex > 0 && path.StaggerIndex <= previousStaggerIndex) ||
+                    path.CycleStartedAt < -epsilon || path.CycleStartedAt > now + epsilon ||
+                    path.CycleStartedAt + ExpandedElijahChariot.MinimumCycle > NextCycle + epsilon ||
                     path.ExpiresAt(evolved) < now - epsilon ||
                     !BattleSnapshot.Finite(path.Distance) || path.Distance < 0 || path.Distance > path.Range ||
                     Math.Abs(path.Distance - path.DistanceAt(now)) > .000001)
@@ -181,6 +211,9 @@ namespace BibleSurvivor.Core
 
                 ValidateHitState(path, now, evolved);
                 previousId = path.Id;
+                previousCycle = path.Cycle;
+                previousCycleStart = path.CycleStartedAt;
+                previousStaggerIndex = path.StaggerIndex;
             }
         }
 
@@ -196,7 +229,9 @@ namespace BibleSurvivor.Core
                     path.BodyHitIds.Count + path.WhirlwindCandidateIds.Count ||
                 (path.BodyEnded || !evolved) && path.WhirlwindCandidateIds.Count != 0 ||
                 now < path.MoveAt - epsilon && (path.BodyHitCount != 0 || path.WhirlwindCandidateIds.Count != 0) ||
-                (path.SuppressedTrail || path.WiderWhirlwind || path.WidenedSupportShape) && !evolved || path.ExtendedTrail && !hasTrail ||
+                (path.SuppressedTrail || path.WiderWhirlwind || path.WidenedSupportShape) && !evolved ||
+                !ExpandedWeaponRules.ValidResidualDurationBonus(path.ResidualDurationBonus) ||
+                (path.ExtendedTrail || path.ResidualDurationBonus != 0) && !hasTrail ||
                 path.TrailTicksFired < 0 || path.TrailTicksFired > (hasTrail ? path.TrailTickLimit : 0))
                 throw new ArgumentException("Invalid Elijah chariot hit history");
 
@@ -222,8 +257,14 @@ namespace BibleSurvivor.Core
         internal static readonly double TravelBonus = Profile.TravelDistance * .12;
         private static readonly double MaximumRange = MaximumBaseRange + TravelBonus;
         internal static readonly int MaximumPaths = MaximumAmount *
-            (int)Math.Ceiling((Profile.FirstAttackDelay + MaximumRange / MinimumSpeed + BaseTrailDuration * 1.20) / MinimumCycle);
+            (int)Math.Ceiling((Profile.FirstAttackDelay + (MaximumAmount - 1) * StaggerPerChariot +
+                MaximumRange / MinimumSpeed + BaseTrailDuration * (1.20 + ExpandedWeaponRules.MaximumResidualDurationBonus)) / MinimumCycle);
         internal const double TimeEpsilon = 1e-9;
+        internal const double StaggerPerChariot = .12;
+        private const double MinimumConvergedRange = .000001;
+        private const double AimRadius = 8;
+        private const double CrowdRadius = 1.5;
+        private const double LastChariotDamageBonus = .10;
         internal const double MinimumCycle = .15;
         private const double MinimumDelay = .05;
         internal const double TrailInterval = .5;
@@ -239,11 +280,16 @@ namespace BibleSurvivor.Core
             int level, bool evolved, double damage, double cycle, int amount, double width, double speed, double range,
             Func<IReadOnlyDictionary<int, Vector2>> targets, Func<ExpandedElijahChariotHit, bool> applyHit,
             double delayAdvance = 0, Func<bool>? reserveOriginal = null, Func<bool>? reserveTrail = null,
-            ExpandedElijahChariotRankOptions rankOptions = default, Func<double>? nextCycleDuration = null)
+            ExpandedElijahChariotRankOptions rankOptions = default, Func<double>? nextCycleDuration = null,
+            Func<int, bool>? isElite = null, Func<int, bool>? isBoss = null,
+            Action<int>? recordOriginalSuppression = null, Action? recordSupportSuppression = null)
         {
             if (state == null) throw new ArgumentNullException(nameof(state));
             if (targets == null) throw new ArgumentNullException(nameof(targets));
             if (applyHit == null) throw new ArgumentNullException(nameof(applyHit));
+            if (rankOptions.PrioritizeElite && isElite == null) throw new ArgumentNullException(nameof(isElite));
+            if ((rankOptions.PrioritizeElite || rankOptions.ConvergeOnBoss) && isBoss == null)
+                throw new ArgumentNullException(nameof(isBoss));
             if (!BattleSnapshot.Finite(delayAdvance) || delayAdvance < 0) throw new ArgumentOutOfRangeException(nameof(delayAdvance));
             if (!BattleSnapshot.Finite(now) || now < 0 ||
                 !BattleSnapshot.Position(playerPosition.X, playerPosition.Y) || !BattleSnapshot.Position(facing.X, facing.Y) ||
@@ -257,6 +303,11 @@ namespace BibleSurvivor.Core
             if (state.NextCycle > now + TimeEpsilon) return;
 
             var direction = facing.LengthSquared() > 1e-12f ? Vector2.Normalize(facing) : Vector2.UnitX;
+            var canAim = rankOptions.PrioritizeCrowds || rankOptions.PrioritizeElite;
+            var current = canAim || rankOptions.ConvergeOnBoss ? targets() : null;
+            if (canAim)
+                direction = ResolveAim(playerPosition, direction, current!, rankOptions, isElite, isBoss);
+            var converge = rankOptions.ConvergeOnBoss ? SoleBossPosition(current!, isBoss!) : null;
             var perpendicular = new Vector2(-direction.Y, direction.X);
             var spacing = Profile.ParallelSpacing + (rankOptions.WidenFormation ? .30 : 0);
             var travel = range + (rankOptions.ExtendTravel ? TravelBonus : 0);
@@ -269,33 +320,87 @@ namespace BibleSurvivor.Core
                 if (reserveOriginal?.Invoke() == false)
                 {
                     state.SuppressedOriginals = checked(state.SuppressedOriginals + amount - index);
+                    recordOriginalSuppression?.Invoke(amount - index);
                     break;
                 }
                 var offset = (index - (amount - 1) * .5) * spacing;
                 var start = playerPosition + perpendicular * (float)offset;
+                var pathDirection = direction;
+                var pathRange = travel;
+                if (converge.HasValue)
+                {
+                    var x = (double)converge.Value.X - start.X;
+                    var y = (double)converge.Value.Y - start.Y;
+                    var distance = Math.Sqrt(x * x + y * y);
+                    if (distance > 0)
+                        pathDirection = new Vector2((float)(x / distance), (float)(y / distance));
+                    // Use the same projection as collision so the quantized direction includes the boss at the endpoint.
+                    pathRange = Math.Min(travel, Math.Max(MinimumConvergedRange, x * pathDirection.X + y * pathDirection.Y));
+                }
+                var staggerIndex = rankOptions.StaggerFormation ? index : 0;
+                var pathDamage = damage;
+                if (rankOptions.StrengthenLastChariot && index == amount - 1)
+                {
+                    var basis = Profile.AtLevel(level).Damage;
+                    pathDamage = Math.Min(basis * 2.25, damage + basis * LastChariotDamageBonus);
+                }
                 var suppressedTrail = evolved && reserveTrail?.Invoke() == false;
+                if (suppressedTrail) recordSupportSuppression?.Invoke();
                 state.Paths.Add(new ExpandedElijahChariotPathState
                 {
                     Id = state.NextPathId,
                     Cycle = state.Cycle,
                     StartX = start.X,
                     StartY = start.Y,
-                    DirectionX = direction.X,
-                    DirectionY = direction.Y,
-                    MoveAt = moveAt,
+                    DirectionX = pathDirection.X,
+                    DirectionY = pathDirection.Y,
+                    MoveAt = moveAt + staggerIndex * StaggerPerChariot,
                     FirstDelay = delay == Profile.FirstAttackDelay ? (double?)null : delay,
+                    StaggerIndex = staggerIndex,
                     SuppressedTrail = suppressedTrail,
                     ForwardKnockback = rankOptions.KnockBack,
                     WiderWhirlwind = evolved && rankOptions.WidenWhirlwind,
                     ExtendedTrail = evolved && !suppressedTrail && rankOptions.ExtendTrail,
                     WidenedSupportShape = evolved && rankOptions.WidenSupportShape,
-                    Range = travel,
+                    ResidualDurationBonus = evolved && !suppressedTrail ? rankOptions.ResidualDurationBonus : 0,
+                    Range = pathRange,
                     Speed = speed,
                     Width = width,
-                    Damage = damage,
+                    Damage = pathDamage,
                 });
                 state.NextPathId = checked(state.NextPathId + 1);
             }
+        }
+
+        private static Vector2 ResolveAim(Vector2 player, Vector2 facing, IReadOnlyDictionary<int, Vector2> targets,
+            ExpandedElijahChariotRankOptions ranks, Func<int, bool>? isElite, Func<int, bool>? isBoss)
+        {
+            var candidate = targets.Select(target =>
+                {
+                    var offset = target.Value - player;
+                    var distance = offset.LengthSquared();
+                    return (Target: target, Offset: offset, Distance: distance);
+                })
+                .Where(candidate => candidate.Distance <= AimRadius * AimRadius)
+                .Select(candidate => (candidate.Target, candidate.Offset, candidate.Distance,
+                    Priority: !ranks.PrioritizeElite ? 0 :
+                        isBoss!(candidate.Target.Key) ? 2 : isElite!(candidate.Target.Key) ? 1 : 0))
+                .Where(candidate => ranks.PrioritizeCrowds || candidate.Priority > 0)
+                .OrderByDescending(candidate => candidate.Priority)
+                .ThenByDescending(candidate => ranks.PrioritizeCrowds
+                    ? targets.Values.Count(position => Vector2.DistanceSquared(candidate.Target.Value, position) <= CrowdRadius * CrowdRadius)
+                    : 0)
+                .ThenBy(candidate => candidate.Distance)
+                .ThenBy(candidate => candidate.Target.Key)
+                .FirstOrDefault();
+            return candidate.Offset.LengthSquared() > 1e-12f ? Vector2.Normalize(candidate.Offset) : facing;
+        }
+
+        private static Vector2? SoleBossPosition(IReadOnlyDictionary<int, Vector2> targets, Func<int, bool> isBoss)
+        {
+            if (targets.Count != 1) return null;
+            var target = targets.First();
+            return isBoss(target.Key) ? target.Value : (Vector2?)null;
         }
 
         private static void AdvancePaths(ExpandedElijahChariotState state, double now,

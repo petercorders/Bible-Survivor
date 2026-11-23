@@ -92,14 +92,28 @@ namespace BibleSurvivor.Core
     {
         internal static PermanentOriginalHitProfile BaseCritical(IReadOnlyDictionary<string, int> ranks,
             string weapon, double damage) => new PermanentOriginalHitProfile(damage, BaseCriticalChance(ranks, weapon),
-                Math.Min(2, 1.5 + BasicCriticalMultiplier(ranks) +
-                    (weapon == "sling" && Has(ranks, "weapon.sling.a.03") ? .20 : 0)), false);
+                Math.Min(2, 1.5 + BasicCriticalMultiplier(ranks) + SlingCriticalMultiplier(ranks, weapon)), false);
+
+        internal static PermanentOriginalHitProfile ConditionalCritical(IReadOnlyDictionary<string, int> ranks,
+            string weapon, double damage, PermanentOriginalHitContext context)
+        {
+            context.Validate();
+            var chance = Math.Min(.35, ChanceBonus(ranks, context) + SlingCriticalChance(ranks, weapon));
+            var multiplier = Math.Min(2, 1.5 + MultiplierBonus(ranks, context) + SlingCriticalMultiplier(ranks, weapon));
+            return new PermanentOriginalHitProfile(damage, chance, multiplier, false);
+        }
+
+        private static double SlingCriticalChance(IReadOnlyDictionary<string, int> ranks, string weapon) =>
+            weapon == "sling" && Has(ranks, "weapon.sling.a.02") ? .06 : 0;
+
+        private static double SlingCriticalMultiplier(IReadOnlyDictionary<string, int> ranks, string weapon) =>
+            weapon == "sling" && Has(ranks, "weapon.sling.a.03") ? .20 : 0;
 
         internal static bool HasBaseCriticalChance(IReadOnlyDictionary<string, int> ranks) =>
             BasicCriticalChance(ranks) > 0 || Has(ranks, "weapon.sling.a.02");
 
         internal static double BaseCriticalChance(IReadOnlyDictionary<string, int> ranks, string weapon) =>
-            BasicCriticalChance(ranks) + (weapon == "sling" && Has(ranks, "weapon.sling.a.02") ? .06 : 0);
+            BasicCriticalChance(ranks) + SlingCriticalChance(ranks, weapon);
 
         internal static uint NextCriticalState(string runId, int round, string weaponId, uint state)
         {

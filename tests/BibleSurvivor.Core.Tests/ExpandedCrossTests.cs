@@ -11,6 +11,147 @@ internal static class ExpandedCrossTests
 {
     public static void Register(Action<string, Action> test)
     {
+        test("Cross a.03 freezes an 18 degree gap between launches", () =>
+        {
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            Step(state, 0, targets, hits, count: 3, ranks: Rank("a.03"));
+            var loaded = RoundTrip(state);
+            loaded.Validate(0, false);
+            foreach (var (shot, angle) in loaded.Shots.Zip(new[] { -18d, 0d, 18d }))
+                Check.Near(angle, Math.Atan2(shot.Direction.Y, shot.Direction.X) * 180 / Math.PI, 1e-4);
+        });
+
+        test("Cross primary damage stacks by phase and accepted hit ordinal using the frozen base", () =>
+        {
+            var ranks = ExpandedCrossRankOptions.FromRanks(new Dictionary<string, int>
+            {
+                ["weapon.cross.a.04"] = 1,
+                ["weapon.cross.b.02"] = 1,
+                ["weapon.cross.b.04"] = 1,
+                ["weapon.cross.c.03"] = 1,
+            });
+            var state = new ExpandedCrossState();
+            var targets = Enumerable.Range(1, 6).ToDictionary(id => id, id => new Vector2(id * .8f, 0));
+            var hits = new List<ExpandedCrossHit>();
+            Step(state, 0, targets, hits, evolved: true, ranks: ranks);
+            for (var tick = 1; tick <= 50; tick++) Step(state, tick / 60d, targets, hits, evolved: true);
+            var outbound = hits.Where(hit => hit.Kind == ExpandedCrossHitKind.Outbound).ToArray();
+            Check.Equal(6, outbound.Length);
+            foreach (var (hit, damage) in outbound.Zip(new[] { 32.4, 30, 30, 32.4, 32.4, 32.4 }))
+                Check.Near(damage, hit.Damage);
+
+            var restored = RoundTrip(state);
+            restored.Validate(50 / 60d, true);
+            Check.Equal(8, restored.Shots.Single().DamageLevel);
+            targets.Add(7, new Vector2(4.6f, 0));
+            hits.Clear();
+            for (var tick = 51; tick <= 100; tick++)
+            {
+                Step(restored, tick / 60d, targets, hits, evolved: true);
+                restored.Validate(tick / 60d, true);
+            }
+            var returning = hits.Where(hit => hit.Kind == ExpandedCrossHitKind.Return).ToArray();
+            Check.Near(34.8, returning.Single(hit => hit.TargetId == 7).Damage);
+            Check.Near(36.9, returning.Single(hit => hit.TargetId == 1).Damage);
+            Check.True(hits.Where(hit => hit.Kind == ExpandedCrossHitKind.Thorns).All(hit => hit.Damage == 10.5));
+
+            var capped = new ExpandedCrossState();
+            targets.Clear();
+            targets[1] = new Vector2(.3f, 0);
+            hits.Clear();
+            Step(capped, 0, targets, hits, evolved: true, damage: 67, ranks: ranks);
+            Step(capped, 1 / 60d, targets, hits, evolved: true, damage: 67);
+            Check.Near(67.5, hits.Single(hit => hit.Kind == ExpandedCrossHitKind.Outbound).Damage);
+        });
+
+        test("Cross b.03 bends counterclockwise on return, unwinds on time, and catches by swept geometry", () =>
+        {
+            var state = new ExpandedCrossState();
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            Step(state, 0, targets, hits, ranks: Rank("b.03"));
+            for (var tick = 1; tick <= 51; tick++) Step(state, tick / 60d, targets, hits);
+            var shot = state.Shots.Single();
+            Check.Near(-Math.Sin(Math.PI / 9) * .1, shot.Position.Y, 1e-6);
+            Check.Near(20, TurnOffsetDegrees(-Vector2.UnitX, shot.Direction), 1e-4);
+
+            var restored = RoundTrip(state);
+            restored.Validate(.85, false);
+            for (var tick = 52; tick <= 75; tick++)
+            {
+                var prior = restored.Shots.Single().Position;
+                var now = tick / 60d;
+                Step(state, now, targets, hits);
+                Step(restored, now, targets, hits);
+                restored.Validate(now, false);
+                var current = restored.Shots.Single();
+                Check.Equal(state.Shots.Single().Position, current.Position);
+                Check.Equal(state.Shots.Single().Direction, current.Direction);
+                if (tick == 63)
+                    Check.Near(10, TurnOffsetDegrees(-prior, current.Direction), 1e-4);
+                if (tick == 75)
+                    Check.Near(0, TurnOffsetDegrees(-prior, current.Direction), 1e-4);
+            }
+
+            var catchState = new ExpandedCrossState();
+            Step(catchState, 0, targets, hits, ranks: Rank("b.03"));
+            Step(catchState, 50 / 60d, targets, hits);
+            var player = new Vector2(4.6f, 0);
+            Step(catchState, 50.5 / 60d, targets, hits, player: player);
+            Check.True(catchState.Shots.Single().IsFlying);
+            Step(catchState, 51 / 60d, targets, hits, player: player);
+            Check.Equal(0, catchState.Shots.Count);
+
+            var trailState = new ExpandedCrossState();
+            var trailRanks = new ExpandedCrossRankOptions(accelerateOutbound: true, curvedReturn: true,
+                extendThorns: true, widenSupportShape: true);
+            Step(trailState, 0, targets, hits, evolved: true, ranks: trailRanks);
+            for (var tick = 1; tick <= 110; tick++)
+            {
+                var now = tick / 60d;
+                Step(trailState, now, targets, hits, evolved: true, player: new Vector2(0, 30));
+                trailState.Validate(now, true);
+            }
+            var trail = RoundTrip(trailState).Shots.Single();
+            Check.True(ShotTrailCrossesBothLegs(trail));
+            Check.Near(1.8, trail.ThornDuration);
+            Check.Near(.39, trail.ThornRadius);
+        });
+
+        test("Cross c.04 gives only the first sixth-cycle projectile eight return hits in isolation", () =>
+        {
+            var state = new ExpandedCrossState { Cycle = 5 };
+            var targets = new Dictionary<int, Vector2>();
+            var hits = new List<ExpandedCrossHit>();
+            Step(state, 0, targets, hits, count: 2, ranks: Rank("c.04"));
+            var restored = RoundTrip(state);
+            var first = restored.Shots[0];
+            var second = restored.Shots[1];
+            Check.Equal(4, first.HitBudget(false));
+            Check.Equal(8, first.ReturnBudget(false));
+            Check.Equal(4, second.ReturnBudget(false));
+            var bad = restored.Copy();
+            bad.Shots[0].LaunchIndex = 1;
+            Check.Throws<ArgumentException>(() => bad.Validate(0, false));
+
+            var direction = first.Direction;
+            for (var tick = 1; tick <= 50; tick++) Step(restored, tick / 60d, targets, hits);
+            for (var id = 1; id <= 9; id++) targets.Add(id, direction * (1.55f + (id - 1) * .35f));
+            for (var tick = 51; tick <= 100; tick++)
+            {
+                Step(restored, tick / 60d, targets, hits);
+                restored.Validate(tick / 60d, false);
+            }
+            Check.Equal(8, hits.Count(hit => hit.ShotId == first.Id && hit.Kind == ExpandedCrossHitKind.Return));
+            Check.Equal(0, hits.Count(hit => hit.Kind == ExpandedCrossHitKind.Outbound));
+
+            var other = new ExpandedCrossState { Cycle = 4 };
+            Step(other, 0, new Dictionary<int, Vector2>(), hits, ranks: Rank("c.04"));
+            Check.Equal(4, other.Shots.Single().ReturnBudget(false));
+        });
+
         test("Expanded cross aims at the nearest target with stable ties and symmetric 12 degree spread", () =>
         {
             var state = new ExpandedCrossState();
@@ -289,6 +430,12 @@ internal static class ExpandedCrossTests
             Step(basic, 0, targets, hits, ranks: Rank("e.01"));
             Check.True(!basic.Shots.Single().ExtendedThorns && !basic.Shots.Single().LeavesThorns);
         });
+    }
+
+    private static double TurnOffsetDegrees(Vector2 tangent, Vector2 direction)
+    {
+        var from = Vector2.Normalize(tangent);
+        return Math.Atan2(from.X * direction.Y - from.Y * direction.X, Vector2.Dot(from, direction)) * 180 / Math.PI;
     }
 
     private static ExpandedCrossRankOptions Rank(string id) => ExpandedCrossRankOptions.FromRanks(

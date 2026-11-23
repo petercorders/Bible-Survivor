@@ -273,7 +273,109 @@ internal static class ExpandedLightningTests
                 Step(state, .05, targets, hits, amount: 2, settings: settings);
                 Check.Equal(reserveFreshTarget ? 3 : 2, state.Pending[0].AssignedTargetId);
                 Check.Equal(2, state.Pending[1].AssignedTargetId);
+                Check.Equal(reserveFreshTarget ? 3 : 0, state.Pending[1].PredecessorTargetId);
+                state.Validate(.05, false);
             }
+        });
+
+        test("Lightning reuses the farthest actor only after the unique targets and retains priority for ties", () =>
+        {
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("a.03"));
+            var hits = new List<ExpandedLightningHit>();
+            var targets = new Dictionary<int, Vector2>
+            {
+                [1] = new Vector2(.5f, 0), [2] = new Vector2(3, 0), [3] = new Vector2(-4, 0),
+            };
+            int[] Assign(ExpandedLightningSettings ranks)
+            {
+                var state = new ExpandedLightningState();
+                Step(state, 0, targets, hits, amount: 4, settings: ranks);
+                state.Validate(0, false);
+                return state.Pending.Select(attack => attack.AssignedTargetId).ToArray();
+            }
+            Check.True(Assign(default).SequenceEqual(new[] { 1, 2, 3, 1 }));
+            Check.True(Assign(settings).SequenceEqual(new[] { 1, 2, 3, 2 }));
+
+            targets[1] = new Vector2(1, 0);
+            targets[2] = new Vector2(-1, 0);
+            targets[3] = new Vector2(0, 4);
+            Check.True(Assign(settings).SequenceEqual(new[] { 1, 2, 3, 1 }));
+            targets.Remove(3);
+            targets[2] = targets[1];
+            Check.True(Assign(settings).SequenceEqual(new[] { 1, 2, 1, 2 }));
+            targets.Remove(2);
+            Check.True(Assign(settings).SequenceEqual(new[] { 1, 1, 1, 1 }));
+        });
+
+        test("Lightning restored retarget uses the live predecessor or current priority when there is none", () =>
+        {
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("a.03", "a.04"));
+            var targets = RetargetTargets();
+            var hits = new List<ExpandedLightningHit>();
+            var before = new ExpandedLightningState();
+            Step(before, 0, targets, hits, amount: 4, settings: settings);
+            var state = Restore(before);
+            Check.Equal(2, state.Pending[2].PredecessorTargetId);
+            Check.Near(2, state.Pending[2].PredecessorX!.Value);
+            targets[2] = new Vector2(7, 0);
+            targets.Remove(3);
+            Step(state, .05, targets, hits, amount: 4, settings: settings);
+            Check.Equal(1, state.Pending[2].AssignedTargetId);
+            Check.Equal(1, state.Pending[3].PredecessorTargetId);
+            Check.Near(-1, state.Pending[3].PredecessorX!.Value);
+            Check.Near(.15, state.Pending[2].At);
+            Check.Near(40, state.Pending[2].Damage);
+            Check.Near(1, state.Pending[2].Radius);
+            state.Validate(.05, false);
+            var corrupt = state.Copy();
+            corrupt.Pending[3].PredecessorY = null;
+            Check.Throws<ArgumentException>(() => corrupt.Validate(.05, false));
+
+            targets = RetargetTargets();
+            state = Restore(before);
+            targets.Remove(1);
+            Step(state, .05, targets, hits, amount: 4, settings: settings);
+            Check.Equal(0, state.Pending[0].PredecessorTargetId);
+            Check.Equal(2, state.Pending[0].AssignedTargetId);
+        });
+
+        test("Lightning same-step retarget uses the saved anchor and counts earlier strikes as already assigned", () =>
+        {
+            var settings = ExpandedLightningSettings.FromRanks(Ranks("a.03", "a.04"));
+            foreach (var moveSurvivor in new[] { false, true })
+            {
+                var targets = RetargetTargets();
+                var hits = new List<ExpandedLightningHit>();
+                var state = new ExpandedLightningState();
+                Step(state, 0, targets, hits, amount: 4, settings: settings);
+                state = Restore(state);
+                Step(state, .149, targets, hits, amount: 4, settings: settings);
+                Check.Equal(0, hits.Count);
+                Step(state, .15, targets, hits, amount: 4, settings: settings, accept: hit =>
+                {
+                    if (hit.StrikeId == 1) targets.Remove(3);
+                    if (hit.StrikeId == 2)
+                    {
+                        targets.Remove(2);
+                        if (moveSurvivor) targets[1] = new Vector2(-5, 0);
+                    }
+                    return true;
+                });
+                var reassigned = hits.Single(hit => hit.StrikeId == 3);
+                Check.Equal(moveSurvivor ? 1 : 4, reassigned.TargetId);
+                Check.Near(40, reassigned.Damage);
+                Check.Equal(0, state.Pending.Count);
+                state.Validate(.15, false);
+            }
+
+            var evolved = new ExpandedLightningState();
+            var fixedTargets = RetargetTargets();
+            var evolvedHits = new List<ExpandedLightningHit>();
+            Step(evolved, 0, fixedTargets, evolvedHits, evolved: true, amount: 4, settings: settings);
+            Step(evolved, .15, fixedTargets, evolvedHits, evolved: true, amount: 4, settings: settings);
+            var aftershock = Restore(evolved).Pending.Single();
+            Check.True(aftershock.Aftershock && !aftershock.UsesFarthestReuse);
+            Check.Equal(0, aftershock.PredecessorTargetId);
         });
 
         test("Lightning evolution rank adds a fourth accepted chain transfer only to its evolved form", () =>
@@ -303,6 +405,21 @@ internal static class ExpandedLightningTests
             Check.Equal(ExpandedLightningHitKind.Strike, hits.Single().Kind);
             Check.Equal(0, basic.Pending.Count);
         });
+    }
+
+    private static Dictionary<int, Vector2> RetargetTargets() => new()
+    {
+        [1] = new Vector2(-1, 0), [2] = new Vector2(2, 0),
+        [3] = new Vector2(4, 0), [4] = new Vector2(6, 0),
+    };
+
+    private static ExpandedLightningState Restore(ExpandedLightningState state)
+    {
+        using var save = new MemoryStream();
+        var serializer = new DataContractJsonSerializer(typeof(ExpandedLightningState));
+        serializer.WriteObject(save, state);
+        save.Position = 0;
+        return (ExpandedLightningState)serializer.ReadObject(save)!;
     }
 
     private static void Step(ExpandedLightningState state, double time, Dictionary<int, Vector2> targets,
