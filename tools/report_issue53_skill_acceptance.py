@@ -128,6 +128,36 @@ COMBAT_EVIDENCE = {
            "R03 보스 HP 25%/25.1%와 일반 적 HP 25%, 확률 양쪽",
        ), 1)},
 
+    **{f"cooldown@{rank}": ("Tempo", "턱뼈 대기 -2%p 및 다음 타격 직전/발동 틱")
+       for rank in range(1, 4)},
+    **{f"common.tempo.{index:02}@1": ("Tempo", boundary)
+       for index, boundary in enumerate((
+           "라운드 첫 턱뼈 공격 대기/첫 공격 소비 후",
+           "턱뼈 갱신 틱과 마지막 피격 3초/3.001초", "라운드 전투 10초/10.001초",
+           "같은 표적의 성경 재타격 1.7초에서 1.632초, 직전/발동 틱",
+           "라운드 전투 60초/59.999초",
+           "준비된 이월과 현재 전투의 무피격 합계 10초/9.999초",
+           "실제 AdamSession 정예 처치 뒤 3초/3.001초",
+           "턱뼈 두 번째 연사 0.15초에서 0.138초, 직전/발동 틱",
+           "같은 R03의 활성 보스/일반 웨이브에서 턱뼈 대기",
+       ), 2)},
+    **{f"attack@{rank}": ("Attack", "원본 턱뼈 피해 +3%p, 구매 전후 피해 사이와 새 피해를 넘는 적 HP")
+       for rank in range(1, 6)},
+    **{f"health@{rank}": ("Survival", "이전 최대 HP에 해당하는 접촉 피해, 새 최대 HP보다 1 낮은 생존과 동일한 사망")
+       for rank in range(1, 6)},
+    **{f"common.health.{index:02}@1": ("Survival", "이전 최대 HP에 해당하는 접촉 피해, 새 최대 HP보다 1 낮은 생존과 동일한 사망")
+       for index in range(2, 11)},
+    **{f"weapon.{weapon}.base.{index:02}@1": (family, boundary)
+       for weapon in ("bible", "jawbone", "sling", "moses_staff", "daniel_lion",
+                      "fire_pillar", "cross", "wilderness_voice", "elijah_chariot")
+       for index, family, boundary in (
+           (1, "Mastery damage", "레벨1 첫 원본 피해 +10%p 및 이전/새 피해 사이의 처치"),
+           (2, "Mastery cadence", "레벨1 첫째/둘째 발동 간격 -5%p, 고정 틱 1개 오차"),
+           (3, "Mastery amount",
+            "첫 맥동 거리 2.99/3.30, 새 도달 3.59/3.61" if weapon == "wilderness_voice"
+            else "레벨1 첫 주기 0.75초 발동 수 1/2"),
+       ) if not (weapon == "sling" and index == 3)},
+
 }
 
 
