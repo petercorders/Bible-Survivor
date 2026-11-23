@@ -24,8 +24,6 @@ namespace BibleSurvivor.Unity.Editor
             AdamArtImporter.ValidateBuild();
             PlayerSettings.companyName = "BibleSurvivor";
             PlayerSettings.productName = "Adam Prototype";
-            PlayerSettings.defaultScreenWidth = 1100;
-            PlayerSettings.defaultScreenHeight = 720;
             PlayerSettings.fullScreenMode = UnityEngine.FullScreenMode.Windowed;
             PlayerSettings.resizableWindow = true;
             AssetDatabase.SaveAssets();
