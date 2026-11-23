@@ -2,133 +2,210 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    // Temporary composition using the existing Genesis frontispiece, clay/ink tones and actor sprite.
+    // Technical compositions use the frontispiece palette and existing sprite artwork.
     internal static class AdamCinematicArt
     {
         static readonly Color Ink = new Color32(20, 25, 34, 255);
         static readonly Color Night = new Color32(42, 58, 106, 255);
         static readonly Color Lapis = new Color32(64, 88, 150, 255);
-        static readonly Color Water = new Color32(42, 58, 106, 255);
-        static readonly Color Rim = new Color32(138, 166, 214, 255);
+        static readonly Color Water = new Color32(92, 122, 188, 255);
+        static readonly Color Pale = new Color32(138, 166, 214, 255);
         static readonly Color Ochre = new Color32(132, 98, 74, 255);
+        static readonly Color Clay = new Color32(58, 42, 44, 255);
         static readonly Color Gold = new Color32(255, 232, 160, 255);
         static readonly Color Moss = new Color32(56, 84, 44, 255);
         static readonly Color Leaf = new Color32(98, 128, 58, 255);
 
-        public static bool Available => AdamVisualQualityArt.TryGetClip(AdamBookTitle.Horizon, out _) &&
-            AdamVisualQualityArt.TryGetClip(AdamBookTitle.Crest, out _);
+        public static bool Available => AdamVisualQualityArt.TryGetClip(AdamBookTitle.Horizon, out _);
 
-        public static void Draw(AdamCinematic scene, Sprite horizon, Sprite figure, bool motion)
+        public static void Draw(AdamCinematic scene, Sprite horizon, Sprite figure, Sprite scroll, bool motion)
         {
-            int day = scene.Current.day;
-            int beat = motion && day != 7 ? Mathf.FloorToInt(scene.Elapsed * 8) : 0;
-            if (day == 0)
+            int beat = motion ? Mathf.FloorToInt(scene.CutElapsed * 8) : 0;
+            switch (scene.Current.day)
             {
-                DrawEnding(scene.CurrentIndex == 1, horizon, figure, beat);
-                return;
+                case 1: FirstLight(beat, motion); break;
+                case 2: SkyAndWater(beat); break;
+                case 3: LandAndPlants(beat, motion); break;
+                case 4: LightsInTheSky(horizon, beat); break;
+                case 5: FishAndBirds(beat); break;
+                case 6: LandAnimals(beat); break;
+                default: DrawEnding(scene.CurrentIndex == 1, figure, scroll); break;
             }
+        }
 
+        static void FirstLight(int beat, bool motion)
+        {
+            Fill(0, 0, 480, 156, Ink);
+            var opening = motion ? 124 + beat * 8 : 220;
+            Fill(480 - opening, 0, opening, 156, Night);
+            Fill(480 - opening + 26, 0, opening - 26, 156, Lapis);
+            Fill(480 - opening + 60, 0, opening - 60, 156, Pale);
+            Fill(480 - opening + 92, 0, opening - 92, 156, Gold);
+            Fill(0, 156, 480, 114, Night);
+            Fill(480 - opening + 16, 156, opening - 16, 4, Gold);
+            Waves(170, beat, Pale);
+            DrawEdenSeal(new Vector2(24, 213), 1);
+        }
+
+        static void SkyAndWater(int beat)
+        {
+            Fill(0, 0, 480, 142, Pale);
+            for (var i = 0; i < 4; i++)
+            {
+                var x = 20 + i * 109 + beat % 12;
+                var y = 54 + i % 2 * 22;
+                Fill(x, y, 76, 11, Gold);
+                Fill(x + 12, y - 12, 45, 15, Gold);
+                Fill(x + 22, y - 18, 20, 8, Gold);
+            }
+            Fill(0, 140, 480, 6, Gold);
+            Fill(0, 146, 480, 124, Lapis);
+            Waves(171, beat, Pale);
+        }
+
+        static void LandAndPlants(int beat, bool motion)
+        {
+            Fill(0, 0, 480, 106, Pale);
+            Fill(0, 106, 480, 164, Moss);
+            Fill(0, 130, 480, 24, Leaf);
+            DrawRiver();
+            var growth = motion ? Mathf.Min(14, beat) : 14;
+            Tree(104, 185, growth);
+            Tree(176, 162, growth);
+            Tree(332, 179, growth);
+            Tree(407, 205, growth);
+        }
+
+        static void LightsInTheSky(Sprite horizon, int beat)
+        {
+            Fill(0, 0, 480, 270, Night);
+            Fill(248, 0, 232, 150, Lapis);
+            for (var i = 0; i < 13; i++)
+                Fill(27 + i * 15, 37 + i * 17 % 82, 2 + i % 3, 2 + i % 3, Pale);
+            var moonY = 49 + beat / 3;
+            Fill(77, moonY, 23, 32, Pale);
+            Fill(70, moonY + 6, 38, 20, Pale);
+            Fill(85, moonY - 3, 25, 24, Night);
+            AdamArt.Blit(horizon, new Rect(40, 126, 400, 55));
+            Fill(0, 181, 480, 89, Moss);
+        }
+
+        static void FishAndBirds(int beat)
+        {
+            Fill(0, 0, 480, 100, Pale);
+            Fill(0, 100, 480, 4, Gold);
+            Fill(0, 104, 480, 166, Lapis);
+            Fill(0, 116, 480, 36, Water);
+            Waves(121, beat, Pale);
+            for (var i = 0; i < 5; i++)
+            {
+                var x = 40 + i * 77 + beat;
+                var y = 168 + i % 2 * 37;
+                Fill(x, y, 24, 11, Pale);
+                Fill(x + 3, y - 3, 15, 17, Pale);
+                Fill(x - 6, y - 1, 7, 13, Water);
+                Fill(x + 18, y + 3, 2, 2, Night);
+                var birdX = 71 + i * 67 + beat;
+                var birdY = 47 + i % 2 * 20;
+                Fill(birdX, birdY - 6, 9, 4, Ink);
+                Fill(birdX + 9, birdY - 2, 8, 4, Ink);
+                Fill(birdX + 17, birdY - 6, 9, 4, Ink);
+            }
+        }
+
+        static void LandAnimals(int beat)
+        {
+            Fill(0, 0, 480, 113, Gold);
+            Fill(0, 113, 480, 157, Leaf);
+            Fill(0, 142, 480, 128, Moss);
+            Tree(72, 150, 14);
+            Tree(416, 153, 14);
+            DrawRiver();
+            Animal(99 + beat, 170, 2, Clay, beat);
+            Animal(267 + beat, 179, 2, Ochre, beat);
+            Animal(352 + beat, 201, 1, Gold, beat);
+        }
+
+        static void DrawEnding(bool last, Sprite figure, Sprite scroll)
+        {
             Fill(0, 0, 480, 270, Ink);
-            Fill(0, 15, 480, 136, day >= 2 ? Lapis : Night);
-            // The first cut starts with a visible, slowly opening break in the darkness.
-            if (day == 1)
+            Fill(0, 84, 480, 186, Clay);
+            for (var i = 0; i < 6; i++)
+                Fill(28 + i * 14, 125 + i * 18, 424 - i * 28, 2, Ochre);
+            for (var i = 0; i < 4; i++)
             {
-                var glow = 28 + (motion ? Mathf.Min(80, beat * 4) : 50);
-                Fill(240 - glow, 138, glow * 2, 3, Gold);
-                Fill(240 - glow / 2, 135, glow, 3, Ochre);
+                var x = 35 + i * 44;
+                Pillar(x, 74 + i * 4);
+                Pillar(425 - i * 44, 74 + i * 4);
             }
-            if (day >= 2)
+            if (!last)
             {
-                Fill(0, 126, 480, 25, Night);
-                Fill(0, 145, 480, 2, Rim);
+                Figure(figure, 210, 117);
+                Figure(figure, 241, 132, true);
+                Figure(figure, 272, 128, true);
             }
-            if (day >= 3)
+            else
             {
-                if (day >= 4) AdamArt.Blit(horizon, new Rect(40, 101, 400, 55));
-                else
-                {
-                    Fill(0, 144, 480, 11, Moss);
-                    Tree(128, 151, beat);
-                    Tree(307, 152, beat);
-                }
-                Fill(0, 155, 480, 23, Moss);
-                for (var i = 0; i < 16; i++)
-                {
-                    var x = 14 + i * 29;
-                    Fill(x, 158 + i % 4 * 3, 2, 7, Night);
-                    Fill(x - 2, 157 + i % 4 * 3, 6, 2, Leaf);
-                }
+                Fill(396, 176, 37, 6, Ochre);
+                Fill(401, 182, 26, 8, Ink);
+                AdamArt.Blit(scroll, new Rect(408, 162, 16, 16));
             }
-            if (day >= 4)
-            {
-                Fill(0, 17, 186, 84, Night);
-                for (var i = 0; i < 12; i++)
-                    Fill(14 + i * 13, 26 + i * 17 % 65, 2, 2, Rim);
-                Fill(75, 52 + beat % 4, 13, 13, Rim);
-                Fill(80, 50 + beat % 4, 11, 11, Night);
-            }
+        }
 
-            Fill(0, day >= 3 ? 178 : 151, 480, 119, Water);
+        static void Pillar(int x, int y)
+        {
+            Fill(x - 6, y, 23, 7, Clay);
+            Fill(x, y + 7, 12, 91, Ochre);
+            Fill(x + 2, y + 7, 2, 91, Clay);
+            Fill(x - 6, y + 98, 23, 7, Ink);
+        }
+
+        public static void DrawEdenSeal(Vector2 origin, int scale)
+        {
+            void Stamp(int x, int y, int w, int h, Color color) =>
+                AdamHud.Fill(new Rect(origin.x + x * scale, origin.y + y * scale, w * scale, h * scale),
+                    AdamHud.GuiColor(color));
+            Stamp(0, 4, 16, 11, Clay);
+            Stamp(2, 1, 12, 13, Clay);
+            Stamp(2, 5, 12, 8, Ochre);
+            Stamp(7, 5, 2, 7, Ink);
+            Stamp(5, 4, 6, 4, Moss);
+            Stamp(6, 3, 4, 2, Leaf);
+        }
+
+        static void Waves(int y, int beat, Color edge)
+        {
             for (var row = 0; row < 3; row++)
             for (var i = 0; i < 8; i++)
             {
                 var x = 8 + (i * 59 + row * 19 + beat * 2) % 452;
-                Fill(x, 184 + row * 19, 10 + i % 4 * 4, 2, row == 0 ? Rim : Lapis);
-            }
-            if (day >= 5)
-            {
-                for (var i = 0; i < 5; i++)
-                {
-                    var fish = 74 + i * 22 + beat * 2;
-                    Fill(fish, 208 + i % 2 * 7, 9, 3, Rim);
-                    Fill(fish - 3, 207 + i % 2 * 7, 3, 5, Lapis);
-                    var bird = 208 + i * 20 + beat;
-                    Fill(bird, 64 + i % 2 * 7, 5, 2, Ink);
-                    Fill(bird + 5, 66 + i % 2 * 7, 4, 2, Ink);
-                    Fill(bird + 9, 64 + i % 2 * 7, 5, 2, Ink);
-                }
-            }
-            if (day >= 6)
-            {
-                Animal(124, 157);
-                Animal(156, 160);
-                Figure(figure, 262, 142);
-                Figure(figure, 297, 143, true);
+                Fill(x, y + row * 21, 10 + i % 4 * 4, 2, row == 0 ? edge : Water);
             }
         }
 
-        static void DrawEnding(bool last, Sprite horizon, Sprite figure, int beat)
+        static void DrawRiver()
         {
-            Fill(0, 0, 480, 270, last ? Ink : Night);
-            AdamArt.Blit(horizon, new Rect(40, 92, 400, 55));
-            Fill(0, 149, 480, 121, last ? Ink : Water);
-            if (last)
-            {
-                AdamArt.Blit(AdamVisualQualityArt.Sprite(AdamBookTitle.Crest, 0), new Rect(224, 103, 32, 32));
-                Fill(186, 158, 108, 2, Ochre);
-                return;
-            }
-            Figure(figure, 218, 128);
-            Figure(figure, 261, 132, true);
-            Figure(figure, 290, 132, true);
-            for (var i = 0; i < 6; i++)
-                Fill(62 + i * 35 + beat % 16, 164 + i % 3 * 6, 7, 1, Ochre);
+            Fill(215, 141, 26, 44, Lapis);
+            Fill(210, 177, 37, 41, Lapis);
+            Fill(191, 211, 48, 31, Lapis);
+            Fill(176, 236, 50, 34, Lapis);
         }
 
-        static void Animal(int x, int y)
+        static void Animal(int x, int y, int scale, Color coat, int beat)
         {
-            Fill(x, y, 18, 7, Ink);
-            Fill(x + 16, y - 3, 7, 5, Ink);
-            Fill(x + 2, y + 7, 3, 6, Night);
-            Fill(x + 13, y + 7, 3, 6, Night);
+            var step = beat % 3;
+            Fill(x, y, 20 * scale, 10 * scale, coat);
+            Fill(x + 18 * scale, y - 4 * scale, 9 * scale, 7 * scale, coat);
+            Fill(x + (3 + step) * scale, y + 10 * scale, 3 * scale, 8 * scale, Clay);
+            Fill(x + (15 - step) * scale, y + 10 * scale, 3 * scale, 8 * scale, Clay);
         }
 
-        static void Tree(int x, int y, int beat)
+        static void Tree(int x, int y, int growth)
         {
-            var height = 13 + Mathf.Min(14, beat % 65);
-            Fill(x, y - height, 4, height, Ochre);
-            Fill(x - 7, y - height - 5, 18, 8, Moss);
-            Fill(x - 5, y - height - 9, 14, 7, Leaf);
+            var height = 15 + growth;
+            Fill(x, y - height, 6, height, Ochre);
+            Fill(x - 13, y - height - 8, 32, 13, Moss);
+            Fill(x - 9, y - height - 14, 25, 12, Leaf);
         }
 
         static void Figure(Sprite figure, int x, int y, bool flip = false)

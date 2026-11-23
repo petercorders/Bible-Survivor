@@ -33,7 +33,7 @@ namespace BibleSurvivor.Unity
             catch (System.ArgumentException) { return null; }
             bool creation = kind == AdamCinematicKind.Creation;
             var items = sequence?.cuts;
-            if (items == null || items.Length != (creation ? 7 : 2)) return null;
+            if (items == null || items.Length != (creation ? 6 : 2)) return null;
             var previousEnd = 0f;
             for (var i = 0; i < items.Length; i++)
             {
@@ -60,6 +60,7 @@ namespace BibleSurvivor.Unity
             }
         }
         public Cut Current => cuts[CurrentIndex];
+        public float CutElapsed => CurrentIndex == 0 ? Elapsed : Elapsed - cuts[CurrentIndex - 1].end;
 
         public bool Begin(AdamCinematicKind kind, string json)
         {

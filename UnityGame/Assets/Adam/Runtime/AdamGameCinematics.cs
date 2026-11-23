@@ -86,15 +86,19 @@ namespace BibleSurvivor.Unity
                 Vector3.one * (frame.width / AdamCinematic.Width));
             var horizon = AdamVisualQualityArt.Sprite(AdamBookTitle.Horizon, 0);
             var actor = art.Sprite("chr_player_layer-base_idle_32", 0);
-            AdamCinematicArt.Draw(cinematic, horizon, actor, ArtWorld.FeedbackEnabled);
+            var scroll = art.Sprite("ico_psv_scroll_static_16", 0);
+            AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, ArtWorld.FeedbackEnabled);
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one);
 
             var cut = cinematic.Current;
-            var heading = cut.day == 0 ? "창세기 마무리" : cut.day + "일 · 창조의 일곱 날";
             var subtitleTop = viewport.height - 100;
             AdamHud.Fill(new Rect(0, subtitleTop, viewport.width, 100), AdamHud.Ink0);
-            GUI.Label(new Rect(14, 10, viewport.width - 28, 34), heading,
-                HudText(20, AdamHud.Primary, false));
+            if (cut.day > 0)
+            {
+                AdamHud.Fill(new Rect(12, 10, 116, 32), AdamHud.Ink0);
+                GUI.Label(new Rect(20, 10, 100, 32), $"제{cut.day}일",
+                    HudText(20, AdamHud.Primary, false));
+            }
             var caption = HudText(20, AdamHud.Primary, false, TextAnchor.MiddleCenter);
             caption.wordWrap = true;
             GUI.Label(new Rect(12, subtitleTop, viewport.width - 24, 40), cut.caption, caption);
@@ -121,7 +125,7 @@ namespace BibleSurvivor.Unity
             var style = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 16 };
             var pointer = Event.current.isMouse;
             if (Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.Creation)) != null &&
-                GUI.Button(new Rect(origin.x, origin.y, 166, 34), "창조의 일곱 날 (F5)", style) && pointer)
+                GUI.Button(new Rect(origin.x, origin.y, 166, 34), "창조 이야기 (F5)", style) && pointer)
                 Replay(AdamCinematicKind.Creation);
             if (endingAllowed && CanReplayEnding &&
                 Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.GenesisEnding)) != null &&

@@ -577,6 +577,17 @@ namespace BibleSurvivor.Unity
             if(!SortieVisible||session==null)return;
             var identity=AdamSortieRibbon.Identity(Host.State?.Run?.RunId,session.RoundNumber);
             if(!sortie.Visible(identity,ArtWorld.FeedbackEnabled))return;
+            if (AdamBookTitle.Book(session.RoundNumber) == 0)
+            {
+                var corner = new Vector2(34, 136) - arenaPosition;
+                var sceneName = $"{AdamBookTitle.Local(session.RoundNumber)}라운드 · {AdamRoundPresentation.Name(session.RoundNumber)}";
+                var style = HudText(16, AdamHud.Secondary);
+                var size = style.CalcSize(new GUIContent(sceneName));
+                var marker = new Rect(corner.x, corner.y, size.x + 22, 29);
+                AdamHud.Fill(marker, AdamHud.Ink1);
+                GUI.Label(new Rect(marker.x + 11, marker.y, size.x, marker.height), sceneName, style);
+                return;
+            }
             var rect=AdamBookTitle.Ribbon(width);rect.position-=arenaPosition;
             var extent=AdamSortieRibbon.Extent(sortie.Elapsed,ArtWorld.FeedbackEnabled);
             if(extent<=0)return;

@@ -11,7 +11,7 @@ public sealed class AdamCinematicTests
         Assert.AreEqual(new Rect(x,y,frameWidth,frameHeight),AdamCinematic.Frame(new Rect(0,0,width,height)));
     }
 
-    [TestCase(true,7)]
+    [TestCase(true,6)]
     [TestCase(false,2)]
     public void ScriptPlaysEveryCutAndCompletes(bool creation,int expectedCuts)
     {
@@ -35,5 +35,7 @@ public sealed class AdamCinematicTests
         }
         Assert.IsFalse(replay.Active);
         Assert.AreEqual(expectedCuts,cuts.Count);
+        if (creation)
+            Assert.AreEqual("창 1:24–25", replay.Current.reference);
     }
 }

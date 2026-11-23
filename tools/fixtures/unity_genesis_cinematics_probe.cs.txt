@@ -127,7 +127,7 @@ namespace BibleSurvivor.Unity
             {
                 yield return WaitUntil(1.4f);
                 yield return SaveImage("r01-day1-light");
-                var cuts = new[]{ 3.1f,5.8f,8.6f,11.4f,14.2f,17.4f };
+                var cuts = new[]{ 3.1f,5.8f,8.6f,11.4f,16.2f };
                 for (int i=0; i<cuts.Length; i++)
                 {
                     yield return WaitUntil(cuts[i]);
