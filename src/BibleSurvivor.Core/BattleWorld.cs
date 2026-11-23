@@ -1666,7 +1666,7 @@ namespace BibleSurvivor.Core
                                 ExpandedJawboneLifecycle.BreakthroughRadius * ExpandedJawboneLifecycle.BreakthroughRadius,
                                 result.BreakthroughDamage);
                         }
-                        if (alive && Session.CanAttack && knockback > 0 && at != carried)
+                        if (evolved && alive && Session.CanAttack && knockback > 0 && at != carried)
                             lifecycle.RecordPush(ranks, SimulationTime, target.Key, accepted, at, carried, enemies,
                                 TargetRadius, ApplyJawbonePushHit);
                     }

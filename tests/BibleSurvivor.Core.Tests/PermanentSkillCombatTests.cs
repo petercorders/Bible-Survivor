@@ -941,6 +941,14 @@ internal static class PermanentSkillCombatTests
             });
         });
 
+        foreach (var weapon in new[] { "jawbone", "wilderness_voice" })
+            test($"Frozen {weapon} boss entry survives live expiry, reload, and R04 entry",
+                () => CheckBossEntryReceiptExpiry(weapon));
+
+        foreach (var evolved in new[] { false, true })
+            test($"Jawbone push collision respects the current form (evolved={evolved})",
+                () => CheckJawbonePushForm(evolved));
+
         test("Common critical first-hit bonus applies once per real originating volley", () =>
         {
             WithStore(store =>
@@ -1508,6 +1516,118 @@ internal static class PermanentSkillCombatTests
                     .Evolved(EvolutionRules.Sling).Amount);
             });
         });
+    }
+
+    private static void CheckJawbonePushForm(bool evolved)
+    {
+        WithStore(store =>
+        {
+            var state = ExpandedProfile(store, "weapon.jawbone.d.01", "weapon.jawbone.e.02");
+            var definition = new RoundDefinition(3, 40, 60, 25, new[]
+            {
+                new WaveDefinition(0, 60, new[] { new SpawnGroup("a1", 30, 400, 4) })
+            });
+            var session = StartJawboneThirdRound(state, definition);
+            if (evolved)
+            {
+                for (var level = 1; level < 8; level++) Check.True(session.Inventory.TryChoose("jawbone", false));
+                Check.True(session.Inventory.TryChoose("hair", true));
+                Check.True(session.Inventory.TryEvolve(EvolutionRules.Jawbone));
+            }
+            session.Advance(10);
+            var tuning = new BattleTuning { PlayerSpeed = .01 };
+            var speeds = CatalogReader.MonsterSpeeds("content/genesis/catalog.json");
+            var prepared = new BattleWorld(session, speeds, 7, tuning).Capture();
+            foreach (var enemy in prepared.Enemies) { enemy.X = 80; enemy.Y = 80; }
+            var pushed = prepared.Enemies[0];
+            pushed.X = .85f; pushed.Y = 0;
+            prepared.Enemies[1].X = 1.43f; prepared.Enemies[1].Y = 0;
+            var world = BattleWorld.Restore(session, speeds, prepared, tuning);
+            world.Advance(BattleWorld.FixedStep, Vector2.UnitX);
+
+            var snapshot = world.Capture();
+            Check.True(snapshot.Enemies.Single(enemy => enemy.Id == pushed.Id).X > pushed.X + .2f);
+            var lifecycle = snapshot.Weapons.Single(clock => clock.WeaponId == "jawbone").JawboneLifecycle!;
+            Check.Equal(evolved, lifecycle.NextPushAt.HasValue);
+            Check.True(lifecycle.Pushes == null);
+            state.Run!.World = snapshot;
+            store.Commit(state, state.Revision, "jawbone-push-form");
+            state = store.LoadConfirmed()!;
+            session = AdamSession.Resume(state, definition);
+            var restored = BattleWorld.Restore(session, speeds, state.Run!.World!, tuning);
+            world.Advance(.1, Vector2.UnitX);
+            restored.Advance(.1, Vector2.UnitX);
+            Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(restored.Capture()));
+        });
+    }
+
+    private static void CheckBossEntryReceiptExpiry(string weapon)
+    {
+        WithStore(store =>
+        {
+            var jawbone = weapon == "jawbone";
+            var state = ExpandedProfile(store, jawbone ? "weapon.jawbone.c.02" : "weapon.wilderness_voice.d.01");
+            const string catalog = "content/genesis/catalog.json";
+            var definition = CatalogReader.Round(catalog, 3);
+            var session = StartJawboneThirdRound(state, definition);
+            if (!jawbone) Check.True(session.Inventory.TryChoose(weapon, false));
+            var speeds = CatalogReader.MonsterSpeeds(catalog);
+            session.Advance(179.9);
+            var world = new BattleWorld(session, speeds, 7);
+            world.Advance(BattleWorld.FixedStep, Vector2.Zero);
+            var closing = world.Capture();
+            foreach (var enemy in closing.Enemies) enemy.X = 100;
+
+            var receipt = closing.Time + (jawbone ? -.2 : 3.5);
+            if (jawbone)
+                closing.Weapons.Single(clock => clock.WeaponId == weapon).JawboneLifecycle!.RapidKills =
+                    new List<double> { receipt };
+            else
+                closing.WildernessVoice!.NextWaitAt = receipt;
+            world = BattleWorld.Restore(session, speeds, closing);
+            world.Advance(.2, Vector2.Zero);
+            Check.Equal("boss_intro", session.Stage);
+            Check.Near(receipt, EntryReceipt(state));
+
+            world.Advance(7, Vector2.UnitY);
+            Check.Equal("boss", session.Stage);
+            state.Run!.World = world.Capture();
+            if (jawbone)
+                Check.True(state.Run.World.Weapons.Single(clock => clock.WeaponId == weapon)
+                    .JawboneLifecycle!.RapidKills == null);
+            else
+                Check.True(state.Run.World.WildernessVoice!.NextWaitAt == null);
+            Check.Near(receipt, EntryReceipt(state));
+            store.Commit(state, state.Revision, "boss-after-entry-receipt-expired");
+            state = store.LoadConfirmed()!;
+            Check.Near(receipt, EntryReceipt(state));
+            session = AdamSession.Resume(state, definition);
+            var restored = BattleWorld.Restore(session, speeds, state.Run!.World!);
+            world.Advance(.5, Vector2.UnitY);
+            restored.Advance(.5, Vector2.UnitY);
+            Check.Equal(JsonSerializer.Serialize(world.Capture()), JsonSerializer.Serialize(restored.Capture()));
+
+            session.Hit(session.BossRules!.BossActorId, session.Boss!.Health);
+            Check.True(session.ChooseBossReward(session.Boss.Reward!.RewardId, session.BossChoices[0].Id));
+            while (session.PendingChoices.Count > 0) Check.True(session.Choose(session.PendingChoices[0]));
+            Check.True(session.CompleteBossSettlement());
+            Check.Equal(4, session.StartNextRound(CatalogReader.Round(catalog, 4)).RoundNumber);
+            Check.True(state.Run.BossEntryJawboneLifecycle == null && state.Run.BossEntryVoiceState == null);
+
+            double EntryReceipt(GameSnapshot snapshot) => jawbone
+                ? snapshot.Run!.BossEntryJawboneLifecycle!.RapidKills!.Single()
+                : snapshot.Run!.BossEntryVoiceState!.NextWaitAt!.Value;
+        });
+    }
+
+    private static AdamSession StartJawboneThirdRound(GameSnapshot state, RoundDefinition third)
+    {
+        const string catalog = "content/genesis/catalog.json";
+        var session = new AdamSession(state, CatalogReader.Round(catalog, 1), "jawbone");
+        session.Advance(180);
+        session = session.StartNextRound(CatalogReader.Round(catalog, 2));
+        session.Advance(180);
+        return session.StartNextRound(third);
     }
 
     private static void PutDropAtPickupBoundary(GameSnapshot state, AdamSession session)

@@ -10,15 +10,26 @@ using UnityEngine.TestTools;
 
 public sealed class AdamParticlePlayTests
 {
-    static AdamHost Fixture(string path,int projectileCount=2,bool lethalLast=false)
+    internal static AdamHost Fixture(string path,int projectileCount=2,bool lethalLast=false,int impactsPerTick=0)
     {
         var store=new SaveStore(path);var host=new AdamHost(AdamCatalog.Load(),store);host.Start("sling");
         for(var i=0;i<20 && host.World.Capture().Enemies.Count<2;i++)host.Tick(.1);
         host.Checkpoint();var state=store.Load();var snapshot=state.Run.World;snapshot.PlayerX=100;snapshot.PlayerY=70;
-        foreach(var enemy in snapshot.Enemies){enemy.X=101;enemy.Y=70;}
+        for(var i=0;i<snapshot.Enemies.Count;i++)
+        {
+            snapshot.Enemies[i].X=101;
+            snapshot.Enemies[i].Y=lethalLast && i==1?73:70;
+        }
         snapshot.Projectiles.Clear();snapshot.NextProjectileId=projectileCount+1;
-        for(var i=1;i<=projectileCount;i++)snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=100.8f,Y=70,
-            VelocityX=(float)snapshot.Tuning.SlingSpeed,Lifetime=1,Damage=lethalLast && i==projectileCount?1000:.001,RemainingPierce=1,Radius=.1});
+        for(var i=1;i<=projectileCount;i++)
+        {
+            var lethal=lethalLast && i==projectileCount;
+            var delay=impactsPerTick>0?(i-1)/impactsPerTick:0;
+            // Spread the sweeps over real world ticks by advancing one world unit per tick.
+            snapshot.Projectiles.Add(new BattleProjectileState{Id=i,X=impactsPerTick>0?99.8f-delay:100.8f,
+                Y=lethal?73:70,VelocityX=impactsPerTick>0?60:(float)snapshot.Tuning.SlingSpeed,
+                Lifetime=impactsPerTick>0?.1:1,Damage=lethal?1000:.001,RemainingPierce=1,Radius=.1});
+        }
         snapshot.Weapons.Clear();snapshot.Weapons.Add(new BattleWeaponState{WeaponId="sling",NextCycle=100});
         store.Commit(state,state.Revision,Guid.NewGuid().ToString("N"));Assert.IsTrue(host.Reload(),host.Error);host.SetPaused(false);return host;
     }
@@ -45,14 +56,68 @@ public sealed class AdamParticlePlayTests
             host.SetSuspended(true);particles.Update(host,view,.1f);Assert.AreEqual(count,particles.ParticleCount);host.SetSuspended(false);
             view.FeedbackEnabled=false;particles.Update(host,view,0);Assert.Zero(particles.ParticleCount);view.FeedbackEnabled=true;particles.Update(host,view,0);Assert.Zero(particles.ParticleCount,"low effects cannot backlog replay");
             host.Checkpoint();host.Reload();view.Update(host,0);particles.Update(host,view,0);Assert.Zero(particles.ParticleCount);
-            var crowded=Fixture(Path.Combine(directory,"crowded.json"),41,true);view.Update(crowded,0);particles.Update(crowded,view,0);crowded.Tick(1d/60);view.Update(crowded,0);particles.Update(crowded,view,0);
-            Assert.Greater(particles.Dropped,0);Assert.AreEqual(72,particles.ParticleCount,"lethal burst must replace a lower priority burst in a saturated pool");Assert.LessOrEqual(particles.ParticleCount,AdamImpactParticles.Capacity);
-            crowded.Session.Damage(100000);view.Update(crowded,0);particles.Update(crowded,view,0);Assert.Zero(particles.ParticleCount,"terminal clears decoration before death clip/modal");
+            host.Session.Damage(100000);view.Update(host,0);particles.Update(host,view,0);
+            Assert.Zero(particles.ParticleCount,"terminal clears decoration before death clip/modal");
         }
         finally{particles.Dispose();Assert.AreEqual(oldMask,main.cullingMask);UnityEngine.Object.Destroy(main.gameObject);}
         yield return null;Assert.IsEmpty(UnityEngine.Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None).Where(p=>p.name.StartsWith("pooled burst ")));
         if(Directory.Exists(directory))Directory.Delete(directory,true);
     }
+    [Test] public void DenseWorldFrameKeepsItsLateLethalBurstWithinTheChipBudget()
+    {
+        CheckWorldImpactBudget(saturatePool:false);
+    }
+
+    [Test] public void ConsecutiveWorldFramesFillThePoolAndLethalBurstReplacesAnOrdinaryBurst()
+    {
+        CheckWorldImpactBudget(saturatePool:true);
+    }
+
+    static void CheckWorldImpactBudget(bool saturatePool)
+    {
+        var directory=Path.Combine(Path.GetTempPath(),"adam-impact-budget-"+Guid.NewGuid().ToString("N"));
+        using var view=new AdamArtWorld();
+        using var particles=new AdamImpactParticles();
+        try
+        {
+            var host=Fixture(Path.Combine(directory,"save.json"),saturatePool?20:41,true,saturatePool?4:0);
+            view.Update(host,0);particles.Update(host,view,0);
+            if(saturatePool)
+            {
+                for(var frame=1;frame<=4;frame++)
+                {
+                    AdvanceImpactFrame(host,view,particles);
+                    Assert.AreEqual(4,view.FrameImpacts.Count(impact=>impact.Cause=="sling"&&!impact.Killed));
+                    Assert.AreEqual(frame*16,particles.ParticleCount);
+                    Assert.Zero(particles.Dropped);
+                }
+            }
+
+            var emitted=particles.EmittedImpacts;
+            AdvanceImpactFrame(host,view,particles);
+            var hits=view.FrameImpacts.Where(impact=>impact.Cause=="sling").ToArray();
+            Assert.AreEqual(saturatePool?4:41,hits.Length);
+            Assert.IsTrue(hits[^1].Killed,"the real killing sweep comes after ordinary impacts");
+            Assert.IsTrue(view.Effects.Any(effect=>effect.Active&&effect.Clip=="fx_enemy-death_burst_32"));
+            var slots=particles.OverlayCamera.transform.parent.GetComponentsInChildren<ParticleSystem>();
+            var deathPoint=hits[^1].Position;
+            Assert.IsTrue(slots.Any(slot=>slot.particleCount>0&&
+                Vector2.Distance(slot.GetComponent<ParticleSystemRenderer>().bounds.center,
+                    new Vector2(deathPoint.X,deathPoint.Y))<.01f),"a chip burst must show at the killed enemy");
+            Assert.AreEqual(saturatePool?1:4,particles.EmittedImpacts-emitted);
+            Assert.AreEqual(saturatePool?64:16,particles.ParticleCount);
+            Assert.AreEqual(saturatePool?3:0,particles.Dropped);
+        }
+        finally { if(Directory.Exists(directory))Directory.Delete(directory,true); }
+    }
+
+    static void AdvanceImpactFrame(AdamHost host,AdamArtWorld view,AdamImpactParticles particles)
+    {
+        host.Tick(BattleWorld.FixedStep);
+        view.Update(host,0);
+        particles.Update(host,view,(float)BattleWorld.FixedStep);
+    }
+
     [UnityTest] public IEnumerator LivePrepareThenClearDisablesCameraAndNextRealBurstReenablesSameCamera() => ClearCameraRegression(false);
     [UnityTest] public IEnumerator NoRunReloadSkipsPrepareButStillDisablesCameraAndNextWorldReenablesIt() => ClearCameraRegression(true);
     static IEnumerator ClearCameraRegression(bool noRunReload)

@@ -251,7 +251,9 @@ namespace BibleSurvivor.Core
                     if (Run.Boss == null || !Run.Weapons.ContainsKey("jawbone") || jawboneEntry.Pushes != null ||
                         !JawboneLifecycleMatchesRanks(jawboneEntry, Run.PermanentSnapshot))
                         throw new InvalidDataException("Invalid Jawbone lifecycle at boss entry");
-                    jawboneEntry.Validate(combatTime, Run.BossEntryJawboneCycle, Run.Forms?.ContainsKey("jawbone") == true);
+                    // These receipts describe the frozen handoff from the normal wave.
+                    jawboneEntry.Validate(Run.Boss.NormalEndedAt, Run.BossEntryJawboneCycle,
+                        Run.Forms?.ContainsKey("jawbone") == true);
                 }
                 if (Run.BossEntryVoiceState is { } voiceEntry)
                 {
@@ -262,7 +264,7 @@ namespace BibleSurvivor.Core
                         voiceEntry.Evolved && Run.Forms?.ContainsKey("wilderness_voice") != true ||
                         !VoiceReceiptsMatchRanks(voiceEntry, Run.PermanentSnapshot))
                         throw new InvalidDataException("Invalid Wilderness Voice state at boss entry");
-                    voiceEntry.Validate(combatTime, voiceEntry.Evolved);
+                    voiceEntry.Validate(Run.Boss.NormalEndedAt, voiceEntry.Evolved);
                 }
                 if (!Finite(Run.NoHitCarrySeconds) || Run.NoHitCarrySeconds < 0 || Run.NoHitCarrySeconds > 10 ||
                     Run.NoHitCarrySeconds > 0 && PermanentRules.Rank(Run.PermanentSnapshot, "common.tempo.07") == 0 ||

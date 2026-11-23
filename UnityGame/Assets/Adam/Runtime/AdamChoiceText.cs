@@ -21,6 +21,13 @@ namespace BibleSurvivor.Unity
         public bool IsCurrency => Id!=null && Id.StartsWith(AdamSession.GrowthGoldChoicePrefix,StringComparison.Ordinal);
         public string Card(int slot) => IsCurrency ? $"{slot + 1}. {Name}  |  {Kind}\n{Effect}" : $"{slot + 1}. {Name}  |  {Kind} · {(CurrentLevel == 0 ? "신규" : "강화")} {CurrentLevel} → {NextLevel}/{Maximum}\n{Effect}";
         public static string StartCard(string id,int slot,bool newChallenge=false)=>$"{slot+1}. "+(newChallenge?"새 도전 · ":"")+ItemName(id);
+        public static string StartWeaponEffect(string id) => id switch
+        {
+            "bible" => "주변 회전",
+            "jawbone" => "전방 120° 타격",
+            "sling" => "가까운 적 자동 조준",
+            _ => throw new ArgumentOutOfRangeException(nameof(id))
+        };
         public const string ExodusStartCard="출애굽기 시작 (Enter)";
         // Four actions fit the existing 410px panel at the supported 660x440 minimum.
         public static Rect ChapterAction(Rect panel,int action)
@@ -71,7 +78,7 @@ namespace BibleSurvivor.Unity
                 var next = WeaponRules.Get(id, current + 1);
                 if (current == 0)
                 {
-                    var attack = id == "bible" ? "주변 회전" : id == "jawbone" ? "전방 120° 타격" : "가까운 적 자동 조준";
+                    var attack = StartWeaponEffect(id);
                     result.Effect = $"{attack} · 기본 피해 {next.Damage} · 수 {next.Amount} · 대기 {N(next.Cooldown)}초";
                 }
                 else
