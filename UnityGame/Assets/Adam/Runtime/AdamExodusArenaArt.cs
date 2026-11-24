@@ -30,18 +30,18 @@ namespace BibleSurvivor.Unity
             if (round == 10)
             {
                 var east = new Stamp(projection, East);
-                if (west.Overlaps(projection.TextureRect)) BrickKiln(west);
-                if (east.Overlaps(projection.TextureRect)) BrickStack(east);
+                if (west.Overlaps(projection.TextureRect) && !west.TryDraw(AdamExodusPropArt.Kiln)) BrickKiln(west);
+                if (east.Overlaps(projection.TextureRect) && !east.TryDraw(AdamExodusPropArt.Stack)) BrickStack(east);
                 return;
             }
             if (!west.Overlaps(projection.TextureRect)) return;
             switch (round)
             {
-                case 11: ReedBank(west); break;
-                case 12: SeaPassage(west); break;
-                case 13: Elim(west); break;
-                case 14: Sinai(west); break;
-                case 15: Tabernacle(west); break;
+                case 11: if (!west.TryDraw(AdamExodusPropArt.Basket)) ReedBank(west); break;
+                case 12: if (!west.TryDraw(AdamExodusPropArt.Passage)) SeaPassage(west); break;
+                case 13: if (!west.TryDraw(AdamExodusPropArt.Springs)) Elim(west); break;
+                case 14: if (!west.TryDraw(AdamExodusPropArt.Foothill)) Sinai(west); break;
+                case 15: if (!west.TryDraw(AdamExodusPropArt.Court)) Tabernacle(west); break;
             }
         }
 
@@ -173,7 +173,10 @@ namespace BibleSurvivor.Unity
                 scale = projection.Scale;
             }
 
-            public bool Overlaps(Rect viewport) => Rect(-36, -22, 72, 42).Overlaps(viewport);
+            Rect Slot => AdamExodusPropArt.Destination(origin, scale);
+
+            public bool Overlaps(Rect viewport) => Slot.Overlaps(viewport);
+            public bool TryDraw(string id) => AdamExodusPropArt.TryDraw(id, Slot);
 
             Rect Rect(int x, int y, int width, int height) =>
                 new Rect(origin.x + x * scale, origin.y + y * scale, width * scale, height * scale);
