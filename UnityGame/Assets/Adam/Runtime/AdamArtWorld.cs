@@ -321,11 +321,14 @@ namespace BibleSurvivor.Unity
             }
             return latest;
         }
-        public void DrawBackdrop(AdamArt art, Rect frame, int round)
+        public void DrawBackdrop(AdamArt art, Rect frame, int round) =>
+            DrawBackdrop(art, frame, round, Vector2.zero, true);
+
+        internal void DrawBackdrop(AdamArt art, Rect frame, int round, Vector2 origin, bool coverFrame)
         {
             GUI.BeginGroup(frame);
-            DrawTerrain(art, new AdamWorldProjection(frame, Vector2.zero), round, true);
-            GUI.EndGroup();
+            try { DrawTerrain(art, new AdamWorldProjection(frame, origin), round, coverFrame); }
+            finally { GUI.EndGroup(); }
         }
 
         void DrawTerrain(AdamArt art, AdamWorldProjection projection, int round, bool coverFrame)

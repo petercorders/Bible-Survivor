@@ -8,6 +8,7 @@ namespace BibleSurvivor.Unity
     {
         readonly AdamCinematic cinematic = new AdamCinematic();
         readonly AdamCuratedCinematicArt curatedArt = new AdamCuratedCinematicArt();
+        readonly AdamGenesisCinematicMedia genesisCinematicMedia = new AdamGenesisCinematicMedia();
         bool releaseCinematicControls;
         int cinematicExitFrame = -1;
         public bool CinematicPlaying => cinematic.Active;
@@ -32,6 +33,7 @@ namespace BibleSurvivor.Unity
             var script = Resources.Load<TextAsset>(spec.Resource);
             if (!cinematic.Begin(kind, script?.text)) return false;
             curatedArt.Begin(spec, cinematic);
+            if (!spec.IsCurated) genesisCinematicMedia.Begin(kind, AdamCinematic.Read(kind, script.text));
             commandFrame = Time.frameCount;
             inputReleased = false;
             touchStarted = false;
@@ -85,6 +87,7 @@ namespace BibleSurvivor.Unity
         void FinishCinematic(bool pointer = false)
         {
             cinematic.End();
+            genesisCinematicMedia.Clear();
             curatedArt.Clear();
             cinematicExitFrame = commandFrame = Time.frameCount;
             var keys = Keyboard.current;
@@ -182,6 +185,18 @@ namespace BibleSurvivor.Unity
                     artLabel = "컷신 시제품";
                 }
             }
+            else if (genesisCinematicMedia.TryGetFrame(cinematic, motion, viewport, out var genesisMedia))
+            {
+                if (genesisMedia.LiveTerrain)
+                    DrawGenesisCinematicTerrain(viewport, frame, mobile, physicalFrame, genesisMedia.FullTerrain);
+                var tint = GUI.color;
+                try
+                {
+                    GUI.color = Color.white;
+                    GUI.DrawTextureWithTexCoords(sourceRect, genesisMedia.Texture, genesisMedia.Uv);
+                }
+                finally { GUI.color = tint; }
+            }
             else if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
                 ArtWorld.DrawBackdrop(art, sourceRect, ExodusContent.GlobalRoundNumber);
             else
@@ -245,6 +260,32 @@ namespace BibleSurvivor.Unity
             ArtWorld.DrawBackdrop(art, arena, round);
             GUI.EndGroup();
             GUI.matrix = prior;
+        }
+
+        void DrawGenesisCinematicTerrain(Rect viewport, Rect frame, bool mobile, Rect? physicalFrame, bool fullTerrain)
+        {
+            var prior = GUI.matrix;
+            var scale = mobile ? AdamMobileLayout.Scale(viewport) : AdamChoiceText.ScreenScale(viewport.width, viewport.height);
+            GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, new Vector3(scale, scale, 1));
+            var arena = mobile ? AdamMobileLayout.FullFrame(viewport, physicalFrame ?? viewport) :
+                Arena(viewport.width / scale, viewport.height / scale);
+            if (!fullTerrain)
+            {
+                // Letterbox gutters stay dark until the authored mask has fully revealed the arena.
+                var clip = new Rect((frame.position - viewport.position) / scale, frame.size / scale);
+                GUI.BeginGroup(clip);
+                arena.position -= clip.position;
+            }
+            try
+            {
+                // A replay can start from a later save; use the opening camera and round.
+                ArtWorld.DrawBackdrop(art, arena, ExodusContent.GlobalRoundNumber, Vector2.zero, mobile);
+            }
+            finally
+            {
+                if (!fullTerrain) GUI.EndGroup();
+                GUI.matrix = prior;
+            }
         }
 
         internal static float SubtitleHeight(Rect viewport, Rect frame) =>

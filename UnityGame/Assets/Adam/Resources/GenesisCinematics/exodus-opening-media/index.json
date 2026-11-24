@@ -1,0 +1,18 @@
+{
+  "designVersion": 23,
+  "status": "approved",
+  "shots": [
+    {
+      "frames": 48,
+      "liveTerrain": false
+    },
+    {
+      "frames": 72,
+      "liveTerrain": false
+    },
+    {
+      "frames": 48,
+      "liveTerrain": true
+    }
+  ]
+}
