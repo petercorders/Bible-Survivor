@@ -124,19 +124,19 @@ namespace BibleSurvivor.Unity
                     }
                     // IMGUI's texture pass and the Linear framebuffer each encode gamma. Keep source PNGs intact;
                     // a bounded owned float copy cancels those two encodes without changing alpha or registration.
-                    if(QualitySettings.activeColorSpace==ColorSpace.Linear)frames=PresentationFrames(frames);
+                    if(QualitySettings.activeColorSpace==ColorSpace.Linear)frames=PresentationFrames(frames,ownedPresentation);
                     nextClips.Add(c.id,c);nextSprites.Add(c.id,frames);
                 }
             }
             sprites=nextSprites;clips=nextClips;
         }
         public static Color PresentationPixel(Color source,bool linear)=>linear?source.linear.linear:source;
-        static Sprite[] PresentationFrames(Sprite[] source)
+        internal static Sprite[] PresentationFrames(Sprite[] source,List<UnityEngine.Object> owner)
         {
             var original=source[0].texture;var raw=original.GetPixels32();var pixels=new Color[raw.Length];for(var i=0;i<pixels.Length;i++)pixels[i]=PresentationPixel((Color)raw[i],true);
             var texture=new Texture2D(original.width,original.height,TextureFormat.RGBAFloat,false,true){name=original.name+" owned IMGUI pixels",filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp,hideFlags=HideFlags.HideAndDontSave};
-            texture.SetPixels(pixels);texture.Apply(false,false);ownedPresentation.Add(texture);var result=new Sprite[source.Length];
-            for(var i=0;i<source.Length;i++){var s=source[i];var item=UnityEngine.Sprite.Create(texture,s.rect,new Vector2(s.pivot.x/s.rect.width,s.pivot.y/s.rect.height),s.pixelsPerUnit,0,SpriteMeshType.FullRect,s.border);item.name=s.name;item.hideFlags=HideFlags.HideAndDontSave;ownedPresentation.Add(item);result[i]=item;}return result;
+            texture.SetPixels(pixels);texture.Apply(false,false);owner.Add(texture);var result=new Sprite[source.Length];
+            for(var i=0;i<source.Length;i++){var s=source[i];var item=UnityEngine.Sprite.Create(texture,s.rect,new Vector2(s.pivot.x/s.rect.width,s.pivot.y/s.rect.height),s.pixelsPerUnit,0,SpriteMeshType.FullRect,s.border);item.name=s.name;item.hideFlags=HideFlags.HideAndDontSave;owner.Add(item);result[i]=item;}return result;
         }
         public static void Release()
         {

@@ -68,6 +68,7 @@ namespace BibleSurvivor.Unity
         }
         public AdamArtClip Clip(string id) => clips[id];
         public Sprite Sprite(string id, int frame) => sprites[id][Mathf.Clamp(frame, 0, clips[id].frames - 1)];
+        internal Sprite FindSprite(string id) => sprites.TryGetValue(id, out var frames) ? frames[0] : null;
         public static Rect PlacedRect(AdamArtClip clip, Vector2 feet, int scale) => new Rect(
             Mathf.Round(feet.x) - clip.pivotX * scale, Mathf.Round(feet.y) - (clip.height - clip.pivotY) * scale,
             clip.width * scale, clip.height * scale);

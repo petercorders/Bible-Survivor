@@ -88,6 +88,7 @@ namespace BibleSurvivor.Unity
             releaseCinematicControls = false;
             cinematicExitFrame = -1;
             replaySelection = -1;
+            genesisStoryRound = 0;
             newChallengeSource=null;
             focusNewChallenge=false;
             sortie.Reset();sortieSession=host.Session;inputReleased=false;
@@ -145,7 +146,9 @@ namespace BibleSurvivor.Unity
             var keys = Keyboard.current;
             if(keys?.f6Key.wasPressedThisFrame == true) ArtWorld.FeedbackEnabled = !ArtWorld.FeedbackEnabled;
             if (BeginSavedCinematic() && !CinematicPlaying) return;
-            if (UpdateCinematic(keys) || UpdateCinematicReplay(keys)) return;
+            if (UpdateCinematic(keys)) return;
+            if (genesisStoryRound != 0 && HandleGenesisStoryInput(keys)) return;
+            if (UpdateCinematicReplay(keys) || HandleGenesisStoryInput(keys)) return;
             if (keys?.f5Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.Creation)) return;
             if (keys?.f10Key.wasPressedThisFrame == true && Replay(AdamCinematicKind.GenesisEnding)) return;
             if (HandlePermanentSkillInput(keys))
@@ -398,6 +401,11 @@ namespace BibleSurvivor.Unity
             var instruction = new GUIStyle(label) { font = mobile?fonts.Body:fonts.Small, fontSize = mobile ? 20 : 16, wordWrap = true, normal = { textColor = AdamHud.Secondary } };
             if (Host == null)
             { GUI.Label(new Rect(30,120,width-60,160),startupError ?? "저장 기록을 불러오는 중…",label);return; }
+            if (genesisStoryRound != 0)
+            {
+                DrawGenesisStory(width, height);
+                return;
+            }
             if (Host.PermanentSkillsOpen)
             {
                 DrawPermanentSkills(width, height);
@@ -522,6 +530,7 @@ namespace BibleSurvivor.Unity
             {
                 DrawPauseOverlay(width, height);
             }
+            DrawGenesisStoryEntry(width);
         }
         void DrawBookActions(float width,float height,bool mobile)
         {
@@ -603,13 +612,15 @@ namespace BibleSurvivor.Unity
             if(!SortieVisible||session==null)return;
             var identity=AdamSortieRibbon.Identity(Host.State?.Run?.RunId,session.RoundNumber);
             if(!sortie.Visible(identity,ArtWorld.FeedbackEnabled))return;
-            if (AdamBookTitle.Book(session.RoundNumber) == 0)
+            var book = AdamBookTitle.Book(session.RoundNumber);
+            if (book is 0 or 1)
             {
-                var corner = new Vector2(34, 136) - arenaPosition;
                 var sceneName = $"{AdamBookTitle.Local(session.RoundNumber)}라운드 · {AdamRoundPresentation.Name(session.RoundNumber)}";
                 var style = HudText(16, AdamHud.Secondary);
                 var size = style.CalcSize(new GUIContent(sceneName));
-                var marker = new Rect(corner.x, corner.y, size.x + 22, 29);
+                var markerWidth = size.x + 22;
+                var corner = new Vector2(book == 0 ? 34 : width - 34 - markerWidth, 136) - arenaPosition;
+                var marker = new Rect(corner.x, corner.y, markerWidth, 29);
                 AdamHud.Fill(marker, AdamHud.Ink1);
                 GUI.Label(new Rect(marker.x + 11, marker.y, size.x, marker.height), sceneName, style);
                 return;

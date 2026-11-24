@@ -476,7 +476,7 @@ public sealed class AdamRoundPlayTests
         yield return null; // Close the new-challenge prompt opened by the final Enter.
         Keys();
         yield return null;
-        Keys(Key.F4);
+        Keys(Key.F3);
         yield return null;
         Keys(Key.RightArrow);
         yield return null;

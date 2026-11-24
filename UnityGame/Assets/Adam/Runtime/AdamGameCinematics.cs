@@ -46,7 +46,7 @@ namespace BibleSurvivor.Unity
         {
             return (keys != null && (keys.enterKey.isPressed || keys.escapeKey.isPressed ||
                 keys.spaceKey.isPressed || keys.digit1Key.isPressed || keys.digit2Key.isPressed ||
-                keys.digit3Key.isPressed || keys.f4Key.isPressed || keys.f5Key.isPressed || keys.f10Key.isPressed ||
+                keys.digit3Key.isPressed || keys.f3Key.isPressed || keys.f4Key.isPressed || keys.f5Key.isPressed || keys.f10Key.isPressed ||
                 keys.upArrowKey.isPressed || keys.downArrowKey.isPressed ||
                 keys.leftArrowKey.isPressed || keys.rightArrowKey.isPressed ||
                 keys.wKey.isPressed || keys.aKey.isPressed || keys.sKey.isPressed || keys.dKey.isPressed)) ||
@@ -131,7 +131,7 @@ namespace BibleSurvivor.Unity
             var pad = Gamepad.current;
             if (replaySelection < 0)
             {
-                if (keys?.f4Key.wasPressedThisFrame != true && pad?.selectButton.wasPressedThisFrame != true)
+                if (keys?.f3Key.wasPressedThisFrame != true && pad?.selectButton.wasPressedThisFrame != true)
                     return false;
                 return OpenCinematicReplay();
             }
@@ -304,7 +304,7 @@ namespace BibleSurvivor.Unity
             if (!CanReplayCinematics) return;
             var style = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 16 };
             var pointer = Event.current.isMouse;
-            if (GUI.Button(new Rect(origin.x, origin.y, 166, 34), "컷신 다시 보기 (F4)", style) && pointer)
+            if (GUI.Button(new Rect(origin.x, origin.y, 166, 34), "컷신 다시 보기 (F3)", style) && pointer)
                 OpenCinematicReplay();
         }
 
