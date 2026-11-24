@@ -2,7 +2,72 @@ using UnityEngine;
 
 namespace BibleSurvivor.Unity
 {
-    internal enum AdamCinematicKind { None, Creation, GenesisEnding, ExodusOpening }
+    internal enum AdamCinematicKind
+    {
+        None, Creation, GenesisEnding, ExodusOpening, Judges, Samuel, Kings,
+        Nehemiah, Isaiah, Daniel, Jonah, Habakkuk, Malachi
+    }
+
+    internal enum AdamCinematicBoundary { Entry, Settlement }
+
+    internal sealed class AdamCinematicSpec
+    {
+        static readonly AdamCinematicSpec[] catalog =
+        {
+            new(AdamCinematicKind.Creation, 1, AdamCinematicBoundary.Entry,
+                "GenesisCinematics/creation", "창조 이야기", 6, AdamCinematic.CreationSeconds),
+            new(AdamCinematicKind.GenesisEnding, 9, AdamCinematicBoundary.Settlement,
+                "GenesisCinematics/ending", "연결편 · 창세기 마무리", 2, AdamCinematic.EndingSeconds),
+            new(AdamCinematicKind.ExodusOpening, 10, AdamCinematicBoundary.Entry,
+                "GenesisCinematics/exodus-opening", "연결편 · 출애굽기 시작", 3, AdamCinematic.ExodusSeconds),
+            new(AdamCinematicKind.Judges, 43, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r43-judges", "흩어진 지파의 마을", 3, 13),
+            new(AdamCinematicKind.Samuel, 55, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r55-samuel", "한나의 기도", 3, 13.5f),
+            new(AdamCinematicKind.Kings, 67, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r67-kings", "솔로몬과 성전", 3, 12),
+            new(AdamCinematicKind.Nehemiah, 94, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r94-nehemiah", "무너진 성벽", 3, 12),
+            new(AdamCinematicKind.Isaiah, 121, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r121-isaiah", "성전과 숯불", 3, 12),
+            new(AdamCinematicKind.Daniel, 151, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r151-daniel", "바벨론 왕궁", 3, 12),
+            new(AdamCinematicKind.Jonah, 166, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r166-jonah", "폭풍과 큰 물고기", 3, 12),
+            new(AdamCinematicKind.Habakkuk, 172, AdamCinematicBoundary.Entry,
+                "CuratedCinematics/r172-habakkuk", "파수대", 3, 12),
+            new(AdamCinematicKind.Malachi, 180, AdamCinematicBoundary.Settlement,
+                "CuratedCinematics/r180-malachi", "공의로운 해", 3, 14)
+        };
+
+        internal static System.Collections.Generic.IReadOnlyList<AdamCinematicSpec> Segments { get; } =
+            System.Array.AsReadOnly(catalog);
+        internal static AdamCinematicSpec Find(AdamCinematicKind kind) =>
+            System.Array.Find(catalog, item => item.Kind == kind);
+        internal static AdamCinematicSpec Find(int round, AdamCinematicBoundary boundary) =>
+            System.Array.Find(catalog, item => item.Round == round && item.Boundary == boundary);
+
+        internal readonly AdamCinematicKind Kind;
+        internal readonly int Round, CutCount;
+        internal readonly float Seconds;
+        internal readonly AdamCinematicBoundary Boundary;
+        internal readonly string Resource, Title;
+        internal bool IsCurated => Round > 10;
+        // The Genesis–Exodus film has two independent playback and save boundaries.
+        internal AdamCinematicKind Film => Kind == AdamCinematicKind.ExodusOpening ? AdamCinematicKind.GenesisEnding : Kind;
+
+        AdamCinematicSpec(AdamCinematicKind kind, int round, AdamCinematicBoundary boundary,
+            string resource, string title, int cutCount, float seconds)
+        {
+            Kind = kind;
+            Round = round;
+            Boundary = boundary;
+            Resource = resource;
+            Title = title;
+            CutCount = cutCount;
+            Seconds = seconds;
+        }
+    }
 
     internal sealed class AdamCinematic
     {
@@ -22,29 +87,18 @@ namespace BibleSurvivor.Unity
 
         Cut[] cuts;
 
-        public static string ResourceName(AdamCinematicKind kind) => kind switch
-        {
-            AdamCinematicKind.Creation => "GenesisCinematics/creation",
-            AdamCinematicKind.GenesisEnding => "GenesisCinematics/ending",
-            AdamCinematicKind.ExodusOpening => "GenesisCinematics/exodus-opening",
-            _ => throw new System.ArgumentOutOfRangeException(nameof(kind))
-        };
+        public static string ResourceName(AdamCinematicKind kind) =>
+            AdamCinematicSpec.Find(kind)?.Resource ?? throw new System.ArgumentOutOfRangeException(nameof(kind));
 
         internal static Cut[] Read(AdamCinematicKind kind, string json)
         {
-            if (kind == AdamCinematicKind.None || string.IsNullOrEmpty(json)) return null;
+            var spec = AdamCinematicSpec.Find(kind);
+            if (spec == null || string.IsNullOrEmpty(json)) return null;
             Sequence sequence;
             try { sequence = JsonUtility.FromJson<Sequence>(json); }
             catch (System.ArgumentException) { return null; }
-            var (count, duration) = kind switch
-            {
-                AdamCinematicKind.Creation => (6, CreationSeconds),
-                AdamCinematicKind.GenesisEnding => (2, EndingSeconds),
-                AdamCinematicKind.ExodusOpening => (3, ExodusSeconds),
-                _ => (0, 0)
-            };
             var items = sequence?.cuts;
-            if (count == 0 || items == null || items.Length != count) return null;
+            if (items == null || items.Length != spec.CutCount) return null;
             var previousEnd = 0f;
             for (var i = 0; i < items.Length; i++)
             {
@@ -54,7 +108,7 @@ namespace BibleSurvivor.Unity
                     string.IsNullOrWhiteSpace(cut.caption)) return null;
                 previousEnd = cut.end;
             }
-            return previousEnd == duration ? items : null;
+            return previousEnd == spec.Seconds ? items : null;
         }
 
         public AdamCinematicKind Kind { get; private set; }
@@ -71,7 +125,9 @@ namespace BibleSurvivor.Unity
             }
         }
         public Cut Current => cuts[CurrentIndex];
-        public float CutElapsed => CurrentIndex == 0 ? Elapsed : Elapsed - cuts[CurrentIndex - 1].end;
+        public float CutElapsed => Elapsed - CutStart(CurrentIndex);
+        internal float CutDuration(int index) => cuts[index].end - CutStart(index);
+        float CutStart(int index) => index == 0 ? 0 : cuts[index - 1].end;
 
         public bool Begin(AdamCinematicKind kind, string json)
         {

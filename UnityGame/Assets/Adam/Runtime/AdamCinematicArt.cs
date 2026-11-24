@@ -45,7 +45,124 @@ namespace BibleSurvivor.Unity
             }
         }
 
-        static void FirstLight(int beat, bool motion)
+        // Temporary compositions for timing, input and subtitle verification.
+        public static void DrawCuratedPrototype(AdamCinematic scene, Sprite figure, Sprite scroll, bool motion)
+        {
+            var cut = scene.CurrentIndex;
+            var beat = motion ? Mathf.FloorToInt(scene.CutElapsed * 8) : 0;
+            switch (scene.Kind)
+            {
+                case AdamCinematicKind.Judges:
+                    Fill(0, 0, 480, 124, Pale);
+                    Fill(0, 124, 480, 146, Ochre);
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var x = 50 + i * 135;
+                        Fill(x - 8, 100 + 12 * i, 86, 14, Clay);
+                        Fill(x, 114 + 12 * i, 70, 53, Ochre);
+                        Fill(x + 26, 135 + 12 * i, 18, 32, Clay);
+                    }
+                    if (cut == 1)
+                    {
+                        Fill(208, 169, 100, 18, Clay);
+                        Fill(227, 154, 61, 15, Pale);
+                    }
+                    else
+                    {
+                        Figure(figure, 196 - beat / 4, 151);
+                        Figure(figure, 245 + beat / 3, 172, true);
+                    }
+                    break;
+                case AdamCinematicKind.Samuel:
+                    DrawEnding(false, figure, scroll);
+                    Fill(158, 96, 164, 111, Clay);
+                    Pillar(145, 72);
+                    Pillar(319, 72);
+                    Fill(324, 132, 8, 7, Gold);
+                    Figure(figure, 228, cut == 1 ? 159 : 141);
+                    Figure(figure, 281, 119, true);
+                    break;
+                case AdamCinematicKind.Kings:
+                case AdamCinematicKind.Isaiah:
+                case AdamCinematicKind.Daniel:
+                    DrawEnding(false, figure, scroll);
+                    if (scene.Kind == AdamCinematicKind.Daniel)
+                    {
+                        Fill(148, 90, 184, 23, Lapis);
+                        Fill(167, 177, 146, 12, Lapis);
+                    }
+                    if (scene.Kind == AdamCinematicKind.Isaiah && cut == 1)
+                    {
+                        Fill(223, 155, 34, 14, Ochre);
+                        Fill(235, 150, 9, 5, Gold);
+                    }
+                    if (scene.Kind == AdamCinematicKind.Kings && cut == 1)
+                    {
+                        Fill(176 - beat / 2, 57, 128 + beat, 41, Pale);
+                        Fill(222, 163, 43, 24, Gold);
+                    }
+                    break;
+                case AdamCinematicKind.Nehemiah:
+                case AdamCinematicKind.Habakkuk:
+                    Fill(0, 0, 480, 128, Night);
+                    Fill(0, 128, 480, 142, Clay);
+                    for (var row = 0; row < 4; row++)
+                    {
+                        var width = scene.Kind == AdamCinematicKind.Nehemiah ? 230 + row * 23 : 89;
+                        var start = scene.Kind == AdamCinematicKind.Nehemiah ? 36 : 210;
+                        for (var x = start; x < start + width; x += 30)
+                            Fill(x + row % 2 * 8, 81 + row * 17, 26, 14, Ochre);
+                    }
+                    Figure(figure, scene.Kind == AdamCinematicKind.Nehemiah ? 308 : 231,
+                        scene.Kind == AdamCinematicKind.Nehemiah ? 139 : 48);
+                    break;
+                case AdamCinematicKind.Jonah:
+                    Fill(0, 0, 480, 270, Night);
+                    Fill(0, 92, 480, 178, Lapis);
+                    Waves(cut == 0 ? 92 : 162, beat, Pale);
+                    if (cut == 0)
+                    {
+                        Fill(176, 98, 119, 13, Ochre);
+                        Fill(194, 111, 82, 10, Clay);
+                        Fill(225, 42, 4, 57, Ochre);
+                        Fill(229, 44, 33, 35, Pale);
+                    }
+                    else if (cut == 2)
+                    {
+                        Fill(132, 113, 201, 40, Ink);
+                        Fill(171, 98, 152, 71, Ink);
+                        Fill(113, 111, 39, 45, Ink);
+                        Fill(295, 123, 4, 4, Pale);
+                    }
+                    else Figure(figure, 228, 127 + beat);
+                    break;
+                case AdamCinematicKind.Malachi:
+                    if (cut == 0)
+                    {
+                        Fill(0, 0, 480, 270, Ink);
+                        Fill(0, 127, 480, 143, Clay);
+                        for (var i = 0; i < 9; i++)
+                            Fill(27 + i * 51, 127 - (i * 7 + beat) % 14, 9, 20, Ochre);
+                    }
+                    else
+                    {
+                        FirstLight(Mathf.Min(27, beat), motion, showSeal: false);
+                        if (cut == 1)
+                        {
+                            Fill(334, 99, 31, 36, Gold);
+                            Fill(327, 106, 45, 22, Gold);
+                        }
+                        else
+                        {
+                            Animal(151 + beat, 178, 2, Ochre, beat);
+                            Animal(278 + beat, 198, 1, Clay, beat);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        static void FirstLight(int beat, bool motion, bool showSeal = true)
         {
             Fill(0, 0, 480, 156, Ink);
             var opening = motion ? 124 + beat * 8 : 220;
@@ -56,7 +173,7 @@ namespace BibleSurvivor.Unity
             Fill(0, 156, 480, 114, Night);
             Fill(480 - opening + 16, 156, opening - 16, 4, Gold);
             Waves(170, beat, Pale);
-            DrawEdenSeal(new Vector2(24, 213), 1);
+            if (showSeal) DrawEdenSeal(new Vector2(24, 213), 1);
         }
 
         static void SkyAndWater(int beat)

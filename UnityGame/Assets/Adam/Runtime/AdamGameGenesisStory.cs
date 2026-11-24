@@ -8,7 +8,7 @@ namespace BibleSurvivor.Unity
     {
         int genesisStoryRound;
 
-        bool CanReadGenesisStory => CanReplayCreation &&
+        bool CanReadGenesisStory => CanReplayCinematics &&
             (Host.Session == null || Host.Session.PendingChoices.Count == 0 &&
                 Host.Session.Stage != "boss_reward" && Host.Session.Stage != "boss_settlement" &&
                 Host.Session.Stage != "round_settlement" && !Host.AwaitingNextRound);

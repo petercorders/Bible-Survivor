@@ -1,0 +1,21 @@
+{
+  "status": "approved",
+  "shots": [
+    {
+      "frames": 48,
+      "liveTerrain": false,
+      "manifestSha256": "f0c377bcd60200e4b22dae211669f51729e964bad009ccda3cbb275c091126b7"
+    },
+    {
+      "frames": 48,
+      "liveTerrain": false,
+      "manifestSha256": "8514ceaa099e66895a590d8eebf936a1de5161c96c2e20d19ed971645de90d6b"
+    },
+    {
+      "frames": 60,
+      "liveTerrain": true,
+      "manifestSha256": "5bbc91fb35c7fd5f613135c1d9dc02d3be656d52f9327e6a5dcf435ab21f9e8d"
+    }
+  ],
+  "designVersion": 24
+}

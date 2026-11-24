@@ -16,7 +16,7 @@ namespace BibleSurvivor.Unity
         GameSnapshot chapterCandidate;
         double sinceSave;
         bool completedCheckpoint;
-        AdamCinematicKind cinematicAfterSave;
+        AdamCinematicSpec cinematicAfterSave;
         AdamCinematicKind savedCinematic;
         public GameSnapshot State { get; private set; }
         public AdamSession Session { get; private set; }
@@ -101,7 +101,7 @@ namespace BibleSurvivor.Unity
                     ? new BattleWorld(session, catalog.SpeedsFor(session.RoundNumber), 7) : BattleWorld.Restore(session, catalog.SpeedsFor(session.RoundNumber), loaded.Run.World);
                 State = loaded; Session = session; World = world; revision = loaded.Revision;
                 operation = null; chapterCandidate=null; Error = null; RequiresNewerGame = false; Paused = true; Movement = Vector2.zero; sinceSave = 0;completedCheckpoint=AwaitingNextRound;
-                cinematicAfterSave = savedCinematic = AdamCinematicKind.None;
+                cinematicAfterSave = null; savedCinematic = AdamCinematicKind.None;
                 return true;
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
@@ -111,13 +111,13 @@ namespace BibleSurvivor.Unity
         internal void Start(string weapon, bool showCreation)
         {
             if (Error != null || !CanStartNew || (weapon!="bible" && weapon!="jawbone" && weapon!="sling")) return;
-            if (showCreation && Session == null && State.Revision == 0)
-                cinematicAfterSave = AdamCinematicKind.Creation;
+            var firstStart = showCreation && Session == null && State.Revision == 0;
             // Explicit new challenge button only; completed checkpoint is otherwise preserved.
             State = SaveStore.PrepareNewChallenge(State);
             completedCheckpoint=false;
             Session = new AdamSession(State, catalog.Definition, weapon);
             World = new BattleWorld(Session, catalog.Speeds, 7);
+            if (firstStart) cinematicAfterSave = AdamCinematicSpec.Find(Session.RoundNumber, AdamCinematicBoundary.Entry);
             Paused = false; Movement = Vector2.zero; Checkpoint();
         }
         public bool TryEnterExodus() => TryEnterExodus(false);
@@ -131,7 +131,7 @@ namespace BibleSurvivor.Unity
         public bool TryEnterRuth() => CanEnterRuth && TryEnterChapter(RuthContent.GlobalRoundNumber);
         public bool TryEnterFirstSamuel() => CanEnterFirstSamuel && TryEnterChapter(FirstSamuelContent.GlobalRoundNumber);
         public bool TryEnterLaterBook() => CanEnterLaterBook && TryEnterChapter(UpcomingLaterBook.FirstRound);
-        bool TryEnterChapter(int round, bool showOpening = false)
+        bool TryEnterChapter(int round, bool showOpening = true)
         {
             try
             {
@@ -154,7 +154,7 @@ namespace BibleSurvivor.Unity
                 candidate.Run.World=new BattleWorld(preview,catalog.SpeedsFor(definition.Number),7).Capture();
                 candidate.Validate();
                 chapterCandidate=candidate;operation=Guid.NewGuid().ToString("N");
-                if (showOpening) cinematicAfterSave = AdamCinematicKind.ExodusOpening;
+                if (showOpening) cinematicAfterSave = AdamCinematicSpec.Find(round, AdamCinematicBoundary.Entry);
                 Paused=true;Movement=Vector2.zero;
                 var accepted=RetrySave();
                 if(accepted && !Suspended)Paused=false;
@@ -200,12 +200,13 @@ namespace BibleSurvivor.Unity
         public bool CompleteBossSettlement()
         {
             if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.CompleteBossSettlement())return false;
-            if (Session.ChapterComplete) cinematicAfterSave = AdamCinematicKind.GenesisEnding;
+            cinematicAfterSave = AdamCinematicSpec.Find(Session.RoundNumber, AdamCinematicBoundary.Settlement);
             Movement=Vector2.zero;return Checkpoint();
         }
         public bool CompleteNormalSettlement()
         {
             if(PermanentSkillsOpen || Error!=null || Suspended || Session==null || !Session.CompleteNormalSettlement())return false;
+            cinematicAfterSave = AdamCinematicSpec.Find(Session.RoundNumber, AdamCinematicBoundary.Settlement);
             Movement=Vector2.zero;return Checkpoint();
         }
         public void SetPaused(bool value)
@@ -226,6 +227,7 @@ namespace BibleSurvivor.Unity
                 var next=Session.StartNextRound(catalog.ForRound(State.Run.RoundNumber));
                 var arena=new BattleWorld(next,catalog.SpeedsFor(next.RoundNumber),7);
                 Session=next;World=arena;sinceSave=0;
+                cinematicAfterSave = AdamCinematicSpec.Find(next.RoundNumber, AdamCinematicBoundary.Entry);
                 // Publish exactly once, then freeze this same new arena/payload if its entry commit fails.
                 Checkpoint();
             }
@@ -265,7 +267,7 @@ namespace BibleSurvivor.Unity
                     // A failed or uncertain attempt retains this exact candidate, old revision and operation for retry.
                     SaveStore.PreparePermanentCheckpoint(chapterCandidate);
                     var committed=store.Commit(chapterCandidate,revision,operation);
-                    var loaded=(cinematicAfterSave == AdamCinematicKind.ExodusOpening ? store.LoadConfirmed() : store.Load())
+                    var loaded=(cinematicAfterSave != null ? ConfirmCinematicCheckpoint(chapterCandidate, committed) : store.Load())
                         ?? throw new InvalidOperationException("Chapter entry readback is missing");
                     if(loaded.Revision!=committed || loaded.LastOperationId!=operation ||
                         loaded.Run?.RunId!=chapterCandidate.Run.RunId ||
@@ -280,15 +282,7 @@ namespace BibleSurvivor.Unity
                     Paused=true;Movement=Vector2.zero;sinceSave=0;completedCheckpoint=false;return true;
                 }
                 var committedRevision = store.Commit(State, revision, operation);
-                if (cinematicAfterSave == AdamCinematicKind.GenesisEnding)
-                {
-                    var confirmed = store.LoadConfirmed();
-                    if (confirmed?.Revision != committedRevision || confirmed.LastOperationId != operation ||
-                        confirmed.Run?.RunId != State.Run.RunId ||
-                        confirmed.Run?.RoundNumber != ExodusContent.GlobalRoundNumber ||
-                        confirmed.Run.Stage != "between_rounds" || confirmed.Run.Boss?.CompletionApplied != true)
-                        throw new IOException("Genesis settlement readback changed; reload before new input");
-                }
+                if (cinematicAfterSave != null) ConfirmCinematicCheckpoint(State, committedRevision);
                 revision = committedRevision;
                 State.Revision = revision; State.LastOperationId = operation;
                 PublishSavedCinematic();
@@ -296,11 +290,37 @@ namespace BibleSurvivor.Unity
             }
             catch (Exception e) { ReportDevelopmentFailure(e); Error = e.Message; RequiresNewerGame = e is UnsupportedSaveVersionException; Paused = true; Movement = Vector2.zero; return false; }
         }
+        GameSnapshot ConfirmCinematicCheckpoint(GameSnapshot expected, long committed)
+        {
+            var confirmed = store.LoadConfirmed();
+            var run = confirmed?.Run;
+            if (run == null || confirmed.Revision != committed || confirmed.LastOperationId != operation ||
+                run.RunId != expected.Run.RunId || run.Stage != expected.Run.Stage ||
+                confirmed.Profile.Gold != expected.Profile.Gold)
+                throw new IOException("Cinematic checkpoint readback changed; reload before new input");
+
+            var spec = cinematicAfterSave;
+            var atBoundary = spec.Boundary == AdamCinematicBoundary.Entry
+                ? run.RoundNumber == spec.Round && run.Stage == "normal" && run.World != null
+                : run.RoundNumber == spec.Round + 1 && run.Stage == "between_rounds" &&
+                    (run.RoundCompletionApplied || run.Boss?.CompletionApplied == true);
+            if (!atBoundary) throw new IOException("Cinematic checkpoint has no saved round boundary");
+
+            if (spec.Round == CampaignContent.OldTestamentFinalRound &&
+                (confirmed.OldTestamentClear == null || expected.OldTestamentClear == null ||
+                 confirmed.OldTestamentClear.RunId != run.RunId ||
+                 confirmed.OldTestamentClear.CompletedAtUnixMilliseconds != expected.OldTestamentClear.CompletedAtUnixMilliseconds ||
+                 run.Boss?.CompletionApplied != true || run.Boss.Reward?.Applied != true ||
+                 run.Boss.Reward.SelectedId != expected.Run.Boss?.Reward?.SelectedId))
+                throw new IOException("Final settlement receipt readback changed; reload before new input");
+            return confirmed;
+        }
+
         void PublishSavedCinematic()
         {
-            if (cinematicAfterSave == AdamCinematicKind.None) return;
-            savedCinematic = cinematicAfterSave;
-            cinematicAfterSave = AdamCinematicKind.None;
+            if (cinematicAfterSave == null) return;
+            savedCinematic = cinematicAfterSave.Kind;
+            cinematicAfterSave = null;
         }
         internal AdamCinematicKind TakeSavedCinematic()
         {

@@ -7,28 +7,34 @@ namespace BibleSurvivor.Unity
     public sealed partial class AdamGame
     {
         readonly AdamCinematic cinematic = new AdamCinematic();
+        readonly AdamCuratedCinematicArt curatedArt = new AdamCuratedCinematicArt();
         readonly AdamGenesisCinematicMedia genesisCinematicMedia = new AdamGenesisCinematicMedia();
         bool releaseCinematicControls;
+        int cinematicExitFrame = -1;
         public bool CinematicPlaying => cinematic.Active;
+
+        int replaySelection = -1;
 
         bool BeginSavedCinematic()
         {
             var kind = Host.TakeSavedCinematic();
-            if (kind != AdamCinematicKind.ExodusOpening) return BeginCinematic(kind);
-
-            // The entry confirmation also owns a retry of that same save operation.
-            if (!Host.Suspended && Host.Paused) SetPlayPaused(false);
+            if (kind == AdamCinematicKind.None) return false;
+            // A retry freezes play. An entry event resumes the same committed battle.
+            if (AdamCinematicSpec.Find(kind).Boundary == AdamCinematicBoundary.Entry &&
+                !Host.Suspended && Host.Paused) SetPlayPaused(false);
             if (!BeginCinematic(kind)) FinishCinematic();
             return true;
         }
 
         bool BeginCinematic(AdamCinematicKind kind)
         {
-            if (kind == AdamCinematicKind.None || !AdamCinematicArt.Available) return false;
-            var script = Resources.Load<TextAsset>(AdamCinematic.ResourceName(kind));
+            var spec = AdamCinematicSpec.Find(kind);
+            if (spec == null || (!spec.IsCurated && !AdamCinematicArt.Available)) return false;
+            var script = Resources.Load<TextAsset>(spec.Resource);
             if (!cinematic.Begin(kind, script?.text)) return false;
-            genesisCinematicMedia.Begin(kind, AdamCinematic.Read(kind, script.text));
-            releaseCinematicControls = true;
+            curatedArt.Begin(spec, cinematic);
+            if (!spec.IsCurated) genesisCinematicMedia.Begin(kind, AdamCinematic.Read(kind, script.text));
+            commandFrame = Time.frameCount;
             inputReleased = false;
             touchStarted = false;
             Host.SetMovement(Vector2.zero);
@@ -36,58 +42,117 @@ namespace BibleSurvivor.Unity
             return true;
         }
 
+        static bool CinematicControlsHeld(Keyboard keys, Gamepad pad)
+        {
+            return (keys != null && (keys.enterKey.isPressed || keys.escapeKey.isPressed ||
+                keys.spaceKey.isPressed || keys.digit1Key.isPressed || keys.digit2Key.isPressed ||
+                keys.digit3Key.isPressed || keys.f3Key.isPressed || keys.f4Key.isPressed || keys.f5Key.isPressed || keys.f10Key.isPressed ||
+                keys.upArrowKey.isPressed || keys.downArrowKey.isPressed ||
+                keys.leftArrowKey.isPressed || keys.rightArrowKey.isPressed ||
+                keys.wKey.isPressed || keys.aKey.isPressed || keys.sKey.isPressed || keys.dKey.isPressed)) ||
+                (pad != null && (pad.buttonEast.isPressed || pad.buttonSouth.isPressed ||
+                    pad.startButton.isPressed || pad.selectButton.isPressed || pad.dpad.IsActuated())) ||
+                Mouse.current?.leftButton.isPressed == true ||
+                UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches.Count > 0;
+        }
+
         bool UpdateCinematic(Keyboard keys)
         {
             var pad = Gamepad.current;
-            var held = (keys != null && (keys.enterKey.isPressed || keys.escapeKey.isPressed ||
-                keys.spaceKey.isPressed || keys.digit1Key.isPressed || keys.digit2Key.isPressed ||
-                keys.digit3Key.isPressed || keys.f5Key.isPressed || keys.f10Key.isPressed)) ||
-                (pad != null && (pad.buttonEast.isPressed || pad.startButton.isPressed));
-            if (releaseCinematicControls && !held) releaseCinematicControls = false;
-
-            if (!cinematic.Active) return releaseCinematicControls;
-            if (Host.Suspended) return true;
-            if (!releaseCinematicControls)
+            if (!cinematic.Active)
             {
-                if (keys?.escapeKey.wasPressedThisFrame == true || keys?.enterKey.wasPressedThisFrame == true ||
-                    pad?.buttonEast.wasPressedThisFrame == true)
-                {
-                    FinishCinematic();
-                    return true;
-                }
-                if (keys?.spaceKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true)
-                    cinematic.Paused = !cinematic.Paused;
+                if (releaseCinematicControls && commandFrame != Time.frameCount && !CinematicControlsHeld(keys, pad))
+                    releaseCinematicControls = false;
+                return releaseCinematicControls;
             }
+
+            if (Host.Suspended) return true;
+            // Enter can also select a weapon or enter a chapter. Escape and pad East
+            // are available immediately, including on the frame that opened the scene.
+            if (keys?.escapeKey.wasPressedThisFrame == true ||
+                pad?.buttonEast.wasPressedThisFrame == true ||
+                (commandFrame != Time.frameCount && keys?.enterKey.wasPressedThisFrame == true))
+            {
+                FinishCinematic();
+                return true;
+            }
+            if (keys?.spaceKey.wasPressedThisFrame == true || pad?.startButton.wasPressedThisFrame == true)
+                cinematic.Paused = !cinematic.Paused;
+
             cinematic.Advance(Time.unscaledDeltaTime);
             if (!cinematic.Active) FinishCinematic();
             return true;
         }
 
-        void FinishCinematic()
+        void FinishCinematic(bool pointer = false)
         {
             cinematic.End();
             genesisCinematicMedia.Clear();
-            commandFrame = Time.frameCount;
-            releaseCinematicControls = true;
-            inputReleased = KeyboardMovement(Keyboard.current) == Vector2.zero &&
-                UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches.Count == 0;
+            curatedArt.Clear();
+            cinematicExitFrame = commandFrame = Time.frameCount;
+            var keys = Keyboard.current;
+            releaseCinematicControls = pointer || CinematicControlsHeld(keys, Gamepad.current);
+            inputReleased = !releaseCinematicControls;
             touchStarted = false;
         }
 
-        bool CanReplayCreation => Host?.Error == null && Host != null && !Host.Suspended &&
+        bool CanReplayCinematics => Host?.Error == null && Host != null && !Host.Suspended &&
             !Host.PermanentSkillsOpen && !NewChallengeOpen && !DeathPresentationVisible &&
             (Host.Session == null || Host.BookComplete || Host.Paused ||
                 (!Host.Session.IsActive && Host.Session.CurrentHealth <= 0));
 
-        bool CanReplayEnding => CanReplayCreation && (Host.Session?.ChapterComplete == true ||
-            Host.State.Profile.HighestSettledRound >= 9 || Host.State.Run?.CompletedThirdBoss?.CompletionApplied == true);
-
-        bool Replay(AdamCinematicKind kind)
+        bool CanReplay(AdamCinematicSpec spec)
         {
-            if (commandFrame == Time.frameCount || releaseCinematicControls ||
-                !(kind == AdamCinematicKind.Creation ? CanReplayCreation : CanReplayEnding)) return false;
+            if (!CanReplayCinematics) return false;
+            if (spec.Kind == AdamCinematicKind.Creation) return true;
+            var settled = Host.State.Profile.HighestSettledRound.GetValueOrDefault();
+            if (spec.Kind == AdamCinematicKind.Malachi && Host.State.OldTestamentClear is { } clear &&
+                clear.RunId != Host.State.Run?.RunId) return true;
+            if (spec.Kind == AdamCinematicKind.GenesisEnding &&
+                (Host.Session?.ChapterComplete == true || Host.State.Run?.CompletedThirdBoss?.CompletionApplied == true))
+                return true;
+            return spec.Boundary == AdamCinematicBoundary.Settlement
+                ? settled >= spec.Round || (Host.ContentComplete && Host.Session?.RoundNumber == spec.Round)
+                : settled >= spec.Round || (Host.Session?.RoundNumber ?? 0) >= spec.Round;
+        }
+
+        internal bool Replay(AdamCinematicKind kind)
+        {
+            var spec = AdamCinematicSpec.Find(kind);
+            if (commandFrame == Time.frameCount || releaseCinematicControls || spec == null || !CanReplay(spec))
+                return false;
             if (!BeginCinematic(kind)) return false;
-            commandFrame = Time.frameCount;
+            replaySelection = -1;
+            return true;
+        }
+
+        bool UpdateCinematicReplay(Keyboard keys)
+        {
+            var pad = Gamepad.current;
+            if (replaySelection < 0)
+            {
+                if (keys?.f3Key.wasPressedThisFrame != true && pad?.selectButton.wasPressedThisFrame != true)
+                    return false;
+                return OpenCinematicReplay();
+            }
+            if (!CanReplayCinematics || keys?.escapeKey.wasPressedThisFrame == true ||
+                pad?.buttonEast.wasPressedThisFrame == true)
+            {
+                replaySelection = -1;
+                FinishCinematic();
+                return true;
+            }
+            var count = AdamCinematicSpec.Segments.Count;
+            if (keys?.rightArrowKey.wasPressedThisFrame == true || pad?.dpad.right.wasPressedThisFrame == true)
+                replaySelection = (replaySelection + 1) % count;
+            if (keys?.leftArrowKey.wasPressedThisFrame == true || pad?.dpad.left.wasPressedThisFrame == true)
+                replaySelection = (replaySelection + count - 1) % count;
+            if (keys?.downArrowKey.wasPressedThisFrame == true || pad?.dpad.down.wasPressedThisFrame == true)
+                replaySelection = (replaySelection + 2) % count;
+            if (keys?.upArrowKey.wasPressedThisFrame == true || pad?.dpad.up.wasPressedThisFrame == true)
+                replaySelection = (replaySelection + count - 2) % count;
+            if (keys?.enterKey.wasPressedThisFrame == true || pad?.buttonSouth.wasPressedThisFrame == true)
+                Replay(AdamCinematicSpec.Segments[replaySelection].Kind);
             return true;
         }
 
@@ -102,34 +167,51 @@ namespace BibleSurvivor.Unity
             var horizon = AdamVisualQualityArt.Sprite(AdamBookTitle.Horizon, 0);
             var actor = art.Sprite("chr_player_layer-base_idle_32", 0);
             var scroll = art.Sprite("ico_psv_scroll_static_16", 0);
+            var spec = AdamCinematicSpec.Find(cinematic.Kind);
+            var sourceRect = new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height);
             var motion = ArtWorld.FeedbackEnabled;
-            var hasMedia = genesisCinematicMedia.TryGetFrame(cinematic, motion, viewport, out var media);
-            if (hasMedia)
+            var artLabel = "";
+            if (spec.IsCurated)
             {
-                if (media.LiveTerrain && Host.World != null)
-                    DrawGenesisCinematicTerrain(viewport, frame, mobile, physicalFrame, media.FullTerrain);
+                if (curatedArt.TryGetFrame(cinematic, motion, out var media))
+                {
+                    if (media.LiveTerrain) DrawCinematicTerrain(viewport, frame, spec.Round, mobile, physicalFrame);
+                    GUI.DrawTextureWithTexCoords(sourceRect, media.Texture, media.Uv);
+                    if (curatedArt.Preview) artLabel = "컷신 검수용";
+                }
+                else
+                {
+                    AdamCinematicArt.DrawCuratedPrototype(cinematic, actor, scroll, motion);
+                    artLabel = "컷신 시제품";
+                }
+            }
+            else if (genesisCinematicMedia.TryGetFrame(cinematic, motion, viewport, out var genesisMedia))
+            {
+                if (genesisMedia.LiveTerrain)
+                    DrawGenesisCinematicTerrain(viewport, frame, mobile, physicalFrame, genesisMedia.FullTerrain);
                 var tint = GUI.color;
                 try
                 {
                     GUI.color = Color.white;
-                    GUI.DrawTextureWithTexCoords(new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
-                        media.Texture, media.Uv);
+                    GUI.DrawTextureWithTexCoords(sourceRect, genesisMedia.Texture, genesisMedia.Uv);
                 }
                 finally { GUI.color = tint; }
             }
             else if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
-                ArtWorld.DrawBackdrop(art, new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
-                    ExodusContent.GlobalRoundNumber);
+                ArtWorld.DrawBackdrop(art, sourceRect, ExodusContent.GlobalRoundNumber);
             else
-                AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, ArtWorld.FeedbackEnabled);
+                AdamCinematicArt.Draw(cinematic, horizon, actor, scroll, motion);
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one);
 
             var cut = cinematic.Current;
-            var subtitleHeight = hasMedia && !mobile
-                ? Mathf.Min(100f, 25f * frame.width / AdamCinematic.Width + viewport.yMax - frame.yMax)
-                : 100f;
+            if (artLabel.Length > 0)
+            {
+                AdamHud.Fill(new Rect(10, 8, 116, 30), AdamHud.Ink0);
+                GUI.Label(new Rect(16, 10, 110, 26), artLabel, HudText(16, AdamHud.Primary, false));
+            }
+            var subtitleHeight = SubtitleHeight(viewport, frame);
             var subtitleTop = viewport.height - subtitleHeight;
-            var subtitleScale = subtitleHeight / 100f;
+            var compact = subtitleHeight < 90;
             AdamHud.Fill(new Rect(0, subtitleTop, viewport.width, subtitleHeight), AdamHud.Ink0);
             if (cut.day > 0)
             {
@@ -137,45 +219,46 @@ namespace BibleSurvivor.Unity
                 GUI.Label(new Rect(20, 10, 100, 32), $"제{cut.day}일",
                     HudText(20, AdamHud.Primary, false));
             }
-            var compactCaption = subtitleHeight < 60f;
-            if (compactCaption)
-            {
-                var caption = HudText(14, AdamHud.Primary, false, TextAnchor.MiddleCenter);
-                var citation = HudText(12, AdamHud.Muted, false, TextAnchor.MiddleLeft);
-                const float gap = 12;
-                var citationWidth = Mathf.Ceil(citation.CalcSize(new GUIContent(cut.reference)).x);
-                var captionWidth = Mathf.Min(Mathf.Ceil(caption.CalcSize(new GUIContent(cut.caption)).x),
-                    viewport.width - 24 - gap - citationWidth);
-                var start = Mathf.Floor((viewport.width - captionWidth - gap - citationWidth) / 2);
-                GUI.Label(new Rect(start, subtitleTop, captionWidth, 24), cut.caption, caption);
-                GUI.Label(new Rect(start + captionWidth + gap, subtitleTop, citationWidth, 24), cut.reference, citation);
-            }
-            else
-            {
-                var caption = HudText(Mathf.RoundToInt(20 * subtitleScale), AdamHud.Primary, false, TextAnchor.MiddleCenter);
-                caption.wordWrap = true;
-                GUI.Label(new Rect(12, subtitleTop, viewport.width - 24, 40 * subtitleScale), cut.caption, caption);
-                GUI.Label(new Rect(12, subtitleTop + 38 * subtitleScale, viewport.width - 24, 20 * subtitleScale),
-                    cut.reference, HudText(Mathf.RoundToInt(16 * subtitleScale), AdamHud.Muted, false, TextAnchor.MiddleCenter));
-            }
+            var captionFraction = compact ? (viewport.width >= 900 ? .68f : .55f) : 1;
+            var captionSize = compact ? 16 : viewport.width < 760 ? 18 : 20;
+            var caption = HudText(captionSize, AdamHud.Primary, false, TextAnchor.MiddleCenter);
+            caption.wordWrap = true;
+            GUI.Label(new Rect(10, subtitleTop, viewport.width * captionFraction - 20,
+                compact ? subtitleHeight - 18 : 44), cut.caption, caption);
+            GUI.Label(new Rect(10, subtitleTop + (compact ? subtitleHeight - 18 : 44),
+                viewport.width * captionFraction - 20, 18), cut.reference,
+                HudText(compact ? 13 : 16, AdamHud.Muted, false, TextAnchor.MiddleCenter));
 
             var enabled = GUI.enabled;
             GUI.enabled = enabled && !Host.Suspended;
-            var buttonTop = subtitleTop + (compactCaption ? 24 : 61 * subtitleScale);
-            var buttonHeight = compactCaption ? 24 : 36 * subtitleScale;
-            var controls = new GUIStyle(GUI.skin.button)
-            {
-                font = fonts.Label,
-                fontSize = compactCaption ? 14 : Mathf.RoundToInt(16 * subtitleScale)
-            };
+            var controls = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = compact ? 14 : 16 };
             var pointer = Event.current.isMouse;
-            if (GUI.Button(new Rect(viewport.width / 2 - 164, buttonTop, 156, buttonHeight),
-                cinematic.Paused ? "재개" : "일시정지 (Space)", controls) && pointer)
+            var controlWidth = viewport.width * (1 - captionFraction) - 20;
+            var pause = compact
+                ? new Rect(viewport.width * captionFraction, subtitleTop + (subtitleHeight - 30) / 2 - 4, controlWidth * .42f, 30)
+                : new Rect(viewport.width / 2 - 174, subtitleTop + 61, 166, 36);
+            var skip = new Rect(pause.xMax + (compact ? 8 : 16), pause.y, compact ? controlWidth - pause.width - 8 : 166, pause.height);
+            if (GUI.Button(pause, cinematic.Paused ? "재개" : compact ? "일시정지" : "일시정지 (Space)", controls) && pointer)
                 cinematic.Paused = !cinematic.Paused;
-            if (GUI.Button(new Rect(viewport.width / 2 + 8, buttonTop, 156, buttonHeight),
-                "건너뛰기 (Esc)", controls) && pointer)
-                FinishCinematic();
+            var skipLabel = skip.width >= 145 ? "건너뛰기 (Esc / B)" : "건너뛰기";
+            if (GUI.Button(skip, skipLabel, controls) && pointer)
+                FinishCinematic(pointer: true);
             GUI.enabled = enabled;
+            GUI.matrix = prior;
+        }
+
+        void DrawCinematicTerrain(Rect viewport, Rect frame, int round, bool mobile, Rect? physicalFrame)
+        {
+            var prior = GUI.matrix;
+            var scale = mobile ? AdamMobileLayout.Scale(viewport) : AdamChoiceText.ScreenScale(viewport.width, viewport.height);
+            var arena = mobile ? AdamMobileLayout.FullFrame(viewport, physicalFrame ?? viewport)
+                : Arena(viewport.width / scale, viewport.height / scale);
+            var clip = new Rect((frame.position - viewport.position) / scale, frame.size / scale);
+            GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one * scale);
+            GUI.BeginGroup(clip);
+            arena.position -= clip.position;
+            ArtWorld.DrawBackdrop(art, arena, round);
+            GUI.EndGroup();
             GUI.matrix = prior;
         }
 
@@ -186,7 +269,6 @@ namespace BibleSurvivor.Unity
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, new Vector3(scale, scale, 1));
             var arena = mobile ? AdamMobileLayout.FullFrame(viewport, physicalFrame ?? viewport) :
                 Arena(viewport.width / scale, viewport.height / scale);
-            var position = Host.World.PlayerPosition;
             if (!fullTerrain)
             {
                 // Letterbox gutters stay dark until the authored mask has fully revealed the arena.
@@ -196,8 +278,8 @@ namespace BibleSurvivor.Unity
             }
             try
             {
-                ArtWorld.DrawBackdrop(art, arena, Host.Session.RoundNumber,
-                    new Vector2(position.X, position.Y), mobile);
+                // A replay can start from a later save; use the opening camera and round.
+                ArtWorld.DrawBackdrop(art, arena, ExodusContent.GlobalRoundNumber, Vector2.zero, mobile);
             }
             finally
             {
@@ -206,18 +288,55 @@ namespace BibleSurvivor.Unity
             }
         }
 
-        void DrawCinematicReplay(Vector2 origin, bool endingAllowed = false)
+        internal static float SubtitleHeight(Rect viewport, Rect frame) =>
+            Mathf.Min(100, frame.width / AdamCinematic.Width * 25 + viewport.yMax - frame.yMax);
+
+        bool OpenCinematicReplay()
         {
-            if (!CanReplayCreation || !AdamCinematicArt.Available) return;
+            if (!CanReplayCinematics || releaseCinematicControls || commandFrame == Time.frameCount) return false;
+            replaySelection = 0;
+            commandFrame = Time.frameCount;
+            return true;
+        }
+
+        void DrawCinematicReplay(Vector2 origin)
+        {
+            if (!CanReplayCinematics) return;
             var style = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 16 };
             var pointer = Event.current.isMouse;
-            if (Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.Creation)) != null &&
-                GUI.Button(new Rect(origin.x, origin.y, 166, 34), "창조 이야기 (F5)", style) && pointer)
-                Replay(AdamCinematicKind.Creation);
-            if (endingAllowed && CanReplayEnding &&
-                Resources.Load<TextAsset>(AdamCinematic.ResourceName(AdamCinematicKind.GenesisEnding)) != null &&
-                GUI.Button(new Rect(origin.x + 174, origin.y, 166, 34), "창세기 마무리 (F10)", style) && pointer)
-                Replay(AdamCinematicKind.GenesisEnding);
+            if (GUI.Button(new Rect(origin.x, origin.y, 166, 34), "컷신 다시 보기 (F3)", style) && pointer)
+                OpenCinematicReplay();
+        }
+
+        void DrawCinematicReplayMenu(float width, float height)
+        {
+            AdamHud.Fill(new Rect(0, 0, width, height), AdamHud.Ink0);
+            var panelWidth = Mathf.Min(490, width - 24);
+            var row = Mathf.Min(42, (height - 100) / 7);
+            var left = (width - panelWidth) / 2;
+            var top = (height - (7 * row + 44)) / 2;
+            GUI.Label(new Rect(left, top, panelWidth, 36), "컷신 다시 보기",
+                HudText(22, AdamHud.Primary, false, TextAnchor.MiddleCenter));
+            var prior = GUI.enabled;
+            var pointer = Event.current.isMouse;
+            var style = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 16 };
+            for (var i = 0; i < AdamCinematicSpec.Segments.Count; i++)
+            {
+                var spec = AdamCinematicSpec.Segments[i];
+                GUI.enabled = prior && CanReplay(spec) && Resources.Load<TextAsset>(spec.Resource) != null;
+                var rect = new Rect(left + i % 2 * (panelWidth / 2), top + 44 + i / 2 * row,
+                    panelWidth / 2 - 4, row - 4);
+                if (i == replaySelection)
+                    AdamHud.Fill(new Rect(rect.x - 2, rect.y - 2, rect.width + 4, rect.height + 4), AdamHud.Primary);
+                if (GUI.Button(rect, spec.Title, style) && pointer && Replay(spec.Kind)) break;
+            }
+            GUI.enabled = prior;
+            if (GUI.Button(new Rect(left, top + 44 + 6 * row, panelWidth, row - 4), "돌아가기 (Esc)", style) &&
+                pointer && commandFrame != Time.frameCount)
+            {
+                replaySelection = -1;
+                FinishCinematic(pointer: true);
+            }
         }
     }
 }
