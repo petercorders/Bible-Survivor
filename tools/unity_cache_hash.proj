@@ -1,0 +1,11 @@
+<Project DefaultTargets="Compute">
+  <!-- Replay the pinned SDK's Hash task with ordered identities from Rebuild. -->
+  <Target Name="Compute">
+    <ReadLinesFromFile File="$(CacheItemsFile)">
+      <Output TaskParameter="Lines" ItemName="CacheInput" />
+    </ReadLinesFromFile>
+    <Hash ItemsToHash="@(CacheInput)" IgnoreCase="$(CacheIgnoreCase)">
+      <Output TaskParameter="HashResult" PropertyName="CacheDigest" />
+    </Hash>
+  </Target>
+</Project>

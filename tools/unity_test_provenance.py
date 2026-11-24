@@ -80,7 +80,17 @@ def main():
             check(name + '-restored', True)
 
         check('baseline', True)
+        for name in ('BibleSurvivor.Core.csproj.nuget.g.props', 'BibleSurvivor.Core.AssemblyInfo.cs',
+                     'BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig',
+                     'BibleSurvivor.Core.csproj.CoreCompileInputs.cache'):
+            path, = (core / 'obj').rglob(name)
+            # Keep props parseable so content comparison itself must catch the edit.
+            suffix = '<!-- changed -->' if name.endswith('.props') else 'changed'
+            change('mutated-' + name, path, path.read_text() + suffix, name)
+
         change('added-root-source', core / 'NewUnsyncedRule.cs', 'namespace ProvenanceFixture { class NewUnsyncedRule {} }', 'Added build input:')
+        combat = core / 'Combat.cs'
+        change('edited-core-source', combat, combat.read_text() + '\n// unsynced Core edit\n', 'Changed build input:')
         change('deleted-source', core / 'Combat.cs', None, 'Removed build input:')
         change('added-nested-source', core / 'Nested/NewNestedRule.cs', 'namespace ProvenanceFixture { class NewNestedRule {} }', 'Added build input:')
         change('changed-nested-source', nested, 'namespace ProvenanceFixture { public class ExistingRule { public int Value; } }', 'Changed build input:')

@@ -5,6 +5,13 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- Unity's committed plugin must reproduce after a docs-only commit or checkout move. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <EnableSourceLink>false</EnableSourceLink>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <PathMap>$(MSBuildProjectDirectory)=/_/Core</PathMap>
+  </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="BibleSurvivor.Sim" />
     <InternalsVisibleTo Include="BibleSurvivor.Core.Tests" />

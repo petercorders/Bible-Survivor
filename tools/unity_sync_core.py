@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
-from unity_build_inputs import SCHEMA, digest, evaluate, query, item_manifest, compare_inputs
+from unity_build_inputs import SCHEMA, digest, evaluate, query, item_manifest, compare_inputs, CACHE_KEY, cache_recipe, expected_cache_digest, recipe_digest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,6 +16,11 @@ def sync(root):
     before, paths = evaluate(root)
     executed = query(root, build=True)
     build = item_manifest(executed, paths)
+    recipe = cache_recipe(executed, paths)
+    if build['files_sha256'][CACHE_KEY] != expected_cache_digest(root, recipe, paths):
+        raise ValueError('SDK compiler cache differs from captured Rebuild inputs')
+    build['files_sha256'][CACHE_KEY] = recipe_digest(recipe)
+    build['compiler_cache'] = recipe
     after, _ = evaluate(root)
     changes = compare_inputs(before, after)
     if changes:
