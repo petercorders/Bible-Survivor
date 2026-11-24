@@ -4,3 +4,4 @@ UnityGame/**/*.meta whitespace=-blank-at-eol
 UnityGame/**/*.asset whitespace=-blank-at-eol
 UnityGame/**/*.unity whitespace=-blank-at-eol
 UnityGame/**/*.scenetemplate whitespace=-blank-at-eol
+/UnityGame/Assets/Adam/Resources/GenesisArenaProps/manifest.json text eol=lf
