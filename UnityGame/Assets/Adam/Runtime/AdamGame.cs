@@ -63,7 +63,7 @@ namespace BibleSurvivor.Unity
         public static readonly string[] Weapons = { "bible", "jawbone", "sling" };
         void OnEnable() {EnhancedTouchSupport.Enable();if(Host!=null && ImpactParticles==null)ImpactParticles=new AdamImpactParticles();}
         void OnDisable() {EnhancedTouchSupport.Disable();bossStaging.Reset();ImpactAudio?.Stop();ImpactParticles?.Dispose();ImpactParticles=null;}
-        void OnDestroy() { ArtWorld.Dispose(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); bossStaging.Audio?.Dispose(); fonts?.Dispose(); }
+        void OnDestroy() { genesisCinematicMedia.Clear(); ArtWorld.Dispose(); ImpactParticles?.Dispose(); ImpactAudio?.Dispose(); bossStaging.Audio?.Dispose(); fonts?.Dispose(); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Bootstrap()
@@ -83,6 +83,7 @@ namespace BibleSurvivor.Unity
             Host = host;
             host.TakeSavedCinematic();
             cinematic.End();
+            genesisCinematicMedia.Clear();
             releaseCinematicControls = false;
             newChallengeSource=null;
             focusNewChallenge=false;
@@ -370,7 +371,7 @@ namespace BibleSurvivor.Unity
             EnsureStyles();
             if (CinematicPlaying)
             {
-                DrawCinematic(viewport);
+                DrawCinematic(viewport, mobile, physicalFrame);
                 return;
             }
             SyncSortieSession();

@@ -7,6 +7,7 @@ namespace BibleSurvivor.Unity
     public sealed partial class AdamGame
     {
         readonly AdamCinematic cinematic = new AdamCinematic();
+        readonly AdamGenesisCinematicMedia genesisCinematicMedia = new AdamGenesisCinematicMedia();
         bool releaseCinematicControls;
         public bool CinematicPlaying => cinematic.Active;
 
@@ -26,6 +27,7 @@ namespace BibleSurvivor.Unity
             if (kind == AdamCinematicKind.None || !AdamCinematicArt.Available) return false;
             var script = Resources.Load<TextAsset>(AdamCinematic.ResourceName(kind));
             if (!cinematic.Begin(kind, script?.text)) return false;
+            genesisCinematicMedia.Begin(kind, AdamCinematic.Read(kind, script.text));
             releaseCinematicControls = true;
             inputReleased = false;
             touchStarted = false;
@@ -64,6 +66,7 @@ namespace BibleSurvivor.Unity
         void FinishCinematic()
         {
             cinematic.End();
+            genesisCinematicMedia.Clear();
             commandFrame = Time.frameCount;
             releaseCinematicControls = true;
             inputReleased = KeyboardMovement(Keyboard.current) == Vector2.zero &&
@@ -88,7 +91,7 @@ namespace BibleSurvivor.Unity
             return true;
         }
 
-        void DrawCinematic(Rect viewport)
+        void DrawCinematic(Rect viewport, bool mobile, Rect? physicalFrame)
         {
             var prior = GUI.matrix;
             GUI.matrix = Matrix4x4.identity;
@@ -99,7 +102,22 @@ namespace BibleSurvivor.Unity
             var horizon = AdamVisualQualityArt.Sprite(AdamBookTitle.Horizon, 0);
             var actor = art.Sprite("chr_player_layer-base_idle_32", 0);
             var scroll = art.Sprite("ico_psv_scroll_static_16", 0);
-            if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
+            var motion = ArtWorld.FeedbackEnabled;
+            var hasMedia = genesisCinematicMedia.TryGetFrame(cinematic, motion, viewport, out var media);
+            if (hasMedia)
+            {
+                if (media.LiveTerrain && Host.World != null)
+                    DrawGenesisCinematicTerrain(viewport, frame, mobile, physicalFrame, media.FullTerrain);
+                var tint = GUI.color;
+                try
+                {
+                    GUI.color = Color.white;
+                    GUI.DrawTextureWithTexCoords(new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
+                        media.Texture, media.Uv);
+                }
+                finally { GUI.color = tint; }
+            }
+            else if (cinematic.Kind == AdamCinematicKind.ExodusOpening && cinematic.CurrentIndex == 2)
                 ArtWorld.DrawBackdrop(art, new Rect(0, 0, AdamCinematic.Width, AdamCinematic.Height),
                     ExodusContent.GlobalRoundNumber);
             else
@@ -107,32 +125,85 @@ namespace BibleSurvivor.Unity
             GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, Vector3.one);
 
             var cut = cinematic.Current;
-            var subtitleTop = viewport.height - 100;
-            AdamHud.Fill(new Rect(0, subtitleTop, viewport.width, 100), AdamHud.Ink0);
+            var subtitleHeight = hasMedia && !mobile
+                ? Mathf.Min(100f, 25f * frame.width / AdamCinematic.Width + viewport.yMax - frame.yMax)
+                : 100f;
+            var subtitleTop = viewport.height - subtitleHeight;
+            var subtitleScale = subtitleHeight / 100f;
+            AdamHud.Fill(new Rect(0, subtitleTop, viewport.width, subtitleHeight), AdamHud.Ink0);
             if (cut.day > 0)
             {
                 AdamHud.Fill(new Rect(12, 10, 116, 32), AdamHud.Ink0);
                 GUI.Label(new Rect(20, 10, 100, 32), $"제{cut.day}일",
                     HudText(20, AdamHud.Primary, false));
             }
-            var caption = HudText(20, AdamHud.Primary, false, TextAnchor.MiddleCenter);
-            caption.wordWrap = true;
-            GUI.Label(new Rect(12, subtitleTop, viewport.width - 24, 40), cut.caption, caption);
-            GUI.Label(new Rect(12, subtitleTop + 38, viewport.width - 24, 20), cut.reference,
-                HudText(16, AdamHud.Muted, false, TextAnchor.MiddleCenter));
+            var compactCaption = subtitleHeight < 60f;
+            if (compactCaption)
+            {
+                var caption = HudText(14, AdamHud.Primary, false, TextAnchor.MiddleCenter);
+                var citation = HudText(12, AdamHud.Muted, false, TextAnchor.MiddleLeft);
+                const float gap = 12;
+                var citationWidth = Mathf.Ceil(citation.CalcSize(new GUIContent(cut.reference)).x);
+                var captionWidth = Mathf.Min(Mathf.Ceil(caption.CalcSize(new GUIContent(cut.caption)).x),
+                    viewport.width - 24 - gap - citationWidth);
+                var start = Mathf.Floor((viewport.width - captionWidth - gap - citationWidth) / 2);
+                GUI.Label(new Rect(start, subtitleTop, captionWidth, 24), cut.caption, caption);
+                GUI.Label(new Rect(start + captionWidth + gap, subtitleTop, citationWidth, 24), cut.reference, citation);
+            }
+            else
+            {
+                var caption = HudText(Mathf.RoundToInt(20 * subtitleScale), AdamHud.Primary, false, TextAnchor.MiddleCenter);
+                caption.wordWrap = true;
+                GUI.Label(new Rect(12, subtitleTop, viewport.width - 24, 40 * subtitleScale), cut.caption, caption);
+                GUI.Label(new Rect(12, subtitleTop + 38 * subtitleScale, viewport.width - 24, 20 * subtitleScale),
+                    cut.reference, HudText(Mathf.RoundToInt(16 * subtitleScale), AdamHud.Muted, false, TextAnchor.MiddleCenter));
+            }
 
             var enabled = GUI.enabled;
             GUI.enabled = enabled && !Host.Suspended;
-            var controls = new GUIStyle(GUI.skin.button) { font = fonts.Label, fontSize = 16 };
+            var buttonTop = subtitleTop + (compactCaption ? 24 : 61 * subtitleScale);
+            var buttonHeight = compactCaption ? 24 : 36 * subtitleScale;
+            var controls = new GUIStyle(GUI.skin.button)
+            {
+                font = fonts.Label,
+                fontSize = compactCaption ? 14 : Mathf.RoundToInt(16 * subtitleScale)
+            };
             var pointer = Event.current.isMouse;
-            if (GUI.Button(new Rect(viewport.width / 2 - 164, subtitleTop + 61, 156, 36),
+            if (GUI.Button(new Rect(viewport.width / 2 - 164, buttonTop, 156, buttonHeight),
                 cinematic.Paused ? "재개" : "일시정지 (Space)", controls) && pointer)
                 cinematic.Paused = !cinematic.Paused;
-            if (GUI.Button(new Rect(viewport.width / 2 + 8, subtitleTop + 61, 156, 36),
+            if (GUI.Button(new Rect(viewport.width / 2 + 8, buttonTop, 156, buttonHeight),
                 "건너뛰기 (Esc)", controls) && pointer)
                 FinishCinematic();
             GUI.enabled = enabled;
             GUI.matrix = prior;
+        }
+
+        void DrawGenesisCinematicTerrain(Rect viewport, Rect frame, bool mobile, Rect? physicalFrame, bool fullTerrain)
+        {
+            var prior = GUI.matrix;
+            var scale = mobile ? AdamMobileLayout.Scale(viewport) : AdamChoiceText.ScreenScale(viewport.width, viewport.height);
+            GUI.matrix = Matrix4x4.TRS(viewport.position, Quaternion.identity, new Vector3(scale, scale, 1));
+            var arena = mobile ? AdamMobileLayout.FullFrame(viewport, physicalFrame ?? viewport) :
+                Arena(viewport.width / scale, viewport.height / scale);
+            var position = Host.World.PlayerPosition;
+            if (!fullTerrain)
+            {
+                // Letterbox gutters stay dark until the authored mask has fully revealed the arena.
+                var clip = new Rect((frame.position - viewport.position) / scale, frame.size / scale);
+                GUI.BeginGroup(clip);
+                arena.position -= clip.position;
+            }
+            try
+            {
+                ArtWorld.DrawBackdrop(art, arena, Host.Session.RoundNumber,
+                    new Vector2(position.X, position.Y), mobile);
+            }
+            finally
+            {
+                if (!fullTerrain) GUI.EndGroup();
+                GUI.matrix = prior;
+            }
         }
 
         void DrawCinematicReplay(Vector2 origin, bool endingAllowed = false)
