@@ -128,7 +128,7 @@ public sealed class AdamRoundPlayTests
         }
         yield return null;
     }
-    AdamHost CompletedGenesisForEntry(string suffix, bool expanded=false)
+    AdamHost CompletedGenesisForEntry(string suffix, bool expanded=false, bool settleLast=true, Action beforeReplace=null)
     {
         var catalog=AdamCatalog.Load();
         var state=GameSnapshot.New();
@@ -144,16 +144,16 @@ public sealed class AdamRoundPlayTests
                 session.Hit(session.BossRules.BossActorId,session.BossRules.MaxHealth);
                 if(session.Stage=="boss_reward")Assert.IsTrue(session.ChooseBossReward(session.Boss.Reward.RewardId,session.BossChoices[0].Id));
                 while(session.PendingChoices.Count>0)Assert.IsTrue(session.Choose(session.PendingChoices[0]));
-                Assert.IsTrue(session.CompleteBossSettlement());
+                if (round != 9 || settleLast) Assert.IsTrue(session.CompleteBossSettlement());
             }
             while(session.PendingChoices.Count>0)Assert.IsTrue(session.Choose(session.PendingChoices[0]));
             if(session.Stage=="round_settlement")Assert.IsTrue(session.CompleteNormalSettlement());
             if(round<9)session=session.StartNextRound(catalog.ForRound(round+1));
         }
-        session.Capture();state.Run.World=null;var path=Path.Combine(directory,suffix+".json");new SaveStore(path).Commit(state,0,"technical-Genesis-completion");return new AdamHost(catalog,new SaveStore(path));
+        session.Capture();state.Run.World=null;var path=Path.Combine(directory,suffix+".json");new SaveStore(path).Commit(state,0,"technical-Genesis-completion");return new AdamHost(catalog,new SaveStore(path, beforeReplace));
     }
     // Technical progression fixture; actual keyboard commands drive the saved round transitions.
-    static void SettleForEntry(AdamHost host)
+    static void SettleForEntry(AdamHost host, Action beforeSettlement=null)
     {
         host.Session.Advance(180);
         if(host.Session.Stage=="boss_intro")
@@ -164,7 +164,8 @@ public sealed class AdamRoundPlayTests
             if(host.Session.Stage=="boss_reward")
                 Assert.IsTrue(host.ChooseBossReward(host.Session.Boss.Reward.RewardId,host.Session.BossChoices[0].Id));
             while(host.Session.PendingChoices.Count>0)Assert.IsTrue(host.Choose(host.Session.PendingChoices[0]));
-            Assert.IsTrue(host.CompleteBossSettlement(),host.Error);
+            beforeSettlement?.Invoke();
+            Assert.AreEqual(beforeSettlement == null, host.CompleteBossSettlement(), host.Error);
         }
         else Assert.IsTrue(host.Checkpoint(),host.Error);
     }
@@ -293,9 +294,68 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(committed,host.State.Run.RunId);
     }
 
+    [UnityTest] public IEnumerator GenesisEndingAndExodusOpeningSkipIndependently()
+    {
+        var host = CompletedGenesisForEntry("r09-r10-skip", settleLast: false);
+        game.Initialize(host);
+        game.SetLifecycle(true, false);
+        Assert.IsTrue(host.CompleteBossSettlement(), host.Error);
+        yield return null;
+        Assert.IsTrue(game.CinematicPlaying);
+        var runId = host.State.Run.RunId;
+        var gold = host.State.Profile.Gold;
+        var revision = host.State.Revision;
+
+        Keys(Key.Escape, Key.Enter);
+        yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        yield return null;
+        Assert.AreEqual(9, host.Session.RoundNumber);
+        Assert.AreEqual(revision, host.State.Revision);
+        Assert.IsTrue(host.CanEnterExodus);
+        Keys();
+        yield return null;
+        Keys(Key.Enter);
+        yield return null;
+        Assert.IsTrue(game.CinematicPlaying);
+        Assert.AreEqual(10, host.Session.RoundNumber);
+        Assert.Zero(host.World.SimulationTime);
+
+        var pad = InputSystem.AddDevice<Gamepad>();
+        try
+        {
+            InputSystem.QueueStateEvent(pad, new GamepadState().WithButton(GamepadButton.East));
+            yield return null;
+            Assert.IsFalse(game.CinematicPlaying);
+            yield return null;
+            Assert.Zero(host.World.SimulationTime);
+            Assert.AreEqual(runId, host.State.Run.RunId);
+            Assert.AreEqual(gold, host.State.Profile.Gold);
+            Assert.AreEqual(revision + 1, host.State.Revision);
+            Keys();
+            InputSystem.QueueStateEvent(pad, new GamepadState());
+            yield return null;
+            Keys(Key.D);
+            yield return new WaitForSecondsRealtime(.12f);
+            Assert.Greater(host.World.PlayerPosition.X, 0);
+        }
+        finally
+        {
+            InputSystem.RemoveDevice(pad);
+            Keys();
+        }
+    }
+
     [UnityTest] public IEnumerator EnterKeyRespectsSuspensionAndChapterBoundariesThroughR180()
     {
-        var host=CompletedGenesisForEntry("enter");
+        var path = Path.Combine(directory, "enter.json");
+        var loseSettlementReply = false;
+        var host=CompletedGenesisForEntry("enter", beforeReplace: () =>
+        {
+            if (!loseSettlementReply) return;
+            File.Replace(Directory.GetFiles(directory, "enter.json.tmp-*")[0], path, path + ".bak");
+            throw new IOException("R180 settlement acknowledgement lost");
+        });
         var run=host.State.Run.RunId;
         game.Initialize(host);game.SetLifecycle(true,false);
         yield return null;
@@ -312,10 +372,46 @@ public sealed class AdamRoundPlayTests
         Assert.AreEqual(10,host.Session.RoundNumber);
         Assert.AreEqual(run,host.State.Run.RunId);
         Assert.AreEqual(revision+1,host.State.Revision);
+        Keys();yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        Keys();yield return null;
         for(var round=10;round<=180;round++)
         {
             Assert.AreEqual(round,host.Session.RoundNumber);
-            SettleForEntry(host);
+            if (round == 180)
+            {
+                var beforeGold = 0L;
+                SettleForEntry(host, () =>
+                {
+                    beforeGold = host.State.Profile.Gold;
+                    loseSettlementReply = true;
+                });
+                yield return null;
+                Assert.IsFalse(game.CinematicPlaying);
+                Assert.IsTrue(host.HasSaveRetry);
+                var settledBytes = File.ReadAllBytes(path);
+                var committed = new SaveStore(path).LoadConfirmed();
+                var receipt = Json(committed.OldTestamentClear);
+                var reward = Json(committed.Run.Boss.Reward);
+                Assert.AreEqual(beforeGold + CampaignContent.Round(180).CompletionGold, committed.Profile.Gold);
+                loseSettlementReply = false;
+                Assert.IsTrue(host.RetrySave(), host.Error);
+                yield return null;
+                Assert.IsTrue(game.CinematicPlaying);
+                Assert.IsFalse(host.RetrySave());
+                CollectionAssert.AreEqual(settledBytes, File.ReadAllBytes(path));
+                Keys(Key.Escape);
+                yield return null;
+                Assert.IsFalse(game.CinematicPlaying);
+                Assert.IsTrue(host.ContentComplete);
+                Assert.AreEqual(receipt, Json(host.State.OldTestamentClear));
+                Assert.AreEqual(reward, Json(host.State.Run.Boss.Reward));
+                CollectionAssert.AreEqual(settledBytes, File.ReadAllBytes(path));
+                Keys();
+                yield return null;
+            }
+            else SettleForEntry(host);
             Assert.IsTrue(host.Reload(),host.Error);
             Assert.AreEqual(round==15,host.CanEnterLeviticus);
             Assert.AreEqual(round==21,host.CanEnterNumbers);
@@ -354,6 +450,16 @@ public sealed class AdamRoundPlayTests
             Assert.AreEqual(Math.Min(180,round+1),host.Session.RoundNumber);
             Assert.AreEqual(revision+(round==180?0:1),host.State.Revision);
             Assert.AreEqual(run,host.State.Run.RunId);
+            if (round + 1 is 43 or 55 or 67 or 94 or 121 or 151 or 166 or 172)
+            {
+                Assert.IsTrue(game.CinematicPlaying, $"R{round + 1} opening");
+                Assert.Zero(host.World.SimulationTime);
+                Keys(Key.Escape);
+                yield return null;
+                Assert.IsFalse(game.CinematicPlaying);
+                Keys();
+                yield return null;
+            }
         }
         Assert.IsTrue(host.ContentComplete);
         Assert.AreEqual(181,host.State.Run.RoundNumber);
@@ -363,6 +469,31 @@ public sealed class AdamRoundPlayTests
         StringAssert.Contains("말라기 최종 보스 ‘삼키는 자’ 처치",AdamRoundPresentation.CompletionDetail(host));
         Assert.AreEqual(0,AdamRoundPresentation.NextChapter(host));
         var completedAt=host.State.OldTestamentClear.CompletedAtUnixMilliseconds;
+        var completedData = File.ReadAllBytes(path);
+        Keys();
+        yield return null;
+        Keys(Key.Escape);
+        yield return null; // Close the new-challenge prompt opened by the final Enter.
+        Keys();
+        yield return null;
+        Keys(Key.F3);
+        yield return null;
+        Keys(Key.RightArrow);
+        yield return null;
+        for (var row = 0; row < 5; row++)
+        {
+            Keys();
+            yield return null;
+            Keys(Key.DownArrow);
+            yield return null;
+        }
+        Keys(Key.Enter);
+        yield return null;
+        Assert.IsTrue(game.CinematicPlaying, "the directory offers the previously settled ending");
+        Keys(Key.Escape);
+        yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        CollectionAssert.AreEqual(completedData, File.ReadAllBytes(path));
         host.Start("sling");
         Assert.IsTrue(host.Reload(),host.Error);
         Assert.AreEqual(1,host.State.Run.RoundNumber);
@@ -418,6 +549,18 @@ public sealed class AdamRoundPlayTests
         var host=CompletedGenesisForEntry("same-frame");var old=host.State.Run.RunId;var profile=Json(SaveStore.PreviewPermanentProfile(host.State));game.Initialize(host);game.SetLifecycle(true,false);yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Digit1,Key.Enter));yield return null;
         Assert.AreEqual(10,host.Session.RoundNumber);Assert.AreEqual(old,host.State.Run.RunId);Assert.AreEqual(SaveFormat.CurrentVersion,host.State.SchemaVersion);Assert.AreEqual(profile,Json(host.State.Profile));Assert.IsFalse(host.CanEnterExodus);
+        Assert.IsTrue(game.CinematicPlaying);
+        yield return null;
+        Assert.IsTrue(game.CinematicPlaying);
+        Keys();yield return null;
+        Keys(Key.Enter);yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        yield return null;
+        Assert.Zero(host.World.SimulationTime);
+        Assert.Zero(host.World.Capture().Remainder);
+        Assert.IsTrue(host.Reload(),host.Error);
+        Assert.AreEqual(10,host.Session.RoundNumber);
+        Assert.IsFalse(game.CinematicPlaying);
     }
     static string Json(object value)
     {using(var stream=new System.IO.MemoryStream()){new System.Runtime.Serialization.Json.DataContractJsonSerializer(value.GetType()).WriteObject(stream,value);return System.Text.Encoding.UTF8.GetString(stream.ToArray());}}

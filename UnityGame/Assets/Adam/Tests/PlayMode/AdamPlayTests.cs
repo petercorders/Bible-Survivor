@@ -52,6 +52,7 @@ public class AdamPlayTests
     [UnityTest] public IEnumerator FrontispieceInitializeReloadAndImmediateSelectDoNotReplayDeparture()
     {
         game.SetLifecycle(true,false);Assert.IsFalse(game.SortieVisible);game.SelectSlot(0);var id=game.Host.State.Run.RunId;
+        Assert.IsTrue(game.CinematicPlaying);
         Assert.AreEqual(1,game.Host.Session.RoundNumber);game.UpdatePresentation(0);Assert.AreEqual(AdamBookTitle.Enabled,game.SortieVisible);
         game.SelectSlot(2);Assert.AreEqual(id,game.Host.State.Run.RunId);
         Assert.IsTrue(game.Host.Reload(),game.Host.Error);game.UpdatePresentation(0);game.Host.SetPaused(false);game.UpdatePresentation(0);
@@ -60,8 +61,23 @@ public class AdamPlayTests
     }
     [UnityTest] public IEnumerator KeyboardSelectionMovementPauseAndLifecycle()
     {
+        game.SetLifecycle(true,false);
         Keys(Key.Digit3); yield return null; Keys(); yield return null;
         Assert.IsNotNull(game.Host.World, $"keyboard={Keyboard.current?.deviceId}, enabled={keyboard.enabled}, focus={Application.isFocused}, suspended={game.Host.Suspended}, error={game.Host.Error}"); Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("sling"));
+        Assert.IsTrue(game.CinematicPlaying);
+        var initialTime = game.Host.World.SimulationTime;
+        Assert.Zero(initialTime);
+        Assert.Zero(game.Host.World.Capture().Remainder);
+        Keys(Key.Space); yield return null; Keys(); yield return null;
+        Keys(Key.F6); yield return null; Keys(); yield return null;
+        Assert.IsFalse(game.ArtWorld.FeedbackEnabled);
+        Keys(Key.Enter,Key.D); yield return null;
+        Assert.IsFalse(game.CinematicPlaying);
+        Assert.AreEqual(initialTime,game.Host.World.SimulationTime);
+        Assert.IsFalse(game.Host.Paused);
+        yield return null;
+        Assert.AreEqual(initialTime,game.Host.World.SimulationTime);
+        Keys(); yield return null;
         Keys(Key.D); yield return new WaitForSecondsRealtime(.15f);
         Assert.Greater(game.Host.World.PlayerPosition.X, 0);
         Keys(Key.Escape); yield return null; Keys(); yield return null;
@@ -70,6 +86,10 @@ public class AdamPlayTests
         Assert.AreEqual(time, game.Host.World.SimulationTime);
         game.SetLifecycle(false, false); game.SetLifecycle(true, false);
         Assert.IsTrue(game.Host.Paused); Assert.AreEqual(Vector2.zero, game.Host.Movement);
+        Keys(Key.F5); yield return null; Keys(); yield return null;
+        Assert.IsTrue(game.CinematicPlaying);
+        Keys(Key.Escape); yield return null; Keys(); yield return null;
+        Assert.IsTrue(game.Host.Paused);
         Keys(Key.Enter); yield return null; Keys(); yield return null;
         Assert.IsFalse(game.Host.Paused);
     }
@@ -127,6 +147,7 @@ public class AdamPlayTests
         Assert.AreSame(terminal,host.Session);Assert.IsNull(host.State.Run);Assert.AreEqual(gold,host.State.Profile.Gold);
         Keys();yield return null;Keys(digit);yield return null;
         Assert.AreNotSame(terminal,host.Session);Assert.IsTrue(host.Session.IsActive);Assert.IsNotNull(host.State.Run);
+        Assert.IsFalse(game.CinematicPlaying);
         Assert.IsTrue(host.Session.Inventory.Weapons.ContainsKey(weapon));Assert.AreEqual(gold,host.State.Profile.Gold);
         var run=host.State.Run.RunId;yield return null;Assert.AreEqual(run,host.State.Run.RunId);
         Keys();yield return null;
@@ -205,6 +226,46 @@ public class AdamPlayTests
         }
     }
 #if UNITY_EDITOR
+    [UnityTest] public IEnumerator PointerReplaysAClipAndReturnsToTheSameStartScreen()
+    {
+        var window = ScriptableObject.CreateInstance<PauseModalPointerWindow>();
+        try
+        {
+            window.Game = game;
+            window.minSize = window.maxSize = new Vector2(660, 440);
+            window.position = new Rect(10, 10, 660, 440);
+            window.ShowUtility();
+            window.Repaint();
+            yield return null;
+            game.SetLifecycle(true, false);
+            void Click(float x, float y)
+            {
+                var point = new Vector2(x, y);
+                window.SendEvent(new Event { type = EventType.MouseDown, mousePosition = point, button = 0, clickCount = 1 });
+                window.SendEvent(new Event { type = EventType.MouseUp, mousePosition = point, button = 0, clickCount = 1 });
+            }
+            Click(555, 25);
+            yield return null;
+            Click(210, 130);
+            Assert.IsTrue(game.CinematicPlaying);
+            Click(414, 419);
+            Assert.IsFalse(game.CinematicPlaying);
+            Assert.IsNull(game.Host.State.Run);
+            Assert.Zero(game.Host.State.Revision);
+            yield return null;
+            Click(555, 25);
+            yield return null;
+            Click(330, 380);
+            Assert.IsFalse(game.CinematicPlaying);
+            Assert.IsNull(game.Host.State.Run);
+            yield return null;
+            Keys(Key.Enter);
+            yield return null;
+            Assert.IsNotNull(game.Host.State.Run, "the start screen accepts input after closing the directory");
+        }
+        finally { window.Close(); }
+    }
+
     [UnityTest] public IEnumerator MobileScaledStartAndPauseAreClickableWithoutKeyboard()
     {
         var window = UnityEngine.ScriptableObject.CreateInstance<PauseModalPointerWindow>();
@@ -220,6 +281,8 @@ public class AdamPlayTests
             };
             var start=AdamMobileLayout.StartButton(603,500,2);
             click(start.center*2);Assert.IsNotNull(game.Host.State.Run);Assert.IsTrue(game.Host.Session.Inventory.Weapons.ContainsKey("sling"));
+            Assert.IsTrue(game.CinematicPlaying);
+            click(new Vector2(603+86,980));Assert.IsFalse(game.CinematicPlaying);
             yield return null;game.SetLifecycle(true,false);
             click(AdamMobileLayout.HudPause(603).center*2);Assert.IsTrue(game.Host.Paused);
             var time=game.Host.World.SimulationTime;yield return null;Assert.AreEqual(time,game.Host.World.SimulationTime);

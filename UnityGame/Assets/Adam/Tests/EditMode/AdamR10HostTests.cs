@@ -41,10 +41,29 @@ public sealed class AdamR10HostTests
             throw new IOException("R10 entry replacement/ack failure");
         });
         h=new AdamHost(AdamCatalog.Load(),store);var oldState=h.State;var oldSession=h.Session;var oldRun=Bytes(h.State.Run);var oldRevision=h.State.Revision;
-        Assert.IsFalse(h.TryEnterExodus());Assert.NotNull(h.Error);Assert.IsTrue(h.HasSaveRetry);Assert.IsTrue(h.Paused);Assert.AreSame(oldState,h.State);Assert.AreSame(oldSession,h.Session);Assert.IsNull(h.World);Assert.AreEqual(oldRevision,h.State.Revision);Assert.IsFalse(h.CanEnterExodus);
+        Assert.IsFalse(h.TryEnterExodus(showOpening: true));Assert.NotNull(h.Error);Assert.IsTrue(h.HasSaveRetry);Assert.IsTrue(h.Paused);Assert.AreSame(oldState,h.State);Assert.AreSame(oldSession,h.Session);Assert.IsNull(h.World);Assert.AreEqual(oldRevision,h.State.Revision);Assert.IsFalse(h.CanEnterExodus);
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
         var operation=(string)Field(h,"operation");var candidate=Bytes(Field(h,"chapterCandidate"));h.Tick(60);h.Start("bible");Assert.IsFalse(h.TryEnterExodus());Assert.IsFalse(h.Checkpoint());CollectionAssert.AreEqual(oldRun,Bytes(h.State.Run));CollectionAssert.AreEqual(candidate,Bytes(Field(h,"chapterCandidate")));Assert.AreEqual(operation,Field(h,"operation"));
         if(!uncertainPublish)CollectionAssert.AreEqual(before,File.ReadAllBytes(path));else Assert.AreEqual(10,AdamSession.Resume(store.Load(),AdamCatalog.Load().ForRound(10)).RoundNumber);
-        fail=false;Assert.IsTrue(h.RetrySave(),h.Error);Assert.AreEqual(10,h.Session.RoundNumber);Assert.AreEqual(oldRevision+1,h.State.Revision);Assert.AreEqual(operation,h.State.LastOperationId);Assert.AreEqual(uncertainPublish?1:2,callbacks);Assert.IsTrue(h.Paused);Assert.IsFalse(h.HasSaveRetry);Assert.IsFalse(h.TryEnterExodus());Assert.IsTrue(h.Reload());Assert.AreEqual(10,h.Session.RoundNumber);
+        fail=false;
+        if (uncertainPublish)
+        {
+            // Even a valid backup of the same operation cannot confirm chapter entry.
+            var primary = File.ReadAllBytes(path);
+            File.WriteAllBytes(path + ".bak", primary);
+            File.Delete(path);
+            Assert.AreEqual(operation, store.Load().LastOperationId);
+            Assert.IsFalse(h.RetrySave());
+            Assert.AreSame(oldSession, h.Session);
+            Assert.AreEqual(AdamCinematicKind.None, h.TakeSavedCinematic());
+            File.WriteAllBytes(path, primary);
+        }
+        Assert.IsTrue(h.RetrySave(),h.Error);Assert.AreEqual(10,h.Session.RoundNumber);Assert.AreEqual(oldRevision+1,h.State.Revision);Assert.AreEqual(operation,h.State.LastOperationId);Assert.AreEqual(uncertainPublish?1:2,callbacks);Assert.IsTrue(h.Paused);Assert.IsFalse(h.HasSaveRetry);Assert.IsFalse(h.TryEnterExodus());
+        Assert.Zero(h.World.SimulationTime);
+        Assert.AreEqual(AdamCinematicKind.ExodusOpening,h.TakeSavedCinematic());
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
+        Assert.IsTrue(h.Reload());Assert.AreEqual(10,h.Session.RoundNumber);
+        Assert.AreEqual(AdamCinematicKind.None,h.TakeSavedCinematic());
     }
     [Test]public void ExplicitReloadCancelsOnlyUncommittedEntryAndReconcilesPublishedEntryWithoutRollback()
     {

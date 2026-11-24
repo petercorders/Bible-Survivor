@@ -65,12 +65,17 @@ namespace BibleSurvivor.Unity
             }
             GUI.EndGroup();
             AdamArt.Blit(AdamVisualQualityArt.Sprite(Fade,0),new Rect(300,0,32,110));
-            AdamArt.Blit(AdamVisualQualityArt.Sprite(Crest,ArtFrame(round)),new Rect(20,22,64,64));
-            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":"성경 서바이버",eyebrow);
-            var bookName=Name(round);GUI.Label(new Rect(96,34,204,44),bookName,name);
-            if(round.HasValue)
+            var genesis = Book(round) == 0;
+            if (genesis) AdamCinematicArt.DrawEdenSeal(new Vector2(28, 35), 2);
+            else AdamArt.Blit(AdamVisualQualityArt.Sprite(Crest,ArtFrame(round)),new Rect(20,22,64,64));
+            GUI.Label(new Rect(96,14,204,22),death?"사망 · 이번 도전 종료":AdamGameTitle.Korean,eyebrow);
+            if (genesis)
+                GUI.Label(new Rect(96,38,204,36), death ? "도전 기록" : "시작 무기를 선택하세요", count);
+            else
+                GUI.Label(new Rect(96,34,204,44),Name(round),name);
+            if(round.HasValue && !genesis)
             {
-                var end=96+name.CalcSize(new GUIContent(bookName)).x+12;
+                var end=96+name.CalcSize(new GUIContent(Name(round))).x+12;
                 GUI.Label(new Rect(end,50,Mathf.Max(0,300-end),22),Local(round)+" / "+Total(round),count);
             }
             DrawPips(new Vector2(96,82),round);
