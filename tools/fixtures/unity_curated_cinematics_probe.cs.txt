@@ -125,6 +125,16 @@ namespace BibleSurvivor.Unity
                     AdvanceTo(timeline, start + time);
                     Check(timeline.CurrentIndex == i && renderer.TryGetFrame(timeline, true, out _),
                         $"Design atlas {kind} cut {i + 1} at {time:0.00}");
+                    if (kind == AdamCinematicKind.Jonah && i == 1 && time < .1f)
+                    {
+                        AdvanceTo(timeline, start + 1.42f);
+                        timeline.Paused = true;
+                        yield return Capture("Jonah-lightning");
+                        game.ArtWorld.FeedbackEnabled = false;
+                        yield return Capture("Jonah-lightning-lowfx");
+                        game.ArtWorld.FeedbackEnabled = true;
+                        timeline.Paused = false;
+                    }
                 }
                 timeline.Paused = true;
                 yield return Capture(kind + "-design-" + (i + 1));
