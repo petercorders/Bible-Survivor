@@ -1,0 +1,23 @@
+{
+  "cuts": [
+    {
+      "day": 0,
+      "end": 4.0,
+      "reference": "출 1:6–7",
+      "caption": "요셉과 그 세대가 세상을 떠나고 여러 세대가 지났다.",
+      "motif": "egypt-scroll-promise"
+    },
+    {
+      "day": 0,
+      "end": 10.0,
+      "reference": "출 1:8–14",
+      "caption": "요셉을 알지 못하는 새 왕은 이스라엘 백성에게 벽돌 노동을 시켰다."
+    },
+    {
+      "day": 0,
+      "end": 14.0,
+      "reference": "출 1:13–14",
+      "caption": "일터에는 진흙과 벽돌이 쌓였다."
+    }
+  ]
+}
