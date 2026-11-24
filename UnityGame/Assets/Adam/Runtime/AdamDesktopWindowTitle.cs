@@ -11,10 +11,14 @@ namespace BibleSurvivor.Unity
 
         void LateUpdate()
         {
-            if (Screen.fullScreen || Time.unscaledTime < nextWindowTitleCheck)
+#if UNITY_STANDALONE_WIN
+            if (Screen.fullScreen)
+                return;
+#endif
+            if (Time.unscaledTime < nextWindowTitleCheck)
                 return;
 
-            // Unity can recreate or retitle the native window when returning to windowed mode.
+            // Unity can recreate or retitle the native window during a display-mode transition.
             nextWindowTitleCheck = Time.unscaledTime + 1;
             AdamDesktopWindowTitle.Apply();
         }

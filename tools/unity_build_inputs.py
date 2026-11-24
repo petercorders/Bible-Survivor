@@ -7,10 +7,13 @@ This describes standard SDK/MSBuild declared inputs, not arbitrary custom-task f
 """
 import hashlib
 import json
+import os
+import re
 from pathlib import Path
 import subprocess
+import tempfile
 
-SCHEMA = 2
+SCHEMA = 3
 PROJECT = 'src/BibleSurvivor.Core/BibleSurvivor.Core.csproj'
 ITEMS = ('Compile', 'AdditionalFiles', 'Analyzer', 'EmbeddedResource', 'Content', 'None',
          'ProjectReference', 'Reference', 'ReferencePath', 'ReferencePathWithRefAssemblies',
@@ -33,6 +36,8 @@ def run_msbuild(root, *arguments):
 def query(root, build=False):
     arguments = ['-getItem:' + ','.join(ITEMS), '-getProperty:' + ','.join(PROPERTIES)]
     if build:
+        arguments[0] += ',CoreCompileCache'
+        arguments[1] += ',CoreCompileCacheIgnoreCase'
         arguments.append('-target:Rebuild')
     raw = run_msbuild(root, *arguments)
     # Build diagnostics may precede MSBuild's final structured query output.
@@ -84,6 +89,60 @@ class Paths:
             text = text.replace(str(base), '${' + name + '}')
         return text
 
+CORE_OBJ = Path(PROJECT).parent / 'obj'
+RELEASE_OBJ = CORE_OBJ / 'Release/netstandard2.1'
+CACHE_KEY = 'repo/' + str(RELEASE_OBJ / 'BibleSurvivor.Core.csproj.CoreCompileInputs.cache')
+GENERATED_TEXT = {CORE_OBJ / 'BibleSurvivor.Core.csproj.nuget.g.props',
+                  RELEASE_OBJ / 'BibleSurvivor.Core.GeneratedMSBuildEditorConfig.editorconfig'}
+
+
+def input_digest(path, paths):
+    root = paths.roots['repo']
+    if path.is_relative_to(root) and path.relative_to(root) in GENERATED_TEXT:
+        # Escape literal token prefixes before replacing checkout-specific directories.
+        data = path.read_bytes().replace(b'%', b'%25')
+        for name, base in paths.ordered:
+            prefix = str(base).encode().replace(b'%', b'%25') + b'/'
+            data = data.replace(prefix, b'%' + name.encode() + b'%/')
+        return hashlib.sha256(data).hexdigest()
+    return digest(path)
+
+
+def cache_recipe(executed, paths):
+    identities = [paths.normalize(item['Identity']) for item in executed['Items']['CoreCompileCache']]
+    if not identities:
+        raise ValueError('SDK returned no compiler cache inputs')
+    return {'items': identities, 'ignore_case': executed['Properties']['CoreCompileCacheIgnoreCase'] or 'true'}
+
+
+def recipe_digest(recipe):
+    return hashlib.sha256(json.dumps(recipe, sort_keys=True).encode()).hexdigest()
+
+
+def expected_cache_digest(root, recipe, paths):
+    # Use the SDK implementation (including its Unicode casing and item separator).
+    with tempfile.TemporaryDirectory() as scratch:
+        path = Path(scratch) / 'items.txt'
+        items = []
+        for item in recipe['items']:
+            for name, base in paths.ordered:
+                item = item.replace('${' + name + '}', str(base))
+            items.append(item)
+        path.write_text('\n'.join(items) + '\n')
+        project = Path(__file__).with_name('unity_cache_hash.proj')
+        command = ['bash', 'tools/dotnet.sh', 'msbuild', str(project), '-target:Compute',
+                   '-getProperty:CacheDigest', '-p:CacheItemsFile=' + str(path),
+                   '-p:CacheIgnoreCase=' + recipe['ignore_case']]
+        result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+        if result.returncode:
+            raise ValueError(f'SDK cache verification failed (exit {result.returncode})')
+        value = result.stdout.strip()
+        if not re.fullmatch('[0-9a-f]{64}', value):
+            raise ValueError('SDK Hash task returned an invalid digest')
+        # WriteLinesToFile uses the build host's native newline.
+        return hashlib.sha256((value + os.linesep).encode()).hexdigest()
+
+
 def item_manifest(data, paths):
     items = {}
     files = {}
@@ -101,12 +160,14 @@ def item_manifest(data, paths):
                     continue
                 if kind in ('GlobalAnalyzerConfigFiles', 'EditorConfigFiles'):
                     key = paths.key(source)
+                    if key.startswith('ancestor'):
+                        continue  # Absent outer probes vary with checkout depth. Present files are recorded below.
                     files[key] = None  # SDK optional config probe: adding the file must invalidate.
                     entries.append({'path': key, 'metadata': {}})
                     continue
                 raise ValueError('Missing declared input: ' + source.name)
             key = paths.key(source)
-            files[key] = digest(source)
+            files[key] = input_digest(source, paths)
             metadata = {name: paths.normalize(item[name]) for name in
                         ('Link', 'LogicalName', 'TargetPath', 'Aliases', 'EmbedInteropTypes') if item.get(name)}
             entries.append({'path': key, 'metadata': metadata})
@@ -124,7 +185,7 @@ def evaluate(root):
     for line in preprocessed.splitlines():
         candidate = line.strip()
         if candidate.startswith('/') and Path(candidate).is_file():
-            imports[paths.key(candidate)] = digest(Path(candidate))
+            imports[paths.key(candidate)] = input_digest(Path(candidate), paths)
     configs = {}
     for directory in [root, *(root / PROJECT).parent.parents]:
         if not directory.is_relative_to(root):
@@ -166,13 +227,20 @@ def verify(root, provenance):
         return ['Legacy provenance has no evaluated input set; re-sync after Unity/UI handoff']
     actual, paths = evaluate(root)
     errors = compare_inputs(provenance['evaluation'], actual)
+    recipe = provenance['build']['compiler_cache']
+    if CACHE_KEY not in provenance['build']['files_sha256']:
+        raise ValueError('Missing compiler cache entry')
     for key, expected in provenance['build']['files_sha256'].items():
         path = paths.resolve(key)
+        if key == CACHE_KEY:
+            if expected != recipe_digest(recipe):
+                raise ValueError('Invalid compiler cache record')
+            expected = expected_cache_digest(root, recipe, paths)
         if expected is None:
             if path.is_file():
                 errors.append('Added optional compiler input: ' + key)
         elif not path.is_file():
             errors.append('Missing recorded compiler input: ' + key)
-        elif digest(path) != expected:
+        elif input_digest(path, paths) != expected:
             errors.append('Changed recorded compiler input: ' + key)
     return errors

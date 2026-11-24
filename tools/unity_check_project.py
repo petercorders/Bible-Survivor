@@ -14,7 +14,8 @@ def check(root):
     try:
         provenance = json.loads((assets / 'Resources/core-provenance.json').read_text())
         errors.extend(verify(root, provenance))
-        for path, key in [(assets / 'Plugins/BibleSurvivor.Core.dll', 'dll_sha256'),
+        for path, key in [(root / 'src/BibleSurvivor.Core/bin/Release/netstandard2.1/BibleSurvivor.Core.dll', 'dll_sha256'),
+                          (assets / 'Plugins/BibleSurvivor.Core.dll', 'dll_sha256'),
                           (assets / 'Resources/genesis-catalog.json', 'catalog_sha256'),
                           (root / 'content/genesis/catalog.json', 'catalog_sha256')]:
             if digest(path) != provenance[key]:
