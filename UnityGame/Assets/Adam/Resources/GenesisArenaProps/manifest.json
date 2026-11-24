@@ -1,6 +1,6 @@
 {
-  "version": 19,
-  "versionId": "1795448087-8d87",
+  "version": 32,
+  "versionId": "1795484317-78e5",
   "sourceSha256": "fc6a2b55796b82865930c7f53fcc348355b54a10610e4c6f530bdbef05767756",
   "shadowAlpha": 0.45,
   "assets": [
@@ -23,8 +23,9 @@
       "y": -20,
       "pivotX": 34,
       "pivotY": 4,
-      "propSha256": "df303a747770075f81b19c945876a3c00c3e9c1e4db5bc4c85bacd6abc1a414e",
-      "shadowSha256": "b435ee9de91d58e2d86a700bfd4950db81258990d11d87b0e4fea65db4b5e529"
+      "propSha256": "30332646b13bf27222335e4654d68ae179b11d71b84ba42d36b7630cb1cbabd6",
+      "shadowSha256": "b435ee9de91d58e2d86a700bfd4950db81258990d11d87b0e4fea65db4b5e529",
+      "sourceSha256": "9d6a904bc1f20d8570790adecf44b0d2fd0a88acf67b14b27156012f6d563e91"
     },
     {
       "id": "genesis-env-hall-cup",

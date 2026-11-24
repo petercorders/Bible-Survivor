@@ -13,7 +13,7 @@ namespace BibleSurvivor.Unity
         public const string Seal = "genesis-env-eden-seal";
         public const string Ark = "genesis-env-ark-frame";
         public const string Cup = "genesis-env-hall-cup";
-        const string ManifestSha = "b4f0490f1202b9dcfeb41175a80a96909ebb27568811a169f1e832950c7f9363";
+        const string ManifestSha = "d16969d223c3b2681586d29ebb8784bae578561e2a1707c9fd3bf3642e4ef94b";
 
         [Serializable]
         public sealed class Manifest

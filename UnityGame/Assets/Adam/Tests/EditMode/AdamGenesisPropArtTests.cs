@@ -20,7 +20,7 @@ public sealed class AdamGenesisPropArtTests
         Assert.That(asset, Is.Not.Null);
         var manifest = AdamGenesisPropArt.ReadManifest(asset.bytes);
         Assert.That(manifest, Is.Not.Null);
-        Assert.That(manifest.version, Is.EqualTo(19));
+        Assert.That(manifest.version, Is.EqualTo(32));
         Assert.That(manifest.shadowAlpha, Is.EqualTo(.45f));
         Assert.That(manifest.assets.Length, Is.EqualTo(3));
         foreach (var slot in manifest.assets)
