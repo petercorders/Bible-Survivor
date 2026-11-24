@@ -138,7 +138,7 @@ namespace BibleSurvivor.Unity
             }
             if (spec.Boundary == AdamCinematicBoundary.Entry)
             {
-                AdvanceTo(timeline, spec.Seconds - .2f);
+                AdvanceTo(timeline, spec.Seconds - .04f);
                 Check(renderer.TryGetFrame(timeline, true, out var frame) && frame.LiveTerrain,
                     "live projected arena " + kind);
                 timeline.Paused = true;
@@ -172,8 +172,11 @@ namespace BibleSurvivor.Unity
             var clearTime = host.State.OldTestamentClear.CompletedAtUnixMilliseconds;
             var gold = host.State.Profile.Gold;
             var design = Array.IndexOf(Environment.GetCommandLineArgs(), "-curatedDesignArt") >= 0;
-            foreach (var kind in new[] { AdamCinematicKind.Creation, AdamCinematicKind.Judges,
-                AdamCinematicKind.Samuel, AdamCinematicKind.Malachi })
+            var clipsArgument = Array.IndexOf(Environment.GetCommandLineArgs(), "-curatedClips");
+            var clips = clipsArgument >= 0
+                ? Array.ConvertAll(Environment.GetCommandLineArgs()[clipsArgument + 1].Split(','), Enum.Parse<AdamCinematicKind>)
+                : new[] { AdamCinematicKind.Creation, AdamCinematicKind.Judges, AdamCinematicKind.Samuel, AdamCinematicKind.Malachi };
+            foreach (var kind in clips)
             {
                 Check(game.Replay(kind), "start " + kind);
                 var timeline = (AdamCinematic)Timeline.GetValue(game);

@@ -104,6 +104,9 @@ public sealed class AdamCinematicTests
 
     [TestCase(43)]
     [TestCase(55)]
+    [TestCase(67)]
+    [TestCase(94)]
+    [TestCase(121)]
     [TestCase(180)]
     public void ApprovedCuratedArtLoadsEveryPageAndReducedMotionStill(int round)
     {
